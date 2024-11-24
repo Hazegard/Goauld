@@ -4,9 +4,12 @@ import (
 	"Goauld/sshd/shell"
 	"fmt"
 	"github.com/gliderlabs/ssh"
+	"log"
 	"net"
-	"runtime"
+	"sync"
 )
+
+var SShSessions = sync.Map{}
 
 func StartSShd() {
 	listener, err := net.Listen("tcp", ":61160")
@@ -19,18 +22,11 @@ func StartSShd() {
 		Addr: "127.0.0.1:0",
 		Handler: ssh.Handler(func(s ssh.Session) {
 			fmt.Println("New connection from ", s.RemoteAddr())
-
-			switch runtime.GOOS {
-			case "darwin":
-
-				fmt.Println(s.Command())
-				shell.GivePty(s, s.Command())
-			case "linux":
-			case "windows":
-			default:
-				fmt.Println("Unsupported platform")
-				return
+			err = shell.GivePty(s, s.Command())
+			if err != nil {
+				log.Printf("error spawning pty: %s\n", err)
 			}
+
 		}),
 		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
 			fmt.Println("Forwarding to", destinationHost)
