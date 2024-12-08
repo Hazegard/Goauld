@@ -1,7 +1,13 @@
 package main
 
-import "Goauld/sshd"
+import (
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+)
 
 func main() {
-	sshd.StartSShd()
+
+	if err != nil {
+		panic("failed to connect database")
+	}
 }

@@ -1,15 +1,15 @@
 package sshd
 
 import (
-	"Goauld/sshd/shell"
+	"Goauld/client/sshd/shell"
+	"Goauld/server/structs"
 	"fmt"
 	"github.com/gliderlabs/ssh"
 	"log"
 	"net"
-	"sync"
 )
 
-var SShSessions = sync.Map{}
+var store structs.AgentStore
 
 func StartSShd() {
 	listener, err := net.Listen("tcp", ":61160")
@@ -21,17 +21,18 @@ func StartSShd() {
 	s := &ssh.Server{
 		Addr: "127.0.0.1:0",
 		Handler: ssh.Handler(func(s ssh.Session) {
-			fmt.Println("New connection from ", s.RemoteAddr())
+			key := s.RemoteAddr().String()
+			fmt.Println("New connection from ", key)
+			store.Get(key)
 			err = shell.GivePty(s, s.Command())
 			if err != nil {
 				log.Printf("error spawning pty: %s\n", err)
 			}
-
 		}),
-		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
-			fmt.Println("Forwarding to", destinationHost)
-			return true
-		},
+		// LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
+		// 	fmt.Println("Forwarding to", destinationHost)
+		// 	return true
+		// },
 		ReversePortForwardingCallback: func(ctx ssh.Context, host string, port uint32) bool {
 			fmt.Println("Forwarding from", host)
 			return true
@@ -41,26 +42,21 @@ func StartSShd() {
 			"cancel-tcpip-forward": forwardHandler.HandleSSHRequest,
 		},
 		ChannelHandlers: map[string]ssh.ChannelHandler{
-			"direct-tcpip": ssh.DirectTCPIPHandler,
-			"session":      ssh.DefaultSessionHandler,
+			// "direct-tcpip": ssh.DirectTCPIPHandler,
+			"session": ssh.DefaultSessionHandler,
 		},
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			fmt.Println(password)
-			if password == "password" {
+			key := ctx.RemoteAddr().String()
+			agent := store.Get(key)
+			if password == agent.Password {
 				return true
 			}
-			return true
-		},
-		PtyCallback: func(ctx ssh.Context, pty ssh.Pty) bool {
-			fmt.Println("pty requested")
-			return true
+			return false
 		},
 		SessionRequestCallback: func(sess ssh.Session, requestType string) bool {
 			fmt.Printf("session requested: %s\n", requestType)
 			return true
-		},
-		SubsystemHandlers: map[string]ssh.SubsystemHandler{
-			"sftp": SftpHandler,
 		},
 	}
 	fmt.Println(s.Serve(listener))
