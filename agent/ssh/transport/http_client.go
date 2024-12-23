@@ -82,7 +82,7 @@ func (c *HttpClient) req(method string, url string, body io.Reader) (*http.Reque
 	}
 
 	req.Host = removeScheme(c.host)
-	// Cache control
+	// Cache serTypes
 	req.Header.Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	req.Header.Set("Pragma", "no-cache")
 	req.Header.Set("Expires", "0")
@@ -129,7 +129,7 @@ func (c *HttpClient) handleConnection(conn net.Conn) {
 
 			req, err := c.req(http.MethodPost, c.host, nil)
 			if err != nil {
-				log.Printf("http client: failed to send request: %s", err)
+				log.Printf("http agent: failed to send request: %s", err)
 			}
 			if req != nil {
 				req = req.WithContext(ctx)
@@ -294,7 +294,7 @@ func randomFilename() string {
 		".xml", ".json", ".csv",
 		// Web fonts
 		".woff", ".woff2", ".ttf", ".eot",
-		// Config files
+		// agent files
 		".conf", ".cfg", ".ini",
 	}
 	return randomString(minLen, maxLen) + extensions[rand.Intn(len(extensions))]

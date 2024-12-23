@@ -24,7 +24,7 @@ func SftpHandler(sess ssh.Session) {
 	}
 	if err := server.Serve(); err == io.EOF {
 		server.Close()
-		fmt.Println("sftp client exited session.")
+		fmt.Println("sftp agent exited session.")
 	} else if err != nil {
 		fmt.Println("sftp server completed with error:", err)
 	}

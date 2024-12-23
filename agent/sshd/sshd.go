@@ -1,22 +1,27 @@
 package sshd
 
 import (
-	"Goauld/client/sshd/shell"
+	"Goauld/agent/agent"
+	"Goauld/agent/sshd/shell"
 	"fmt"
 	"github.com/gliderlabs/ssh"
 	"log"
 	"net"
 )
 
-func StartSShd() {
-	listener, err := net.Listen("tcp", ":61160")
+func StartSShd() error {
+	sshdAddress := agent.Get().LocalSShdAddress()
+	listener, err := net.Listen("tcp", sshdAddress)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	fmt.Println("Listening on port ", listener.Addr().(*net.TCPAddr).Port)
+	if agent.Get().IsSshdRandomPort() {
+		agent.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
+	}
+
+	fmt.Println("Listening on port ", agent.Get().LocalSShdAddress())
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
-		Addr: "127.0.0.1:0",
 		Handler: ssh.Handler(func(s ssh.Session) {
 			fmt.Println("New connection from ", s.RemoteAddr())
 			err = shell.GivePty(s, s.Command())
@@ -43,10 +48,11 @@ func StartSShd() {
 		},
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			fmt.Println(password)
-			if password == "password" {
+			fmt.Println(agent.Get().LocalSShdPassword())
+			if password == agent.Get().LocalSShdPassword() {
 				return true
 			}
-			return true
+			return false
 		},
 		PtyCallback: func(ctx ssh.Context, pty ssh.Pty) bool {
 			fmt.Println("pty requested")
@@ -60,6 +66,5 @@ func StartSShd() {
 			"sftp": SftpHandler,
 		},
 	}
-	fmt.Println(s.Serve(listener))
-	fmt.Println("Shutting down...")
+	return s.Serve(listener)
 }
