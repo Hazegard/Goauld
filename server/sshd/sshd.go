@@ -1,39 +1,32 @@
 package sshd
 
 import (
+	"Goauld/common/log"
 	_ssh "Goauld/common/ssh"
 	"Goauld/server/db"
 	"context"
-	"fmt"
 	"github.com/gliderlabs/ssh"
-	"log"
 	"net"
 )
 
-func StartSshd(context context.Context) {
+func StartSshd(context context.Context, db *db.DB) {
 	listener, err := net.Listen("tcp", ":61160")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Listening on port ", listener.Addr().(*net.TCPAddr).Port)
+	log.Debug().Msgf("SSH server listening on port %d", listener.Addr().(*net.TCPAddr).Port)
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
-		Addr: "127.0.0.1:0",
+		Addr:    "127.0.0.1:0",
+		Banner:  "SSH-2.0-OpenSSH",
+		Version: "SSH-2.0-OpenSSH",
 		Handler: ssh.Handler(func(s ssh.Session) {
-			key := s.RemoteAddr().String()
+			srcAddr := s.RemoteAddr().String()
 			s.User()
-			fmt.Println("New connection from ", key)
-			// err = shell.GivePty(s, s.Command())
-			// if err != nil {
-			// 	log.Printf("error spawning pty: %s\n", err)
-			// }
+			log.Debug().Msgf("New ssh connection from %s (%s)", s.User(), srcAddr)
 		}),
-		// LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
-		// 	fmt.Println("Forwarding to", destinationHost)
-		// 	return true
-		// },
 		ReversePortForwardingCallback: func(ctx ssh.Context, host string, port uint32) bool {
-			fmt.Println("Forwarding from", host)
+			log.Trace().Msgf("Reverse port forward for %s to %s", ctx.User(), host)
 			return true
 		},
 		RequestHandlers: map[string]ssh.RequestHandler{
@@ -45,17 +38,17 @@ func StartSshd(context context.Context) {
 			"session": ssh.DefaultSessionHandler,
 		},
 		PublicKeyHandler: func(ctx ssh.Context, key ssh.PublicKey) bool {
-			fmt.Println("PublicKey from", ctx.User())
-			user := ctx.User()
-			agent, err := db.Get().FindAgent(user)
+			id := ctx.User()
+			log.Debug().Msgf("SSH Connection attempt from %s", id)
+			agent, err := db.FindAgent(id)
 			if err != nil {
-				fmt.Println(err)
+				log.Debug().Msgf("Agent not found (%s)", id)
 				return false
 			}
 
 			agentPubKey, err := _ssh.ParseSSHPublicKey(agent.PublicKey)
 			if err != nil {
-				fmt.Println(err)
+				log.Debug().Msgf("Error parsing public key (%s)", id)
 			}
 			if ssh.KeysEqual(agentPubKey, key) {
 				return true
@@ -65,24 +58,28 @@ func StartSshd(context context.Context) {
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			remote := ctx.RemoteAddr().String()
 			id := ctx.User()
-			agent, err := db.Get().FindAgent(id)
+			agent, err := db.FindAgent(id)
 			if err != nil {
-				log.Printf("error getting agent from store: %s\n", err)
+				log.Debug().Msgf("Agent not found (%s)", id)
 				return false
 			}
 			agent.Source = remote
 			// TODO: ici c'est pas le mdp de l'agent mais le mdp du serveur à revoir
-			if password == "" {
+			if password == agent.SharedSecret {
 				return true
 			}
 			return false
 		},
 		SessionRequestCallback: func(sess ssh.Session, requestType string) bool {
-			fmt.Printf("session requested: %s\n", requestType)
+			id := sess.User()
+			log.Debug().Msgf("SSH session requested from %s", id)
 			return false
 		},
 	}
-	fmt.Println(s.Serve(listener))
-	fmt.Println("Shutting down...")
+	err = s.Serve(listener)
+	if err != nil {
+		log.Error().Msg(err.Error())
+	}
+	log.Println("SSH server stopped")
 	context.Done()
 }

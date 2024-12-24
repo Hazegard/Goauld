@@ -2,6 +2,7 @@ package agent
 
 import (
 	"Goauld/common/crypto"
+	"crypto/md5"
 	"fmt"
 	"github.com/alecthomas/kong"
 	"github.com/denisbrodbeck/machineid"
@@ -46,10 +47,11 @@ func InitAgent() (*kong.Context, error) {
 		return nil, fmt.Errorf("initializing cryptor: %v", err)
 	}
 
-	id, err := machineid.ID()
+	mid, err := machineid.ID()
 	if err != nil {
 		return nil, fmt.Errorf("error generating machine id: %v", err)
 	}
+	id := fmt.Sprintf("%x", md5.Sum([]byte(mid)))
 
 	if cfg.Name == _name {
 		userName, err := user.Current()

@@ -1,121 +1,76 @@
 package control
 
 import (
+	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
 	"Goauld/server/config"
 	"Goauld/server/db"
+	"Goauld/server/store"
 	"fmt"
-	"log"
-	"net/http"
-	"sync"
-	"time"
-
-	sio "github.com/karagenc/socket.io-go"
+	gosio "github.com/karagenc/socket.io-go"
 )
 
-func RunSocketIOServer() *SocketIOServer {
-	cfg := sio.ServerConfig{}
-	io := sio.NewServer(&cfg)
-	sio := new(SocketIOServer)
+type SocketIO struct {
+	agentStore *store.AgentStore
+	server     *gosio.Server
+}
 
-	sio.Setup(io.Of("/"))
+func InitSocketIOServer(agentStore *store.AgentStore) *gosio.Server {
+
+	io := gosio.NewServer(&gosio.ServerConfig{})
+	socketIO := &SocketIO{
+		agentStore: agentStore,
+	}
+	socketIO.Setup(io.Of("/"))
 	err := io.Run()
 	if err != nil {
-		log.Fatalln(err)
 	}
-	router := http.NewServeMux()
-	router.Handle("/socket.io/", io)
 
-	server := &http.Server{
-		Addr:    config.Get().ListenAddress,
-		Handler: router,
-
-		// It is always a good practice to set timeouts.
-		ReadTimeout: 120 * time.Second,
-		IdleTimeout: 120 * time.Second,
-
-		// HTTPWriteTimeout returns io.PollTimeout + 10 seconds (extra 10 seconds to write the response).
-		// You should either set this timeout to 0 (infinite) or some value greater than the io.PollTimeout.
-		// Otherwise poll requests may fail.
-		WriteTimeout: io.HTTPWriteTimeout(),
-	}
-	err = server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
-		log.Fatalln(err)
-	}
-	return nil
+	return io
 }
 
-type SocketIOServer struct {
-	agents   map[sio.ServerSocket]*db.Agent
-	agentsMu sync.Mutex
-}
-
-func (a *SocketIOServer) AddAgent(agent *db.Agent, id sio.ServerSocket) {
-	a.agentsMu.Lock()
-	a.agents[id] = agent
-	a.agentsMu.Unlock()
-}
-func (a *SocketIOServer) RemoveAgent(id sio.ServerSocket) {
-	a.agentsMu.Lock()
-	delete(a.agents, id)
-	a.agentsMu.Unlock()
-}
-func (a *SocketIOServer) GetAgent(id sio.ServerSocket) *db.Agent {
-	a.agentsMu.Lock()
-	agent := a.agents[id]
-	a.agentsMu.Unlock()
-	return agent
-}
-
-func (a *SocketIOServer) Setup(root *sio.Namespace) {
-	a.agents = make(map[sio.ServerSocket]*db.Agent)
-	a.agentsMu = sync.Mutex{}
-	root.OnConnection(func(socket sio.ServerSocket) {
+func (sio *SocketIO) Setup(root *gosio.Namespace) {
+	root.OnConnection(func(socket gosio.ServerSocket) {
 		socket.OnEvent(socketio.RegisterEvent, func(data socketio.Register) {
-			fmt.Println("OnEvent socketio.RegisterEvent!")
+			log.Debug().Msgf("socketio.RegisterEvent (%s)!", data.Id)
 			agent, err := db.Get().FindOrCreate(data.Id)
+
 			if err != nil {
 				errorMsg := fmt.Errorf("error retrieving agent: %s", err)
 				socket.Emit(socketio.RegisterError, socketio.SioError{
 					Message: errorMsg.Error(),
 					Code:    socketio.RegisterError,
 				})
-				fmt.Println(errorMsg)
+				log.Error().Err(err).Msgf("socketio.RegisterError retriving agent(%s)", data.Id)
+				return
 			}
-			fmt.Println(agent.Id)
 
 			sharedSecret, err := config.Get().Decrypt(data.SharedKey)
 			if err != nil {
-				errorMsg := fmt.Errorf("error decrypting shared secret: %s", err)
+				errorMsg := fmt.Errorf("error decrypting shared secret (%s): %s", data.Id, err)
 				socket.Emit(socketio.RegisterError, socketio.SioError{
 					Message: errorMsg.Error(),
 					Code:    socketio.RegisterEvent,
 				})
-				fmt.Println(errorMsg)
+				log.Error().Err(err).Msgf("socketio.RegisterError decrypting shared secret (%s)", data.Id)
+				return
 			}
-			fmt.Println(sharedSecret)
 
-			name, err := config.Get().Decrypt(data.Name)
+			agentName, err := config.Get().Decrypt(data.Name)
 			if err != nil {
 				errorMsg := fmt.Errorf("error decrypting name: %s", err)
 				socket.Emit(socketio.RegisterError, socketio.SioError{
 					Message: errorMsg.Error(),
 					Code:    socketio.RegisterEvent,
 				})
-				fmt.Println(errorMsg)
+				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting agent name (%s)", data.Id)
+				return
 			}
-			fmt.Println(name)
-			fmt.Println(name)
-			fmt.Println(name)
-			fmt.Println(name)
-			fmt.Println(name)
-			fmt.Println(name)
 
 			agent.SetSharedSecret(sharedSecret)
-			agent.SetName(name)
+			agent.SetName(agentName)
 			agent.SetConnect()
-			a.AddAgent(agent, socket)
+			sio.agentStore.SioAddAgent(agent, socket)
 
 			if agent.PrivateKey == "" {
 				err := agent.InitKeys()
@@ -124,6 +79,8 @@ func (a *SocketIOServer) Setup(root *sio.Namespace) {
 						Message: "error generating keys",
 						Code:    socketio.RegisterError,
 					})
+					log.Error().Err(err).Msgf("socketio.RegisterError error generating ssh keys (%s / %s)", agentName, data.Id)
+					return
 				}
 			}
 			cryptor, err := agent.GetCryptor()
@@ -132,6 +89,8 @@ func (a *SocketIOServer) Setup(root *sio.Namespace) {
 					Message: "error encrypting fields",
 					Code:    socketio.RegisterError,
 				})
+				log.Error().Err(err).Msgf("socketio.RegisterError error encrypting ssh keys (%s / %s)", agentName, data.Id)
+				return
 			}
 			message, err := socketio.NewEncryptedSshPrivateKeyMessage(agent.PrivateKey, cryptor)
 			if err != nil {
@@ -139,19 +98,24 @@ func (a *SocketIOServer) Setup(root *sio.Namespace) {
 					Message: "error encrypting keys",
 					Code:    socketio.RegisterError,
 				})
+				log.Error().Err(err).Msgf("socketio.RegisterError error encrypting ssh keys (%s / %s)", agentName, data.Id)
+				return
 			}
 			socket.Emit(socketio.SendSshPrivateKeyEvent, message)
+			log.Debug().Msgf("socketio.SendSshPrivateKeyEvent (%s / %s)", agentName, data.Id)
 		})
 
 		socket.OnEvent(socketio.SendAgentSshPasswordEvent, func(data []byte) {
-			fmt.Println("OnEvent socketio.RegisterEvent!")
-			agent := a.GetAgent(socket)
+			agent := sio.agentStore.SioGetAgent(socket)
+			log.Debug().Msgf("socketio.SendAgentSshPasswordEvent (%s / %s)", agent.Name, agent.Id)
+
 			cryptor, err := agent.GetCryptor()
 			if err != nil {
 				socket.Emit(socketio.SendAgentSshPasswordError, socketio.SioError{
 					Message: "error geting decryptor for agent ssh password",
 					Code:    socketio.SendAgentSshPasswordError,
 				})
+				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting ssh password (%s / %s)", agent.Name, agent.Id)
 			}
 			password, err := socketio.DecryptAgentSshPasswordMessage(data, cryptor)
 			if err != nil {
@@ -159,26 +123,24 @@ func (a *SocketIOServer) Setup(root *sio.Namespace) {
 					Message: "error decrypting agent ssh password",
 					Code:    socketio.SendAgentSshPasswordError,
 				})
+				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting ssh password (%s / %s)", agent.Name, agent.Id)
 			}
 			agent.SetSshpassword(password.AgentSshPassword)
-			fmt.Println("OnEvent socketio.SendAgentSshPasswordEvent!")
-			fmt.Println("SSH password for Agent %s (%s): %s", agent.Id, agent.ID)
+			log.Trace().Msgf("socketio.SendAgentSshPasswordEvent (%s)!", agent.Name, agent.Id)
+			log.Debug().Msgf("SSH password send (%s / %s)", agent.Name, agent.Id)
 		})
 
 		socket.OnEvent(socketio.DeregisterEvent, func(data socketio.Deregister) {
-			agent := a.GetAgent(socket)
+			agent := sio.agentStore.SioGetAgent(socket)
 			agent.SetDisconnect()
-
+			log.Debug().Msgf("socketio.DeregisterEvent (%s / %s)!", agent.Name, agent.Id)
 		})
 
-		socket.OnDisconnect(func(reason sio.Reason) {
-			fmt.Println("OnDisconnect!")
-			agent := a.GetAgent(socket)
-			fmt.Println(agent.Id)
-			fmt.Println(agent.Name)
-			agent.SetDisconnect()
-			fmt.Println("Agent Disconnected!")
+		socket.OnDisconnect(func(reason gosio.Reason) {
+			agent := sio.agentStore.SioGetAgent(socket)
 
+			log.Debug().Msgf("socketio.Disconnect: %s / %s (%s)!", agent.Name, agent.Id, reason)
+			agent.SetDisconnect()
 		})
 	})
 }

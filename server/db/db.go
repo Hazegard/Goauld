@@ -17,19 +17,29 @@ var (
 )
 
 var once sync.Once
-var db *DB
+var _db *DB
+
+func InitDB() (*DB, error) {
+	db := Get()
+	err := db.Migrate()
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
 
 func Get() *DB {
 	var err error
 	once.Do(func() {
-		_db, _err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+		__db, _err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 		if err != nil {
 			err = _err
 			return
 		}
-		db = &DB{db: _db}
+		_db = &DB{db: __db}
 	})
-	return db
+
+	return _db
 }
 
 func (db *DB) Migrate() error {

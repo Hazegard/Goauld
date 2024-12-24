@@ -1,12 +1,11 @@
 package sshd
 
 import (
-	"fmt"
+	"Goauld/common/log"
 	"github.com/gliderlabs/ssh"
 
 	"github.com/pkg/sftp"
 	"io"
-	"log"
 )
 
 func SftpHandler(sess ssh.Session) {
@@ -19,13 +18,13 @@ func SftpHandler(sess ssh.Session) {
 		serverOptions...,
 	)
 	if err != nil {
-		log.Printf("sftp server init error: %s\n", err)
+		log.Debug().Err(err).Msg("sftp server error")
 		return
 	}
 	if err := server.Serve(); err == io.EOF {
 		server.Close()
-		fmt.Println("sftp agent exited session.")
+		log.Debug().Msg("sftp agent exited session.")
 	} else if err != nil {
-		fmt.Println("sftp server completed with error:", err)
+		log.Debug().Err(err).Msg("sftp server error")
 	}
 }

@@ -11,15 +11,17 @@ var srvCfg *ServerConfig
 var privKey = ""
 
 type ServerConfig struct {
-	PrivKey       string
-	ListenAddress string
+	PrivKey           string
+	HttpListenAddress string
+	SshPort           string
 }
 
 func Get() *ServerConfig {
 	serverOnce.Do(func() {
 		srvCfg = &ServerConfig{
-			PrivKey:       privKey,
-			ListenAddress: ":3000",
+			PrivKey:           privKey,
+			HttpListenAddress: ":3000",
+			SshPort:           "22",
 		}
 	})
 	return srvCfg

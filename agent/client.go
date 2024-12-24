@@ -4,8 +4,8 @@ import (
 	"Goauld/agent/agent"
 	"Goauld/agent/control"
 	"Goauld/agent/sshd"
+	"Goauld/common/log"
 	"context"
-	"fmt"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 
 	_, err := agent.InitAgent()
 	if err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Msg("error initializing the agent")
 		return
 	}
 
@@ -27,6 +27,11 @@ func main() {
 		sshErr <- sshd.StartSShd()
 	}()
 
-	select {}
+	select {
+	case err := <-controlErr:
+		log.Error().Err(err).Msg("error starting the agent")
+	case err := <-sshErr:
+		log.Error().Err(err).Msg("error starting the sshd server")
+	}
 
 }

@@ -3,9 +3,8 @@ package sshd
 import (
 	"Goauld/agent/agent"
 	"Goauld/agent/sshd/shell"
-	"fmt"
+	"Goauld/common/log"
 	"github.com/gliderlabs/ssh"
-	"log"
 	"net"
 )
 
@@ -19,23 +18,25 @@ func StartSShd() error {
 		agent.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
 	}
 
-	fmt.Println("Listening on port ", agent.Get().LocalSShdAddress())
+	log.Info().Msg("start sshd")
+	log.Info().Msgf("Listening on port %s", agent.Get().LocalSShdAddress())
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
-			fmt.Println("New connection from ", s.RemoteAddr())
+			log.Info().Msg("sshd")
+			log.Debug().Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
 			err = shell.GivePty(s, s.Command())
 			if err != nil {
-				log.Printf("error spawning pty: %s\n", err)
+				log.Error().Err(err).Msg("error spawning pty")
 			}
 
 		}),
 		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
-			fmt.Println("Forwarding to", destinationHost)
+			log.Trace().Msgf("Forwarding connection from %s to %s:%d", ctx.User(), destinationHost, destinationPort)
 			return true
 		},
 		ReversePortForwardingCallback: func(ctx ssh.Context, host string, port uint32) bool {
-			fmt.Println("Forwarding from", host)
+			log.Trace().Msgf("Forwarding connection to %s from %s:%d", ctx.User(), host, port)
 			return true
 		},
 		RequestHandlers: map[string]ssh.RequestHandler{
@@ -47,19 +48,20 @@ func StartSShd() error {
 			"session":      ssh.DefaultSessionHandler,
 		},
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
-			fmt.Println(password)
-			fmt.Println(agent.Get().LocalSShdPassword())
+			log.Trace().Msgf("Received connection from user: %s", ctx.User())
 			if password == agent.Get().LocalSShdPassword() {
+				log.Trace().Msgf("Connnection using password succecced from user: %s", ctx.User())
 				return true
 			}
+			log.Debug().Msgf("Connnection using password failed from user: %s", ctx.User())
 			return false
 		},
 		PtyCallback: func(ctx ssh.Context, pty ssh.Pty) bool {
-			fmt.Println("pty requested")
+			log.Trace().Msgf("Received pty request from user: %s", ctx.User())
 			return true
 		},
 		SessionRequestCallback: func(sess ssh.Session, requestType string) bool {
-			fmt.Printf("session requested: %s\n", requestType)
+			log.Trace().Msgf("Received session request from user: %s", sess.User())
 			return true
 		},
 		SubsystemHandlers: map[string]ssh.SubsystemHandler{

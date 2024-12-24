@@ -3,7 +3,7 @@ package ssh
 import (
 	"crypto"
 	"fmt"
-	gossh "golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh"
 
 	"crypto/rand"
 	"encoding/pem"
@@ -11,12 +11,12 @@ import (
 )
 
 // ParseSSHPublicKey parses an SSH public key string and returns an ssh.PublicKey type.
-func ParseSSHPublicKey(publicKeyStr string) (gossh.PublicKey, error) {
+func ParseSSHPublicKey(publicKeyStr string) (ssh.PublicKey, error) {
 	// Convert the string to bytes
 	keyBytes := []byte(publicKeyStr)
 
 	// Parse the public key
-	publicKey, _, _, _, err := gossh.ParseAuthorizedKey(keyBytes)
+	publicKey, _, _, _, err := ssh.ParseAuthorizedKey(keyBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SSH public key: %w", err)
 	}
@@ -31,19 +31,18 @@ func GenKey() (privateKeyPEM string, publicKeySSH string, err error) {
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate Ed25519 key: %v", err)
 	}
-	p, err := gossh.MarshalPrivateKey(crypto.PrivateKey(privateKey), "")
+	p, err := ssh.MarshalPrivateKey(crypto.PrivateKey(privateKey), "")
 	if err != nil {
 		panic(err)
 	}
 	privateKeyPem := pem.EncodeToMemory(p)
 	privateKeyString := string(privateKeyPem)
-	fmt.Println(privateKeyPEM)
 	// Generate the corresponding public key in OpenSSH format
-	publicKey, err := gossh.NewPublicKey(privateKey.Public())
+	publicKey, err := ssh.NewPublicKey(privateKey.Public())
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate public key: %v", err)
 	}
-	publicKeySSH = string(gossh.MarshalAuthorizedKey(publicKey))
+	publicKeySSH = string(ssh.MarshalAuthorizedKey(publicKey))
 
 	return privateKeyString, publicKeySSH, nil
 }

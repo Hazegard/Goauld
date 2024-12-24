@@ -13,6 +13,7 @@ require (
 	github.com/karagenc/socket.io-go v0.1.0
 	github.com/pkg/sftp v1.13.7
 	github.com/quic-go/webtransport-go v0.8.0
+	github.com/rs/zerolog v1.33.0
 	golang.org/x/crypto v0.26.0
 	golang.org/x/time v0.8.0
 	gopkg.in/yaml.v3 v3.0.1

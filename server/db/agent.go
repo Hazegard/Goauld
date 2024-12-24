@@ -2,6 +2,7 @@ package db
 
 import (
 	"Goauld/common/crypto"
+	"Goauld/common/log"
 	"Goauld/common/ssh"
 	"fmt"
 	"gorm.io/gorm"
@@ -54,7 +55,10 @@ func (a *Agent) InitKeys() error {
 }
 
 func (a *Agent) save() {
-	Get().UpdateAgent(a)
+	err := Get().UpdateAgent(a)
+	if err != nil {
+		log.Error().Err(err).Msgf("error saving agent (%s): %v", a.Id, err)
+	}
 }
 
 func (a *Agent) AddPort(port int) {
@@ -130,6 +134,7 @@ func (db *DB) UpdateAgent(agent *Agent) error {
 
 func (db *DB) FindOrCreate(id string) (*Agent, error) {
 	agent, err := db.FindAgent(id)
+
 	if agent != nil {
 		return agent, nil
 	}

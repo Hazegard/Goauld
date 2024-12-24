@@ -1,13 +1,14 @@
 package shell
 
 import (
+	"Goauld/common/log"
 	"fmt"
 	"github.com/aymanbagabas/go-pty"
 	"github.com/gliderlabs/ssh"
 	"io"
-	"log"
 	"os/exec"
 	"runtime"
+	"strings"
 )
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.
@@ -21,7 +22,7 @@ func GivePty(s ssh.Session, c []string) error {
 			c = getShellCmd([]string{"bash", "zsh", "sh"})
 		}
 	}
-	log.Println(c)
+	log.Debug().Msgf("Receving shell command [%s] (User: %s, RemoteAddr: %s)", strings.Join(c, " "), s.User(), s.RemoteAddr())
 	ptyReq, winCh, isPty := s.Pty()
 	if isPty {
 		pseudo, err := pty.New()
@@ -31,7 +32,7 @@ func GivePty(s ssh.Session, c []string) error {
 		defer func(pseudo pty.Pty) {
 			err := pseudo.Close()
 			if err != nil {
-				log.Printf("error while closing pty: %s", err)
+				log.Error().Err(err).Msg("error while closing pty")
 			}
 		}(pseudo)
 
@@ -41,7 +42,6 @@ func GivePty(s ssh.Session, c []string) error {
 			return fmt.Errorf("error while resizing pty: %s", err)
 		}
 		cmd := pseudo.Command(c[0], c[1:]...)
-		log.Printf(ptyReq.Term)
 		cmd.Env = append(cmd.Env, "TERM="+ptyReq.Term, "SSH_TTY="+pseudo.Name())
 		if err := cmd.Start(); err != nil {
 			return fmt.Errorf("error while starting command (%s): %s", c, err)
@@ -49,26 +49,29 @@ func GivePty(s ssh.Session, c []string) error {
 
 		go func() {
 			for win := range winCh {
-				pseudo.Resize(win.Width, win.Height)
+				err := pseudo.Resize(win.Width, win.Height)
+				if err != nil {
+					log.Trace().Err(err).Msg("error while resizing pty")
+				}
 			}
 		}()
 
 		go func() {
 			<-s.Context().Done() // Wait until the session context is canceled.
-			log.Printf("Session ended: %s\n", s.RemoteAddr())
+			log.Debug().Msgf("session closed (%s, %s)", s.User(), s.RemoteAddr())
 		}()
 
 		go func() {
 			_, err := io.Copy(pseudo, s)
 			if err != nil {
-				log.Printf("Error copying input to PTY: %v\n", err)
+				log.Error().Err(err).Msgf("error while copying pty to client (%s, %s)", s.User(), s.RemoteAddr())
 			}
 		}()
 
 		go func() {
 			_, err := io.Copy(s, pseudo)
 			if err != nil {
-				log.Printf("Error copying input to PTY: %v\n", err)
+				log.Error().Err(err).Msgf("error while copying input to pty (%s, %s)", s.User(), s.RemoteAddr())
 			}
 		}()
 

@@ -1,59 +1,46 @@
 package main
 
 import (
+	"Goauld/common/log"
 	"Goauld/server/control"
 	"Goauld/server/db"
+	"Goauld/server/router"
 	"Goauld/server/sshd"
+	"Goauld/server/store"
+	"Goauld/server/transport"
 	"context"
-	"fmt"
 )
 
 func main() {
-	initdb()
-	// err := mock()
-	// if err != nil {
-	//	fmt.Println(err)
-	// }
 
-	fmt.Println("Hello World")
 	ctx, cancel := context.WithCancel(context.Background())
+
+	db, err := db.InitDB()
+	if err != nil {
+		log.Error().Err(err).Msgf("error initializing database")
+		return
+	}
+	agentStore := store.NewAgentStore()
+	sioServer := control.InitSocketIOServer(agentStore)
+	wssh := transport.NewWSshHandler(agentStore, db)
+	r := router.NewHttpRouter(sioServer, wssh)
+
+	go sshd.StartSshd(ctx, db)
+	go r.Serve()
+
 	startSshd(ctx)
-	startSocketIO(ctx)
 	select {
 	case <-ctx.Done():
-		fmt.Println("Done")
-		fmt.Println(ctx.Err())
+		log.Error().Err(ctx.Err()).Msgf("shutting down")
 		cancel()
 	}
 	<-ctx.Done()
-	fmt.Println()
 }
 
-func initdb() {
-	db.Get().Migrate()
-}
+func startHttpRouter(r *router.HttpRouter) {
 
-func mock() error {
-	agent := &db.Agent{
-		Id:           "1",
-		UsedPorts:    nil,
-		PrivateKey:   "",
-		PublicKey:    "",
-		Source:       "",
-		Connected:    false,
-		SharedSecret: "",
-	}
-	err := db.Get().CreateAgent(agent)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func startSshd(ctx context.Context) {
-	go sshd.StartSshd(ctx)
-}
 
-func startSocketIO(ctx context.Context) {
-	go control.RunSocketIOServer()
 }

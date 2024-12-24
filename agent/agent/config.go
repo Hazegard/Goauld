@@ -2,8 +2,8 @@ package agent
 
 import (
 	"Goauld/common/cli"
+	"Goauld/common/log"
 	"Goauld/common/utils"
-	"fmt"
 	"github.com/alecthomas/kong"
 
 	"path/filepath"
@@ -55,6 +55,6 @@ func parse() (*kong.Context, *Config, error) {
 		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
 		defaultValues,
 	)
-	fmt.Printf("%+v\n", cfg)
+	log.Info().Msgf("%+v", cfg)
 	return app, cfg, nil
 }
