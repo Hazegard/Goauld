@@ -8,6 +8,7 @@ import (
 	"github.com/denisbrodbeck/machineid"
 	"os"
 	"os/user"
+	"strings"
 )
 
 type Agent struct {
@@ -103,12 +104,36 @@ func (a *Agent) IsRemoteForwardedSshdPortRandom() bool {
 	return a.cfg.RsshPort == 0
 }
 
+func (a *Agent) RsshPort() int {
+	return a.cfg.RsshPort
+}
+func (a *Agent) LocalSshdPort() int {
+	return a.cfg.SshdPort
+}
+
 func (a *Agent) RemoteForwardedSshdAddress() string {
 	return fmt.Sprintf("127.0.0.1:%d", a.cfg.RsshPort)
 }
 
+func (a *Agent) ServerUrl() string {
+	url := ""
+	if strings.HasPrefix(a.cfg.Server, "http://") {
+		url = a.cfg.Server
+	} else if strings.HasPrefix(a.cfg.Server, "https://") {
+		url = a.cfg.Server
+	} else {
+		url = "http://" + a.cfg.Server
+	}
+
+	return url
+}
+
+func (a *Agent) WSshUrl() string {
+	return fmt.Sprintf("%s/wssh/%s", a.ServerUrl(), a.Id)
+}
+
 func (a *Agent) SocketIoUrl() string {
-	return fmt.Sprintf("http://%s/socket.io/", a.cfg.Server)
+	return fmt.Sprintf("%s/socket.io/", a.ServerUrl())
 }
 
 func (a *Agent) parseRemotePortForward() error {

@@ -19,5 +19,8 @@ func (a *AgentStore) SioGetAgent(id sio.ServerSocket) *db.Agent {
 	a.sioAgentMapMu.Lock()
 	agent := a.sioAgentMap[id]
 	a.sioAgentMapMu.Unlock()
+	if agent == nil {
+		return &db.Agent{}
+	}
 	return agent
 }

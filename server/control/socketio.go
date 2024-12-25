@@ -126,7 +126,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting ssh password (%s / %s)", agent.Name, agent.Id)
 			}
 			agent.SetSshpassword(password.AgentSshPassword)
-			log.Trace().Msgf("socketio.SendAgentSshPasswordEvent (%s)!", agent.Name, agent.Id)
+			log.Trace().Msgf("END socketio.SendAgentSshPasswordEvent (%s / %s)!", agent.Name, agent.Id)
 			log.Debug().Msgf("SSH password send (%s / %s)", agent.Name, agent.Id)
 		})
 

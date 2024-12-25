@@ -7,6 +7,7 @@ toolchain go1.23.4
 require (
 	filippo.io/age v1.2.1
 	github.com/alecthomas/kong v1.6.0
+	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/gliderlabs/ssh v0.3.7
@@ -14,7 +15,7 @@ require (
 	github.com/pkg/sftp v1.13.7
 	github.com/quic-go/webtransport-go v0.8.0
 	github.com/rs/zerolog v1.33.0
-	golang.org/x/crypto v0.26.0
+	golang.org/x/crypto v0.31.0
 	golang.org/x/time v0.8.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.5.6
@@ -23,11 +24,13 @@ require (
 )
 
 require (
+	github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -41,6 +44,7 @@ require (
 	github.com/petermattis/goid v0.0.0-20240716203034-badd1c0974d6 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/quic-go/quic-go v0.47.0 // indirect
+	github.com/rapid7/go-get-proxied v0.0.0-20181210221417-16249a544090 // indirect
 	github.com/sasha-s/go-deadlock v0.3.1 // indirect
 	github.com/u-root/u-root v0.11.0 // indirect
 	github.com/xiegeo/coloredgoroutine v0.1.1 // indirect
@@ -48,8 +52,9 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
+	h12.io/socks v1.0.1 // indirect
 )

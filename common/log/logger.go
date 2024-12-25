@@ -1,6 +1,7 @@
 package log
 
 import (
+	"gorm.io/gorm/logger"
 	"os"
 	"sync"
 	"time"
@@ -9,20 +10,39 @@ import (
 )
 
 var (
-	logger *zerolog.Logger
-	once   sync.Once
+	zerologger *zerolog.Logger
+	once       sync.Once
+	gormlogger logger.Interface
 )
 
+func initLoggers() {
+	l := zerolog.New(
+		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
+	).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
+	zerologger = &l
+
+	gormlogger = NewGormLogger().
+		WithInfo(func() Event {
+			return &GormLoggerEvent{Event: zerologger.Info()}
+		}).
+		WithError(func() Event {
+			return &GormLoggerEvent{Event: zerologger.Error()}
+		}).
+		WithWarn(func() Event {
+			return &GormLoggerEvent{Event: zerologger.Warn()}
+		}).LogMode(logger.Warn)
+
+}
 func Get() *zerolog.Logger {
 
-	once.Do(func() {
-		l := zerolog.New(
-			zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
-		).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
-		logger = &l
-	})
+	once.Do(initLoggers)
 
-	return logger
+	return zerologger
+}
+
+func GetGormLogger() logger.Interface {
+	once.Do(initLoggers)
+	return gormlogger
 }
 
 var (

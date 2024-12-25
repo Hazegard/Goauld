@@ -3,6 +3,7 @@ package sshd
 import (
 	"Goauld/common/log"
 	_ssh "Goauld/common/ssh"
+	"Goauld/server/config"
 	"Goauld/server/db"
 	"context"
 	"github.com/gliderlabs/ssh"
@@ -14,7 +15,8 @@ func StartSshd(context context.Context, db *db.DB) {
 	if err != nil {
 		panic(err)
 	}
-	log.Debug().Msgf("SSH server listening on port %d", listener.Addr().(*net.TCPAddr).Port)
+	config.Get().SshPort = listener.Addr().(*net.TCPAddr).Port
+	log.Debug().Msgf("SSH server listening on port %d", config.Get().SshPort)
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Addr:    "127.0.0.1:0",
@@ -51,6 +53,7 @@ func StartSshd(context context.Context, db *db.DB) {
 				log.Debug().Msgf("Error parsing public key (%s)", id)
 			}
 			if ssh.KeysEqual(agentPubKey, key) {
+				log.Trace().Msgf("SSH connection succeeded from %s (%s)", ctx.User(), id)
 				return true
 			}
 			return false

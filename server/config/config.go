@@ -13,7 +13,7 @@ var privKey = ""
 type ServerConfig struct {
 	PrivKey           string
 	HttpListenAddress string
-	SshPort           string
+	SshPort           int
 }
 
 func Get() *ServerConfig {
@@ -21,7 +21,7 @@ func Get() *ServerConfig {
 		srvCfg = &ServerConfig{
 			PrivKey:           privKey,
 			HttpListenAddress: ":3000",
-			SshPort:           "22",
+			SshPort:           22,
 		}
 	})
 	return srvCfg

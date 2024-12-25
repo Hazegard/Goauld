@@ -1,6 +1,7 @@
 package db
 
 import (
+	"Goauld/common/log"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"sync"
@@ -31,7 +32,9 @@ func InitDB() (*DB, error) {
 func Get() *DB {
 	var err error
 	once.Do(func() {
-		__db, _err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+		__db, _err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+			Logger: log.GetGormLogger(),
+		})
 		if err != nil {
 			err = _err
 			return

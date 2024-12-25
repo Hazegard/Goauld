@@ -1,5 +1,9 @@
 package proxy
 
+import (
+	"crypto/tls"
+)
+
 func NewTlsConfig() *tls.Config {
 	return &tls.Config{
 		InsecureSkipVerify: true,

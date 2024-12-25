@@ -14,6 +14,9 @@ func NewAgentStore() *AgentStore {
 		store = &AgentStore{
 			sioAgentMap:   make(map[sio.ServerSocket]*db.Agent),
 			sioAgentMapMu: sync.Mutex{},
+
+			wsshAgentMap:   make(map[string]*WsshAgent),
+			wsshAgentMapMu: sync.Mutex{},
 		}
 	})
 	return store
