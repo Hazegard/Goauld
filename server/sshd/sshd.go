@@ -21,8 +21,7 @@ func StartSshd(context context.Context, db *db.DB) {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Addr:    "127.0.0.1:0",
-		Version: "SSH-2.0-Server",
-		Banner:  "SERVER",
+		Version: "Server",
 		Handler: ssh.Handler(func(s ssh.Session) {
 			srcAddr := s.RemoteAddr().String()
 			s.User()

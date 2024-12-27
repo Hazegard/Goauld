@@ -4,176 +4,107 @@ import (
 	"Goauld/agent/agent"
 	"Goauld/agent/proxy"
 	"Goauld/common/log"
-	socketio "Goauld/common/socket.io"
 	"bytes"
-	"fmt"
-	sio "github.com/karagenc/socket.io-go"
-	eio "github.com/karagenc/socket.io-go/engine.io"
-	"github.com/quic-go/webtransport-go"
+	"errors"
+	"io"
 	"net"
-	"nhooyr.io/websocket"
+	"net/http"
 	"sync"
 	"time"
 )
 
-type SSHTTPClient struct {
-	socket sio.ClientSocket
-
-	bufMutex           sync.Mutex
-	currentBuffer      bytes.Buffer
-	sentCounter        int64
-	incomingCounter    int64
-	incomingQueueMutex sync.Mutex
-	nextPackets        map[int64]socketio.SsHttp
-	incomingMessage    chan socketio.SsHttp
+type SSHHttpClient struct {
+	client *http.Client
+	buffer bytes.Buffer
+	bufMu  sync.Mutex
+	url    string
 }
 
-func (conn *SSHTTPClient) Read(b []byte) (int, error) {
-	//func (conn *SSHTTPClient) Write(b []byte) (int, error) {
-	//log.Trace().Msg("Read start")
-	//defer log.Trace().Msg("Read end")
-	conn.bufMutex.Lock()
-	defer conn.bufMutex.Unlock()
-	if conn.currentBuffer.Len() > 0 {
-		return conn.currentBuffer.Read(b)
+func NewSSHTTPConn() *SSHHttpClient {
+	httpClient := &http.Client{
+		Transport: proxy.NewTransportProxy(),
 	}
-	//select {
-	/*case*/
-	data := <-conn.incomingMessage
-	conn.currentBuffer.Write(data.Data)
-	return conn.currentBuffer.Read(b)
-	//default:
-	//	return 0, nil
-	//}
-
-}
-
-func (conn *SSHTTPClient) Write(b []byte) (int, error) {
-	//func (conn *SSHTTPClient) Read(b []byte) (int, error) {
-	//log.Trace().Msg("Write start")
-	//defer log.Trace().Msg("Write end")
-	if conn.socket != nil && len(b) > 0 {
-		data := socketio.SsHttp{
-			Id:   agent.Get().Id,
-			Data: b,
-			Num:  conn.sentCounter,
-		}
-		//log.Trace().Msgf("Sent packet N° %d (%d)", conn.sentCounter, len(data.Data))
-		conn.socket.Emit(socketio.SSHTTPEvent, data)
-		conn.sentCounter++
-		return len(b), nil
-	}
-	return 0, nil
-}
-
-func (conn *SSHTTPClient) Close() error {
-	conn.socket.Disconnect()
-	return nil
-}
-
-func (conn *SSHTTPClient) LocalAddr() net.Addr {
-	return nil
-}
-
-func (conn *SSHTTPClient) RemoteAddr() net.Addr {
-	return nil
-
-}
-
-func (conn *SSHTTPClient) SetDeadline(t time.Time) error {
-	return nil
-}
-
-func (conn *SSHTTPClient) SetReadDeadline(t time.Time) error {
-	return nil
-}
-
-func (conn *SSHTTPClient) SetWriteDeadline(t time.Time) error {
-	return nil
-}
-
-func (conn *SSHTTPClient) Start() {
-
-	conn.socket.Connect()
-}
-
-func NewSSHTTPConn() *SSHTTPClient {
-	cfg := getEioConfig()
-	url := agent.Get().SSHTTPUrl()
-	manager := sio.NewManager(url, cfg)
-	socket := manager.Socket("/", nil)
-	conn := &SSHTTPClient{
-		socket:             socket,
-		bufMutex:           sync.Mutex{},
-		currentBuffer:      bytes.Buffer{},
-		sentCounter:        0,
-		incomingCounter:    0,
-		incomingQueueMutex: sync.Mutex{},
-		nextPackets:        make(map[int64]socketio.SsHttp),
-		incomingMessage:    make(chan socketio.SsHttp),
-	}
-
-	socket.OnConnect(func() {
-		log.Trace().Msgf("[SSHTTPClient] connect to %s", url)
-	})
-	socket.OnConnectError(func(err any) {
-		log.Trace().Err(fmt.Errorf("%v", err)).Msgf("[SSHTTPClient] Error connecting to %s", url)
-	})
-
-	socket.OnDisconnect(func(reason sio.Reason) {
-		log.Trace().Msgf("[SSHTTPClient] disconnect with reason: %s", reason)
-
-	})
-	manager.OnError(func(err error) {
-		log.Trace().Err(err).Msgf("[SSHTTPClient] Error connecting to %s", url)
-	})
-	manager.OnReconnect(func(attempt uint32) {
-		log.Trace().Msgf("[SSHTTPClient] Reconnect to %s (Attempts %d)", url, attempt)
-	})
-
-	socket.OnEvent(socketio.SSHTTPEvent, func(sshData socketio.SsHttp) {
-		conn.incomingQueueMutex.Lock()
-		defer conn.incomingQueueMutex.Unlock()
-		//log.Trace().Msgf("[SSHTTPClient] Received packet N°%d (%d)", sshData.Num, len(sshData.Data))
-		//log.Trace().Msg("Receive packet start")
-		//defer log.Trace().Msg("Receive packet end")
-		if sshData.Num == -1 {
-			return
-		}
-		conn.processIncomingMessage(sshData)
-	})
-	return conn
-}
-
-func (conn *SSHTTPClient) processIncomingMessage(data socketio.SsHttp) {
-	if conn.incomingCounter == data.Num {
-		conn.incomingMessage <- data
-		conn.incomingCounter++
-		for {
-			if next, ok := conn.nextPackets[data.Num]; ok {
-				conn.incomingMessage <- next
-				delete(conn.nextPackets, data.Num)
-				conn.incomingCounter++
-			} else {
-				break
-			}
-		}
-	} else if data.Num > conn.incomingCounter {
-		conn.nextPackets[data.Num] = data
+	return &SSHHttpClient{
+		client: httpClient,
+		url:    agent.Get().SSHTTPUrl(),
 	}
 }
 
-func getEioConfig() *sio.ManagerConfig {
-	return &sio.ManagerConfig{
-		EIO: eio.ClientConfig{
-			Transports:    []string{"polling"},
-			HTTPTransport: proxy.NewTransportProxy(),
-			WebSocketDialOptions: &websocket.DialOptions{
-				HTTPClient: proxy.NewHttpClientProxy(),
-			},
-			WebTransportDialer: &webtransport.Dialer{
-				TLSClientConfig: proxy.NewTlsConfig(),
-			},
-		},
+func (c *SSHHttpClient) Connect() error {
+	log.Trace().Msgf("Connect to %s", c.url)
+	r, err := c.client.Head(c.url)
+
+	if err != nil {
+		return err
 	}
+	if r.StatusCode != 200 {
+		return errors.New("HEAD: " + r.Status)
+	}
+	log.Trace().Msgf("http connect success: %s", r.Status)
+	return nil
+}
+
+func (c *SSHHttpClient) Read(b []byte) (int, error) {
+	c.bufMu.Lock()
+	defer c.bufMu.Unlock()
+	//log.Trace().Msgf("READ START")
+	//defer log.Trace().Msgf("READ END")
+	if c.buffer.Len() > 0 {
+		//log.Trace().Msgf("read data in buffer")
+		return c.buffer.Read(b)
+	}
+
+	r, err := c.client.Get(c.url)
+	if err != nil {
+		return 0, err
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		//log.Trace().Msgf("read body err: %v", err)
+		return 0, err
+	}
+	r.Body.Close()
+
+	_, err = c.buffer.Write(body)
+	if err != nil {
+		//fmt.Printf("error writing to buffer %v\n", err)
+	}
+	return c.buffer.Read(b)
+
+}
+
+func (c *SSHHttpClient) Write(b []byte) (int, error) {
+	//log.Trace().Msgf("WRITE START")
+	//defer log.Trace().Msgf("WRITE END")
+	_, err := c.client.Post(c.url, "application/octet-stream", bytes.NewReader(b))
+	if err != nil {
+		return 0, err
+	}
+	//log.Trace().Msgf("http client post response: %s", r.Status)
+	return len(b), nil
+}
+
+func (c *SSHHttpClient) Close() error {
+	log.Trace().Msgf("Close START")
+	return nil
+}
+
+func (c *SSHHttpClient) LocalAddr() net.Addr {
+	return &net.TCPAddr{}
+}
+
+func (c *SSHHttpClient) RemoteAddr() net.Addr {
+	return &net.TCPAddr{}
+}
+
+func (c *SSHHttpClient) SetDeadline(t time.Time) error {
+	return nil
+}
+
+func (c *SSHHttpClient) SetReadDeadline(t time.Time) error {
+	return nil
+}
+
+func (c *SSHHttpClient) SetWriteDeadline(t time.Time) error {
+	return nil
 }

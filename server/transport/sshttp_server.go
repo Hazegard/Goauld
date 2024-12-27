@@ -2,102 +2,107 @@ package transport
 
 import (
 	"Goauld/common/log"
-	socketio "Goauld/common/socket.io"
 	"Goauld/server/config"
 	"Goauld/server/store"
-	gosio "github.com/karagenc/socket.io-go"
+	"io"
 	"net"
-	"sync"
+	"net/http"
 )
 
-type SSHTTP struct {
-	ssHttpAgentStore *store.AgentStore
-	server           *gosio.Server
+type SSHttpServer struct {
+	store *store.AgentStore
 }
 
-func InitSSHTTPServer(agentStore *store.AgentStore) *gosio.Server {
-
-	io := gosio.NewServer(&gosio.ServerConfig{})
-	socketIO := &SSHTTP{
-		ssHttpAgentStore: agentStore,
+func NewSSHHttpServer(store *store.AgentStore) *SSHttpServer {
+	return &SSHttpServer{
+		store: store,
 	}
-	socketIO.Setup(io.Of("/"))
-	err := io.Run()
+}
+
+func (s *SSHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("agentId")
+	// log.Trace()().Msgf("[SSHTTP] Received %s from %s", r.Method, id)
+	switch r.Method {
+	case http.MethodHead:
+		s.StartSSH(id, w, r)
+	case http.MethodGet:
+		s.Get(id, w, r)
+	case http.MethodPost:
+		s.Post(id, w, r)
+	case http.MethodDelete:
+		s.StopSSH(id, w, r)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+	return
+}
+
+func (s *SSHttpServer) StartSSH(id string, w http.ResponseWriter, r *http.Request) {
+	// log.Trace()()().Msgf("[SSHTTP] HEAD Server %s", id)
+	conn, err := net.Dial("tcp", config.Get().LocalSShServer())
+	// log.Trace()()().Msgf("[SSHTTP] Connect to %s", config.Get().LocalSShServer())
 	if err != nil {
+		log.Error().Err(err).Msgf("[SSHTTP] Start SSH Server error")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	return io
+	s.store.SshttpAddAgent(conn, id)
+	w.WriteHeader(http.StatusOK)
+	// log.Trace()()().Msgf("[SSHTTP] DONE HEAD Server %s", id)
+
 }
 
-func (sio *SSHTTP) Setup(root *gosio.Namespace) {
-	root.OnConnection(func(socket gosio.ServerSocket) {
+func (s *SSHttpServer) Get(id string, w http.ResponseWriter, r *http.Request) {
+	// log.Trace()()().Msgf("[SSHTTP] GET Server %s", id)
 
-		sentCounter := int64(0)
-		receivedCounter := int64(0)
-		queueMutex := sync.Mutex{}
-		nextPackets := map[int64]socketio.SsHttp{}
-		sshConn, err := net.Dial("tcp", config.Get().LocalSShServer())
-		if err != nil {
-			log.Error().Err(err).Msgf("[SSHTTP] error connecting to ssh server")
-		}
-		sio.ssHttpAgentStore.SshttpAddAgent(sshConn, socket)
+	agent := s.store.SshttpGetAgent(id)
+	if agent == nil {
+		log.Error().Msgf("[SSHTTP] Get Agent Not Found")
+		http.Error(w, "agent not fount", http.StatusNotFound)
+		return
+	}
+	buffer := make([]byte, 10*1024*1024)
+	n, err := agent.SshConn.Read(buffer)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	// log.Trace()().Msgf("[SSHTTP] Read %d bytes from %s connection", n, id)
+	n, err = w.Write(buffer[:n])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	// log.Trace()().Msgf("[SSHTTP] DONE GET Server %s (%d bytes)", id, n)
+}
 
-		socket.OnEvent(socketio.SSHTTPEvent, func(data socketio.SsHttp) {
+func (s *SSHttpServer) Post(id string, w http.ResponseWriter, r *http.Request) {
+	// log.Trace()().Msgf("[SSHTTP] POST Server %s", id)
+	agent := s.store.SshttpGetAgent(id)
+	if agent == nil {
+		log.Error().Msgf("[SSHTTP] Get Agent Not Found")
+		http.Error(w, "agent not fount", http.StatusNotFound)
+		return
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	r.Body.Close()
+	// log.Trace()().Msgf("[SSHTTP] Received %d bytes from %s", len(body), id)
+	_, err = agent.SshConn.Write(body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	// log.Trace()().Msgf("[SSHTTP] Written %d bytes to %s ssh conn", n, id)
+	w.WriteHeader(http.StatusOK)
+	// log.Trace()().Msgf("[SSHTTP] DONE POST Server %s", id)
+}
 
-			//defer log.Trace().Msg("Receive packet start")
-			queueMutex.Lock()
-			defer queueMutex.Unlock()
-			if data.Num == receivedCounter {
-				//log.Trace().Msgf("writing... %s", strconv.Itoa(int(receivedCounter)))
-				_, err := sshConn.Write(data.Data)
-				if err != nil {
-					log.Error().Err(err).Msgf("[SSHTTP] error writing to sshs server")
-				}
-				receivedCounter++
-				for {
-					if next, ok := nextPackets[receivedCounter]; ok {
-						//log.Trace().Msgf("writing... %s", strconv.Itoa(int(receivedCounter)))
-						_, err := sshConn.Write(next.Data)
-						if err != nil {
-							log.Error().Err(err).Msgf("[SSHTTP] error writing to sshs server")
-						}
-						delete(nextPackets, receivedCounter)
-						receivedCounter++
-					} else {
-						break
-					}
-				}
-			} else if data.Num > receivedCounter {
-				nextPackets[data.Num] = data
-			}
-			//log.Trace().Msgf("Received packet %d (%d)", data.Num, len(data.Data))
-			//defer log.Trace().Msg("Receive packet end")
-
-		})
-
-		socket.OnError(func(err error) {
-			log.Error().Err(err).Msgf("[SSHTTP] error from server")
-		})
-
-		socket.OnDisconnect(func(reason gosio.Reason) {
-			//agent := sio.ssHttpAgentStore.SshttpGetAgent(socket)
-			log.Debug().Msgf("[SSHTTP] socketio.Disconnect: %s !", reason)
-			_ = sio.ssHttpAgentStore.SshttpCloseAgent(socket)
-		})
-
-		for {
-			//log.Trace().Msg("Read start")
-			buf := make([]byte, 10*1024)
-			n, err := sshConn.Read(buf)
-			if err != nil {
-				log.Error().Err(err).Msgf("[SSHTTP] error reading from SSH server (%s)")
-				return
-			}
-			data := socketio.SsHttp{Data: buf[:n], Id: "todo", Num: sentCounter}
-			//log.Trace().Msgf("[SSHTTP] Sent packet N°%d %d", data.Num, len(data.Data))
-			sentCounter++
-			socket.Emit(socketio.SSHTTPEvent, data)
-			//log.Trace().Msg("Read end")
-		}
-	})
+func (s *SSHttpServer) StopSSH(id string, w http.ResponseWriter, r *http.Request) {
+	err := s.store.SshttpCloseAgent(id)
+	if err != nil {
+		log.Error().Err(err).Msgf("[SSHTTP] Stop SSH Server error")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

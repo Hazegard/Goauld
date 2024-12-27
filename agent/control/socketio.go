@@ -55,9 +55,6 @@ func NewClient(ctx context.Context) error {
 		}
 		log.Debug().Msgf("Local sshd password sent")
 		socket.Emit(socketio.SendAgentSshPasswordEvent, localSshPassword)
-		log.Debug().Msgf("Conecting to remote ssh server")
-		ssh.Connect()
-		log.Warn().Msgf("Conected")
 
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent done")
 	})
@@ -72,6 +69,21 @@ func NewClient(ctx context.Context) error {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess")
 		log.Debug().Msgf("Event SendSshPrivateKeySuccess received")
 		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess done")
+	})
+
+	socket.OnEvent(socketio.SendAgentSshPasswordError, func() {
+		log.Trace().Msg("OnEvent: SendAgentSshPasswordError")
+		log.Error().Msgf("Error occured (%s) %s", "SendAgentSshPasswordError", url)
+		log.Trace().Msg("OnEvent: SendAgentSshPasswordError done")
+	})
+
+	socket.OnEvent(socketio.SendAgentSshPasswordSuccess, func() {
+		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess")
+		log.Debug().Msgf("Event SendAgentSshPasswordSuccess received")
+		log.Debug().Msgf("Conecting to remote ssh server")
+		ssh.Connect()
+		log.Warn().Msgf("Conected")
+		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess done")
 	})
 
 	encryptedKey, err := crypto.AsymEncrypt(agent.Get().AgePubKey, agent.Get().SharedSecret)

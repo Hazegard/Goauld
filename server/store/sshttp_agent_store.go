@@ -1,44 +1,40 @@
 package store
 
 import (
-	sio "github.com/karagenc/socket.io-go"
 	"net"
 )
 
 type SSHTTPAgent struct {
-	sshConn net.Conn
-	socket  sio.ServerSocket
+	SshConn net.Conn
 }
 
-func (a *AgentStore) SshttpAddAgent(ssh net.Conn, socket sio.ServerSocket) {
+func (a *AgentStore) SshttpAddAgent(ssh net.Conn, id string) {
 	a.sshttpAgentMapMu.Lock()
-	a.sshttpAgentMap[socket] = &SSHTTPAgent{
-		sshConn: ssh,
-		socket:  socket,
+	a.sshttpAgentMap[id] = &SSHTTPAgent{
+		SshConn: ssh,
 	}
 	a.sshttpAgentMapMu.Unlock()
 }
 
-func (a *AgentStore) SshttpRemoveAgent(socket sio.ServerSocket) {
+func (a *AgentStore) SshttpRemoveAgent(id string) {
 	a.sshttpAgentMapMu.Lock()
-	delete(a.sshttpAgentMap, socket)
+	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
 }
 
-func (a *AgentStore) SshttpGetAgent(socket sio.ServerSocket) *SSHTTPAgent {
+func (a *AgentStore) SshttpGetAgent(id string) *SSHTTPAgent {
 	a.sshttpAgentMapMu.Lock()
-	agent := a.sshttpAgentMap[socket]
+	agent := a.sshttpAgentMap[id]
 	a.sshttpAgentMapMu.Unlock()
 	return agent
 }
 
-func (a *AgentStore) SshttpCloseAgent(socket sio.ServerSocket) error {
+func (a *AgentStore) SshttpCloseAgent(id string) error {
 	a.sshttpAgentMapMu.Lock()
-	agent := a.sshttpAgentMap[socket]
-	delete(a.sshttpAgentMap, socket)
-	a.SshttpRemoveAgent(socket)
-	err := agent.sshConn.Close()
+	agent := a.sshttpAgentMap[id]
+	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
-	//agent.socket.Disconnect(false)
+	err := agent.SshConn.Close()
+	a.SshttpRemoveAgent(id)
 	return err
 }

@@ -116,6 +116,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Code:    socketio.SendAgentSshPasswordError,
 				})
 				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting ssh password (%s / %s)", agent.Name, agent.Id)
+				return
 			}
 			password, err := socketio.DecryptAgentSshPasswordMessage(data, cryptor)
 			if err != nil {
@@ -124,10 +125,11 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Code:    socketio.SendAgentSshPasswordError,
 				})
 				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting ssh password (%s / %s)", agent.Name, agent.Id)
+				return
 			}
 			agent.SetSshpassword(password.AgentSshPassword)
+			socket.Emit(socketio.SendAgentSshPasswordSuccess)
 			log.Trace().Msgf("END socketio.SendAgentSshPasswordEvent (%s / %s)!", agent.Name, agent.Id)
-			log.Debug().Msgf("SSH password send (%s / %s)", agent.Name, agent.Id)
 		})
 
 		socket.OnEvent(socketio.DeregisterEvent, func(data socketio.Deregister) {
@@ -140,7 +142,11 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent := sio.agentStore.SioGetAgent(socket)
 			log.Debug().Msgf("socketio.Disconnect: %s / %s (%s)!", agent.Name, agent.Id, reason)
 
-			err := sio.agentStore.WsshCloseAgent(agent.Id)
+			err := sio.agentStore.CloseAgentConnections(agent.Id)
+			if err != nil {
+				log.Error().Err(err).Msgf("socketio.Disconnect: error closing agent (%s)", agent.Id)
+			}
+			sio.agentStore.SioRemoveAgent(socket)
 			if err != nil {
 				log.Error().Err(err).Msgf("socketio.Disconnect: agent disconnect failed (%s)", agent.Id)
 			}

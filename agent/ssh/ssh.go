@@ -69,7 +69,6 @@ func connect() error {
 		}()
 
 	}
-	return nil
 }
 
 func initClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, error) {
@@ -79,40 +78,44 @@ func initClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, 
 		case strings.HasPrefix(proto, "ssh"):
 			log.Info().Msgf("Trying to direct connect to ssh server")
 			client, err := transport.DirectSshConnect(sshConfig)
-			if err == nil {
-				return client, nil
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to connect directly to ssh server")
+				continue
 			}
-			log.Error().Err(err).Msg("Failed to mount direct ssh tunnel")
+			log.Info().Msgf("Direct connection to the ssh server successfully")
+			return client, nil
 
 		case strings.HasPrefix(proto, "ws"):
 			log.Info().Msg("Trying to proxify SSH using websocket")
-
 			wsConn, err := transport.GetWebsocketConn(ctx)
-			if err == nil {
-				client, err := tryProxyfySsh(sshConfig, wsConn)
-				if err == nil {
-					log.Info().Msg("Proxify using websocket succeeded")
-					return client, nil
-				}
-				log.Error().Err(err).Msg("failed to proxify ssh connection using websocket")
-			}
 			if err != nil {
-				log.Error().Err(err).Msg("failed to connect to websocket service")
+				log.Error().Err(err).Msg("Failed to create WebSocket connection")
+				continue
 			}
+			client, err := tryProxifySsh(sshConfig, wsConn)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to proxify ssh connection using websocket")
+				continue
+			}
+			log.Info().Msg("Proxify using websocket succeeded")
+			return client, nil
+
 		case strings.HasPrefix(proto, "http"):
 			log.Info().Msg("Trying to proxify SSH using HTTP")
 			httpConn := transport.NewSSHTTPConn()
-			httpConn.Start()
-			client, err := tryProxyfySsh(sshConfig, httpConn)
-			if err == nil {
-				log.Info().Msg("Proxify using HTTP succeeded")
-				return client, nil
-			}
-			log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
-
+			err := httpConn.Connect()
 			if err != nil {
-				log.Error().Err(err).Msg("failed to connect to HTTP service")
+				log.Error().Err(err).Msg("failed to proxify SSH using HTTP")
+				continue
 			}
+			//httpConn.Start()
+			client, err := tryProxifySsh(sshConfig, httpConn)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
+				continue
+			}
+			log.Info().Msg("Proxify using HTTP succeeded")
+			return client, nil
 		}
 	}
 
@@ -120,7 +123,7 @@ func initClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, 
 	return nil, fmt.Errorf("failed to Proxify ssh connection")
 }
 
-func tryProxyfySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error) {
+func tryProxifySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error) {
 	chanSuccess := make(chan *ssh.Client)
 	chanErr := make(chan error)
 

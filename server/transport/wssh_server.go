@@ -3,7 +3,6 @@ package transport
 import (
 	"Goauld/common/log"
 	"Goauld/server/config"
-	"Goauld/server/db"
 	"Goauld/server/store"
 	"context"
 	"errors"
@@ -14,16 +13,14 @@ import (
 	"nhooyr.io/websocket"
 )
 
-func NewWSshHandler(agentStore *store.AgentStore, db *db.DB) *WSshHandler {
+func NewWSshHandler(agentStore *store.AgentStore) *WSshHandler {
 	return &WSshHandler{
 		agentStore: agentStore,
-		db:         db,
 	}
 }
 
 type WSshHandler struct {
 	agentStore *store.AgentStore
-	db         *db.DB
 }
 
 func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -31,11 +28,6 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	id := r.PathValue("agentId")
-	agent, err := wssh.db.FindAgent(id)
-	if err != nil {
-		log.Error().Err(err).Msgf("WSSH: unable to find agent %s", id)
-		return
-	}
 
 	wsConn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		InsecureSkipVerify: true,
@@ -56,7 +48,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer targetConn.Close()
 	conn := websocket.NetConn(ctx, wsConn, websocket.MessageBinary)
 	defer conn.Close()
-	wssh.agentStore.WsshAddAgent(agent, id, conn, targetConn)
+	wssh.agentStore.WsshAddAgent(id, conn, targetConn)
 	errChan := make(chan error, 1)
 	go func() {
 		_, err := io.Copy(conn, targetConn)

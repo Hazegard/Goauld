@@ -1,7 +1,7 @@
 package store
 
 import (
-	"Goauld/server/db"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -10,13 +10,18 @@ import (
 type WsshAgent struct {
 	srcConn net.Conn
 	dstConn net.Conn
-	agent   *db.Agent
 }
 
-func (a *AgentStore) WsshAddAgent(agent *db.Agent, id string, src net.Conn, dst net.Conn) {
+func (a *AgentStore) WsshAddAgent(id string, src net.Conn, dst net.Conn) {
 	a.wsshAgentMapMu.Lock()
-	a.wsshAgentMap[id] = &WsshAgent{srcConn: src, dstConn: dst, agent: agent}
+	a.wsshAgentMap[id] = &WsshAgent{srcConn: src, dstConn: dst}
 	a.wsshAgentMapMu.Unlock()
+}
+
+func (a *AgentStore) CloseAgentConnections(id string) error {
+	err1 := a.WsshCloseAgent(id)
+	err2 := a.SshttpCloseAgent(id)
+	return errors.Join(err1, err2)
 }
 
 func (a *AgentStore) WsshCloseAgent(id string) error {
