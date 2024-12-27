@@ -23,15 +23,21 @@ func (a *AgentStore) WsshCloseAgent(id string) error {
 	a.wsshAgentMapMu.Lock()
 	agent := a.wsshAgentMap[id]
 	a.wsshAgentMapMu.Unlock()
+	a.WsshRemoveAgent(id)
 	errs := []string{}
-	err1 := agent.srcConn.Close()
-	if err1 != nil {
-		errs = append(errs, err1.Error())
+	if agent != nil && agent.srcConn != nil {
+		err1 := agent.srcConn.Close()
+		if err1 != nil {
+			errs = append(errs, err1.Error())
+		}
 	}
-	err2 := agent.dstConn.Close()
-	if err2 != nil {
-		errs = append(errs, err2.Error())
+	if agent != nil && agent.dstConn != nil {
+		err2 := agent.dstConn.Close()
+		if err2 != nil {
+			errs = append(errs, err2.Error())
+		}
 	}
+
 	return fmt.Errorf(strings.Join(errs, " / "))
 }
 

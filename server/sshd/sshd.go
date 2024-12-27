@@ -11,17 +11,18 @@ import (
 )
 
 func StartSshd(context context.Context, db *db.DB) {
-	listener, err := net.Listen("tcp", ":61160")
+	listener, err := net.Listen("tcp", config.Get().LocalSShServer())
 	if err != nil {
 		panic(err)
 	}
+	// Update if listening on 0 to get the real port
 	config.Get().SshPort = listener.Addr().(*net.TCPAddr).Port
-	log.Debug().Msgf("SSH server listening on port %d", config.Get().SshPort)
+	log.Debug().Msgf("SSH server listening on port %s", config.Get().LocalSShServer())
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Addr:    "127.0.0.1:0",
-		Banner:  "SSH-2.0-OpenSSH",
-		Version: "SSH-2.0-OpenSSH",
+		Version: "SSH-2.0-Server",
+		Banner:  "SERVER",
 		Handler: ssh.Handler(func(s ssh.Session) {
 			srcAddr := s.RemoteAddr().String()
 			s.User()

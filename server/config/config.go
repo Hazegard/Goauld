@@ -2,6 +2,7 @@ package config
 
 import (
 	"Goauld/common/crypto"
+	"fmt"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ func Get() *ServerConfig {
 		srvCfg = &ServerConfig{
 			PrivKey:           privKey,
 			HttpListenAddress: ":3000",
-			SshPort:           22,
+			SshPort:           0,
 		}
 	})
 	return srvCfg
@@ -29,4 +30,8 @@ func Get() *ServerConfig {
 
 func (s *ServerConfig) Decrypt(data []byte) (string, error) {
 	return crypto.AsymDecrypt(s.PrivKey, data)
+}
+
+func (s *ServerConfig) LocalSShServer() string {
+	return fmt.Sprintf("%s:%d", "127.0.0.1", s.SshPort)
 }

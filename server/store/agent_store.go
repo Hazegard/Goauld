@@ -17,6 +17,9 @@ func NewAgentStore() *AgentStore {
 
 			wsshAgentMap:   make(map[string]*WsshAgent),
 			wsshAgentMapMu: sync.Mutex{},
+
+			sshttpAgentMap:   make(map[sio.ServerSocket]*SSHTTPAgent),
+			sshttpAgentMapMu: sync.Mutex{},
 		}
 	})
 	return store
@@ -28,4 +31,7 @@ type AgentStore struct {
 
 	wsshAgentMap   map[string]*WsshAgent
 	wsshAgentMapMu sync.Mutex
+
+	sshttpAgentMap   map[sio.ServerSocket]*SSHTTPAgent
+	sshttpAgentMapMu sync.Mutex
 }

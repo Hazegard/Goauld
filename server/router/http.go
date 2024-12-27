@@ -15,11 +15,12 @@ type HttpRouter struct {
 	server        *http.Server
 }
 
-func NewHttpRouter(controlServer *sio.Server, handler *transport.WSshHandler) *HttpRouter {
+func NewHttpRouter(controlServer *sio.Server, handler *transport.WSshHandler, sshttp *sio.Server) *HttpRouter {
 
 	router := http.NewServeMux()
 	router.Handle("/socket.io/", controlServer)
 	router.Handle("/wssh/{agentId}", handler)
+	router.Handle("/sshttp/", sshttp)
 	server := &http.Server{
 		Addr:    config.Get().HttpListenAddress,
 		Handler: router,

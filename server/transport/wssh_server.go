@@ -12,7 +12,6 @@ import (
 	"net"
 	"net/http"
 	"nhooyr.io/websocket"
-	"strconv"
 )
 
 func NewWSshHandler(agentStore *store.AgentStore, db *db.DB) *WSshHandler {
@@ -38,9 +37,6 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	host := "127.0.0.1"
-	port := config.Get().SshPort
-
 	wsConn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		InsecureSkipVerify: true,
 		OriginPatterns:     []string{"*"},
@@ -51,11 +47,10 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer wsConn.CloseNow()
-	ssh := net.JoinHostPort(host, strconv.Itoa(port))
-	fmt.Printf("WSSH: connecting to %s\n", ssh)
-	targetConn, err := net.Dial("tcp", ssh)
+	fmt.Printf("WSSH: connecting to %s\n", config.Get().LocalSShServer())
+	targetConn, err := net.Dial("tcp", config.Get().LocalSShServer())
 	if err != nil {
-		log.Error().Err(err).Msgf("WSSH: failed to connect to %q:%q (%s)", host, port, id)
+		log.Error().Err(err).Msgf("WSSH: failed to connect to %s (%s)", config.Get().LocalSShServer(), id)
 		return
 	}
 	defer targetConn.Close()

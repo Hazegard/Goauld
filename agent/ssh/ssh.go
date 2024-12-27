@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"io"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -22,6 +23,7 @@ func connect() error {
 		User:            agent.Get().Id,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		ClientVersion:   "SSH-2.0-Client",
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -40,7 +42,6 @@ func connect() error {
 	}
 
 	remotePort := remoteListener.Addr().(*net.TCPAddr).Port
-	fmt.Println("odsvnuosdvnusnduovnvnso")
 	log.Info().Msgf("Remote port: %d", remotePort)
 	log.Info().Msg("LocalSshPassword is:")
 	log.Trace().Msg(agent.Get().LocalSShdPassword())
@@ -72,26 +73,51 @@ func connect() error {
 }
 
 func initClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, error) {
-	// client, err := transport.DirectSshConnect(sshConfig)
-	// if err == nil {
-	// 	return client, nil
-	// }
-	// log.Error().Err(err).Msg("failed to direct connect to remote ssh service")
-	wsConn, err := transport.GetWebsocketConn(ctx)
-	log.Info().Msg("Trying to proxify SSH using websocket")
-	if err == nil {
-		client, err := tryProxyfySsh(sshConfig, wsConn)
-		if err == nil {
-			return client, nil
+
+	for _, proto := range agent.Get().GetRsshOrder() {
+		switch {
+		case strings.HasPrefix(proto, "ssh"):
+			log.Info().Msgf("Trying to direct connect to ssh server")
+			client, err := transport.DirectSshConnect(sshConfig)
+			if err == nil {
+				return client, nil
+			}
+			log.Error().Err(err).Msg("Failed to mount direct ssh tunnel")
+
+		case strings.HasPrefix(proto, "ws"):
+			log.Info().Msg("Trying to proxify SSH using websocket")
+
+			wsConn, err := transport.GetWebsocketConn(ctx)
+			if err == nil {
+				client, err := tryProxyfySsh(sshConfig, wsConn)
+				if err == nil {
+					log.Info().Msg("Proxify using websocket succeeded")
+					return client, nil
+				}
+				log.Error().Err(err).Msg("failed to proxify ssh connection using websocket")
+			}
+			if err != nil {
+				log.Error().Err(err).Msg("failed to connect to websocket service")
+			}
+		case strings.HasPrefix(proto, "http"):
+			log.Info().Msg("Trying to proxify SSH using HTTP")
+			httpConn := transport.NewSSHTTPConn()
+			httpConn.Start()
+			client, err := tryProxyfySsh(sshConfig, httpConn)
+			if err == nil {
+				log.Info().Msg("Proxify using HTTP succeeded")
+				return client, nil
+			}
+			log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
+
+			if err != nil {
+				log.Error().Err(err).Msg("failed to connect to HTTP service")
+			}
 		}
-		log.Error().Err(err).Msg("failed to proxify ssh connection using websocket")
-	}
-	if err != nil {
-		log.Error().Err(err).Msg("failed to connect to websocket service")
 	}
 
-	// TODO handle other connections (tlssh, wssh, sshttp, etc...)
-	return nil, fmt.Errorf("failed to connect to websocket service")
+	// TODO handle other connections (tlssh, etc...)
+	return nil, fmt.Errorf("failed to Proxify ssh connection")
 }
 
 func tryProxyfySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error) {

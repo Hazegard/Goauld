@@ -136,6 +136,9 @@ func (a *Agent) SocketIoUrl() string {
 	return fmt.Sprintf("%s/socket.io/", a.ServerUrl())
 }
 
+func (a *Agent) SSHTTPUrl() string {
+	return fmt.Sprintf("%s/sshttp/%s", a.ServerUrl(), a.Id)
+}
 func (a *Agent) parseRemotePortForward() error {
 
 	//rpfs := strings.Split(a.Config().RemoteDynamicPortForwarding, ",")
@@ -147,6 +150,10 @@ func (a *Agent) parseRemotePortForward() error {
 
 func (a *Agent) Name() string {
 	return a.cfg.Name
+}
+
+func (a *Agent) GetRsshOrder() []string {
+	return a.cfg.RsshOrder
 }
 
 // func getID() string {

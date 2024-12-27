@@ -138,9 +138,14 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 
 		socket.OnDisconnect(func(reason gosio.Reason) {
 			agent := sio.agentStore.SioGetAgent(socket)
-
 			log.Debug().Msgf("socketio.Disconnect: %s / %s (%s)!", agent.Name, agent.Id, reason)
+
+			err := sio.agentStore.WsshCloseAgent(agent.Id)
+			if err != nil {
+				log.Error().Err(err).Msgf("socketio.Disconnect: agent disconnect failed (%s)", agent.Id)
+			}
 			agent.SetDisconnect()
+
 		})
 	})
 }

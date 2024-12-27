@@ -7,20 +7,13 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"nhooyr.io/websocket"
 )
 
 func GetWebsocketConn(ctx context.Context) (net.Conn, error) {
 	url := agent.Get().WSshUrl()
 
-	dialContext := proxy.NewProxyDialer()
-	httpclient := &http.Client{
-		Transport: &http.Transport{
-			DialContext:     dialContext,
-			TLSClientConfig: proxy.NewTlsConfig(),
-		},
-	}
+	httpclient := proxy.NewHttpClientProxy()
 
 	wsConn, resp, err := websocket.Dial(ctx, url, &websocket.DialOptions{
 		HTTPClient: httpclient,

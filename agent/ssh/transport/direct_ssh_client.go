@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const SSHD_BANNER = "SSH-2.0-OpenSSH"
+const SSHD_BANNER = "SSH-2.0-"
 
 // CheckSSHService connects to the given address, verifies that the service is SSH,
 // and checks if the returned banner matches the expected one.
@@ -23,7 +23,10 @@ func CheckDirectSshAccess(address string) error {
 	defer conn.Close()
 
 	// Set a deadline for the read operation
-	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	err = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	if err != nil {
+		return fmt.Errorf("failed to set read deadline: %w", err)
+	}
 
 	// Read the banner line
 	reader := bufio.NewReader(conn)
@@ -37,7 +40,7 @@ func CheckDirectSshAccess(address string) error {
 
 	// Check if the banner matches the expected one
 	if !strings.Contains(banner, SSHD_BANNER) {
-		return fmt.Errorf("unexpected banner: got %q, want %q", banner, SSHD_BANNER)
+		return fmt.Errorf("unexpected banner: got %s, want %s*", banner, SSHD_BANNER)
 	}
 
 	return nil
