@@ -16,6 +16,8 @@ var (
 	_ssh_server       = "localhost:61160"
 	_sshd_port        = "0"
 	_rssh_port        = "0"
+	_keepalive        = "20"
+	_verbosity        = "20"
 	_rssh_order       = "SSH,TLS,WS,HTTP"
 
 	defaultValues = kong.Vars{
@@ -26,6 +28,8 @@ var (
 		"_rssh_port":        _rssh_port,
 		"_ssh_server":       _ssh_server,
 		"_rssh_order":       _rssh_order,
+		"_keepalive":        _keepalive,
+		"_verbosity":        _verbosity,
 	}
 )
 
@@ -38,7 +42,9 @@ type Config struct {
 	SshServer        string   `default:"${_ssh_server}" short:"S" name:"sshserver" optional:"" help:"SSH Server to connect to."`
 	SshdPort         int      `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
 	RsshPort         int      `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
-	RsshOrder        []string `default:"${_rssh_order}" short:"O"  name:"rssh_order" optional:"" help:"Order of ssh connection attempts."`
+	RsshOrder        []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order of ssh connection attempts."`
+	KeepAlive        int      `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds)."`
+	Verbose          int      `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	//RemoteDynamicPortForwarding []string `name:"R" optional:"" help:"Ports to forward to the server."`
 	//RemotePortForwarding        []string `name:"L" optional:"" help:"Ports to forward to the server."`
 }
@@ -57,7 +63,7 @@ func parse() (*kong.Context, *Config, error) {
 		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
 		defaultValues,
 	)
+	log.SetLogLevel(cfg.Verbose)
 	cfg.RsshOrder = utils.ToLower(utils.Unique(cfg.RsshOrder))
-	log.Info().Msgf("%+v", cfg)
 	return app, cfg, nil
 }

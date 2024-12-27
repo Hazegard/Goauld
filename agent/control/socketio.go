@@ -13,6 +13,7 @@ import (
 	eio "github.com/karagenc/socket.io-go/engine.io"
 	"github.com/quic-go/webtransport-go"
 	"nhooyr.io/websocket"
+	"time"
 )
 
 func NewClient(ctx context.Context) error {
@@ -41,7 +42,7 @@ func NewClient(ctx context.Context) error {
 
 	socket.OnEvent(socketio.SendSshPrivateKeyEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
-		log.Debug().Msgf("SshPrivateKeyEvent: data reveived")
+		log.Trace().Msgf("SshPrivateKeyEvent: data reveived")
 		privateKey, err := socketio.DecryptSshPrivateKeyMessage(data, agent.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error decrypting private key")
@@ -79,10 +80,7 @@ func NewClient(ctx context.Context) error {
 
 	socket.OnEvent(socketio.SendAgentSshPasswordSuccess, func() {
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess")
-		log.Debug().Msgf("Event SendAgentSshPasswordSuccess received")
-		log.Debug().Msgf("Conecting to remote ssh server")
 		ssh.Connect()
-		log.Warn().Msgf("Conected")
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess done")
 	})
 
@@ -104,7 +102,8 @@ func NewClient(ctx context.Context) error {
 	})
 
 	socket.Connect()
-	log.Trace().Msgf("Connected to the control server %s", url)
+	go KeepAlive(socket, ctx)
+	log.Debug().Msgf("Connected to the control server %s", url)
 	log.Trace().Msg("Event send: RegisterEvent")
 	select {
 	case <-ctx.Done():
@@ -114,6 +113,23 @@ func NewClient(ctx context.Context) error {
 		socket.Disconnect()
 	}
 	return nil
+}
+
+func KeepAlive(socket sio.Socket, ctx context.Context) {
+	socket.OnEvent(socketio.PongEvent, func(data []byte) {
+		log.Trace().Msg("OnEvent: PongEvent")
+	})
+	t := time.NewTicker(agent.Get().GetKeepalive() * time.Second)
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			log.Trace().Msg("OnEvent: PingEvent")
+			socket.Emit(socketio.PingEvent)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func getEioConfig() *sio.ManagerConfig {

@@ -31,7 +31,7 @@ func NewSSHTTPConn() *SSHHttpClient {
 }
 
 func (c *SSHHttpClient) Connect() error {
-	log.Trace().Msgf("Connect to %s", c.url)
+	log.Trace().Msgf("[SSHTTP] Connect to %s", c.url)
 	r, err := c.client.Head(c.url)
 
 	if err != nil {
@@ -40,7 +40,7 @@ func (c *SSHHttpClient) Connect() error {
 	if r.StatusCode != 200 {
 		return errors.New("HEAD: " + r.Status)
 	}
-	log.Trace().Msgf("http connect success: %s", r.Status)
+	log.Trace().Msgf("[SSHTTP] HTTP successfully connected: %s", r.Status)
 	return nil
 }
 
@@ -85,7 +85,7 @@ func (c *SSHHttpClient) Write(b []byte) (int, error) {
 }
 
 func (c *SSHHttpClient) Close() error {
-	log.Trace().Msgf("Close START")
+	log.Trace().Msgf("[SSHTTP] Close() called")
 	return nil
 }
 

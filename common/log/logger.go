@@ -10,15 +10,17 @@ import (
 )
 
 var (
-	zerologger *zerolog.Logger
-	once       sync.Once
-	gormlogger logger.Interface
+	zerologger   *zerolog.Logger
+	once         sync.Once
+	gormlogger   logger.Interface
+	logLevel     = zerolog.InfoLevel
+	gormLogLevel = logger.Warn
 )
 
 func initLoggers() {
 	l := zerolog.New(
 		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
-	).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
+	).Level(logLevel).With().Timestamp().Caller().Logger()
 	zerologger = &l
 
 	gormlogger = NewGormLogger().
@@ -30,9 +32,41 @@ func initLoggers() {
 		}).
 		WithWarn(func() Event {
 			return &GormLoggerEvent{Event: zerologger.Warn()}
-		}).LogMode(logger.Warn)
+		}).LogMode(gormLogLevel)
 
 }
+
+func SetLogLevel(verbosity int) {
+	logLevel = verbosityToLogLevel(verbosity)
+	gormLogLevel = verbosityToGormLogLevel(verbosity)
+}
+
+func verbosityToGormLogLevel(verbosity int) logger.LogLevel {
+	switch verbosity {
+	case 0:
+		return logger.Error
+	case 1:
+		return logger.Warn
+	case 2:
+		return logger.Info
+	default:
+		return logger.Info
+	}
+}
+
+func verbosityToLogLevel(verbosity int) zerolog.Level {
+	switch verbosity {
+	case 0:
+		return zerolog.InfoLevel
+	case 1:
+		return zerolog.DebugLevel
+	case 2:
+		return zerolog.TraceLevel
+	default:
+		return zerolog.TraceLevel
+	}
+}
+
 func Get() *zerolog.Logger {
 
 	once.Do(initLoggers)

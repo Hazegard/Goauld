@@ -14,7 +14,7 @@ func StartSShd() error {
 	if err != nil {
 		return err
 	}
-	if agent.Get().IsSshdRandomPort() {
+	if agent.Get().IsLocalSshdRandomPort() {
 		agent.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
 	}
 
@@ -48,9 +48,9 @@ func StartSShd() error {
 			"session":      ssh.DefaultSessionHandler,
 		},
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
-			log.Trace().Msgf("Received connection from user: %s", ctx.User())
+			log.Debug().Msgf("Received connection from user: %s", ctx.User())
 			if password == agent.Get().LocalSShdPassword() {
-				log.Trace().Msgf("Connnection using password succecced from user: %s", ctx.User())
+				log.Debug().Msgf("Connnection using password succecced from user: %s", ctx.User())
 				return true
 			}
 			log.Debug().Msgf("Connnection using password failed from user: %s", ctx.User())

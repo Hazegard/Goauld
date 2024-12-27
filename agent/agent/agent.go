@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/user"
 	"strings"
+	"time"
 )
 
 type Agent struct {
@@ -80,20 +81,28 @@ func Get() *Agent {
 	return agent
 }
 
-func (a *Agent) LocalSShdAddress() string {
-	return fmt.Sprintf("127.0.0.1:%d", a.cfg.SshdPort)
+func (a *Agent) Verbosity() int {
+	return a.cfg.Verbose
 }
 
-func (a *Agent) IsSshdRandomPort() bool {
-	return a.cfg.SshdPort == 0
+func (a *Agent) LocalSShdAddress() string {
+	return fmt.Sprintf("127.0.0.1:%d", a.cfg.SshdPort)
 }
 
 func (a *Agent) LocalSShdPassword() string {
 	return a.cfg.LocalSshPassword
 }
 
+func (a *Agent) LocalSshdPort() int {
+	return a.cfg.SshdPort
+}
+
 func (a *Agent) SetLocalSshdPort(p int) {
 	a.cfg.SshdPort = p
+}
+
+func (a *Agent) IsLocalSshdRandomPort() bool {
+	return a.cfg.SshdPort == 0
 }
 
 func (a *Agent) ControlSshServer() string {
@@ -106,9 +115,6 @@ func (a *Agent) IsRemoteForwardedSshdPortRandom() bool {
 
 func (a *Agent) RsshPort() int {
 	return a.cfg.RsshPort
-}
-func (a *Agent) LocalSshdPort() int {
-	return a.cfg.SshdPort
 }
 
 func (a *Agent) RemoteForwardedSshdAddress() string {
@@ -139,17 +145,13 @@ func (a *Agent) SocketIoUrl() string {
 func (a *Agent) SSHTTPUrl() string {
 	return fmt.Sprintf("%s/sshttp/%s", a.ServerUrl(), a.Id)
 }
-func (a *Agent) parseRemotePortForward() error {
-
-	//rpfs := strings.Split(a.Config().RemoteDynamicPortForwarding, ",")
-	//for _, rpf := range rpfs {
-
-	//}
-	return nil
-}
 
 func (a *Agent) Name() string {
 	return a.cfg.Name
+}
+
+func (a *Agent) GetKeepalive() time.Duration {
+	return time.Duration(a.cfg.KeepAlive)
 }
 
 func (a *Agent) GetRsshOrder() []string {

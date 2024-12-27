@@ -32,19 +32,19 @@ func InitSocketIOServer(agentStore *store.AgentStore) *gosio.Server {
 func (sio *SocketIO) Setup(root *gosio.Namespace) {
 	root.OnConnection(func(socket gosio.ServerSocket) {
 		socket.OnEvent(socketio.RegisterEvent, func(data socketio.Register) {
-			log.Debug().Msgf("socketio.RegisterEvent (%s)!", data.Id)
+			log.Debug().Str("Agent.Id", data.Id).Msg("socketio.RegisterEvent")
 			agent, err := db.Get().FindOrCreate(data.Id)
-
 			if err != nil {
 				errorMsg := fmt.Errorf("error retrieving agent: %s", err)
 				socket.Emit(socketio.RegisterError, socketio.SioError{
 					Message: errorMsg.Error(),
 					Code:    socketio.RegisterError,
 				})
-				log.Error().Err(err).Msgf("socketio.RegisterError retriving agent(%s)", data.Id)
+				log.Error().Str("Agent.name", "").Str("Agent.Id", data.Id).Err(err).Msg("socketio.RegisterError retriving agent")
 				return
 			}
 
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("START socketio.RegisterEvent decrypting shared key")
 			sharedSecret, err := config.Get().Decrypt(data.SharedKey)
 			if err != nil {
 				errorMsg := fmt.Errorf("error decrypting shared secret (%s): %s", data.Id, err)
@@ -52,10 +52,11 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Message: errorMsg.Error(),
 					Code:    socketio.RegisterEvent,
 				})
-				log.Error().Err(err).Msgf("socketio.RegisterError decrypting shared secret (%s)", data.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError decrypting shared secret")
 				return
 			}
 
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("START socketio.decrypting agent name")
 			agentName, err := config.Get().Decrypt(data.Name)
 			if err != nil {
 				errorMsg := fmt.Errorf("error decrypting name: %s", err)
@@ -63,7 +64,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Message: errorMsg.Error(),
 					Code:    socketio.RegisterEvent,
 				})
-				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting agent name (%s)", data.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error decrypting agent name")
 				return
 			}
 
@@ -73,41 +74,48 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			sio.agentStore.SioAddAgent(agent, socket)
 
 			if agent.PrivateKey == "" {
+				log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("START socketio.RegisterEvent no ssh keys, generating...")
 				err := agent.InitKeys()
 				if err != nil {
 					socket.Emit(socketio.RegisterError, socketio.SioError{
 						Message: "error generating keys",
 						Code:    socketio.RegisterError,
 					})
-					log.Error().Err(err).Msgf("socketio.RegisterError error generating ssh keys (%s / %s)", agentName, data.Id)
+					log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error generating ssh keys")
 					return
 				}
 			}
+
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("START socketio.RegisterEvent initiating cryptor")
 			cryptor, err := agent.GetCryptor()
 			if err != nil {
 				socket.Emit(socketio.RegisterError, socketio.SioError{
 					Message: "error encrypting fields",
 					Code:    socketio.RegisterError,
 				})
-				log.Error().Err(err).Msgf("socketio.RegisterError error encrypting ssh keys (%s / %s)", agentName, data.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error encrypting ssh keys")
 				return
 			}
+
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("START socketio.RegisterEvent encrypting ssh private key")
 			message, err := socketio.NewEncryptedSshPrivateKeyMessage(agent.PrivateKey, cryptor)
 			if err != nil {
 				socket.Emit(socketio.RegisterError, socketio.SioError{
 					Message: "error encrypting keys",
 					Code:    socketio.RegisterError,
 				})
-				log.Error().Err(err).Msgf("socketio.RegisterError error encrypting ssh keys (%s / %s)", agentName, data.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error encrypting ssh keys")
 				return
 			}
+
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("START socketio.RegisterEvent sending encrypted ssh private key")
 			socket.Emit(socketio.SendSshPrivateKeyEvent, message)
-			log.Debug().Msgf("socketio.SendSshPrivateKeyEvent (%s / %s)", agentName, data.Id)
+			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.SendSshPrivateKeyEvent")
 		})
 
 		socket.OnEvent(socketio.SendAgentSshPasswordEvent, func(data []byte) {
 			agent := sio.agentStore.SioGetAgent(socket)
-			log.Debug().Msgf("socketio.SendAgentSshPasswordEvent (%s / %s)", agent.Name, agent.Id)
+			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.SendAgentSshPasswordEvent")
 
 			cryptor, err := agent.GetCryptor()
 			if err != nil {
@@ -115,7 +123,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Message: "error geting decryptor for agent ssh password",
 					Code:    socketio.SendAgentSshPasswordError,
 				})
-				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting ssh password (%s / %s)", agent.Name, agent.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error decrypting ssh password")
 				return
 			}
 			password, err := socketio.DecryptAgentSshPasswordMessage(data, cryptor)
@@ -124,31 +132,38 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Message: "error decrypting agent ssh password",
 					Code:    socketio.SendAgentSshPasswordError,
 				})
-				log.Error().Err(err).Msgf("socketio.RegisterError error decrypting ssh password (%s / %s)", agent.Name, agent.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error decrypting ssh password")
 				return
 			}
 			agent.SetSshpassword(password.AgentSshPassword)
 			socket.Emit(socketio.SendAgentSshPasswordSuccess)
-			log.Trace().Msgf("END socketio.SendAgentSshPasswordEvent (%s / %s)!", agent.Name, agent.Id)
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("END socketio.SendAgentSshPasswordEvent")
 		})
 
 		socket.OnEvent(socketio.DeregisterEvent, func(data socketio.Deregister) {
 			agent := sio.agentStore.SioGetAgent(socket)
 			agent.SetDisconnect()
-			log.Debug().Msgf("socketio.DeregisterEvent (%s / %s)!", agent.Name, agent.Id)
+			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.DeregisterEvent")
+		})
+
+		socket.OnEvent(socketio.PingEvent, func(data socketio.Deregister) {
+			agent := sio.agentStore.SioGetAgent(socket)
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Received socketio.PingEvent")
+			socket.Emit(socketio.PongEvent)
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Sent socketio.PongEvent")
 		})
 
 		socket.OnDisconnect(func(reason gosio.Reason) {
 			agent := sio.agentStore.SioGetAgent(socket)
-			log.Debug().Msgf("socketio.Disconnect: %s / %s (%s)!", agent.Name, agent.Id, reason)
+			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msgf("socketio.Disconnect: %s", reason)
 
 			err := sio.agentStore.CloseAgentConnections(agent.Id)
 			if err != nil {
-				log.Error().Err(err).Msgf("socketio.Disconnect: error closing agent (%s)", agent.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.Disconnect: error closing agent")
 			}
 			sio.agentStore.SioRemoveAgent(socket)
 			if err != nil {
-				log.Error().Err(err).Msgf("socketio.Disconnect: agent disconnect failed (%s)", agent.Id)
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.Disconnect: agent disconnect failed")
 			}
 			agent.SetDisconnect()
 
