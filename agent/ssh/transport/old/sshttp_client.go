@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-type SSHTTPClient struct {
+type SSHTTPClientOld struct {
 	socket sio.ClientSocket
 
 	bufMutex           sync.Mutex
@@ -28,8 +28,8 @@ type SSHTTPClient struct {
 	incomingMessage    chan socketio.SsHttp
 }
 
-func (conn *SSHTTPClient) Read(b []byte) (int, error) {
-	//func (conn *SSHTTPClient) Write(b []byte) (int, error) {
+func (conn *SSHTTPClientOld) Read(b []byte) (int, error) {
+	//func (conn *SSHTTPClientOld) Write(b []byte) (int, error) {
 	//log.Trace().Msg("Read start")
 	//defer log.Trace().Msg("Read end")
 	conn.bufMutex.Lock()
@@ -48,8 +48,8 @@ func (conn *SSHTTPClient) Read(b []byte) (int, error) {
 
 }
 
-func (conn *SSHTTPClient) Write(b []byte) (int, error) {
-	//func (conn *SSHTTPClient) Read(b []byte) (int, error) {
+func (conn *SSHTTPClientOld) Write(b []byte) (int, error) {
+	//func (conn *SSHTTPClientOld) Read(b []byte) (int, error) {
 	//log.Trace().Msg("Write start")
 	//defer log.Trace().Msg("Write end")
 	if conn.socket != nil && len(b) > 0 {
@@ -66,43 +66,43 @@ func (conn *SSHTTPClient) Write(b []byte) (int, error) {
 	return 0, nil
 }
 
-func (conn *SSHTTPClient) Close() error {
+func (conn *SSHTTPClientOld) Close() error {
 	conn.socket.Disconnect()
 	return nil
 }
 
-func (conn *SSHTTPClient) LocalAddr() net.Addr {
+func (conn *SSHTTPClientOld) LocalAddr() net.Addr {
 	return nil
 }
 
-func (conn *SSHTTPClient) RemoteAddr() net.Addr {
+func (conn *SSHTTPClientOld) RemoteAddr() net.Addr {
 	return nil
 
 }
 
-func (conn *SSHTTPClient) SetDeadline(t time.Time) error {
+func (conn *SSHTTPClientOld) SetDeadline(t time.Time) error {
 	return nil
 }
 
-func (conn *SSHTTPClient) SetReadDeadline(t time.Time) error {
+func (conn *SSHTTPClientOld) SetReadDeadline(t time.Time) error {
 	return nil
 }
 
-func (conn *SSHTTPClient) SetWriteDeadline(t time.Time) error {
+func (conn *SSHTTPClientOld) SetWriteDeadline(t time.Time) error {
 	return nil
 }
 
-func (conn *SSHTTPClient) Start() {
+func (conn *SSHTTPClientOld) Start() {
 
 	conn.socket.Connect()
 }
 
-func NewSSHTTPConn() *SSHTTPClient {
+func NewSSHTTPConn() *SSHTTPClientOld {
 	cfg := getEioConfig()
 	url := agent.Get().SSHTTPUrl()
 	manager := sio.NewManager(url, cfg)
 	socket := manager.Socket("/", nil)
-	conn := &SSHTTPClient{
+	conn := &SSHTTPClientOld{
 		socket:             socket,
 		bufMutex:           sync.Mutex{},
 		currentBuffer:      bytes.Buffer{},
@@ -114,27 +114,27 @@ func NewSSHTTPConn() *SSHTTPClient {
 	}
 
 	socket.OnConnect(func() {
-		log.Trace().Msgf("[SSHTTPClient] connect to %s", url)
+		log.Trace().Msgf("[SSHTTPClientOld] connect to %s", url)
 	})
 	socket.OnConnectError(func(err any) {
-		log.Trace().Err(fmt.Errorf("%v", err)).Msgf("[SSHTTPClient] Error connecting to %s", url)
+		log.Trace().Err(fmt.Errorf("%v", err)).Msgf("[SSHTTPClientOld] Error connecting to %s", url)
 	})
 
 	socket.OnDisconnect(func(reason sio.Reason) {
-		log.Trace().Msgf("[SSHTTPClient] disconnect with reason: %s", reason)
+		log.Trace().Msgf("[SSHTTPClientOld] disconnect with reason: %s", reason)
 
 	})
 	manager.OnError(func(err error) {
-		log.Trace().Err(err).Msgf("[SSHTTPClient] Error connecting to %s", url)
+		log.Trace().Err(err).Msgf("[SSHTTPClientOld] Error connecting to %s", url)
 	})
 	manager.OnReconnect(func(attempt uint32) {
-		log.Trace().Msgf("[SSHTTPClient] Reconnect to %s (Attempts %d)", url, attempt)
+		log.Trace().Msgf("[SSHTTPClientOld] Reconnect to %s (Attempts %d)", url, attempt)
 	})
 
 	socket.OnEvent(socketio.SSHTTPEvent, func(sshData socketio.SsHttp) {
 		conn.incomingQueueMutex.Lock()
 		defer conn.incomingQueueMutex.Unlock()
-		//log.Trace().Msgf("[SSHTTPClient] Received packet N°%d (%d)", sshData.Num, len(sshData.Data))
+		//log.Trace().Msgf("[SSHTTPClientOld] Received packet N°%d (%d)", sshData.Num, len(sshData.Data))
 		//log.Trace().Msg("Receive packet start")
 		//defer log.Trace().Msg("Receive packet end")
 		if sshData.Num == -1 {
@@ -145,7 +145,7 @@ func NewSSHTTPConn() *SSHTTPClient {
 	return conn
 }
 
-func (conn *SSHTTPClient) processIncomingMessage(data socketio.SsHttp) {
+func (conn *SSHTTPClientOld) processIncomingMessage(data socketio.SsHttp) {
 	if conn.incomingCounter == data.Num {
 		conn.incomingMessage <- data
 		conn.incomingCounter++

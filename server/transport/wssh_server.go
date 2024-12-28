@@ -6,7 +6,6 @@ import (
 	"Goauld/server/store"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -39,7 +38,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer wsConn.CloseNow()
-	fmt.Printf("WSSH: connecting to %s\n", config.Get().LocalSShServer())
+	log.Info().Msgf("WSSH: connecting to agent SSH server %s", config.Get().LocalSShServer())
 	targetConn, err := net.Dial("tcp", config.Get().LocalSShServer())
 	if err != nil {
 		log.Error().Err(err).Msgf("WSSH: failed to connect to %s (%s)", config.Get().LocalSShServer(), id)
@@ -73,8 +72,4 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Error().Err(err).Msgf("WSSH: error while closing websocket streams (%s)", id)
 	}
-}
-
-func NewWSshRouter() {
-
 }

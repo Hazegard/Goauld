@@ -20,6 +20,9 @@ func NewAgentStore() *AgentStore {
 
 			sshttpAgentMap:   make(map[string]*SSHTTPAgent),
 			sshttpAgentMapMu: sync.Mutex{},
+
+			tlsshAgentMap:   make(map[string]*TLSSHAgent),
+			tlsshAgentMapMu: sync.Mutex{},
 		}
 	})
 	return store
@@ -34,4 +37,7 @@ type AgentStore struct {
 
 	sshttpAgentMap   map[string]*SSHTTPAgent
 	sshttpAgentMapMu sync.Mutex
+
+	tlsshAgentMap   map[string]*TLSSHAgent
+	tlsshAgentMapMu sync.Mutex
 }

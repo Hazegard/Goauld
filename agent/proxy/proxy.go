@@ -1,11 +1,13 @@
 package proxy
 
 import (
+	"Goauld/common/log"
 	"github.com/aus/proxyplease"
 	"net/http"
 )
 
 func NewProxyDialer() proxyplease.DialContext {
+	proxyplease.SetDebugf(log.ProxyPleaseLog())
 	return proxyplease.NewDialContext(proxyplease.Proxy{
 		TLSConfig: NewTlsConfig(),
 	})

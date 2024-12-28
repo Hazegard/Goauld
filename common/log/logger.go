@@ -25,13 +25,13 @@ func initLoggers() {
 
 	gormlogger = NewGormLogger().
 		WithInfo(func() Event {
-			return &GormLoggerEvent{Event: zerologger.Trace()}
+			return &GormLoggerEvent{Event: zerologger.Trace().Str("Src", "Gorm")}
 		}).
 		WithError(func() Event {
-			return &GormLoggerEvent{Event: zerologger.Error()}
+			return &GormLoggerEvent{Event: zerologger.Error().Str("Src", "Gorm")}
 		}).
 		WithWarn(func() Event {
-			return &GormLoggerEvent{Event: zerologger.Warn()}
+			return &GormLoggerEvent{Event: zerologger.Warn().Str("Src", "Gorm")}
 		}).LogMode(gormLogLevel)
 
 }

@@ -29,7 +29,8 @@ func main() {
 	sioServer := control.InitSocketIOServer(agentStore)
 	wssh := transport.NewWSshHandler(agentStore)
 	sshttp := transport.NewSSHHttpServer(agentStore)
-	r := router.NewHttpRouter(sioServer, wssh, sshttp)
+	tlssh := transport.NewTLSSHServer(agentStore)
+	r := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh)
 
 	go sshd.StartSshd(ctx, db)
 	go r.Serve()

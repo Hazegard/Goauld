@@ -21,7 +21,8 @@ func (a *AgentStore) WsshAddAgent(id string, src net.Conn, dst net.Conn) {
 func (a *AgentStore) CloseAgentConnections(id string) error {
 	err1 := a.WsshCloseAgent(id)
 	err2 := a.SshttpCloseAgent(id)
-	return errors.Join(err1, err2)
+	err3 := a.TlsshCloseAgent(id)
+	return errors.Join(err1, err2, err3)
 }
 
 func (a *AgentStore) WsshCloseAgent(id string) error {

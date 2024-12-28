@@ -19,7 +19,7 @@ var srvCfg *ServerConfig
 
 var (
 	_age_privKey = ""
-	_http_port   = "3000"
+	_http_port   = "80"
 	_http_domain = "localhost"
 	_sshd_port   = "2222"
 	_verbosity   = "0"

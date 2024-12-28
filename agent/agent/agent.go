@@ -120,12 +120,6 @@ func (a *Agent) RemoteForwardedSshdAddress() string {
 
 func (a *Agent) ServerUrl() string {
 	url := ""
-	fmt.Println(a.cfg.Server)
-	fmt.Println(a.cfg.Server)
-	fmt.Println(a.cfg.Server)
-	fmt.Println(a.cfg.Server)
-	fmt.Println(a.cfg.Server)
-	fmt.Println(a.cfg.Server)
 	if strings.HasPrefix(a.cfg.Server, "http://") {
 		url = a.cfg.Server
 	} else if strings.HasPrefix(a.cfg.Server, "https://") {
