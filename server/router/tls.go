@@ -2,19 +2,21 @@ package router
 
 import (
 	"Goauld/common/log"
+	"Goauld/server/config"
 	"crypto/tls"
 	"net"
 )
 
 func (router *HttpRouter) ServeTLS() {
-	listener, err := tls.Listen("tcp", ":443", router.tlsConfig)
+	port := config.Get().LocalHttpsServer()
+	listener, err := tls.Listen("tcp", port, router.tlsConfig)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to start TLS listener")
 		return
 	}
 	defer listener.Close()
 
-	log.Info().Str("Address", ":443").Msgf("HTTPS server listening")
+	log.Info().Str("Address", port).Msgf("HTTPS server listening")
 
 	for {
 		conn, err := listener.Accept()
@@ -36,14 +38,14 @@ func (router *HttpRouter) HandleTls(c net.Conn) {
 			return
 		}
 		state := tlsConn.ConnectionState()
-		if state.ServerName == "a.hazegard.fr" {
+		if state.ServerName == config.Get().HttpDomain {
 			// Serve HTTPS traffic
 
 			err := router.server.Serve(NewSingleConnListener(tlsConn))
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to start server")
 			}
-		} else if state.ServerName == "b.hazegard.fr" {
+		} else if state.ServerName == config.Get().TlsDomain {
 			// The client first send its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
 			rawId := make([]byte, 128)
