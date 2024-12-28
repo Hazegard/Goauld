@@ -18,8 +18,8 @@ func StartSshd(context context.Context, db *db.DB) {
 		panic(err)
 	}
 	// Update if listening on 0 to get the real port
-	config.Get().SshPort = listener.Addr().(*net.TCPAddr).Port
-	log.Debug().Msgf("SSH server listening on port %s", config.Get().LocalSShServer())
+	config.Get().SshdPort = listener.Addr().(*net.TCPAddr).Port
+	log.Info().Str("Address", config.Get().LocalSShServer()).Msgf("SSH server listening")
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Addr:    "127.0.0.1:0",
@@ -91,7 +91,7 @@ func StartSshd(context context.Context, db *db.DB) {
 	if err != nil {
 		log.Error().Msg(err.Error())
 	}
-	log.Println("SSH server stopped")
+	log.Info().Msg("SSH server stopped")
 	context.Done()
 }
 

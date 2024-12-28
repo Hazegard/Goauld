@@ -84,12 +84,12 @@ func NewClient(ctx context.Context) error {
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess done")
 	})
 
-	encryptedKey, err := crypto.AsymEncrypt(agent.Get().AgePubKey, agent.Get().SharedSecret)
+	encryptedKey, err := crypto.AsymEncrypt(agent.Get().AgePubKey(), agent.Get().SharedSecret)
 	if err != nil {
 		return fmt.Errorf("error encrypting shared secret: %v", err)
 	}
 
-	encryptedName, err := crypto.AsymEncrypt(agent.Get().AgePubKey, agent.Get().Name())
+	encryptedName, err := crypto.AsymEncrypt(agent.Get().AgePubKey(), agent.Get().Name())
 	if err != nil {
 		return fmt.Errorf("error encrypting shared secret: %v", err)
 	}

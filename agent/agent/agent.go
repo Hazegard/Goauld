@@ -15,7 +15,6 @@ import (
 type Agent struct {
 	Id                       string
 	SShPrivateKey            string
-	AgePubKey                string
 	SharedSecret             string
 	Cryptor                  *crypto.SymCryptor
 	cfg                      *Config
@@ -24,8 +23,6 @@ type Agent struct {
 }
 
 var agent *Agent
-
-var agePubKey = "age1fz7j9zck3qmafdkynu3ldvkjdrsstanhz8py8scx07hw7vja7aysuccrtn"
 
 func InitAgent() (*kong.Context, error) {
 	ctx, cfg, err := parse()
@@ -68,8 +65,8 @@ func InitAgent() (*kong.Context, error) {
 	}
 
 	agent = &Agent{
-		Id:           id,
-		AgePubKey:    agePubKey,
+		Id: id,
+		// AgePubKey:    agePubKey,
 		cfg:          cfg,
 		SharedSecret: sharedSecret,
 		Cryptor:      cryptor,
@@ -123,6 +120,12 @@ func (a *Agent) RemoteForwardedSshdAddress() string {
 
 func (a *Agent) ServerUrl() string {
 	url := ""
+	fmt.Println(a.cfg.Server)
+	fmt.Println(a.cfg.Server)
+	fmt.Println(a.cfg.Server)
+	fmt.Println(a.cfg.Server)
+	fmt.Println(a.cfg.Server)
+	fmt.Println(a.cfg.Server)
 	if strings.HasPrefix(a.cfg.Server, "http://") {
 		url = a.cfg.Server
 	} else if strings.HasPrefix(a.cfg.Server, "https://") {
@@ -156,6 +159,10 @@ func (a *Agent) GetKeepalive() time.Duration {
 
 func (a *Agent) GetRsshOrder() []string {
 	return a.cfg.RsshOrder
+}
+
+func (a *Agent) AgePubKey() string {
+	return a.cfg.AgePubKey
 }
 
 // func getID() string {

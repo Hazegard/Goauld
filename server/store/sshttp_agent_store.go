@@ -30,11 +30,14 @@ func (a *AgentStore) SshttpGetAgent(id string) *SSHTTPAgent {
 }
 
 func (a *AgentStore) SshttpCloseAgent(id string) error {
+	var err error
 	a.sshttpAgentMapMu.Lock()
 	agent := a.sshttpAgentMap[id]
 	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
-	err := agent.SshConn.Close()
+	if agent != nil && agent.SshConn != nil {
+		err = agent.SshConn.Close()
+	}
 	a.SshttpRemoveAgent(id)
 	return err
 }

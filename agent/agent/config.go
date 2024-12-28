@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	_agePubKey        = "age1fz7j9zck3qmafdkynu3ldvkjdrsstanhz8py8scx07hw7vja7aysuccrtn"
 	_localSshPassword = ""
 	_name             = "user@hostname"
 	_server           = "localhost:3000"
@@ -17,7 +18,7 @@ var (
 	_sshd_port        = "0"
 	_rssh_port        = "0"
 	_keepalive        = "20"
-	_verbosity        = "20"
+	_verbosity        = "0"
 	_rssh_order       = "SSH,TLS,WS,HTTP"
 
 	defaultValues = kong.Vars{
@@ -30,6 +31,7 @@ var (
 		"_rssh_order":       _rssh_order,
 		"_keepalive":        _keepalive,
 		"_verbosity":        _verbosity,
+		"_age_pubkey":       _agePubKey,
 	}
 )
 
@@ -45,6 +47,7 @@ type Config struct {
 	RsshOrder        []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order of ssh connection attempts."`
 	KeepAlive        int      `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds)."`
 	Verbose          int      `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+	AgePubKey        string   `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age" short:"A"`
 	//RemoteDynamicPortForwarding []string `name:"R" optional:"" help:"Ports to forward to the server."`
 	//RemotePortForwarding        []string `name:"L" optional:"" help:"Ports to forward to the server."`
 }

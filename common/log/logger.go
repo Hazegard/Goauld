@@ -25,7 +25,7 @@ func initLoggers() {
 
 	gormlogger = NewGormLogger().
 		WithInfo(func() Event {
-			return &GormLoggerEvent{Event: zerologger.Info()}
+			return &GormLoggerEvent{Event: zerologger.Trace()}
 		}).
 		WithError(func() Event {
 			return &GormLoggerEvent{Event: zerologger.Error()}
@@ -79,14 +79,38 @@ func GetGormLogger() logger.Interface {
 	return gormlogger
 }
 
-var (
-	Trace   = Get().Trace
-	Debug   = Get().Debug
-	Info    = Get().Info
-	Warn    = Get().Warn
-	Error   = Get().Error
-	Print   = Get().Print
-	Println = Get().Println
-	Printf  = Get().Printf
-	Log     = Get().Log
-)
+func Trace() *zerolog.Event {
+	return Get().Trace()
+}
+
+func Debug() *zerolog.Event {
+	return Get().Debug()
+}
+
+func Info() *zerolog.Event {
+	return Get().Info()
+}
+
+func Warn() *zerolog.Event {
+	return Get().Warn()
+}
+
+func Error() *zerolog.Event {
+	return Get().Error()
+}
+
+func Print(v ...interface{}) {
+	Get().Print(v)
+}
+
+func Println(v ...interface{}) {
+	Get().Println(v)
+}
+
+func Printf(format string, v ...interface{}) {
+	Get().Printf(format, v...)
+}
+
+func Log() *zerolog.Event {
+	return Get().Log()
+}

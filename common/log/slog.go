@@ -42,7 +42,7 @@ func (e *GormLoggerEvent) Msgf(format string, v ...any) {
 
 func newGormLoggerEventInfo() Event {
 	return &GormLoggerEvent{
-		Event: log.Info(),
+		Event: log.Trace(),
 	}
 }
 

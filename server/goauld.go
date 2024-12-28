@@ -2,6 +2,7 @@ package main
 
 import (
 	"Goauld/common/log"
+	"Goauld/server/config"
 	"Goauld/server/control"
 	"Goauld/server/db"
 	"Goauld/server/router"
@@ -14,7 +15,11 @@ import (
 func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
-
+	_, _, err := config.InitServer()
+	if err != nil {
+		log.Error().Err(err).Msg("error initializing the server")
+		return
+	}
 	db, err := db.InitDB()
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing database")

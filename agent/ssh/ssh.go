@@ -110,6 +110,11 @@ func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.
 			if client != nil {
 				return client, nil
 			}
+		case strings.HasPrefix(proto, "tls"):
+			client = proxifyTls(sshConfig, ctx)
+			if client != nil {
+				return client, nil
+			}
 		}
 	}
 
@@ -125,6 +130,23 @@ func directSSH(sshConfig *ssh.ClientConfig) *ssh.Client {
 		return nil
 	}
 	log.Info().Msgf("Direct connection to the ssh server successfully")
+	return client
+}
+
+func proxifyTls(sshConfig *ssh.ClientConfig, ctx context.Context) *ssh.Client {
+	log.Info().Msgf("Trying to proxify SSH using TLS")
+	tlsConn, err := transport.GetTlsConn(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create TLS connection")
+		return nil
+	}
+	log.Debug().Msg("Connection succedded, trying to mount SSH over the TLS connection")
+	client, err := tryProxifySsh(sshConfig, tlsConn)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to proxify SSH over the TLS connection")
+		return nil
+	}
+	log.Info().Msg("Proxify using TLS succeeded")
 	return client
 }
 
