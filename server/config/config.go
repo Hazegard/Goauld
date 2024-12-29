@@ -49,7 +49,7 @@ type ServerConfig struct {
 	PrivKey string `default:"${_age_privKey}"  name:"age-key" optional:"" help:"Age private key to use."`
 
 	HttpDomain string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
-	TlsDomain  string `default:"${_tls_domain}"  name:"http-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
+	TlsDomain  string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
 
 	HttpPort  int `default:"${_http_port}"  name:"http-port" optional:"" help:"HTTP port to bind to, 0 => Random."`
 	HttpsPort int `default:"${_https_port}"  name:"https-port" optional:"" help:"HTTPS port to bind to, 0 => Random."`
@@ -101,4 +101,8 @@ func (s *ServerConfig) LocalSShServer() string {
 
 func (s *ServerConfig) LocalHttpsServer() string {
 	return fmt.Sprintf("%s:%d", "127.0.0.1", s.HttpsPort)
+}
+
+func (s *ServerConfig) LocalHttpServer() string {
+	return fmt.Sprintf("%s:%d", "127.0.0.1", s.HttpPort)
 }

@@ -4,15 +4,16 @@ import (
 	"Goauld/common/log"
 	_ssh "Goauld/common/ssh"
 	"Goauld/server/config"
-	"Goauld/server/db"
+	"Goauld/server/persistence"
 	"context"
 	"github.com/gliderlabs/ssh"
 	"net"
+	"strconv"
 
 	gossh "golang.org/x/crypto/ssh"
 )
 
-func StartSshd(context context.Context, db *db.DB) {
+func StartSshd(context context.Context, db *persistence.DB) {
 	listener, err := net.Listen("tcp", config.Get().LocalSShServer())
 	if err != nil {
 		panic(err)
@@ -24,13 +25,22 @@ func StartSshd(context context.Context, db *db.DB) {
 	s := &ssh.Server{
 		Addr:    "127.0.0.1:0",
 		Version: "Server",
-		Handler: ssh.Handler(func(s ssh.Session) {
+		Handler: func(s ssh.Session) {
 			srcAddr := s.RemoteAddr().String()
-			s.User()
-			log.Debug().Str("User", s.User()).Msgf("New ssh connection from %s", srcAddr)
-		}),
+			log.Error().Str("User", s.User()).Msgf("New ssh connection from %s", srcAddr)
+
+			log.Error().Str("User", s.User()).Msgf("START SSH connection from: %s", s.RemoteAddr().String())
+			defer log.Error().Str("User", s.User()).Msgf("END  SSH connection from: %s", s.LocalAddr().String())
+		},
 		ReversePortForwardingCallback: func(ctx ssh.Context, host string, port uint32) bool {
-			log.Trace().Str("User", ctx.User()).Msgf("Reverse port forward to %s", host)
+			// TODO: add port in the database
+			log.Trace().Str("User", ctx.User()).Str("Port", strconv.Itoa(int(port))).Msgf("Reverse port forward to %s", host)
+			id := ctx.User()
+			err := db.AddPortToAgent(id, int(port))
+			if err != nil {
+				log.Error().Err(err).Str("User", ctx.User()).Msg("Failed to add port to agent")
+				return false
+			}
 			return true
 		},
 		RequestHandlers: map[string]ssh.RequestHandler{
@@ -83,6 +93,7 @@ func StartSshd(context context.Context, db *db.DB) {
 		SessionRequestCallback: func(sess ssh.Session, requestType string) bool {
 			id := sess.User()
 			remote := sess.RemoteAddr().String()
+
 			log.Trace().Str("User", id).Str("Remote", remote).Msgf("SSH session requested from %s", id)
 			return false
 		},

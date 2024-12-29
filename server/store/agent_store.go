@@ -1,7 +1,9 @@
 package store
 
 import (
-	"Goauld/server/db"
+	"Goauld/server/persistence"
+	"errors"
+	"fmt"
 	sio "github.com/karagenc/socket.io-go"
 	"sync"
 )
@@ -9,10 +11,12 @@ import (
 var store *AgentStore
 var once sync.Once
 
-func NewAgentStore() *AgentStore {
+func NewAgentStore(_db *persistence.DB) *AgentStore {
 	once.Do(func() {
 		store = &AgentStore{
-			sioAgentMap:   make(map[sio.ServerSocket]*db.Agent),
+			db: _db,
+
+			sioAgentMap:   make(map[sio.ServerSocket]*persistence.Agent),
 			sioAgentMapMu: sync.Mutex{},
 
 			wsshAgentMap:   make(map[string]*WsshAgent),
@@ -29,7 +33,8 @@ func NewAgentStore() *AgentStore {
 }
 
 type AgentStore struct {
-	sioAgentMap   map[sio.ServerSocket]*db.Agent
+	db            *persistence.DB
+	sioAgentMap   map[sio.ServerSocket]*persistence.Agent
 	sioAgentMapMu sync.Mutex
 
 	wsshAgentMap   map[string]*WsshAgent
@@ -40,4 +45,38 @@ type AgentStore struct {
 
 	tlsshAgentMap   map[string]*TLSSHAgent
 	tlsshAgentMapMu sync.Mutex
+}
+
+func (a *AgentStore) ClearByPort(port int) error {
+	agents, err := a.db.GetAgentsByUsedPort(port)
+	if err != nil {
+		return fmt.Errorf("get agents by used port:%d err:%v", port, err)
+	}
+
+	errs := make([]error, 0)
+
+	for _, agent := range agents {
+		err := a.ClearById(agent.Id)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+func (a *AgentStore) ClearById(id string) error {
+	errs := make([]error, 0)
+	err := a.TlsshCloseAgent(id)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	err = a.SshttpCloseAgent(id)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	err = a.SshttpCloseAgent(id)
+	if err != nil {
+		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
 }

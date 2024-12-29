@@ -4,22 +4,24 @@ import (
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
 	"Goauld/server/config"
-	"Goauld/server/db"
+	"Goauld/server/persistence"
 	"Goauld/server/store"
 	"fmt"
 	gosio "github.com/karagenc/socket.io-go"
 )
 
 type SocketIO struct {
+	db         *persistence.DB
 	agentStore *store.AgentStore
 	server     *gosio.Server
 }
 
-func InitSocketIOServer(agentStore *store.AgentStore) *gosio.Server {
+func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) *gosio.Server {
 
 	io := gosio.NewServer(&gosio.ServerConfig{})
 	socketIO := &SocketIO{
 		agentStore: agentStore,
+		db:         db,
 	}
 	socketIO.Setup(io.Of("/"))
 	err := io.Run()
@@ -33,7 +35,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 	root.OnConnection(func(socket gosio.ServerSocket) {
 		socket.OnEvent(socketio.RegisterEvent, func(data socketio.Register) {
 			log.Debug().Str("Agent.Id", data.Id).Msg("socketio.RegisterEvent")
-			agent, err := db.Get().FindOrCreate(data.Id)
+			agent, err := sio.db.FindOrCreate(data.Id)
 			if err != nil {
 				errorMsg := fmt.Errorf("error retrieving agent: %s", err)
 				socket.Emit(socketio.RegisterError, socketio.SioError{
@@ -71,6 +73,10 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.SetSharedSecret(sharedSecret)
 			agent.SetName(agentName)
 			agent.SetConnect()
+			err = sio.db.UpdateAgent(agent)
+			if err != nil {
+				log.Error().Err(err).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
+			}
 			sio.agentStore.SioAddAgent(agent, socket)
 
 			if agent.PrivateKey == "" {
@@ -135,7 +141,11 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error decrypting ssh password")
 				return
 			}
-			agent.SetSshpassword(password.AgentSshPassword)
+			agent.SetSshPassword(password.AgentSshPassword)
+			err = sio.db.UpdateAgent(agent)
+			if err != nil {
+				log.Error().Err(err).Str("Agent.Id", agent.Id).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
+			}
 			socket.Emit(socketio.SendAgentSshPasswordSuccess)
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("END socketio.SendAgentSshPasswordEvent")
 		})
@@ -143,6 +153,10 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 		socket.OnEvent(socketio.DeregisterEvent, func(data socketio.Deregister) {
 			agent := sio.agentStore.SioGetAgent(socket)
 			agent.SetDisconnect()
+			err := sio.db.UpdateAgent(agent)
+			if err != nil {
+				log.Error().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.RegisterError updating agent")
+			}
 			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.DeregisterEvent")
 		})
 
@@ -162,11 +176,12 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.Disconnect: error closing agent")
 			}
 			sio.agentStore.SioRemoveAgent(socket)
-			if err != nil {
-				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.Disconnect: agent disconnect failed")
-			}
-			agent.SetDisconnect()
 
+			agent.SetDisconnect()
+			err = sio.db.UpdateAgent(agent)
+			if err != nil {
+				log.Error().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect updating agent")
+			}
 		})
 	})
 }

@@ -1,4 +1,4 @@
-package db
+package persistence
 
 import (
 	"Goauld/common/log"
@@ -21,7 +21,7 @@ var once sync.Once
 var _db *DB
 
 func InitDB() (*DB, error) {
-	db := Get()
+	db := get()
 	err := db.Migrate()
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func InitDB() (*DB, error) {
 	return db, nil
 }
 
-func Get() *DB {
+func get() *DB {
 	var err error
 	once.Do(func() {
 		__db, _err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
@@ -41,7 +41,6 @@ func Get() *DB {
 		}
 		_db = &DB{db: __db}
 	})
-
 	return _db
 }
 
