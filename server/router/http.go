@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"errors"
 	sio "github.com/karagenc/socket.io-go"
+	"github.com/urfave/negroni"
 	"net/http"
 	"time"
 )
@@ -25,15 +26,22 @@ func NewHttpRouter(
 	wssh *transport.WSshHandler,
 	sshttp *transport.SSHttpServer,
 	tlssh *transport.TLSSHServer,
+	manageRouter *UserRouter,
 ) *HttpRouter {
 
 	router := http.NewServeMux()
 	router.Handle("/socket.io/", controlServer)
 	router.Handle("/wssh/{agentId}", wssh)
 	router.Handle("/sshttp/{agentId}", sshttp)
+	// manageRouter.RegisterRouter(router)
+	router.Handle("/manage/", http.StripPrefix("/manage", manageRouter.userRouter))
+	n := negroni.New()
+	n.Use(negroni.NewLogger())
+	n.Use(negroni.NewRecovery())
+	n.UseHandler(router)
 	server := &http.Server{
 		//Addr:    config.Get().LocalHttpServer(),
-		Handler: router,
+		Handler: n,
 
 		// It is always a good practice to set timeouts.
 		ReadTimeout: 120 * time.Second,

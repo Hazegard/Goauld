@@ -4,6 +4,7 @@ import (
 	"Goauld/common/crypto"
 	"Goauld/common/ssh"
 	"Goauld/common/utils"
+	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
 	"strconv"
@@ -12,16 +13,21 @@ import (
 
 type Agent struct {
 	gorm.Model
-	Id           string `gorm:"primaryKey"`
-	Name         string `gorm:"type:text"`
-	UsedPorts    string `gorm:"type:string"`
-	PrivateKey   string `gorm:"type:text"`
-	PublicKey    string `gorm:"type:text"`
-	Source       string `gorm:"type:text"`
-	Connected    bool   `gorm:"type:boolean"`
-	SharedSecret string `gorm:"type:text"`
-	SshPasswd    string `gorm:"type:text"`
+	Id           string `gorm:"primaryKey" json:"id"`
+	Name         string `gorm:"type:text" json:"name"`
+	SshMode      string `gorm:"type:text" json:"ssh_mode"`
+	UsedPorts    string `gorm:"type:string" json:"usedPorts"`
+	PrivateKey   string `gorm:"type:text" json:"privateKey"`
+	PublicKey    string `gorm:"type:text" json:"publicKey"`
+	Source       string `gorm:"type:text" json:"source"`
+	Connected    bool   `gorm:"type:boolean" json:"connected"`
+	SharedSecret string `gorm:"type:text" json:"sharedSecret"`
+	SshPasswd    string `gorm:"type:text" json:"sshPasswd"`
 	cryptor      *crypto.SymCryptor
+}
+
+func (a *Agent) JSON() ([]byte, error) {
+	return json.Marshal(a)
 }
 
 func (a *Agent) GetCryptor() (*crypto.SymCryptor, error) {
@@ -114,6 +120,17 @@ func (a *Agent) SetSshPassword(pwd string) {
 	a.SshPasswd = pwd
 }
 
+func (a *Agent) SetSSHConnectionMode(mode string) error {
+	m := strings.ToUpper(mode)
+	switch mode {
+	case "HTTP", "SSH", "TLS", "WS", "DISCONNECTED":
+		a.SshMode = m
+	default:
+		return fmt.Errorf("unknown mode: %s", mode)
+	}
+	return nil
+}
+
 func (db *DB) GetAllAgents() ([]Agent, error) {
 	agents := []Agent{}
 	result := db.db.Find(&agents)
@@ -194,6 +211,25 @@ func (db *DB) GetAgentsByUsedPort(port int) ([]Agent, error) {
 		}
 	}
 	return found, nil
+}
+
+func (db *DB) SetAgentSshMode(id string, mode string) error {
+	agent, err := db.FindAgent(id)
+	if err != nil {
+		return fmt.Errorf("could not find agent: %s", err)
+	}
+	if agent == nil {
+		return fmt.Errorf("agent not found")
+	}
+	err = agent.SetSSHConnectionMode(mode)
+	if err != nil {
+		return fmt.Errorf("could not set ssh connection mode: %s", err)
+	}
+	err = db.UpdateAgent(agent)
+	if err != nil {
+		return fmt.Errorf("could not update agent: %s", err)
+	}
+	return nil
 }
 
 func portStringToInt(port string) []int {

@@ -3,6 +3,7 @@ package transport
 import (
 	"Goauld/common/log"
 	"Goauld/server/config"
+	"Goauld/server/persistence"
 	"Goauld/server/store"
 	"context"
 	"errors"
@@ -12,14 +13,16 @@ import (
 	"nhooyr.io/websocket"
 )
 
-func NewWSshHandler(agentStore *store.AgentStore) *WSshHandler {
+func NewWSshHandler(agentStore *store.AgentStore, db *persistence.DB) *WSshHandler {
 	return &WSshHandler{
 		agentStore: agentStore,
+		db:         db,
 	}
 }
 
 type WSshHandler struct {
 	agentStore *store.AgentStore
+	db         *persistence.DB
 }
 
 func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +66,10 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			errChan <- err
 		}
 	}()
+	err = wssh.db.SetAgentSshMode(id, "WS")
+	if err != nil {
+		log.Warn().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("error setting agent mode to WS")
+	}
 	err = <-errChan
 	if err != nil {
 		log.Error().Err(err).Msgf("WSSH: error during copy (%s)", id)
@@ -71,5 +78,9 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = wssh.agentStore.WsshCloseAgent(id)
 	if err != nil {
 		log.Error().Err(err).Msgf("WSSH: error while closing websocket streams (%s)", id)
+	}
+	err = wssh.db.SetAgentSshMode(id, "DISCONNECTED")
+	if err != nil {
+		log.Warn().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("error setting agent mode to [DISCONNECTED]")
 	}
 }

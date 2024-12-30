@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"Goauld/common/log"
+	"Goauld/server/config"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"sync"
@@ -18,7 +19,7 @@ var (
 )
 
 var once sync.Once
-var _db *DB
+var db *DB
 
 func InitDB() (*DB, error) {
 	db := get()
@@ -32,16 +33,23 @@ func InitDB() (*DB, error) {
 func get() *DB {
 	var err error
 	once.Do(func() {
-		__db, _err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+		dbFileName := ""
+		if config.Get().NoDB {
+			dbFileName = ":memory:"
+		} else {
+			dbFileName = config.Get().DbFileName
+		}
+
+		_db, _err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{
 			Logger: log.GetGormLogger(),
 		})
 		if err != nil {
 			err = _err
 			return
 		}
-		_db = &DB{db: __db}
+		db = &DB{db: _db}
 	})
-	return _db
+	return db
 }
 
 func (db *DB) Migrate() error {

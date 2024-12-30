@@ -29,6 +29,8 @@ var (
 
 	_verbosity = "0"
 	_tls       = "true"
+	_no_db     = "false"
+	_db_name   = APP_NAME + ".db"
 
 	defaultValues = kong.Vars{
 		"_age_privKey": _age_privKey,
@@ -42,6 +44,8 @@ var (
 
 		"_verbosity": _verbosity,
 		"_tls":       _tls,
+		"_no_db":     _no_db,
+		"_db_name":   _db_name,
 	}
 )
 
@@ -57,7 +61,9 @@ type ServerConfig struct {
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
-	Tls bool `default:"${_tls}" help:"Enable TLS."`
+	Tls        bool   `default:"${_tls}" help:"Enable TLS."`
+	NoDB       bool   `default:"${_no_db}" help:"Disable database usage."`
+	DbFileName string `default:"${_db_name}" help:"Database filename to use."`
 }
 
 func InitServer() (*kong.Context, *ServerConfig, error) {

@@ -177,6 +177,10 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			}
 			sio.agentStore.SioRemoveAgent(socket)
 
+			err = agent.SetSSHConnectionMode("DISCONNECTED")
+			if err != nil {
+				log.Warn().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect: error setting agent connection mode")
+			}
 			agent.SetDisconnect()
 			err = sio.db.UpdateAgent(agent)
 			if err != nil {

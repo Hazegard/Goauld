@@ -14,7 +14,7 @@ var (
 	_localSshPassword = ""
 	_name             = "user@hostname"
 	_server           = "localhost:3000"
-	_ssh_server       = "localhost:61160"
+	_ssh_server       = "localhost:2222"
 	_sshd_port        = "0"
 	_rssh_port        = "0"
 	_keepalive        = "20"
