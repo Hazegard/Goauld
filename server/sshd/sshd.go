@@ -22,6 +22,8 @@ func StartSshd(context context.Context, db *persistence.DB) {
 	config.Get().SshdPort = listener.Addr().(*net.TCPAddr).Port
 	log.Info().Str("Address", config.Get().LocalSShServer()).Msgf("SSH server listening")
 	forwardHandler := &ssh.ForwardedTCPHandler{}
+
+	// The SSHD server
 	s := &ssh.Server{
 		Addr:    "127.0.0.1:0",
 		Version: "Server",
@@ -32,8 +34,10 @@ func StartSshd(context context.Context, db *persistence.DB) {
 			log.Error().Str("User", s.User()).Msgf("START SSH connection from: %s", s.RemoteAddr().String())
 			defer log.Error().Str("User", s.User()).Msgf("END  SSH connection from: %s", s.LocalAddr().String())
 		},
+		// Handle the reverse port forwarding, it gets the agent from the database
+		// and update the agent to add the port in the database
+		// If not agent is retrieved from the database, cancel the port forwarding
 		ReversePortForwardingCallback: func(ctx ssh.Context, host string, port uint32) bool {
-			// TODO: add port in the database
 			log.Trace().Str("User", ctx.User()).Str("Port", strconv.Itoa(int(port))).Msgf("Reverse port forward to %s", host)
 			id := ctx.User()
 			err := db.AddPortToAgent(id, int(port))
@@ -52,6 +56,12 @@ func StartSshd(context context.Context, db *persistence.DB) {
 			// "direct-tcpip": ssh.DirectTCPIPHandler,
 			"session": ssh.DefaultSessionHandler,
 		},
+		// PublicKeyHandler handles the public key authentication
+		// the username connecting is the id of the agent
+		// The authentication only succeed if
+		// - The username matches the ID of an already registered agent
+		// - The agent has a public key configured
+		// - The public key matched
 		PublicKeyHandler: func(ctx ssh.Context, key ssh.PublicKey) bool {
 			id := ctx.User()
 			remote := ctx.RemoteAddr().String()
@@ -66,6 +76,7 @@ func StartSshd(context context.Context, db *persistence.DB) {
 			agentPubKey, err := _ssh.ParseSSHPublicKey(agent.PublicKey)
 			if err != nil {
 				log.Debug().Msgf("Error parsing public key (%s)", id)
+				return false
 			}
 			log.Trace().Str("User", id).Msg("Public Key found, checking public key...")
 			if ssh.KeysEqual(agentPubKey, key) {
@@ -90,6 +101,7 @@ func StartSshd(context context.Context, db *persistence.DB) {
 			}
 			return false
 		},
+		// SessionRequestCallback logs information when a user requests a session
 		SessionRequestCallback: func(sess ssh.Session, requestType string) bool {
 			id := sess.User()
 			remote := sess.RemoteAddr().String()
@@ -106,6 +118,8 @@ func StartSshd(context context.Context, db *persistence.DB) {
 	context.Done()
 }
 
+// handlePing returns pong when an agent send a ping
+// This ping pong mechanism is used to perform a keepalive of the connections
 func handlePing(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte) {
 	// log.Trace().Msgf("SSH ping from %s", ctx.User())
 	// log.Trace().Msgf("Returning pong to %s", ctx.User())

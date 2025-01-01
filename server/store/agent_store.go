@@ -11,6 +11,8 @@ import (
 var store *AgentStore
 var once sync.Once
 
+// NewAgentStore saves in memory all the information related
+// to the actives connections
 func NewAgentStore(_db *persistence.DB) *AgentStore {
 	once.Do(func() {
 		store = &AgentStore{
@@ -47,6 +49,7 @@ type AgentStore struct {
 	tlsshAgentMapMu sync.Mutex
 }
 
+// ClearByPort Clears all agent connections related to a given port
 func (a *AgentStore) ClearByPort(port int) error {
 	agents, err := a.db.GetAgentsByUsedPort(port)
 	if err != nil {
@@ -64,6 +67,7 @@ func (a *AgentStore) ClearByPort(port int) error {
 	return errors.Join(errs...)
 }
 
+// ClearById Clears all agent connections related to a given agent id
 func (a *AgentStore) ClearById(id string) error {
 	errs := make([]error, 0)
 	err := a.TlsshCloseAgent(id)
@@ -79,4 +83,12 @@ func (a *AgentStore) ClearById(id string) error {
 		errs = append(errs, err)
 	}
 	return errors.Join(errs...)
+}
+
+// CloseAgentConnections closes all the connections of the agent
+func (a *AgentStore) CloseAgentConnections(id string) error {
+	err1 := a.WsshCloseAgent(id)
+	err2 := a.SshttpCloseAgent(id)
+	err3 := a.TlsshCloseAgent(id)
+	return errors.Join(err1, err2, err3)
 }

@@ -21,6 +21,7 @@ var (
 var once sync.Once
 var db *DB
 
+// InitDB initialize the database, performing migrations if needed
 func InitDB() (*DB, error) {
 	db := get()
 	err := db.Migrate()
@@ -30,6 +31,7 @@ func InitDB() (*DB, error) {
 	return db, nil
 }
 
+// get return the database connection object
 func get() *DB {
 	var err error
 	once.Do(func() {
@@ -52,6 +54,7 @@ func get() *DB {
 	return db
 }
 
+// Migrate performs the database migration
 func (db *DB) Migrate() error {
 	for _, dbType := range dbTypes {
 		err := db.db.AutoMigrate(&dbType)

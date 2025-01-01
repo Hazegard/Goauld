@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// SSHHttpClient handle the SSH connection over the HTTP traffic
 type SSHHttpClient struct {
 	client *http.Client
 	buffer bytes.Buffer
@@ -20,6 +21,7 @@ type SSHHttpClient struct {
 	url    string
 }
 
+// NewSSHTTPConn returns a new SSHHttpClient
 func NewSSHTTPConn() *SSHHttpClient {
 	httpClient := &http.Client{
 		Transport: proxy.NewTransportProxy(),
@@ -30,6 +32,7 @@ func NewSSHTTPConn() *SSHHttpClient {
 	}
 }
 
+// Connect initialize the SSH over HTTP connection
 func (c *SSHHttpClient) Connect() error {
 	log.Trace().Msgf("[SSHTTP] Connect to %s", c.url)
 	r, err := c.client.Head(c.url)
@@ -44,6 +47,8 @@ func (c *SSHHttpClient) Connect() error {
 	return nil
 }
 
+// Read performs a GET request to read data from the remote SSH server
+// the data is then send to the local SSH client
 func (c *SSHHttpClient) Read(b []byte) (int, error) {
 	c.bufMu.Lock()
 	defer c.bufMu.Unlock()
@@ -73,6 +78,8 @@ func (c *SSHHttpClient) Read(b []byte) (int, error) {
 
 }
 
+// Write performs a POST request to send data from the local SSH client
+// to the remote SSHD server
 func (c *SSHHttpClient) Write(b []byte) (int, error) {
 	//log.Trace().Msgf("WRITE START")
 	//defer log.Trace().Msgf("WRITE END")
@@ -84,6 +91,7 @@ func (c *SSHHttpClient) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
+// Close finish the connection to the server
 func (c *SSHHttpClient) Close() error {
 	log.Trace().Msgf("[SSHTTP] Close() called")
 	return nil

@@ -15,45 +15,44 @@ import (
 func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
+	// Initializt the server configuration from command line, environment variable and configuration files
 	_, _, err := config.InitServer()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the server")
 		return
 	}
+	// Initializz the database
 	db, err := persistence.InitDB()
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing database")
 		return
 	}
+	// Initialize all the required components
 	agentStore := store.NewAgentStore(db)
 	sioServer := control.InitSocketIOServer(agentStore, db)
 	wssh := transport.NewWSshHandler(agentStore, db)
 	sshttp := transport.NewSSHHttpServer(agentStore, db)
 	tlssh := transport.NewTLSSHServer(agentStore, db)
-	manageRouter := router.NewUserRouter(db, agentStore)
+	manageRouter := router.NewManageRouter(db, agentStore)
+
+	// Initialize the HTTP router
 	r := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter)
 
+	// Initialize and start the SSHD server
 	go sshd.StartSshd(ctx, db)
 	go func() {
+		//Start the HTTP server
 		err := r.Serve()
 		if err != nil {
 			log.Error().Err(err).Msg("error starting the HTTP server")
 		}
 	}()
 
-	startSshd(ctx)
+	// waits for the end
 	select {
 	case <-ctx.Done():
 		log.Error().Err(ctx.Err()).Msgf("shutting down")
 		cancel()
 	}
 	<-ctx.Done()
-}
-
-func startHttpRouter(r *router.HttpRouter) {
-
-}
-
-func startSshd(ctx context.Context) {
-
 }

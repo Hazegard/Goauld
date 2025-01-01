@@ -3,7 +3,6 @@ package control
 import (
 	"Goauld/agent/agent"
 	"Goauld/agent/proxy"
-	"Goauld/agent/ssh"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
@@ -16,74 +15,112 @@ import (
 	"time"
 )
 
-func NewClient(ctx context.Context) error {
+// ControlPlanClient Handle the socket.io interaction regarding the management of the agent
+type ControlPlanClient struct {
+	manager    sio.Manager
+	socket     sio.ClientSocket
+	configDone chan<- struct{}
+	ctx        context.Context
+	url        string
+}
+
+// NewControlPlanClient returns a new ControlPlanClient
+func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}) *ControlPlanClient {
+	return &ControlPlanClient{
+		ctx:        ctx,
+		url:        agent.Get().SocketIoUrl(),
+		configDone: configDone,
+	}
+}
+
+// Init initialize the socket.io handlers
+func (cpc *ControlPlanClient) Init() error {
 	cfg := getEioConfig()
-	url := agent.Get().SocketIoUrl()
-	manager := sio.NewManager(url, cfg)
+	manager := sio.NewManager(cpc.url, cfg)
 	socket := manager.Socket("/", nil)
 
 	socket.OnConnect(func() {
 		log.Trace().Msg("OnConnect")
-		log.Info().Msgf("Connected to the control server %s", url)
+		log.Info().Msgf("Connected to the control server %s", cpc.url)
 	})
 	socket.OnConnectError(func(err any) {
 		log.Trace().Msg("OnConnectError")
-		log.Error().Msgf("Error occured connecting to %s (%v)", url, err)
+		log.Error().Msgf("Error occured connecting to %s (%v)", cpc.url, err)
 	})
 
 	manager.OnError(func(err error) {
 		log.Trace().Msg("OnError")
-		log.Error().Err(err).Msgf("Error occured  %s", url)
+		log.Error().Err(err).Msgf("Error occured  %s", cpc.url)
 	})
 	manager.OnReconnect(func(attempt uint32) {
 		log.Trace().Msg("OnReconnect")
-		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", url, attempt)
+		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", cpc.url, attempt)
 	})
 
+	// SendSshPrivateKeyEvent is sent by the server after the client sends the RegisterEvent event
+	// this event contains the encrypted SSH private key used by the agent to authenticate on the
+	// SSHD server.
+	// Once received, the agent sends its SSHD password to the server using the SendAgentSshPasswordEvent event
 	socket.OnEvent(socketio.SendSshPrivateKeyEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
 		log.Trace().Msgf("SshPrivateKeyEvent: data reveived")
+		// Decrypt the SSH private key
 		privateKey, err := socketio.DecryptSshPrivateKeyMessage(data, agent.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error decrypting private key")
 		}
+
+		// Add the decrypted SSH private key to the agent configuration
 		agent.Get().SShPrivateKey = privateKey.SshPrivateKey
 		log.Debug().Msgf("Ssh private key received and successfully decrypted")
 		log.Debug().Msgf("Sending local sshd password")
+		// Encrypt the SSH password used by the client to authenticate to the agent SSHD server
 		localSshPassword, err := socketio.NewEncryptedAgentSshPasswordMessage(agent.Get().LocalSShdPassword(), agent.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error encrypting local sshd password")
 		}
 		log.Debug().Msgf("Local sshd password sent")
+		// Send the encrypted SSH password to the server
 		socket.Emit(socketio.SendAgentSshPasswordEvent, localSshPassword)
 
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent done")
 	})
 
+	// SendSshHPrivateKeyError Logs when the server returns an error
 	socket.OnEvent(socketio.SendSshHPrivateKeyError, func() {
 		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError")
-		log.Error().Msgf("Error occured (%s) %s", "SendSshHPrivateKeyError", url)
+		log.Error().Msgf("Error occured (%s) %s", "SendSshHPrivateKeyError", cpc.url)
 		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError done")
 	})
 
+	// SendSshPrivateKeySuccess Logs when the server returns no error
 	socket.OnEvent(socketio.SendSshPrivateKeySuccess, func() {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess")
 		log.Debug().Msgf("Event SendSshPrivateKeySuccess received")
 		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess done")
 	})
 
+	// SendAgentSshPasswordError Logs when the server returns an error
 	socket.OnEvent(socketio.SendAgentSshPasswordError, func() {
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordError")
-		log.Error().Msgf("Error occured (%s) %s", "SendAgentSshPasswordError", url)
+		log.Error().Msgf("Error occured (%s) %s", "SendAgentSshPasswordError", cpc.url)
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordError done")
 	})
 
+	// SendAgentSshPasswordSuccess Logs when the server returns no error
+	// As it complete the configuration steps between the
 	socket.OnEvent(socketio.SendAgentSshPasswordSuccess, func() {
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess")
-		ssh.Connect()
+		cpc.configDone <- struct{}{}
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess done")
 	})
 
+	cpc.socket = socket
+	return nil
+}
+
+// Start starts the socket and initiates the configuration exchages with the server
+func (cpc *ControlPlanClient) Start() error {
 	encryptedKey, err := crypto.AsymEncrypt(agent.Get().AgePubKey(), agent.Get().SharedSecret)
 	if err != nil {
 		return fmt.Errorf("error encrypting shared secret: %v", err)
@@ -95,28 +132,32 @@ func NewClient(ctx context.Context) error {
 	}
 
 	// This will be emitted after the socket is connected.
-	socket.Emit(socketio.RegisterEvent, socketio.Register{
+	cpc.socket.Emit(socketio.RegisterEvent, socketio.Register{
 		Id:        agent.Get().Id,
 		SharedKey: encryptedKey,
 		Name:      encryptedName,
 	})
 
-	socket.Connect()
-	go KeepAlive(socket, ctx)
-	log.Debug().Msgf("Connected to the control server %s", url)
+	cpc.socket.Connect()
+	// starts the keepalive in background
+	go cpc.keepAliveLoop()
+	log.Debug().Msgf("Connected to the control server %s", cpc.url)
 	log.Trace().Msg("Event send: RegisterEvent")
+	// Waits for an error or the end of the socket
 	select {
-	case <-ctx.Done():
+	case <-cpc.ctx.Done():
 		log.Warn().Msgf("Shutting done the socketio control socket")
-		socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
+		cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
 		log.Trace().Msg("Event send: Disconnect")
-		socket.Disconnect()
+		cpc.socket.Disconnect()
 	}
 	return nil
 }
 
-func KeepAlive(socket sio.Socket, ctx context.Context) {
-	socket.OnEvent(socketio.PongEvent, func(data []byte) {
+// KeepAliveLoop starts a keepalive loop that will periodically send ping
+// in order to keep alive the connection
+func (cpc *ControlPlanClient) keepAliveLoop() {
+	cpc.socket.OnEvent(socketio.PongEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
 	})
 	t := time.NewTicker(agent.Get().GetKeepalive() * time.Second)
@@ -125,13 +166,14 @@ func KeepAlive(socket sio.Socket, ctx context.Context) {
 		select {
 		case <-t.C:
 			log.Trace().Msg("OnEvent: PingEvent")
-			socket.Emit(socketio.PingEvent)
-		case <-ctx.Done():
+			cpc.socket.Emit(socketio.PingEvent)
+		case <-cpc.ctx.Done():
 			return
 		}
 	}
 }
 
+// getEioConfig return the socket.io underlying configuration
 func getEioConfig() *sio.ManagerConfig {
 	return &sio.ManagerConfig{
 		EIO: eio.ClientConfig{

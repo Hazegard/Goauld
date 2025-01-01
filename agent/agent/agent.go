@@ -2,12 +2,15 @@ package agent
 
 import (
 	"Goauld/common/crypto"
+	ssh "Goauld/common/ssh"
 	"crypto/md5"
 	"fmt"
 	"github.com/alecthomas/kong"
 	"github.com/denisbrodbeck/machineid"
+	"net"
 	"os"
 	"os/user"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -24,15 +27,19 @@ type Agent struct {
 
 var agent *Agent
 
+// InitAgent parses the command lines arguments and initializes the temporary values (shared secret,etc...)
 func InitAgent() (*kong.Context, error) {
+	// Parse the command line arguments
 	ctx, cfg, err := parse()
 	if err != nil {
 		return nil, fmt.Errorf("parsing arguments: %v", err)
 	}
+	// Generate the shared secret
 	sharedSecret, err := crypto.GeneratePassword(crypto.PasswordLength)
 	if err != nil {
 		return nil, fmt.Errorf("error generating ssh password: %v", err)
 	}
+	// Generate the local password if not provided
 	if cfg.LocalSshPassword == "" {
 		sshPassword, err := crypto.GeneratePassword(crypto.PasswordLength)
 		if err != nil {
@@ -41,17 +48,20 @@ func InitAgent() (*kong.Context, error) {
 		cfg.LocalSshPassword = sshPassword
 	}
 
+	// Generate the encryption mechanism
 	cryptor, err := crypto.NewCryptor(sharedSecret)
 	if err != nil {
 		return nil, fmt.Errorf("initializing cryptor: %v", err)
 	}
 
+	// compute the agent ID used to identify it
 	mid, err := machineid.ID()
 	if err != nil {
 		return nil, fmt.Errorf("error generating machine id: %v", err)
 	}
 	id := fmt.Sprintf("%x", md5.Sum([]byte(mid)))
 
+	// Generate the agent name if not provided
 	if cfg.Name == _name {
 		userName, err := user.Current()
 		if err != nil {
@@ -78,46 +88,62 @@ func Get() *Agent {
 	return agent
 }
 
+// Verbosity returns the current log verbosity
 func (a *Agent) Verbosity() int {
 	return a.cfg.Verbose
 }
 
+// LocalSShdAddress returns the local address the sshd server listens
 func (a *Agent) LocalSShdAddress() string {
-	return fmt.Sprintf("127.0.0.1:%d", a.cfg.SshdPort)
+	return net.JoinHostPort("127.0.0.1", strconv.Itoa(a.cfg.SshdPort))
 }
 
+// LocalSShdPassword returns the current ssh password allowing to connect
 func (a *Agent) LocalSShdPassword() string {
 	return a.cfg.LocalSshPassword
 }
 
+// LocalSshdPort returns the local SSHD password
 func (a *Agent) LocalSshdPort() int {
 	return a.cfg.SshdPort
 }
 
+// SetLocalSshdPort sets the SSHD port to the configuration
 func (a *Agent) SetLocalSshdPort(p int) {
 	a.cfg.SshdPort = p
 }
 
+// IsLocalSshdRandomPort returns whether the local SSHD port is random
 func (a *Agent) IsLocalSshdRandomPort() bool {
 	return a.cfg.SshdPort == 0
 }
 
+// ControlSshServer returns the SSHD server
 func (a *Agent) ControlSshServer() string {
 	return a.cfg.SshServer
 }
 
+// IsRemoteForwardedSshdPortRandom returns whether the remote forwarded SSHD port is random
 func (a *Agent) IsRemoteForwardedSshdPortRandom() bool {
 	return a.cfg.RsshPort == 0
 }
 
+// RsshPort returns the remote forwarded SSHD port
 func (a *Agent) RsshPort() int {
 	return a.cfg.RsshPort
 }
 
+// RemoteForwardedSshdAddress returns the remote forwarded SSHD address
 func (a *Agent) RemoteForwardedSshdAddress() string {
 	return fmt.Sprintf("127.0.0.1:%d", a.cfg.RsshPort)
 }
 
+// RemoteForwardedSocksAddress returns the remote forwarded Socks address
+func (a *Agent) RemoteForwardedSocksAddress() string {
+	return fmt.Sprintf("127.0.0.1:%d", a.cfg.SocksPort)
+}
+
+// ServerUrl return the HTTP control server URL
 func (a *Agent) ServerUrl() string {
 	url := ""
 	if strings.HasPrefix(a.cfg.Server, "http://") {
@@ -131,32 +157,69 @@ func (a *Agent) ServerUrl() string {
 	return url
 }
 
+// WSshUrl return the SSH over Websocket connection URL
 func (a *Agent) WSshUrl() string {
 	return fmt.Sprintf("%s/wssh/%s", a.ServerUrl(), a.Id)
 }
 
+// SocketIoUrl return the control connection URL
 func (a *Agent) SocketIoUrl() string {
 	return fmt.Sprintf("%s/socket.io/", a.ServerUrl())
 }
 
+// SSHTTPUrl return the SSH over HTTP connection URL
 func (a *Agent) SSHTTPUrl() string {
 	return fmt.Sprintf("%s/sshttp/%s", a.ServerUrl(), a.Id)
 }
 
+// TlsUrl return the SSH over TLS connection URL
+func (a *Agent) TlsUrl() string {
+	return fmt.Sprintf("%s:443", a.cfg.TlsServer)
+}
+
+// Name returns the agent name
 func (a *Agent) Name() string {
 	return a.cfg.Name
 }
 
+// GetKeepalive returns the duration between two keepalive ping
 func (a *Agent) GetKeepalive() time.Duration {
 	return time.Duration(a.cfg.KeepAlive)
 }
 
+// GetRsshOrder returns the order thtat the agent should follow to attempt to connect
+// to the SSHD server
 func (a *Agent) GetRsshOrder() []string {
 	return a.cfg.RsshOrder
 }
 
+// AgePubKey returns the age public key used to encrypt asymetrically data
 func (a *Agent) AgePubKey() string {
 	return a.cfg.AgePubKey
+}
+
+// SshdEnabled returns whether the sshd server is enabled
+func (a *Agent) SshdEnabled() bool {
+	return a.cfg.Sshd || a.cfg.SshdPort != 0
+}
+
+// SocksEnabled returns whether the socks server is enabled
+func (a *Agent) SocksEnabled() bool {
+	return a.cfg.Socks || a.cfg.SocksPort != 0
+}
+
+// AddSshdToRpf adds the SSHD conf to the Remote port forwarding list
+func (a *Agent) AddSshdToRpf() {
+	sshdRpf := ssh.ReversePortForwarding{
+		RemotePort: a.cfg.RsshPort,
+		LocalPort:  a.cfg.SshdPort,
+		LocalIP:    "127.0.0.1",
+	}
+	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
+}
+
+func (a *Agent) GetRemotePortForwarding() []ssh.ReversePortForwarding {
+	return a.cfg.RemotePortForwarding
 }
 
 // func getID() string {

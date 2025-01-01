@@ -2,19 +2,35 @@ package ssh
 
 import (
 	"Goauld/agent/agent"
-	"Goauld/agent/ssh/transport"
 	"Goauld/common/log"
+	_ssh "Goauld/common/ssh"
 	"context"
+	"errors"
 	"fmt"
 	"golang.org/x/crypto/ssh"
 	"io"
 	"net"
-	"strings"
+	"sync"
 	"time"
 )
 
-func connect() error {
+type SSHAgent struct {
+	client *ssh.Client
+	ctx    context.Context
+
+	remotePortMapMu sync.Mutex
+	remotePortMap   map[string]_ssh.ReversePortForwarding
+}
+
+func NewSSHAgent() *SSHAgent {
+	return &SSHAgent{
+		remotePortMap: make(map[string]_ssh.ReversePortForwarding),
+	}
+}
+
+func (sshAgent *SSHAgent) Init() error {
 	log.Info().Msg("Connecting to the ssh server...")
+	// Get the private key used to authenticate to the server
 	privateKey, err := ssh.ParsePrivateKey([]byte(agent.Get().SShPrivateKey))
 	if err != nil {
 		return err
@@ -26,197 +42,139 @@ func connect() error {
 		ClientVersion:   "SSH-2.0-Client",
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
+	// defer cancel()
+	// Get the ssh client, which may be proxified to bypass proxies
 	client, err := getProxifiedClient(sshConfig, ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
 		return err
 	}
-	go sshKeepAlive(client, ctx)
 
-	defer client.Close()
+	// start a keepalive loop
+	go sshAgent.sshKeepAliveLoop()
 
-	remoteListener, err := client.Listen("tcp", agent.Get().RemoteForwardedSshdAddress())
+	sshAgent.client = client
+	sshAgent.ctx = ctx
+	return nil
+}
+
+func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error) {
+	l, err := sshAgent.client.Listen("tcp", remote)
 	if err != nil {
-		return fmt.Errorf("failed to start remote listener: %w", err)
+		return nil, 0, nil
+	}
+	port := l.Addr().(*net.TCPAddr).Port
+	return l, port, err
+}
+
+// RemoteForward starts the
+func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.ReversePortForwarding, ctx context.Context) (int, error) {
+
+	// start the remote forwarding to remotely expose the local sshd server
+	remoteListener, err := sshAgent.client.Listen("tcp", rpf.GetRemote())
+	if err != nil {
+		return 0, fmt.Errorf("failed to start remote listener: %w", err)
 	}
 
 	remotePort := remoteListener.Addr().(*net.TCPAddr).Port
-	log.Info().Msgf("Remote port: %d", remotePort)
-	log.Info().Msg("LocalSshPassword is:")
-	log.Trace().Msg(agent.Get().LocalSShdPassword())
-	defer remoteListener.Close()
-	for {
-		remoteConn, err := remoteListener.Accept()
-		if err != nil {
-			// TODO faire du throttle si on garde l'erreur, voir pour cuoper proprement après un temp ?
-			log.Error().Err(err).Msg("failed to accept remote connection")
-			continue
-		}
+	rpf.RemotePort = remotePort
 
-		go func() {
+	sshAgent.remotePortMapMu.Lock()
+	sshAgent.remotePortMap[rpf.String()] = rpf
+	sshAgent.remotePortMapMu.Unlock()
 
-			localConn, err := net.Dial("tcp", agent.Get().LocalSShdAddress())
-			if err != nil {
-				log.Error().Err(err).Msg("failed to connect to local service")
-				return
-			}
-			defer localConn.Close()
-			//TODO: gérer proprement les Copy?
-			go io.Copy(localConn, remoteConn)
-			io.Copy(remoteConn, localConn)
+	// Loop that perform forwarding from the remote connection
+	// to the local sshd server
+	go func() {
+		defer func() {
+			sshAgent.remotePortMapMu.Lock()
+			delete(sshAgent.remotePortMap, rpf.String())
+			sshAgent.remotePortMapMu.Unlock()
 		}()
 
-	}
+		defer remoteListener.Close()
+		for {
+			if ctx.Err() != nil {
+				return
+			}
+
+			// Waits for a connection
+			remoteConn, err := remoteListener.Accept()
+			if err != nil {
+				// TODO faire du throttle si on garde l'erreur, voir pour cuoper proprement après un temp ?
+				log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to accept remote connection")
+				// Pseudo throttle en attendant
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			// Handle the connection in a dedicated goroutine
+			go func() {
+
+				// Initialize a connection to the local SSHD server
+				localConn, err := net.Dial("tcp", rpf.GetLocal())
+				if err != nil {
+					log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to connect to local service")
+					return
+				}
+				defer localConn.Close()
+
+				errChan := make(chan error, 1)
+
+				// Initialize the Websocket -> SSH connection
+				go func() {
+					_, err := io.Copy(localConn, remoteConn)
+					if err != nil && !errors.Is(err, io.EOF) {
+						log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Local -> Remote connection failed")
+						errChan <- err
+					}
+				}()
+
+				// Initialize the SSH -> Websocket connection
+				go func() {
+					_, err := io.Copy(remoteConn, localConn)
+					if err != nil && !errors.Is(err, io.EOF) {
+						log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Remote -> Local connection failed")
+						errChan <- err
+					}
+				}()
+
+				// Waits for an error to occur
+				err = <-errChan
+				if err != nil {
+					log.Error().Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Err(err).Msg("Remote forwarding: end of forwarding")
+				}
+				sshAgent.Close()
+			}()
+		}
+	}()
+	return remotePort, nil
 }
 
-func sshKeepAlive(client *ssh.Client, context context.Context) {
+// sshKeepAliveLoop starts a loop that will periodically send ping messages to the server
+// in order to perform a keepalive to ensure that the connection is kept active even if no traffic
+// is transmitted within the connection
+func (sshAgent *SSHAgent) sshKeepAliveLoop() {
 	t := time.NewTicker(agent.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
 	for {
 		select {
 		case <-t.C:
 			log.Trace().Msg("Sending keepalive to SSH connection")
-			_, b, err := client.SendRequest("ping", true, nil)
+			_, b, err := sshAgent.client.SendRequest("ping", true, nil)
 			if err != nil {
 				return
 			}
 			log.Trace().Msgf("Keepalive %s recveived from server", string(b))
-		case <-context.Done():
+		case <-sshAgent.ctx.Done():
 			return
 		}
 
 	}
 }
 
-func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, error) {
-	var client *ssh.Client
-	for _, proto := range agent.Get().GetRsshOrder() {
-		switch {
-		case strings.HasPrefix(proto, "ssh"):
-			client = directSSH(sshConfig)
-			if client != nil {
-				return client, nil
-			}
-
-		case strings.HasPrefix(proto, "ws"):
-			client = proxifyWS(sshConfig, ctx)
-			if client != nil {
-				return client, nil
-			}
-		case strings.HasPrefix(proto, "http"):
-			client = proxifyHttp(sshConfig)
-			if client != nil {
-				return client, nil
-			}
-		case strings.HasPrefix(proto, "tls"):
-			client = proxifyTls(sshConfig, ctx)
-			if client != nil {
-				return client, nil
-			}
-		}
-	}
-
-	// TODO handle other connections (tlssh, etc...)
-	return nil, fmt.Errorf("failed to Proxify ssh connection")
-}
-
-func directSSH(sshConfig *ssh.ClientConfig) *ssh.Client {
-	log.Info().Msgf("Trying to direct connect to ssh server")
-	client, err := transport.DirectSshConnect(sshConfig)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to connect directly to ssh server")
-		return nil
-	}
-	log.Info().Msgf("Direct connection to the ssh server successfully")
-	return client
-}
-
-func proxifyTls(sshConfig *ssh.ClientConfig, ctx context.Context) *ssh.Client {
-	log.Info().Msgf("Trying to proxify SSH using TLS")
-	tlsConn, err := transport.GetTlsConn(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to create TLS connection")
-		return nil
-	}
-	log.Debug().Msg("Connection succedded, trying to mount SSH over the TLS connection")
-	client, err := tryProxifySsh(sshConfig, tlsConn)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to proxify SSH over the TLS connection")
-		return nil
-	}
-	log.Info().Msg("Proxify using TLS succeeded")
-	return client
-}
-
-func proxifyWS(sshConfig *ssh.ClientConfig, ctx context.Context) *ssh.Client {
-	log.Info().Msg("Trying to proxify SSH using websocket")
-	wsConn, err := transport.GetWebsocketConn(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to create WebSocket connection")
-		return nil
-	}
-	log.Debug().Msg("Connection succedded, trying to mount SSH over the Websocket connection")
-	client, err := tryProxifySsh(sshConfig, wsConn)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to proxify ssh connection using websocket")
-		return nil
-	}
-	log.Info().Msg("Proxify using websocket succeeded")
-	return client
-}
-
-func proxifyHttp(sshConfig *ssh.ClientConfig) *ssh.Client {
-	log.Info().Msg("Trying to proxify SSH using HTTP")
-	httpConn := transport.NewSSHTTPConn()
-	err := httpConn.Connect()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to proxify SSH using HTTP")
-		return nil
-	}
-	log.Debug().Msg("Connection succedded, trying to mount SSH over the HTTP connection")
-	//httpConn.Start()
-	client, err := tryProxifySsh(sshConfig, httpConn)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
-		return nil
-	}
-	log.Info().Msg("Proxify using HTTP succeeded")
-	return client
-}
-
-func tryProxifySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error) {
-	chanSuccess := make(chan *ssh.Client)
-	chanErr := make(chan error)
-
-	var err error
-
-	go func() {
-		_conn, ch, req, _err := ssh.NewClientConn(netConn, agent.Get().WSshUrl(), conf)
-		if _err != nil {
-			err = _err
-			chanErr <- err
-			return
-		}
-		chanSuccess <- ssh.NewClient(_conn, ch, req)
-	}()
-
-	select {
-	case client := <-chanSuccess:
-		return client, nil
-	case err := <-chanErr:
-		return nil, err
-	case <-time.After(30 * time.Second):
-		return nil, fmt.Errorf("timeout while proxying ssh")
-	}
-}
-
-func Connect() {
-	go func() {
-		err := connect()
-		if err != nil {
-			log.Error().Err(err).Msg("ssh connect failed")
-		}
-	}()
+func (sshAgent *SSHAgent) Close() error {
+	sshAgent.ctx.Done()
+	return sshAgent.client.Close()
 }

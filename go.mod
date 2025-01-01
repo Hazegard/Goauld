@@ -7,6 +7,7 @@ toolchain go1.23.4
 require (
 	filippo.io/age v1.2.1
 	github.com/alecthomas/kong v1.6.0
+	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
 	github.com/denisbrodbeck/machineid v1.0.1

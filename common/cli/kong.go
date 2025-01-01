@@ -11,6 +11,12 @@ import (
 	"strings"
 )
 
+// Taken from https://github.com/alecthomas/kong-yaml
+
+// YAML parse the file as yaml, but ignore the value found in the YAML file
+// if the corresponding value is found in the environment variables.
+// This is done in order to have environment variable precedence over
+// the configuration files
 func YAML(r io.Reader) (kong.Resolver, error) {
 	decoder := yaml.NewDecoder(r)
 	config := map[string]interface{}{}

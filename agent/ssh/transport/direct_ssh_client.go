@@ -46,6 +46,7 @@ func CheckDirectSshAccess(address string) error {
 	return nil
 }
 
+// DirectSshConnect perform direct SSH connection to the server
 func DirectSshConnect(sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
 	err := CheckDirectSshAccess(agent.Get().ControlSshServer())
 	if err != nil {

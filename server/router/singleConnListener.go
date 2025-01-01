@@ -5,6 +5,9 @@ import (
 	"net/http"
 )
 
+// singleConnListener is a wrapper to wrap a net.Conn
+// as a net.Listener to allow the net.Conn to be served
+// by the server
 type singleConnListener struct {
 	conn      net.Conn
 	ch        chan bool

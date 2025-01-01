@@ -10,11 +10,13 @@ import (
 	"net/http"
 )
 
+// SSHttpServer is the server allowing to perform SSH over HTTP
 type SSHttpServer struct {
 	store *store.AgentStore
 	db    *persistence.DB
 }
 
+// NewSSHHttpServer returns a new server
 func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) *SSHttpServer {
 	return &SSHttpServer{
 		store: store,
@@ -22,6 +24,7 @@ func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) *SSHttpServer
 	}
 }
 
+// ServeHTTP handles all the connections performed to the SSHTTP router
 func (s *SSHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("agentId")
@@ -41,8 +44,11 @@ func (s *SSHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// StartSSH handle the HEAD requests performed to router
+// It initializes the connection to the SSH server
+// And responds 200 OK of the connection succeeds
 func (s *SSHttpServer) StartSSH(id string, w http.ResponseWriter, r *http.Request) {
-	// log.Trace()()().Msgf("[SSHTTP] HEAD Server %s", id)
+	// Initialize the connection to the SSH server
 	conn, err := net.Dial("tcp", config.Get().LocalSShServer())
 	// log.Trace()()().Msgf("[SSHTTP] Connect to %s", config.Get().LocalSShServer())
 	if err != nil {
@@ -51,7 +57,9 @@ func (s *SSHttpServer) StartSSH(id string, w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Adds the connections to the SSH HTTP store
 	s.store.SshttpAddAgent(conn, id)
+	// Adds the connection mode to the agent in the database
 	err = s.db.SetAgentSshMode(id, "HTTP")
 	if err != nil {
 		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Unable to set agent SSH connection mode")
@@ -61,36 +69,42 @@ func (s *SSHttpServer) StartSSH(id string, w http.ResponseWriter, r *http.Reques
 
 }
 
+// Get reads from the SSH connections and returns its content as a response
 func (s *SSHttpServer) Get(id string, w http.ResponseWriter, r *http.Request) {
 	// log.Trace()()().Msgf("[SSHTTP] GET Server %s", id)
 
+	// Get the agent connections from the store
 	agent := s.store.SshttpGetAgent(id)
 	if agent == nil {
-		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Msgf("[SSHTTP] Get Agent Not Found")
+		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Msg("Get Agent Not Found")
 		http.Error(w, "agent not fount", http.StatusNotFound)
 		return
 	}
+	// Reads from the SSH connection
 	buffer := make([]byte, 10*1024*1024)
 	n, err := agent.SshConn.Read(buffer)
 	if err != nil {
+		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Msg("SSH connection read error")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	// log.Trace()().Msgf("[SSHTTP] Read %d bytes from %s connection", n, id)
+	// Returns the read data to the caller
 	n, err = w.Write(buffer[:n])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	// log.Trace()().Msgf("[SSHTTP] DONE GET Server %s (%d bytes)", id, n)
 }
 
+// Post gets the data from the body of the request and sends it
+// to the SSH connection
 func (s *SSHttpServer) Post(id string, w http.ResponseWriter, r *http.Request) {
-	// log.Trace()().Msgf("[SSHTTP] POST Server %s", id)
+	// retrieve the SSH connection from the store
 	agent := s.store.SshttpGetAgent(id)
 	if agent == nil {
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Str("ID", id).Msgf("[SSHTTP] Get Agent Not Found")
+		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Str("ID", id).Msgf("Agent Not Found")
 		http.Error(w, "agent not fount", http.StatusNotFound)
 		return
 	}
+	// read the body data of the request
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -98,23 +112,24 @@ func (s *SSHttpServer) Post(id string, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body.Close()
-	// log.Trace()().Msgf("[SSHTTP] Received %d bytes from %s", len(body), id)
+	//Write the received data to the SSH connection
 	_, err = agent.SshConn.Write(body)
 	if err != nil {
 		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Msgf("[SSHTTP] Post Agent Write Error")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	// log.Trace()().Msgf("[SSHTTP] Written %d bytes to %s ssh conn", n, id)
 	w.WriteHeader(http.StatusOK)
-	// log.Trace()().Msgf("[SSHTTP] DONE POST Server %s", id)
 }
 
+// StopSSH stops the SSH connection
 func (s *SSHttpServer) StopSSH(id string, w http.ResponseWriter, r *http.Request) {
+	// Closes the SSH connection
 	err := s.store.SshttpCloseAgent(id)
 	if err != nil {
 		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Stop SSH Server error")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	// Updates the agent in the database to remove the SSH connection mode
 	err = s.db.SetAgentSshMode(id, "DISCONNECTED")
 	if err != nil {
 		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("Unable to update SSH agent mode to [DISCONNECTED]")

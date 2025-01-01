@@ -3,6 +3,7 @@ package agent
 import (
 	"Goauld/common/cli"
 	"Goauld/common/log"
+	"Goauld/common/ssh"
 	"Goauld/common/utils"
 	"github.com/alecthomas/kong"
 	"path/filepath"
@@ -10,48 +11,83 @@ import (
 )
 
 var (
-	_agePubKey        = "age1fz7j9zck3qmafdkynu3ldvkjdrsstanhz8py8scx07hw7vja7aysuccrtn"
+	_agePubKey = "age1fz7j9zck3qmafdkynu3ldvkjdrsstanhz8py8scx07hw7vja7aysuccrtn"
+
 	_localSshPassword = ""
 	_name             = "user@hostname"
-	_server           = "localhost:3000"
-	_ssh_server       = "localhost:2222"
-	_sshd_port        = "0"
-	_rssh_port        = "0"
-	_keepalive        = "20"
-	_verbosity        = "0"
-	_rssh_order       = "SSH,TLS,WS,HTTP"
+
+	_sshd  = "true"
+	_socks = "true"
+
+	_server     = "localhost:3000"
+	_ssh_server = "localhost:2222"
+	_tls_server = "localhost"
+
+	_sshd_port  = "0"
+	_rssh_port  = "0"
+	_socks_port = "0"
+
+	_keepalive = "20"
+	_verbosity = "0"
+
+	_rssh_order = "SSH,TLS,WS,HTTP"
+
+	_remote_port_forwarding = ""
 
 	defaultValues = kong.Vars{
+		"_age_pubkey": _agePubKey,
+
 		"_localSshPassword": _localSshPassword,
 		"_name":             _name,
-		"_server":           _server,
-		"_sshd_port":        _sshd_port,
-		"_rssh_port":        _rssh_port,
-		"_ssh_server":       _ssh_server,
-		"_rssh_order":       _rssh_order,
-		"_keepalive":        _keepalive,
-		"_verbosity":        _verbosity,
-		"_age_pubkey":       _agePubKey,
+
+		"_sshd":  _sshd,
+		"_socks": _socks,
+
+		"_server":     _server,
+		"_ssh_server": _ssh_server,
+		"_tls_server": _tls_server,
+
+		"_sshd_port":  _sshd_port,
+		"_rssh_port":  _rssh_port,
+		"_socks_port": _socks_port,
+
+		"_keepalive": _keepalive,
+		"_verbosity": _verbosity,
+
+		"_rssh_order": _rssh_order,
+
+		"_remote_port_forwarding": _remote_port_forwarding,
 	}
 )
 
 const APP_NAME = "Goa'uld"
 
 type Config struct {
-	LocalSshPassword string   `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
-	Name             string   `default:"user@hostname" name:"name" optional:"" help:"Nice name to identify the agent."`
-	Server           string   `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
-	SshServer        string   `default:"${_ssh_server}" short:"S" name:"sshserver" optional:"" help:"SSH Server to connect to."`
-	SshdPort         int      `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
-	RsshPort         int      `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
-	RsshOrder        []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order of ssh connection attempts."`
-	KeepAlive        int      `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds)."`
-	Verbose          int      `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
-	AgePubKey        string   `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age" short:"A"`
-	//RemoteDynamicPortForwarding []string `name:"R" optional:"" help:"Ports to forward to the server."`
-	//RemotePortForwarding        []string `name:"L" optional:"" help:"Ports to forward to the server."`
+	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age" short:"A"`
+
+	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
+	Name             string `default:"user@hostname" name:"name" optional:"" help:"Nice name to identify the agent."`
+
+	Sshd  bool `default:"${_sshd}" name:"sshd" optional:"" help:"Start the SSHD server."`
+	Socks bool `default:"${_socks}" name:"socks" optional:"" help:"Start the Socks server."`
+
+	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
+	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
+	TlsServer string `default:"${_tls_server}" short:"S" name:"tls-server" optional:"" help:"TLS Server to connect to."`
+
+	SshdPort  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
+	RsshPort  int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
+	SocksPort int `default:"${_rssh_port}"  name:"socks-port" short:"D" optional:"" help:"Remote port to bind to, 0 => Random."`
+
+	KeepAlive int `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds)."`
+	Verbose   int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+
+	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order of ssh connection attempts."`
+
+	RemotePortForwarding []ssh.ReversePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT)."`
 }
 
+// parse parses the command line arguments
 func parse() (*kong.Context, *Config, error) {
 	cfg := &Config{}
 	dir, err := utils.GetCurrentDirectory()

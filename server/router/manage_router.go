@@ -2,22 +2,27 @@ package router
 
 import (
 	"Goauld/common/log"
+	"Goauld/server/config"
 	"Goauld/server/persistence"
+	"Goauld/server/router/midleware"
 	"Goauld/server/store"
 	"encoding/json"
 	"fmt"
+	"github.com/urfave/negroni"
 	"net/http"
 	"strconv"
 )
 
-type UserRouter struct {
+// ManageRouter is the router used by the management API
+type ManageRouter struct {
 	userRouter *http.ServeMux
 	db         *persistence.DB
 	store      *store.AgentStore
 }
 
-func NewUserRouter(_db *persistence.DB, store *store.AgentStore) *UserRouter {
-	r := &UserRouter{
+// NewManageRouter returns a new ManageRouter
+func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter {
+	r := &ManageRouter{
 		db:         _db,
 		userRouter: http.NewServeMux(),
 		store:      store,
@@ -28,7 +33,20 @@ func NewUserRouter(_db *persistence.DB, store *store.AgentStore) *UserRouter {
 	return r
 }
 
-func (ur *UserRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
+// GetRouter returns the router, with the middleware configures
+// - Authentication middleware
+// - IP whitelisting middleware
+func (ur *ManageRouter) GetRouter() *negroni.Negroni {
+	n := negroni.New()
+	n.Use(midleware.AuthMiddleware(config.Get().AccessToken))
+	n.Use(midleware.WhitelistMiddleware(config.Get().AllowedIPs))
+	return n
+}
+
+// GetAGentById handles the /agent/{id} endpoints
+// it returns to the caller the associated agent
+func (ur *ManageRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
+	// Find the agent corresponding to the id
 	id := r.PostFormValue("id")
 	agent, err := ur.db.FindAgent(id)
 	if err != nil {
@@ -42,11 +60,13 @@ func (ur *UserRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate a JSON of the agent
 	jsonAgent, err := agent.JSON()
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error generating json response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	// return the json agent to the caller
 	_, err = w.Write(jsonAgent)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error returning response")
@@ -55,7 +75,8 @@ func (ur *UserRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (ur *UserRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
+// GetAgents return all agents stored in the database
+func (ur *ManageRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
 	agents, err := ur.db.GetAllAgents()
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("find all agents failed")
@@ -74,12 +95,14 @@ func (ur *UserRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ClearPortData is the data type used to retrieve the clearPort endpoint
 type ClearPortData struct {
 	AgentId string `json:"agentId"`
 	Port    string `json:"port"`
 }
 
-func (ur *UserRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
+// ClearPort delete all the remaining connections related to the agent and the port
+func (ur *ManageRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
 	var data ClearPortData
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&data)
@@ -100,7 +123,8 @@ func (ur *UserRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
 	log.Warn().Str("Path", r.URL.Path).Msg("No agent id or port specified")
 }
 
-func (ur *UserRouter) ClearPortByPortNumber(p string, w http.ResponseWriter, r *http.Request) {
+// ClearPortByPortNumber clears all the remaining connections associated to the port
+func (ur *ManageRouter) ClearPortByPortNumber(p string, w http.ResponseWriter, r *http.Request) {
 	port, err := strconv.Atoi(p)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Port", p).Msg("error converting port")
@@ -116,7 +140,8 @@ func (ur *UserRouter) ClearPortByPortNumber(p string, w http.ResponseWriter, r *
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (ur *UserRouter) ClearPortsByAgentId(agentId string, w http.ResponseWriter, r *http.Request) {
+// ClearPortsByAgentId clears all the remaining connections associated to the agent
+func (ur *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWriter, r *http.Request) {
 	err := ur.store.ClearById(agentId)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("AgentId", agentId).Msg("error clearing port")

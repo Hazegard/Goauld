@@ -8,6 +8,7 @@ import (
 	"io"
 )
 
+// SftpHandler handle sftp connections
 func SftpHandler(sess ssh.Session) {
 	debugStream := io.Discard
 	serverOptions := []sftp.ServerOption{
@@ -22,7 +23,10 @@ func SftpHandler(sess ssh.Session) {
 		return
 	}
 	if err := server.Serve(); err == io.EOF {
-		server.Close()
+		err := server.Close()
+		if err != nil {
+			log.Debug().Err(err).Msg("sftp server error")
+		}
 		log.Debug().Msg("sftp agent exited session.")
 	} else if err != nil {
 		log.Debug().Err(err).Msg("sftp server error")

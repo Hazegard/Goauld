@@ -7,7 +7,8 @@ import (
 	"net"
 )
 
-func (router *HttpRouter) ServeTLS() {
+// ServeTLS start a TLS listener on the configured port
+func (router *MainRouter) ServeTLS() {
 	port := config.Get().LocalHttpsServer()
 	listener, err := tls.Listen("tcp", port, router.tlsConfig)
 	if err != nil {
@@ -28,24 +29,33 @@ func (router *HttpRouter) ServeTLS() {
 	}
 }
 
-func (router *HttpRouter) HandleTls(c net.Conn) {
+// HandleTls handle the incoming TLS request
+// If the request matched the HTTP domain, forward this request to the HTTP router
+// If the request matches the TLS domain, forward this TLS traffic to the SSH over TLS
+func (router *MainRouter) HandleTls(c net.Conn) {
 
 	defer c.Close()
 	// Check if connection is TLS
 	if tlsConn, ok := c.(*tls.Conn); ok {
+		// If the connection is TLS, performs the TLS handshake
 		if err := tlsConn.Handshake(); err != nil {
 			log.Warn().Err(err).Msg("TLS handshake failed")
 			return
 		}
 		state := tlsConn.ConnectionState()
+		// Extract the TLS SNI
 		if state.ServerName == config.Get().HttpDomain {
-			// Serve HTTPS traffic
+			// If the domain match, the HTTP domain configured, serve the
+			// request using the HTTP router
 
 			err := router.server.Serve(NewSingleConnListener(tlsConn))
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to start server")
 			}
 		} else if state.ServerName == config.Get().TlsDomain {
+			// If the domain match the TLS domain configured
+			// Handle it as a raw TLS
+
 			// The client first send its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
 			rawId := make([]byte, 128)
@@ -56,7 +66,7 @@ func (router *HttpRouter) HandleTls(c net.Conn) {
 			}
 			id := string(rawId[:n])
 			log.Info().Str("ID", id).Msg("Receiving incomming SSH connection over TLS")
-			// Serve RAW TLS traffic
+			// Serve the raw TLS traffic
 			router.tlsshHandler.HandleTLSSH(c, id)
 		}
 	} else {

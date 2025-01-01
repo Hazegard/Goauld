@@ -12,7 +12,8 @@ import (
 	"time"
 )
 
-type HttpRouter struct {
+// MainRouter is the primary router that listen on
+type MainRouter struct {
 	controlServer *sio.Server
 	wsshHandler   *transport.WSshHandler
 	server        *http.Server
@@ -26,15 +27,17 @@ func NewHttpRouter(
 	wssh *transport.WSshHandler,
 	sshttp *transport.SSHttpServer,
 	tlssh *transport.TLSSHServer,
-	manageRouter *UserRouter,
-) *HttpRouter {
+	manageRouter *ManageRouter,
+) *MainRouter {
 
+	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
 	router.Handle("/socket.io/", controlServer)
 	router.Handle("/wssh/{agentId}", wssh)
 	router.Handle("/sshttp/{agentId}", sshttp)
-	// manageRouter.RegisterRouter(router)
-	router.Handle("/manage/", http.StripPrefix("/manage", manageRouter.userRouter))
+	router.Handle("/manage/", http.StripPrefix("/manage", manageRouter.GetRouter()))
+
+	// Negroni allow to used middleware, such as logger and recovery mecanism
 	n := negroni.New()
 	n.Use(negroni.NewLogger())
 	n.Use(negroni.NewRecovery())
@@ -53,7 +56,7 @@ func NewHttpRouter(
 		WriteTimeout: controlServer.HTTPWriteTimeout(),
 	}
 
-	httprouter := &HttpRouter{
+	httprouter := &MainRouter{
 		controlServer: controlServer,
 		wsshHandler:   wssh,
 		tlsshHandler:  tlssh,
@@ -61,6 +64,7 @@ func NewHttpRouter(
 		router:        router,
 	}
 
+	// If the TLS is enabled, configure the server to used TLS
 	if config.Get().Tls {
 		/*cfg := certmagic.NewDefault()
 		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
@@ -91,13 +95,16 @@ func NewHttpRouter(
 
 }
 
-func (router *HttpRouter) Serve() error {
+// Serve serves the Server
+func (router *MainRouter) Serve() error {
 	log.Info().Str("Address", config.Get().LocalHttpServer()).Msgf("HTTP server listening")
 	var err error
 
+	// If the TLS is enabled, run the TLS server in a dedicated goroutine
 	if config.Get().Tls {
 		go router.ServeTLS()
 	}
+	// serve the HTTP server
 	err = router.server.ListenAndServe()
 
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {

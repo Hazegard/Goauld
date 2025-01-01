@@ -18,7 +18,6 @@ func StartSShd() error {
 		agent.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
 	}
 
-	log.Info().Msg("start sshd")
 	log.Info().Msgf("Listening on port %s", agent.Get().LocalSShdAddress())
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
@@ -31,22 +30,28 @@ func StartSShd() error {
 			}
 
 		}),
+		// Allows Local Port Forwarding
+		// Note: this might be unnecessary as users should only perform reverse port forwarding
 		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
 			log.Trace().Msgf("Forwarding connection from %s to %s:%d", ctx.User(), destinationHost, destinationPort)
 			return true
 		},
+		// Allows Reverse Port Forwarding
 		ReversePortForwardingCallback: func(ctx ssh.Context, host string, port uint32) bool {
 			log.Trace().Msgf("Forwarding connection to %s from %s:%d", ctx.User(), host, port)
 			return true
 		},
+		// Allows tcp traffic within the SSH connection
 		RequestHandlers: map[string]ssh.RequestHandler{
 			"tcpip-forward":        forwardHandler.HandleSSHRequest,
 			"cancel-tcpip-forward": forwardHandler.HandleSSHRequest,
 		},
+		// Allows channels
 		ChannelHandlers: map[string]ssh.ChannelHandler{
 			"direct-tcpip": ssh.DirectTCPIPHandler,
 			"session":      ssh.DefaultSessionHandler,
 		},
+		// Allows tcp traffic within the SSH connection
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			log.Debug().Msgf("Received connection from user: %s", ctx.User())
 			if password == agent.Get().LocalSShdPassword() {
@@ -56,6 +61,7 @@ func StartSShd() error {
 			log.Debug().Msgf("Connnection using password failed from user: %s", ctx.User())
 			return false
 		},
+		// Allows to open a shell
 		PtyCallback: func(ctx ssh.Context, pty ssh.Pty) bool {
 			log.Trace().Msgf("Received pty request from user: %s", ctx.User())
 			return true

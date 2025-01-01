@@ -24,7 +24,7 @@ func ParseSSHPublicKey(publicKeyStr string) (ssh.PublicKey, error) {
 	return publicKey, nil
 }
 
-// GenerateEd25519SSHKey generates an Ed25519 SSH key pair and returns the private and public keys as strings.
+// GenKey generates an Ed25519 SSH key pair and returns the private and public keys as strings.
 func GenKey() (privateKeyPEM string, publicKeySSH string, err error) {
 	// Generate an Ed25519 key pair
 	_, privateKey, err := ed25519.GenerateKey(rand.Reader)

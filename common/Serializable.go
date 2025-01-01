@@ -14,6 +14,7 @@ type Ptr[T any] interface {
 // the first type param will match pointer serTypes and infer U
 type Decryptor[U any] struct{}
 
+// Decrypt decrypts the data and returns it as the provided struct
 func (f Decryptor[U]) Decrypt(data []byte, c *crypto.SymCryptor, init func() *U) (*U, error) {
 	// declare var of non-pointer type. this is not nil!
 	var a = init()
@@ -31,6 +32,7 @@ func (f Decryptor[U]) Decrypt(data []byte, c *crypto.SymCryptor, init func() *U)
 	return a, nil
 }
 
+// Encrypt serialize the struct as JSON and encrypt it using the provided shared key
 func Encrypt[T any](t *T, c *crypto.SymCryptor) ([]byte, error) {
 	data, err := json.Marshal(t)
 	if err != nil {

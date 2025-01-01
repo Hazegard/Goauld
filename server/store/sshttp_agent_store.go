@@ -8,6 +8,7 @@ type SSHTTPAgent struct {
 	SshConn net.Conn
 }
 
+// SshttpAddAgent adds the ssh connection of agent id to the agent store
 func (a *AgentStore) SshttpAddAgent(ssh net.Conn, id string) {
 	a.sshttpAgentMapMu.Lock()
 	a.sshttpAgentMap[id] = &SSHTTPAgent{
@@ -16,12 +17,14 @@ func (a *AgentStore) SshttpAddAgent(ssh net.Conn, id string) {
 	a.sshttpAgentMapMu.Unlock()
 }
 
+// SshttpRemoveAgent removes the ssh connection of the agent id to the agent store
 func (a *AgentStore) SshttpRemoveAgent(id string) {
 	a.sshttpAgentMapMu.Lock()
 	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
 }
 
+// SshttpGetAgent returns the ssh connection of the agent id to the agent store
 func (a *AgentStore) SshttpGetAgent(id string) *SSHTTPAgent {
 	a.sshttpAgentMapMu.Lock()
 	agent := a.sshttpAgentMap[id]
@@ -29,6 +32,7 @@ func (a *AgentStore) SshttpGetAgent(id string) *SSHTTPAgent {
 	return agent
 }
 
+// SshttpCloseAgent closes the ssh connection of the agent id to the agent store
 func (a *AgentStore) SshttpCloseAgent(id string) error {
 	var err error
 	a.sshttpAgentMapMu.Lock()

@@ -8,12 +8,14 @@ import (
 	"filippo.io/age"
 )
 
+// SymCryptor handle the symetrical encryption
 type SymCryptor struct {
 	key       string
 	identity  *age.ScryptIdentity
 	recipient *age.ScryptRecipient
 }
 
+// NewCryptor returns a new SymCryptor
 func NewCryptor(key string) (*SymCryptor, error) {
 	identity, err := age.NewScryptIdentity(key)
 	if err != nil {
@@ -31,6 +33,7 @@ func NewCryptor(key string) (*SymCryptor, error) {
 	return c, nil
 }
 
+// Encrypt encrypts the data using the shared secret key
 func (c *SymCryptor) Encrypt(data []byte) ([]byte, error) {
 	// Create a reader for the encrypted data
 	var encryptedBuffer bytes.Buffer
@@ -54,6 +57,7 @@ func (c *SymCryptor) Encrypt(data []byte) ([]byte, error) {
 	return encryptedBuffer.Bytes(), nil
 }
 
+// Decrypt decrypts the data using the shared secret key
 func (c *SymCryptor) Decrypt(data []byte) ([]byte, error) {
 	// Create a reader for the encrypted data
 	encryptedBuffer := bytes.NewReader(data)

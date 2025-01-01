@@ -2,6 +2,7 @@ package log
 
 import (
 	"gorm.io/gorm/logger"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -34,6 +35,8 @@ func initLoggers() {
 			return &GormLoggerEvent{Event: zerologger.Warn().Str("Src", "Gorm")}
 		}).LogMode(gormLogLevel)
 
+	log.SetOutput(zerologger)
+	log.SetFlags(0)
 }
 
 func SetLogLevel(verbosity int) {

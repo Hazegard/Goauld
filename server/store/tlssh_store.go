@@ -11,18 +11,21 @@ type TLSSHAgent struct {
 	SSHConn net.Conn
 }
 
+// TlsshAddAgent adds the TLS connections to the TLSSH agent store
 func (a *AgentStore) TlsshAddAgent(id string, tlsshAgent *TLSSHAgent) {
 	a.tlsshAgentMapMu.Lock()
 	a.tlsshAgentMap[id] = tlsshAgent
 	a.tlsshAgentMapMu.Unlock()
 }
 
+// TlsshRemoveAgent removes the TLS connections of the TLSSH agent
 func (a *AgentStore) TlsshRemoveAgent(id string) {
 	a.tlsshAgentMapMu.Lock()
 	delete(a.tlsshAgentMap, id)
 	a.tlsshAgentMapMu.Unlock()
 }
 
+// TlsshCloseAgent closes the TLS connections of the TLSSH agent
 func (a *AgentStore) TlsshCloseAgent(id string) error {
 	a.tlsshAgentMapMu.Lock()
 	agent := a.tlsshAgentMap[id]
