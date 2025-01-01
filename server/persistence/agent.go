@@ -3,30 +3,27 @@ package persistence
 import (
 	"Goauld/common/crypto"
 	"Goauld/common/ssh"
+	"Goauld/common/types"
 	"Goauld/common/utils"
 	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Agent struct {
-	gorm.Model
-	Id           string `gorm:"primaryKey" json:"id"`
-	Name         string `gorm:"type:text" json:"name"`
-	SshMode      string `gorm:"type:text" json:"ssh_mode"`
-	UsedPorts    string `gorm:"type:string" json:"usedPorts"`
-	PrivateKey   string `gorm:"type:text" json:"privateKey"`
-	PublicKey    string `gorm:"type:text" json:"publicKey"`
-	Source       string `gorm:"type:text" json:"source"`
-	Connected    bool   `gorm:"type:boolean" json:"connected"`
-	SharedSecret string `gorm:"type:text" json:"sharedSecret"`
-	SshPasswd    string `gorm:"type:text" json:"sshPasswd"`
-	cryptor      *crypto.SymCryptor
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+	types.Agent
+	cryptor *crypto.SymCryptor
 }
 
 func (a *Agent) JSON() ([]byte, error) {
+	a.CreatedAt = time.Now()
 	return json.Marshal(a)
 }
 
@@ -49,7 +46,9 @@ func (a *Agent) GetCryptor() (*crypto.SymCryptor, error) {
 
 func NewAgent(source string) Agent {
 	return Agent{
-		Source: source,
+		Agent: types.Agent{
+			Source: source,
+		},
 	}
 }
 
@@ -66,17 +65,19 @@ func (a *Agent) InitKeys() error {
 
 // AddPort adds the port to the array of used ports of the agent
 func (a *Agent) AddPort(port int) {
-	usedPorts := portStringToInt(a.UsedPorts)
-	newPorts := []int{}
-	// Check if the port already exists
-	for _, p := range usedPorts {
-		if p == port {
-			return // Port already exists, do nothing
-		}
+	fmt.Println(a.UsedPorts)
+	fmt.Println(a.UsedPorts)
+	ports := portStringToInt(a.UsedPorts)
+	if len(ports) == 1 && ports[0] == 0 {
+		ports = []int{}
 	}
-	// Append the port if it is unique
-	newPorts = append(newPorts, port)
-	a.UsedPorts = portIntToString(newPorts)
+	fmt.Println(ports)
+	fmt.Println(ports)
+	ports = append(ports, port)
+
+	ports = utils.Unique(ports)
+	slices.Sort(ports)
+	a.UsedPorts = portIntToString(ports)
 }
 
 // DeletePort remove the port from the array of used ports of the agent
@@ -95,11 +96,13 @@ func (a *Agent) DeletePort(port int) {
 // SetConnect sets the agent state to connected
 func (a *Agent) SetConnect() {
 	a.Connected = true
+	a.LastUpdated = time.Now()
 }
 
 // SetDisconnect sets the agent state to disconnected
 func (a *Agent) SetDisconnect() {
 	a.Connected = false
+	a.LastUpdated = time.Now()
 }
 
 // SetSharedSecret set the shared encryption key to the agent
@@ -116,19 +119,6 @@ func (a *Agent) SetName(name string) {
 // SetSharedSecret set the SSH password to the agent
 func (a *Agent) SetSshPassword(pwd string) {
 	a.SshPasswd = pwd
-}
-
-// SetSSHConnectionMode update the agent to reflect the current connection mode used
-// Direct (SSH), SSH over TLS, ssh over Websockets, SSH over HTTP
-func (a *Agent) SetSSHConnectionMode(mode string) error {
-	m := strings.ToUpper(mode)
-	switch mode {
-	case "HTTP", "SSH", "TLS", "WS", "DISCONNECTED":
-		a.SshMode = m
-	default:
-		return fmt.Errorf("unknown mode: %s", mode)
-	}
-	return nil
 }
 
 // GetAllAgents returns all the agents in the database
@@ -154,7 +144,7 @@ func (db *DB) FindAgent(id string) (*Agent, error) {
 
 // UpdateAgent update the agent information in the database
 func (db *DB) UpdateAgent(agent *Agent) error {
-	result := db.db.Updates(agent)
+	result := db.db.Select("*").Updates(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not update agent: %s", result.Error)
 	}
@@ -168,10 +158,11 @@ func (db *DB) AddPortToAgent(id string, port int) error {
 		return err
 	}
 	agent.AddPort(port)
+	fmt.Printf("%+v\n", agent)
 	return db.UpdateAgent(agent)
 }
 
-// AddPortToAgent removes the port from the UsedPorts field of the agent
+// RemovePortToAgent removes the port from the UsedPorts field of the agent
 func (db *DB) RemovePortToAgent(id string, port int) error {
 	agent, err := db.FindAgent(id)
 	if err != nil {
@@ -185,14 +176,13 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 // If no agent corresponding to this ID exists
 // an empty one that will be populated later is returned
 func (db *DB) FindOrCreate(id string) (*Agent, error) {
-	agent, err := db.FindAgent(id)
+	agent, _ := db.FindAgent(id)
 	if agent != nil {
 		return agent, nil
 	}
-	agent = &Agent{
-		Id: id,
-	}
-	err = db.CreateAgent(agent)
+	agent = &Agent{}
+	agent.Id = id
+	err := db.CreateAgent(agent)
 	if err != nil {
 		return nil, fmt.Errorf("could not create agent: %s", err)
 	}
@@ -228,6 +218,12 @@ func (db *DB) GetAgentsByUsedPort(port int) ([]Agent, error) {
 // SetAgentSshMode updates the agent to reflect the current connection mode used
 // Direct (SSH), SSH over TLS, ssh over Websockets, SSH over HTTP
 func (db *DB) SetAgentSshMode(id string, mode string) error {
+	switch mode {
+	case "HTTP", "SSH", "TLS", "WS", "OFF":
+
+	default:
+		return fmt.Errorf("unknown mode: %s", mode)
+	}
 	agent, err := db.FindAgent(id)
 	if err != nil {
 		return fmt.Errorf("could not find agent: %s", err)
@@ -235,10 +231,13 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 	if agent == nil {
 		return fmt.Errorf("agent not found")
 	}
-	err = agent.SetSSHConnectionMode(mode)
-	if err != nil {
-		return fmt.Errorf("could not set ssh connection mode: %s", err)
+	agent.SshMode = mode
+	// If disconnected, no ports are used
+	if mode == "OFF" {
+		agent.UsedPorts = "/"
+		agent.Connected = false
 	}
+	agent.LastUpdated = time.Now()
 	err = db.UpdateAgent(agent)
 	if err != nil {
 		return fmt.Errorf("could not update agent: %s", err)
@@ -249,6 +248,9 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 // portStringToInt converts a string of port separated by a comma
 // to a slice of the ports
 func portStringToInt(port string) []int {
+	if port == "" {
+		return []int{}
+	}
 	var ports []int
 	strPorts := strings.Split(port, ",")
 	for _, p := range strPorts {

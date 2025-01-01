@@ -73,7 +73,7 @@ type Config struct {
 
 	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
-	TlsServer string `default:"${_tls_server}" short:"S" name:"tls-server" optional:"" help:"TLS Server to connect to."`
+	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"TLS Server to connect to."`
 
 	SshdPort  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
 	RsshPort  int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`

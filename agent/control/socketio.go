@@ -12,12 +12,13 @@ import (
 	eio "github.com/karagenc/socket.io-go/engine.io"
 	"github.com/quic-go/webtransport-go"
 	"nhooyr.io/websocket"
+	"os"
 	"time"
 )
 
 // ControlPlanClient Handle the socket.io interaction regarding the management of the agent
 type ControlPlanClient struct {
-	manager    sio.Manager
+	manager    *sio.Manager
 	socket     sio.ClientSocket
 	configDone chan<- struct{}
 	ctx        context.Context
@@ -115,7 +116,14 @@ func (cpc *ControlPlanClient) Init() error {
 		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess done")
 	})
 
+	socket.OnEvent(socketio.ExitEvent, func() {
+		log.Info().Msg("OnEvent: Exit requested")
+		socket.Emit(socketio.ExitSuccess)
+		os.Exit(0)
+	})
+
 	cpc.socket = socket
+	cpc.manager = manager
 	return nil
 }
 

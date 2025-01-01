@@ -74,8 +74,8 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 		log.Error().Str("ID", id).Err(err).Str("SSH Mode", "TLS").Msg("error while closing TLS streams")
 	}
 	// Updates the database to set the agent mode as disconnected
-	err = tlssh.db.SetAgentSshMode(id, "DISCONNECTED")
+	err = tlssh.db.SetAgentSshMode(id, "OFF")
 	if err != nil {
-		log.Warn().Str("ID", id).Err(err).Str("SSH Mode", "TLS").Msg("error setting agent mode to DISCONNECTED")
+		log.Warn().Str("ID", id).Err(err).Str("SSH Mode", "TLS").Msg("error setting agent mode to OFF")
 	}
 }

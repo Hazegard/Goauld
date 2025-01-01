@@ -13,23 +13,25 @@ import (
 type SocketIO struct {
 	db         *persistence.DB
 	agentStore *store.AgentStore
-	server     *gosio.Server
+	Server     *gosio.Server
 }
 
 // InitSocketIOServer intialize the server socket.io used to manage the agents
-func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) *gosio.Server {
+func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*SocketIO, error) {
 
 	io := gosio.NewServer(&gosio.ServerConfig{})
 	socketIO := &SocketIO{
 		agentStore: agentStore,
 		db:         db,
+		Server:     io,
 	}
 	socketIO.Setup(io.Of("/"))
 	err := io.Run()
 	if err != nil {
+		return nil, fmt.Errorf("error intializing socket.io: %s", err)
 	}
 
-	return io
+	return socketIO, nil
 }
 
 func (sio *SocketIO) Setup(root *gosio.Namespace) {
@@ -198,6 +200,11 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Sent socketio.PongEvent")
 		})
 
+		socket.OnEvent(socketio.ExitSuccess, func() {
+			agent := sio.agentStore.SioGetAgent(socket)
+			log.Info().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Agent exited")
+		})
+
 		socket.OnDisconnect(func(reason gosio.Reason) {
 			agent := sio.agentStore.SioGetAgent(socket)
 			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msgf("socketio.Disconnect: %s", reason)
@@ -210,7 +217,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			// Remove the agent from the im memory store
 			sio.agentStore.SioRemoveAgent(socket)
 
-			err = agent.SetSSHConnectionMode("DISCONNECTED")
+			err = sio.db.SetAgentSshMode(agent.Id, "OFF")
 			if err != nil {
 				log.Warn().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect: error setting agent connection mode")
 			}

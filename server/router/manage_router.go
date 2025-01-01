@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/urfave/negroni"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -27,8 +28,9 @@ func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter
 		userRouter: http.NewServeMux(),
 		store:      store,
 	}
-	r.userRouter.HandleFunc("/agent/{id}", r.GetAGentById)
-	r.userRouter.HandleFunc("/agent/", r.GetAgents)
+	r.userRouter.HandleFunc("GET /agent/{id}", r.GetAGentById)
+	r.userRouter.HandleFunc("POST /agent/kill/{id}", r.KillAgent)
+	r.userRouter.HandleFunc("GET /agent/", r.GetAgents)
 	r.userRouter.HandleFunc("POST /clearport/", r.ClearPort)
 	return r
 }
@@ -40,6 +42,7 @@ func (ur *ManageRouter) GetRouter() *negroni.Negroni {
 	n := negroni.New()
 	n.Use(midleware.AuthMiddleware(config.Get().AccessToken))
 	n.Use(midleware.WhitelistMiddleware(config.Get().AllowedIPs))
+	n.UseHandler(ur.userRouter)
 	return n
 }
 
@@ -47,7 +50,7 @@ func (ur *ManageRouter) GetRouter() *negroni.Negroni {
 // it returns to the caller the associated agent
 func (ur *ManageRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
 	// Find the agent corresponding to the id
-	id := r.PostFormValue("id")
+	id := r.PathValue("id")
 	agent, err := ur.db.FindAgent(id)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("find agent failed")
@@ -80,13 +83,21 @@ func (ur *ManageRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
 	agents, err := ur.db.GetAllAgents()
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("find all agents failed")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	for i := range agents {
+		agents[i].SharedSecret = ""
+		agents[i].PrivateKey = ""
+		agents[i].PublicKey = ""
+
 	}
 	jsonAgent, err := json.Marshal(agents)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating json response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
 	_, err = w.Write(jsonAgent)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error returning response")
@@ -110,7 +121,13 @@ func (ur *ManageRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to parse JSON: %v", err), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Warn().Err(err).Str("SSH Mode", "error closing HTTP body")
+		}
+	}(r.Body)
+
 	if data.AgentId != "" {
 		ur.ClearPortsByAgentId(data.AgentId, w, r)
 		return
@@ -119,7 +136,7 @@ func (ur *ManageRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
 		ur.ClearPortByPortNumber(data.Port, w, r)
 		return
 	}
-	http.Error(w, fmt.Sprintf("No agent id or port specified"), http.StatusBadRequest)
+	http.Error(w, "No agent id or port specified", http.StatusBadRequest)
 	log.Warn().Str("Path", r.URL.Path).Msg("No agent id or port specified")
 }
 
@@ -147,6 +164,22 @@ func (ur *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWrite
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("AgentId", agentId).Msg("error clearing port")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	fmt.Println(id)
+	fmt.Println(id)
+	fmt.Println(id)
+	fmt.Println(id)
+	fmt.Println(id)
+	fmt.Println(id)
+	err := ur.store.KillAGent(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

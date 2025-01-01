@@ -10,12 +10,10 @@ import (
 	"github.com/alecthomas/kong"
 	"path/filepath"
 	"strings"
-	"sync"
 )
 
 const APP_NAME = "Goa'uld"
 
-var serverOnce sync.Once
 var srvCfg *ServerConfig
 
 // All the default values used in the configuration

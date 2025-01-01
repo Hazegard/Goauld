@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/alecthomas/kong"
@@ -53,47 +52,4 @@ func find(config map[string]interface{}, path []string) interface{} {
 		}
 	}
 	return config[strings.Join(path, "-")]
-}
-
-func JSON(r io.Reader) (kong.Resolver, error) {
-	values := map[string]interface{}{}
-	err := json.NewDecoder(r).Decode(&values)
-	if err != nil {
-		return nil, err
-	}
-	var f kong.ResolverFunc = func(context *kong.Context, parent *kong.Path, flag *kong.Flag) (interface{}, error) {
-		for _, env := range flag.Envs {
-			_, ok := os.LookupEnv(env)
-			if ok {
-				return nil, nil
-			}
-		}
-		name := strings.ReplaceAll(flag.Name, "-", "_")
-		snakeCaseName := snakeCase(flag.Name)
-		raw, ok := values[name]
-		if ok {
-			return raw, nil
-		} else if raw, ok = values[snakeCaseName]; ok {
-			return raw, nil
-		}
-		raw = values
-		for _, part := range strings.Split(name, ".") {
-			if values, ok := raw.(map[string]interface{}); ok {
-				raw, ok = values[part]
-				if !ok {
-					return nil, nil
-				}
-			} else {
-				return nil, nil
-			}
-		}
-		return raw, nil
-	}
-
-	return f, nil
-}
-
-func snakeCase(name string) string {
-	name = strings.Join(strings.Split(strings.Title(name), "-"), "")
-	return strings.ToLower(name[:1]) + name[1:]
 }

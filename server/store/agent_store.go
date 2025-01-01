@@ -1,6 +1,7 @@
 package store
 
 import (
+	socketio "Goauld/common/socket.io"
 	"Goauld/server/persistence"
 	"errors"
 	"fmt"
@@ -18,8 +19,10 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 		store = &AgentStore{
 			db: _db,
 
-			sioAgentMap:   make(map[sio.ServerSocket]*persistence.Agent),
-			sioAgentMapMu: sync.Mutex{},
+			sioAgentMap:    make(map[sio.ServerSocket]*persistence.Agent),
+			sioAgentMapMu:  sync.Mutex{},
+			sioSocketMap:   make(map[string]sio.ServerSocket),
+			sioSocketMapMu: sync.Mutex{},
 
 			wsshAgentMap:   make(map[string]*WsshAgent),
 			wsshAgentMapMu: sync.Mutex{},
@@ -35,9 +38,11 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 }
 
 type AgentStore struct {
-	db            *persistence.DB
-	sioAgentMap   map[sio.ServerSocket]*persistence.Agent
-	sioAgentMapMu sync.Mutex
+	db             *persistence.DB
+	sioAgentMap    map[sio.ServerSocket]*persistence.Agent
+	sioAgentMapMu  sync.Mutex
+	sioSocketMap   map[string]sio.ServerSocket
+	sioSocketMapMu sync.Mutex
 
 	wsshAgentMap   map[string]*WsshAgent
 	wsshAgentMapMu sync.Mutex
@@ -91,4 +96,13 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 	err2 := a.SshttpCloseAgent(id)
 	err3 := a.TlsshCloseAgent(id)
 	return errors.Join(err1, err2, err3)
+}
+
+func (a *AgentStore) KillAGent(id string) error {
+	socket := a.SioGetSocket(id)
+	if socket == nil {
+		return errors.New("socket not found")
+	}
+	socket.Emit(socketio.ExitEvent)
+	return nil
 }

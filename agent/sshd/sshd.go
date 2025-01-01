@@ -22,8 +22,7 @@ func StartSShd() error {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
-			log.Info().Msg("sshd")
-			log.Debug().Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
+			log.Info().Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
 			err = shell.GivePty(s, s.Command())
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")

@@ -103,11 +103,11 @@ func Error() *zerolog.Event {
 }
 
 func Print(v ...interface{}) {
-	Get().Print(v)
+	Get().Print(v...)
 }
 
 func Println(v ...interface{}) {
-	Get().Println(v)
+	Get().Println(v...)
 }
 
 func Printf(format string, v ...interface{}) {

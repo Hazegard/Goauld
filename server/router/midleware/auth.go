@@ -10,7 +10,6 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		// Extract the Authorization header
 		authHeader := r.Header.Get("Authorization")
-
 		// Validate the Authorization header
 		if authHeader != expectedAuthToken {
 			// If the token is not correct, return 403 Forbidden

@@ -41,7 +41,6 @@ func (s *SSHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
-	return
 }
 
 // StartSSH handle the HEAD requests performed to router
@@ -88,7 +87,7 @@ func (s *SSHttpServer) Get(id string, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	// Returns the read data to the caller
-	n, err = w.Write(buffer[:n])
+	_, err = w.Write(buffer[:n])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -100,7 +99,7 @@ func (s *SSHttpServer) Post(id string, w http.ResponseWriter, r *http.Request) {
 	// retrieve the SSH connection from the store
 	agent := s.store.SshttpGetAgent(id)
 	if agent == nil {
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Str("ID", id).Msgf("Agent Not Found")
+		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Msgf("Agent Not Found")
 		http.Error(w, "agent not fount", http.StatusNotFound)
 		return
 	}
@@ -108,10 +107,13 @@ func (s *SSHttpServer) Post(id string, w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Str("ID", id).Msgf("[SSHTTP] Post Agent Read Body error")
+		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Post Agent Read Body error")
 		return
 	}
-	r.Body.Close()
+	err = r.Body.Close()
+	if err != nil {
+		log.Warn().Err(err).Str("ID", id).Str("SSH Mode", "error closing HTTP body")
+	}
 	//Write the received data to the SSH connection
 	_, err = agent.SshConn.Write(body)
 	if err != nil {
@@ -130,8 +132,8 @@ func (s *SSHttpServer) StopSSH(id string, w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	// Updates the agent in the database to remove the SSH connection mode
-	err = s.db.SetAgentSshMode(id, "DISCONNECTED")
+	err = s.db.SetAgentSshMode(id, "OFF")
 	if err != nil {
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("Unable to update SSH agent mode to [DISCONNECTED]")
+		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("Unable to update SSH agent mode to [OFF]")
 	}
 }

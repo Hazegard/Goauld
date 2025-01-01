@@ -3,6 +3,7 @@ package router
 import (
 	"Goauld/common/log"
 	"Goauld/server/config"
+	"Goauld/server/control"
 	"Goauld/server/transport"
 	"crypto/tls"
 	"errors"
@@ -22,17 +23,11 @@ type MainRouter struct {
 	tlsConfig     *tls.Config
 }
 
-func NewHttpRouter(
-	controlServer *sio.Server,
-	wssh *transport.WSshHandler,
-	sshttp *transport.SSHttpServer,
-	tlssh *transport.TLSSHServer,
-	manageRouter *ManageRouter,
-) *MainRouter {
+func NewHttpRouter(controlServer *control.SocketIO, wssh *transport.WSshHandler, sshttp *transport.SSHttpServer, tlssh *transport.TLSSHServer, manageRouter *ManageRouter) *MainRouter {
 
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
-	router.Handle("/socket.io/", controlServer)
+	router.Handle("/socket.io/", controlServer.Server)
 	router.Handle("/wssh/{agentId}", wssh)
 	router.Handle("/sshttp/{agentId}", sshttp)
 	router.Handle("/manage/", http.StripPrefix("/manage", manageRouter.GetRouter()))
@@ -53,11 +48,11 @@ func NewHttpRouter(
 		// HTTPWriteTimeout returns io.PollTimeout + 10 seconds (extra 10 seconds to write the response).
 		// You should either set this timeout to 0 (infinite) or some value greater than the io.PollTimeout.
 		// Otherwise poll requests may fail.
-		WriteTimeout: controlServer.HTTPWriteTimeout(),
+		WriteTimeout: controlServer.Server.HTTPWriteTimeout(),
 	}
 
 	httprouter := &MainRouter{
-		controlServer: controlServer,
+		controlServer: controlServer.Server,
 		wsshHandler:   wssh,
 		tlsshHandler:  tlssh,
 		server:        server,

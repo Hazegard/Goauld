@@ -1,7 +1,7 @@
 package store
 
 import (
-	"fmt"
+	"errors"
 	"net"
 	"strings"
 )
@@ -31,7 +31,7 @@ func (a *AgentStore) TlsshCloseAgent(id string) error {
 	agent := a.tlsshAgentMap[id]
 	a.tlsshAgentMapMu.Unlock()
 	a.TlsshRemoveAgent(id)
-	errs := []string{}
+	var errs []string
 	if agent != nil && agent.TLSConn != nil {
 		err1 := agent.SSHConn.Close()
 		if err1 != nil {
@@ -44,5 +44,5 @@ func (a *AgentStore) TlsshCloseAgent(id string) error {
 			errs = append(errs, err2.Error())
 		}
 	}
-	return fmt.Errorf(strings.Join(errs, " / "))
+	return errors.New(strings.Join(errs, " / "))
 }

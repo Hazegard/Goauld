@@ -5,27 +5,50 @@ import (
 	sio "github.com/karagenc/socket.io-go"
 )
 
-// SioAddAgent adds the agent to the associated store
-func (a *AgentStore) SioAddAgent(agent *persistence.Agent, id sio.ServerSocket) {
+// SioAddAgent adds the agent to the associated socket
+func (a *AgentStore) SioAddAgent(agent *persistence.Agent, socket sio.ServerSocket) {
 	a.sioAgentMapMu.Lock()
-	a.sioAgentMap[id] = agent
+	a.sioAgentMap[socket] = agent
 	a.sioAgentMapMu.Unlock()
+
+	a.sioSocketMapMu.Lock()
+	a.sioSocketMap[agent.Id] = socket
+	a.sioSocketMap[agent.Name] = socket
+	a.sioSocketMapMu.Unlock()
 }
 
-// SioRemoveAgent removes the agent of the associated store
-func (a *AgentStore) SioRemoveAgent(id sio.ServerSocket) {
+// SioRemoveAgent removes the agent of the associated socket
+func (a *AgentStore) SioRemoveAgent(socket sio.ServerSocket) {
+	agent := a.SioGetAgent(socket)
+
 	a.sioAgentMapMu.Lock()
-	delete(a.sioAgentMap, id)
+	delete(a.sioAgentMap, socket)
 	a.sioAgentMapMu.Unlock()
+
+	a.sioSocketMapMu.Lock()
+	delete(a.sioSocketMap, agent.Id)
+	delete(a.sioSocketMap, agent.Name)
+	a.sioSocketMapMu.Unlock()
 }
 
-// SioGetAgent returns the agent of the associated store
-func (a *AgentStore) SioGetAgent(id sio.ServerSocket) *persistence.Agent {
+// SioGetAgent returns the agent of the associated socket
+func (a *AgentStore) SioGetAgent(socket sio.ServerSocket) *persistence.Agent {
 	a.sioAgentMapMu.Lock()
-	agent := a.sioAgentMap[id]
+	agent := a.sioAgentMap[socket]
 	a.sioAgentMapMu.Unlock()
 	if agent == nil {
 		return &persistence.Agent{}
 	}
 	return agent
+}
+
+// SioGetSocket returns the socket of the associated store
+func (a *AgentStore) SioGetSocket(id string) sio.ServerSocket {
+	a.sioSocketMapMu.Lock()
+	socket := a.sioSocketMap[id]
+	a.sioSocketMapMu.Unlock()
+	if socket == nil {
+		return nil
+	}
+	return socket
 }

@@ -6,6 +6,7 @@ import (
 	"Goauld/common/log"
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -34,7 +35,7 @@ func NewSSHTTPConn() *SSHHttpClient {
 
 // Connect initialize the SSH over HTTP connection
 func (c *SSHHttpClient) Connect() error {
-	log.Trace().Msgf("[SSHTTP] Connect to %s", c.url)
+	log.Trace().Str("SSH Mode", "HTTP").Msgf("Connect to %s", c.url)
 	r, err := c.client.Head(c.url)
 
 	if err != nil {
@@ -43,7 +44,7 @@ func (c *SSHHttpClient) Connect() error {
 	if r.StatusCode != 200 {
 		return errors.New("HEAD: " + r.Status)
 	}
-	log.Trace().Msgf("[SSHTTP] HTTP successfully connected: %s", r.Status)
+	log.Trace().Str("SSH Mode", "HTTP").Msgf("HTTP successfully connected: %s", r.Status)
 	return nil
 }
 
@@ -51,9 +52,6 @@ func (c *SSHHttpClient) Connect() error {
 // the data is then send to the local SSH client
 func (c *SSHHttpClient) Read(b []byte) (int, error) {
 	c.bufMu.Lock()
-	defer c.bufMu.Unlock()
-	//log.Trace().Msgf("READ START")
-	//defer log.Trace().Msgf("READ END")
 	if c.buffer.Len() > 0 {
 		//log.Trace().Msgf("read data in buffer")
 		return c.buffer.Read(b)
@@ -65,14 +63,16 @@ func (c *SSHHttpClient) Read(b []byte) (int, error) {
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		//log.Trace().Msgf("read body err: %v", err)
 		return 0, err
 	}
-	r.Body.Close()
+	err = r.Body.Close()
+	if err != nil {
+		return 0, err
+	}
 
 	_, err = c.buffer.Write(body)
 	if err != nil {
-		//fmt.Printf("error writing to buffer %v\n", err)
+		return 0, fmt.Errorf("error writing to buffer: %v", err)
 	}
 	return c.buffer.Read(b)
 
@@ -93,7 +93,7 @@ func (c *SSHHttpClient) Write(b []byte) (int, error) {
 
 // Close finish the connection to the server
 func (c *SSHHttpClient) Close() error {
-	log.Trace().Msgf("[SSHTTP] Close() called")
+	log.Trace().Str("SSH Mode", "HTTP").Msgf("Close() called")
 	return nil
 }
 

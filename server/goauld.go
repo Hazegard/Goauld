@@ -15,13 +15,13 @@ import (
 func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
-	// Initializt the server configuration from command line, environment variable and configuration files
+	// Initialize the server configuration from command line, environment variable and configuration files
 	_, _, err := config.InitServer()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the server")
 		return
 	}
-	// Initializz the database
+	// Initialize the database
 	db, err := persistence.InitDB()
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing database")
@@ -29,7 +29,11 @@ func main() {
 	}
 	// Initialize all the required components
 	agentStore := store.NewAgentStore(db)
-	sioServer := control.InitSocketIOServer(agentStore, db)
+	sioServer, err := control.InitSocketIOServer(agentStore, db)
+	if err != nil {
+		log.Error().Err(err).Msgf("error initializing socketio server")
+		return
+	}
 	wssh := transport.NewWSshHandler(agentStore, db)
 	sshttp := transport.NewSSHHttpServer(agentStore, db)
 	tlssh := transport.NewTLSSHServer(agentStore, db)

@@ -1,7 +1,7 @@
 package store
 
 import (
-	"fmt"
+	"errors"
 	"net"
 	"strings"
 )
@@ -38,10 +38,10 @@ func (a *AgentStore) WsshCloseAgent(id string) error {
 		}
 	}
 
-	return fmt.Errorf(strings.Join(errs, " / "))
+	return errors.New(strings.Join(errs, " / "))
 }
 
-// WsshCloseAgent remove the agent of the store
+// WsshRemoveAgent remove the agent of the store
 func (a *AgentStore) WsshRemoveAgent(id string) {
 	a.wsshAgentMapMu.Lock()
 	delete(a.wsshAgentMap, id)

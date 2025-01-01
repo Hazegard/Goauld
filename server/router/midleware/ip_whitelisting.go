@@ -3,6 +3,7 @@ package midleware
 import (
 	"github.com/urfave/negroni"
 	"net/http"
+	"strings"
 )
 
 // WhitelistMiddleware checks if the request IP is in the allowed list.
@@ -25,11 +26,14 @@ func WhitelistMiddleware(allowedIPs []string) negroni.HandlerFunc {
 
 // Helper function to retrieve the client IP address
 func getClientIP(r *http.Request) string {
-	return r.RemoteAddr
+	return strings.Split(r.RemoteAddr, ":")[0]
 }
 
 // Check if the IP is in the allowed list
 func isIPAllowed(ip string, allowedIPs []string) bool {
+	if len(allowedIPs) == 0 {
+		return true
+	}
 	for _, allowedIP := range allowedIPs {
 		if ip == allowedIP {
 			return true

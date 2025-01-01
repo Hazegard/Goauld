@@ -45,7 +45,8 @@ func (c *SymCryptor) Encrypt(data []byte) ([]byte, error) {
 	}
 
 	// Write the plaintext data to the encryption writer
-	_, err = io.WriteString(writer, string(data))
+	_, err = writer.Write(data)
+	//_, err = io.WriteString(writer, string(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to write plaintext: %v", err)
 	}
