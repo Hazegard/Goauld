@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/log"
 	"Goauld/common/ssh"
@@ -60,8 +61,6 @@ var (
 	}
 )
 
-const APP_NAME = "Goa'uld"
-
 type Config struct {
 	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age" short:"A"`
 
@@ -95,11 +94,11 @@ func parse() (*kong.Context, *Config, error) {
 		return nil, cfg, err
 	}
 	app := kong.Parse(cfg,
-		kong.Name(APP_NAME),
+		kong.Name(common.APP_NAME),
 		kong.Description("TODO"),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower(APP_NAME)+".yaml")),
-		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
+		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower(common.APP_NAME)+".yaml")),
+		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
 	)
 	log.SetLogLevel(cfg.Verbose)

@@ -4,12 +4,14 @@ import (
 	"Goauld/common/crypto"
 	ssh "Goauld/common/ssh"
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"github.com/alecthomas/kong"
 	"github.com/denisbrodbeck/machineid"
 	"net"
 	"os"
 	"os/user"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -23,27 +25,34 @@ type Agent struct {
 	cfg                      *Config
 	RemoteDynamicPortForward []int
 	RemotePortForward        []int
+	Platform                 string
+	Architecture             string
+	Username                 string
+	Hostname                 string
+	IPs                      []string
+	Path                     string
 }
 
 var agent *Agent
 
 // InitAgent parses the command lines arguments and initializes the temporary values (shared secret,etc...)
-func InitAgent() (*kong.Context, error) {
+func InitAgent() (*kong.Context, error, []error) {
+	warnings := []error{}
 	// Parse the command line arguments
 	ctx, cfg, err := parse()
 	if err != nil {
-		return nil, fmt.Errorf("parsing arguments: %v", err)
+		return nil, fmt.Errorf("parsing arguments: %v", err), nil
 	}
 	// Generate the shared secret
 	sharedSecret, err := crypto.GeneratePassword(crypto.PasswordLength)
 	if err != nil {
-		return nil, fmt.Errorf("error generating ssh password: %v", err)
+		return nil, fmt.Errorf("error generating ssh password: %v", err), nil
 	}
 	// Generate the local password if not provided
 	if cfg.LocalSshPassword == "" {
 		sshPassword, err := crypto.GeneratePassword(crypto.PasswordLength)
 		if err != nil {
-			return nil, fmt.Errorf("error generating ssh password: %v", err)
+			return nil, fmt.Errorf("error generating ssh password: %v", err), nil
 		}
 		cfg.LocalSshPassword = sshPassword
 	}
@@ -51,13 +60,13 @@ func InitAgent() (*kong.Context, error) {
 	// Generate the encryption mechanism
 	cryptor, err := crypto.NewCryptor(sharedSecret)
 	if err != nil {
-		return nil, fmt.Errorf("initializing cryptor: %v", err)
+		return nil, fmt.Errorf("initializing cryptor: %v", err), nil
 	}
 
 	// compute the agent ID used to identify it
 	mid, err := machineid.ID()
 	if err != nil {
-		return nil, fmt.Errorf("error generating machine id: %v", err)
+		return nil, fmt.Errorf("error generating machine id: %v", err), nil
 	}
 	id := fmt.Sprintf("%x", md5.Sum([]byte(mid)))
 
@@ -65,23 +74,48 @@ func InitAgent() (*kong.Context, error) {
 	if cfg.Name == _name {
 		userName, err := user.Current()
 		if err != nil {
-			return nil, fmt.Errorf("error getting current user: %v", err)
+			return nil, fmt.Errorf("error getting current user: %v", err), nil
 		}
 		hostname, err := os.Hostname()
 		if err != nil {
-			return nil, fmt.Errorf("error getting hostname: %v", err)
+			return nil, fmt.Errorf("error getting hostname: %v", err), nil
 		}
 		cfg.Name = fmt.Sprintf("%s@%s", userName.Username, hostname)
 	}
 
-	agent = &Agent{
-		Id: id,
-		// AgePubKey:    agePubKey,
-		cfg:          cfg,
-		SharedSecret: sharedSecret,
-		Cryptor:      cryptor,
+	host, err := os.Hostname()
+	if err != nil {
+		warnings = append(warnings, fmt.Errorf("error getting hostname: %v", err))
 	}
-	return ctx, nil
+
+	u, err := user.Current()
+	if err != nil {
+		warnings = append(warnings, fmt.Errorf("error getting user: %v", err))
+	}
+	ips, errs := getIps()
+	if len(errs) > 0 {
+		warnings = append(warnings, fmt.Errorf("error getting ips: %v", errors.Join(errs...)))
+	}
+
+	currDir, err := os.Getwd()
+	if err != nil {
+		warnings = append(warnings, fmt.Errorf("error getting current directory: %v", err))
+	}
+	agent = &Agent{
+		Id:                       id,
+		SharedSecret:             sharedSecret,
+		Cryptor:                  cryptor,
+		cfg:                      cfg,
+		RemoteDynamicPortForward: nil,
+		RemotePortForward:        nil,
+		Platform:                 runtime.GOOS,
+		Architecture:             runtime.GOARCH,
+		Username:                 u.Username,
+		Hostname:                 host,
+		IPs:                      ips,
+		Path:                     currDir,
+	}
+	return ctx, nil, warnings
 }
 
 func Get() *Agent {
@@ -225,3 +259,29 @@ func (a *Agent) GetRemotePortForwarding() []ssh.ReversePortForwarding {
 // func getID() string {
 // 	id, err != machin
 // }
+
+func getIps() ([]string, []error) {
+	IPS := make([]string, 0)
+
+	errs := make([]error, 0)
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	for _, iface := range ifaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			errs = append(errs, err)
+		}
+		for _, addr := range addrs {
+			if strings.HasPrefix(addr.String(), "fe80:") || strings.HasPrefix(addr.String(), "127.") {
+				continue
+			}
+			if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback == 0 {
+				IPS = append(IPS, addr.String())
+			}
+		}
+	}
+	return IPS, errs
+}

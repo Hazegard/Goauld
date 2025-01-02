@@ -170,12 +170,6 @@ func (ur *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWrite
 
 func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	fmt.Println(id)
-	fmt.Println(id)
-	fmt.Println(id)
-	fmt.Println(id)
-	fmt.Println(id)
-	fmt.Println(id)
 	err := ur.store.KillAGent(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

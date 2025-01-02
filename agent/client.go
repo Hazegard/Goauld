@@ -18,10 +18,15 @@ func main() {
 	sshErr := make(chan error)
 
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
-	_, err := agent.InitAgent()
+	_, err, warnings := agent.InitAgent()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the agent")
 		return
+	}
+	if len(warnings) > 0 {
+		for _, warning := range warnings {
+			log.Warn().Err(warning).Msgf("agent init error")
+		}
 	}
 	// Announce to hanging goroutines that the configuration is completed
 	configDone := make(chan struct{})

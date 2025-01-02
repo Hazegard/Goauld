@@ -65,14 +65,10 @@ func (a *Agent) InitKeys() error {
 
 // AddPort adds the port to the array of used ports of the agent
 func (a *Agent) AddPort(port int) {
-	fmt.Println(a.UsedPorts)
-	fmt.Println(a.UsedPorts)
 	ports := portStringToInt(a.UsedPorts)
 	if len(ports) == 1 && ports[0] == 0 {
 		ports = []int{}
 	}
-	fmt.Println(ports)
-	fmt.Println(ports)
 	ports = append(ports, port)
 
 	ports = utils.Unique(ports)
@@ -144,7 +140,7 @@ func (db *DB) FindAgent(id string) (*Agent, error) {
 
 // UpdateAgent update the agent information in the database
 func (db *DB) UpdateAgent(agent *Agent) error {
-	result := db.db.Select("*").Updates(agent)
+	result := db.db.Updates(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not update agent: %s", result.Error)
 	}
@@ -158,7 +154,6 @@ func (db *DB) AddPortToAgent(id string, port int) error {
 		return err
 	}
 	agent.AddPort(port)
-	fmt.Printf("%+v\n", agent)
 	return db.UpdateAgent(agent)
 }
 
@@ -175,13 +170,14 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 // FindOrCreate retrieves the agent from the database
 // If no agent corresponding to this ID exists
 // an empty one that will be populated later is returned
-func (db *DB) FindOrCreate(id string) (*Agent, error) {
+func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
 	agent, _ := db.FindAgent(id)
 	if agent != nil {
 		return agent, nil
 	}
 	agent = &Agent{}
 	agent.Id = id
+	agent.Name = name
 	err := db.CreateAgent(agent)
 	if err != nil {
 		return nil, fmt.Errorf("could not create agent: %s", err)
@@ -248,7 +244,7 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 // portStringToInt converts a string of port separated by a comma
 // to a slice of the ports
 func portStringToInt(port string) []int {
-	if port == "" {
+	if port == "/" {
 		return []int{}
 	}
 	var ports []int
@@ -270,5 +266,9 @@ func portIntToString(port []int) string {
 	for _, p := range port {
 		portsString = append(portsString, strconv.Itoa(p))
 	}
-	return strings.Join(portsString, ",")
+	res := strings.Join(portsString, ",")
+	if res == "" {
+		res = "/"
+	}
+	return res
 }

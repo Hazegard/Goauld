@@ -14,6 +14,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/evertras/bubble-table v0.17.1
 	github.com/gliderlabs/ssh v0.3.7
 	github.com/karagenc/socket.io-go v0.1.0
 	github.com/pkg/sftp v1.13.7
@@ -30,6 +31,7 @@ require (
 require (
 	github.com/alexbrainman/sspi v0.0.0-20180613141037-e580b900e9f5 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
+	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/x/ansi v0.4.5 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
@@ -53,6 +55,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
+	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/onsi/ginkgo/v2 v2.19.1 // indirect
 	github.com/petermattis/goid v0.0.0-20240716203034-badd1c0974d6 // indirect

@@ -101,6 +101,7 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 func (a *AgentStore) KillAGent(id string) error {
 	socket := a.SioGetSocket(id)
 	if socket == nil {
+		_ = a.db.SetAgentSshMode(id, "OFF")
 		return errors.New("socket not found")
 	}
 	socket.Emit(socketio.ExitEvent)

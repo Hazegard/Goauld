@@ -1,6 +1,7 @@
 package config
 
 import (
+	"Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
@@ -11,8 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 )
-
-const APP_NAME = "Goa'uld"
 
 var srvCfg *ServerConfig
 
@@ -39,7 +38,7 @@ var (
 	_tls       = "true"
 
 	_no_db   = "false"
-	_db_name = APP_NAME + ".db"
+	_db_name = common.APP_NAME + ".db"
 
 	_allowed_ips  = "127.0.0.1,0.0.0.0/32"
 	_access_token = "TODO_TOKEN"
@@ -93,11 +92,11 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 		return nil, cfg, err
 	}
 	app := kong.Parse(cfg,
-		kong.Name(APP_NAME),
+		kong.Name(common.APP_NAME),
 		kong.Description("TODO"),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower(APP_NAME)+".yaml")),
-		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
+		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower(common.APP_NAME)+".yaml")),
+		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
 	)
 	srvCfg = cfg

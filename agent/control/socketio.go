@@ -7,6 +7,7 @@ import (
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
 	"context"
+	"errors"
 	"fmt"
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
@@ -61,7 +62,7 @@ func (cpc *ControlPlanClient) Init() error {
 	// SendSshPrivateKeyEvent is sent by the server after the client sends the RegisterEvent event
 	// this event contains the encrypted SSH private key used by the agent to authenticate on the
 	// SSHD server.
-	// Once received, the agent sends its SSHD password to the server using the SendAgentSshPasswordEvent event
+	// Once received, the agent sends its SSHD password to the server using the SendAgentDataEvent event
 	socket.OnEvent(socketio.SendSshPrivateKeyEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
 		log.Trace().Msgf("SshPrivateKeyEvent: data reveived")
@@ -76,13 +77,13 @@ func (cpc *ControlPlanClient) Init() error {
 		log.Debug().Msgf("Ssh private key received and successfully decrypted")
 		log.Debug().Msgf("Sending local sshd password")
 		// Encrypt the SSH password used by the client to authenticate to the agent SSHD server
-		localSshPassword, err := socketio.NewEncryptedAgentSshPasswordMessage(agent.Get().LocalSShdPassword(), agent.Get().Cryptor)
+		localSshPassword, err := socketio.NewEncryptedAgentSshPasswordMessage(agent.Get(), agent.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error encrypting local sshd password")
 		}
 		log.Debug().Msgf("Local sshd password sent")
 		// Send the encrypted SSH password to the server
-		socket.Emit(socketio.SendAgentSshPasswordEvent, localSshPassword)
+		socket.Emit(socketio.SendAgentDataEvent, localSshPassword)
 
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent done")
 	})
@@ -101,19 +102,25 @@ func (cpc *ControlPlanClient) Init() error {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess done")
 	})
 
-	// SendAgentSshPasswordError Logs when the server returns an error
-	socket.OnEvent(socketio.SendAgentSshPasswordError, func() {
-		log.Trace().Msg("OnEvent: SendAgentSshPasswordError")
-		log.Error().Msgf("Error occured (%s) %s", "SendAgentSshPasswordError", cpc.url)
-		log.Trace().Msg("OnEvent: SendAgentSshPasswordError done")
+	// SendAgentDataError Logs when the server returns an error
+	socket.OnEvent(socketio.SendAgentDataError, func() {
+		log.Trace().Msg("OnEvent: SendAgentDataError")
+		log.Error().Msgf("Error occured (%s) %s", "SendAgentDataError", cpc.url)
+		log.Trace().Msg("OnEvent: SendAgentDataError done")
 	})
 
-	// SendAgentSshPasswordSuccess Logs when the server returns no error
+	// SendAgentDataSuccess Logs when the server returns no error
 	// As it complete the configuration steps between the
-	socket.OnEvent(socketio.SendAgentSshPasswordSuccess, func() {
-		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess")
+	socket.OnEvent(socketio.SendAgentDataSuccess, func() {
+		log.Trace().Msg("OnEvent: SendAgentDataSuccess")
 		cpc.configDone <- struct{}{}
-		log.Trace().Msg("OnEvent: SendAgentSshPasswordSuccess done")
+		log.Trace().Msg("OnEvent: SendAgentDataSuccess done")
+	})
+
+	socket.OnEvent(socketio.RegisterError, func(data socketio.SioError) {
+		log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
+		log.Info().Msgf("Quitting...")
+		os.Exit(2)
 	})
 
 	socket.OnEvent(socketio.ExitEvent, func() {
