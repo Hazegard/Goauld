@@ -14,6 +14,18 @@ import (
 	"time"
 )
 
+const (
+	action_delete = "ctrl+d"
+	action_kill   = "ctrl+k"
+)
+
+var (
+	textError   = lipgloss.NewStyle().Foreground(lipgloss.Color("202"))
+	textWarning = lipgloss.NewStyle().Foreground(lipgloss.Color("178"))
+	textOk      = lipgloss.NewStyle().Foreground(lipgloss.Color("190"))
+	textHelp    = lipgloss.NewStyle().Foreground(lipgloss.Color("242"))
+)
+
 type CmdResponse struct {
 	Success bool
 	Message string
@@ -63,6 +75,7 @@ type Model struct {
 	agents         []types.Agent
 	agentInfoTable teatable.Model
 	statusText     textinput.Model
+	confirmAction  string
 }
 
 func (m Model) Init() tea.Cmd { return m.doTick(m.agents) }
@@ -94,39 +107,76 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		// ctrl+k: shortcut to kill the agent
-		case "ctrl+k":
+		case action_kill:
 			// if selected agent is not empty
-			if selectedAgent.Id != "" {
-				if selectedAgent.Connected {
-					text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.Id)
-					m.statusText.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("202"))
-					batch = append(batch, m.Kill(selectedAgent))
-				} else {
-					text = fmt.Sprintf("Already killed %s (%s)", selectedAgent.Name, selectedAgent.Id)
-					m.statusText.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("178"))
-				}
+			if m.confirmAction == "" {
+				m.confirmAction = action_kill
+				text = fmt.Sprintf("Confirm killing %s? (%s to confirm)", selectedAgent.Name, action_kill)
+				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
+			} else if m.confirmAction == action_kill {
+				if selectedAgent.Id != "" {
+					m.confirmAction = action_kill
+					if selectedAgent.Connected {
+						text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+						m.statusText.TextStyle = textError
+						batch = append(batch, m.Kill(selectedAgent))
+					} else {
+						text = fmt.Sprintf("Already killed %s (%s)", selectedAgent.Name, selectedAgent.Id)
+						m.statusText.TextStyle = textWarning
+					}
+					m.statusText.SetValue(text)
+				}
+			} else {
+				m.confirmAction = ""
+				m.statusText.SetValue("")
+			}
+		case action_delete:
+			// if selected agent is not empty
+			if m.confirmAction == "" {
+				m.confirmAction = action_delete
+				text = fmt.Sprintf("Confirm deleting %s? (%s to confirm)", selectedAgent.Name, action_delete)
+				m.statusText.TextStyle = textError
+				m.statusText.SetValue(text)
+			} else if m.confirmAction == action_delete {
+				if selectedAgent.Id != "" {
+					m.confirmAction = action_delete
+					if selectedAgent.Connected {
+						text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+						m.statusText.TextStyle = textError
+						batch = append(batch, m.Delete(selectedAgent))
+					} else {
+						text = fmt.Sprintf("Already deleted %s (%s)", selectedAgent.Name, selectedAgent.Id)
+						m.statusText.TextStyle = textWarning
+					}
+					m.statusText.SetValue(text)
+				}
+			} else {
+				m.confirmAction = ""
+				m.statusText.SetValue("")
 			}
 
 		// ctrl+r: shortcut to update the agent list
 		case "ctrl+r":
 			return m, m.UpdateAgents(m.agents)
+		default:
+			m.confirmAction = ""
+			m.statusText.SetValue("")
 		}
 	// If the message is a response of an API call
 	case CmdResponse:
 		switch msg.Action {
 		// Handle kill api call
-		case "kill":
+		case "kill", "delete":
 			if msg.Success {
 				text = msg.Message
-				m.statusText.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("190"))
+				m.statusText.TextStyle = textOk
 			} else {
 				text = fmt.Sprintf("%s", msg.Message)
-				m.statusText.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("178"))
+				m.statusText.TextStyle = textWarning
 			}
 			m.statusText.SetValue(text)
-		// Handle delete api call
-		case "delete":
+
 		}
 	// Handle update agent list
 	case UpdateMessage:
@@ -134,7 +184,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.agentsTable = m.agentsTable.WithRows(rows)
 
 		m.statusText.SetValue(msg.ErrorMessage)
-		m.statusText.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("178"))
+		m.statusText.TextStyle = textWarning
 		// Return your Tick command again to loop.
 		if msg.tick {
 			batch = append(batch, m.doTick(m.agents))
@@ -180,6 +230,10 @@ func (m Model) doUpdate(prevAgents []types.Agent) UpdateMessage {
 		tick:         false,
 		ErrorMessage: "",
 	}
+}
+
+func (m Model) Help() string {
+	return textHelp.SetString("  [↑]:Up [↓]:Down  [←]:Previous  [→]:Next  [q]/[ctrl+c]:Quit  [ctrl+k]:Kill agent  [ctrl+d]:Delete agent  ").String()
 }
 
 // doTick handle the periodic update
@@ -243,7 +297,7 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 }
 
 func (m Model) View() string {
-	return baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n"
+	return baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.Help() + "\n"
 }
 
 // GenerateAgentTable initialize the agent table
@@ -307,7 +361,7 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 	return rows
 }
 
-// Kill performs a call to the API to kill the selectec agent
+// Kill performs a call to the API to kill the selected agent
 func (m Model) Kill(agent types.Agent) tea.Cmd {
 	return func() tea.Msg {
 		err := m.api.KillAgent(agent.Id)
@@ -322,6 +376,25 @@ func (m Model) Kill(agent types.Agent) tea.Cmd {
 			Success: false,
 			Message: fmt.Sprintf("Killed %s (%s)", agent.Name, agent.Id),
 			Action:  "kill",
+		}
+	}
+}
+
+// Delete performs a call to the API to delete the selected agent
+func (m Model) Delete(agent types.Agent) tea.Cmd {
+	return func() tea.Msg {
+		err := m.api.DeleteAgent(agent.Id)
+		if err != nil {
+			return CmdResponse{
+				Success: false,
+				Message: fmt.Sprintf("Error deleting %s (%s): %s", agent.Name, agent.Id, err),
+				Action:  "delete",
+			}
+		}
+		return CmdResponse{
+			Success: false,
+			Message: fmt.Sprintf("Deleted %s (%s)", agent.Name, agent.Id),
+			Action:  "delete",
 		}
 	}
 }

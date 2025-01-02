@@ -26,6 +26,20 @@ func NewAPI(cfg *config.ClientConfig) *API {
 	}
 }
 
+// Delete generic method to perform DELETE request with the appropriate authentication header
+func (api *API) Delete(p string) (*http.Response, error) {
+	u, err := url.JoinPath(api.server, p)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", api.accessToken)
+	return api.client.Do(req)
+}
+
 // Get generic method to perform GET request with the appropriate authentication header
 func (api *API) Get(p string) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
@@ -77,6 +91,18 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 // KillAgent kills the agent
 func (api *API) KillAgent(id string) error {
 	res, err := api.Post("/manage/agent/kill/"+id, nil)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("%d", res.StatusCode)
+	}
+	return nil
+}
+
+// DeleteAgent kills the agent
+func (api *API) DeleteAgent(id string) error {
+	res, err := api.Delete("/manage/agent/" + id)
 	if err != nil {
 		return err
 	}
