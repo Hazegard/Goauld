@@ -83,7 +83,7 @@ type Config struct {
 
 	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order of ssh connection attempts."`
 
-	RemotePortForwarding []ssh.ReversePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT)."`
+	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT)."`
 }
 
 // parse parses the command line arguments

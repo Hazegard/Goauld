@@ -1,6 +1,7 @@
 package store
 
 import (
+	"Goauld/common/types"
 	"Goauld/server/persistence"
 	sio "github.com/karagenc/socket.io-go"
 )
@@ -51,4 +52,18 @@ func (a *AgentStore) SioGetSocket(id string) sio.ServerSocket {
 		return nil
 	}
 	return socket
+}
+
+func (a *AgentStore) DumpSocketIO(id string) types.SocketIOState {
+	a.sioSocketMapMu.Lock()
+	socket := a.sioSocketMap[id]
+	defer a.sioSocketMapMu.Unlock()
+	state := types.SocketIOState{
+		AgentId:   id,
+		SocketId:  string(socket.ID()),
+		Connected: socket.Connected(),
+		Recovered: socket.Recovered(),
+	}
+
+	return state
 }

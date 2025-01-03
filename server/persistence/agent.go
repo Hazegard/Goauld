@@ -89,6 +89,15 @@ func (a *Agent) DeletePort(port int) {
 	a.UsedPorts = portIntToString(usedPorts)
 }
 
+func (a *Agent) SetRemotePortForwarding(rpf []ssh.RemotePortForwarding) {
+	var rpfString []string
+	for _, v := range rpf {
+		rpfString = append(rpfString, v.Info())
+	}
+	a.RemotePortForwarding = strings.Join(rpfString, ",")
+
+}
+
 // SetConnect sets the agent state to connected
 func (a *Agent) SetConnect() {
 	a.Connected = true
@@ -138,8 +147,18 @@ func (db *DB) FindAgent(id string) (*Agent, error) {
 	return &agent, nil
 }
 
+// UpdateAgentField update the specified field information in the database
+func (db *DB) UpdateAgentField(agent *Agent, fields ...string) error {
+	result := db.db.Select(fields).Updates(agent)
+	if result.Error != nil {
+		return fmt.Errorf("could not update agent: %s", result.Error)
+	}
+	return nil
+}
+
 // UpdateAgent update the agent information in the database
 func (db *DB) UpdateAgent(agent *Agent) error {
+	fmt.Printf("%+v\n", agent)
 	result := db.db.Updates(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not update agent: %s", result.Error)
@@ -154,7 +173,7 @@ func (db *DB) AddPortToAgent(id string, port int) error {
 		return err
 	}
 	agent.AddPort(port)
-	return db.UpdateAgent(agent)
+	return db.UpdateAgentField(agent, "UsedPorts")
 }
 
 // RemovePortToAgent removes the port from the UsedPorts field of the agent
@@ -164,7 +183,7 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 		return err
 	}
 	agent.DeletePort(port)
-	return db.UpdateAgent(agent)
+	return db.UpdateAgentField(agent, "UsedPorts")
 }
 
 // FindOrCreate retrieves the agent from the database
@@ -232,9 +251,10 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 	if mode == "OFF" {
 		agent.UsedPorts = "/"
 		agent.Connected = false
+		agent.RemotePortForwarding = "/"
 	}
 	agent.LastUpdated = time.Now()
-	err = db.UpdateAgent(agent)
+	err = db.UpdateAgentField(agent, "SshMode", "LastUpdated", "UsedPorts", "Connected", "RemotePortForwarding")
 	if err != nil {
 		return fmt.Errorf("could not update agent: %s", err)
 	}

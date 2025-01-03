@@ -23,7 +23,13 @@ type MainRouter struct {
 	tlsConfig     *tls.Config
 }
 
-func NewHttpRouter(controlServer *control.SocketIO, wssh *transport.WSshHandler, sshttp *transport.SSHttpServer, tlssh *transport.TLSSHServer, manageRouter *ManageRouter) *MainRouter {
+func NewHttpRouter(controlServer *control.SocketIO,
+	wssh *transport.WSshHandler,
+	sshttp *transport.SSHttpServer,
+	tlssh *transport.TLSSHServer,
+	manageRouter *ManageRouter,
+	adminRouter *AdminRouter,
+) *MainRouter {
 
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
@@ -31,6 +37,7 @@ func NewHttpRouter(controlServer *control.SocketIO, wssh *transport.WSshHandler,
 	router.Handle("/wssh/{agentId}", wssh)
 	router.Handle("/sshttp/{agentId}", sshttp)
 	router.Handle("/manage/", http.StripPrefix("/manage", manageRouter.GetRouter()))
+	router.Handle("/admin/", http.StripPrefix("/admin", adminRouter.GetRouter()))
 
 	// Negroni allow to used middleware, such as logger and recovery mecanism
 	n := negroni.New()

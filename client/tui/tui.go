@@ -2,7 +2,7 @@ package tui
 
 import (
 	"Goauld/client/api"
-	"Goauld/common/types"
+	"Goauld/client/types"
 	"fmt"
 	teatable "github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -85,6 +85,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var agentsTableCmd tea.Cmd
 	var agentInfoCmd tea.Cmd
 	var statusTextCmd tea.Cmd
+	var doUpdateStatus bool
 	var text string
 
 	var batch []tea.Cmd
@@ -131,6 +132,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.confirmAction = ""
 				m.statusText.SetValue("")
 			}
+			doUpdateStatus = true
 		case action_delete:
 			// if selected agent is not empty
 			if m.confirmAction == "" {
@@ -155,6 +157,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.confirmAction = ""
 				m.statusText.SetValue("")
 			}
+			doUpdateStatus = true
 
 		// ctrl+r: shortcut to update the agent list
 		case "ctrl+r":
@@ -162,6 +165,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			m.confirmAction = ""
 			m.statusText.SetValue("")
+			doUpdateStatus = true
 		}
 	// If the message is a response of an API call
 	case CmdResponse:
@@ -185,6 +189,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.statusText.SetValue(msg.ErrorMessage)
 		m.statusText.TextStyle = textWarning
+		doUpdateStatus = true
 		// Return your Tick command again to loop.
 		if msg.tick {
 			batch = append(batch, m.doTick(m.agents))
@@ -193,7 +198,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Finalize the update mechanism
 
-	m.statusText, statusTextCmd = m.statusText.Update(msg)
+	if doUpdateStatus {
+		m.statusText, statusTextCmd = m.statusText.Update(msg)
+		batch = append(batch, statusTextCmd)
+	}
 
 	if selectedAgent.Id != "" {
 		m.agentInfoTable = m.GenerateInfoTable(selectedAgent)
@@ -202,7 +210,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.agentsTable, agentsTableCmd = m.agentsTable.Update(msg)
 	batch = append(batch, agentsTableCmd)
 	batch = append(batch, agentInfoCmd)
-	batch = append(batch, statusTextCmd)
 	return m, tea.Sequence(batch...)
 }
 
@@ -256,12 +263,14 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		{"IPs", agent.IPs},
 		{"Path", agent.Path},
 		{"Ssh Mode", agent.SshMode},
-		{"Used Ports", agent.UsedPorts},
+		{"SSHD Port", agent.GetSSHPort()},
+		{"Socks Ports", agent.GetSocksPort()},
+		{"Other Ports", agent.GetOtherPort()},
 	}
 
 	// Compute the longest field that will be shown on the table
 	length := 0
-	for _, v := range []string{
+	lines := []string{
 		agent.Id,
 		agent.Platform,
 		agent.Architecture,
@@ -270,9 +279,12 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		agent.IPs,
 		agent.Path,
 		agent.SshMode,
-		agent.UsedPorts,
+		agent.GetSSHPort(),
+		agent.GetSocksPort(),
+		agent.GetOtherPort(),
 		agent.SshPasswd,
-	} {
+	}
+	for _, v := range lines {
 		length = max(length, len(v))
 	}
 	s := teatable.DefaultStyles()
@@ -289,7 +301,7 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		teatable.WithColumns(columns),
 		teatable.WithRows(rows),
 		teatable.WithFocused(false),
-		teatable.WithHeight(10),
+		teatable.WithHeight(len(lines)),
 	)
 
 	t.SetStyles(s)
@@ -308,7 +320,8 @@ func GenerateAgentTable() table.Model {
 		table.NewColumn("Name", "Name", 30),
 		table.NewColumn("Last updates", "Last updates", 15),
 		table.NewColumn("Mode", "Mode", 10),
-		table.NewColumn("Ports", "Ports", 30),
+		table.NewColumn("SSHD Port", "SSHD Port", 15),
+		table.NewColumn("Socks Ports", "Socks Ports", 15),
 	}
 	t := table.New(columns).
 		Focused(true).
@@ -352,7 +365,9 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 				"Name":         agent.Name,
 				"Last updates": timeAgo(agent.LastUpdated),
 				"Mode":         agent.SshMode,
-				"Ports":        agent.UsedPorts,
+				"SSHD Port":    agent.GetSSHPort(),
+				"Socks Ports":  agent.GetSocksPort(),
+				"Other Ports":  agent.GetOtherPort(),
 			})
 
 		rows = append(rows, row)

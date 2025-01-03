@@ -6,6 +6,7 @@ import (
 	"Goauld/common/crypto"
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
+	"Goauld/common/ssh"
 	"context"
 	"errors"
 	"fmt"
@@ -129,6 +130,12 @@ func (cpc *ControlPlanClient) Init() error {
 		os.Exit(0)
 	})
 
+	socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
+		log.Trace().Msg("OnEvent: SendRemotePortForwardingDataSuccess")
+		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
+		log.Trace().Msg("OnEvent: SendRemotePortForwardingDataSuccess done")
+	})
+
 	cpc.socket = socket
 	cpc.manager = manager
 	return nil
@@ -166,6 +173,15 @@ func (cpc *ControlPlanClient) Start() error {
 		log.Trace().Msg("Event send: Disconnect")
 		cpc.socket.Disconnect()
 	}
+	return nil
+}
+
+func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
+	data, err := socketio.EncryptRemotePortForwardingMessage(rpf, agent.Get().Cryptor)
+	if err != nil {
+		return fmt.Errorf("error encrypting remote port forwarding message: %v", err)
+	}
+	cpc.socket.Emit(socketio.SendRemotePortForwardingDataEvent, data)
 	return nil
 }
 

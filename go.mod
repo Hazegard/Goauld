@@ -7,7 +7,6 @@ toolchain go1.23.4
 require (
 	filippo.io/age v1.2.1
 	github.com/alecthomas/kong v1.6.0
-	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5
 	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
 	github.com/charmbracelet/bubbles v0.20.0
@@ -20,6 +19,7 @@ require (
 	github.com/pkg/sftp v1.13.7
 	github.com/quic-go/webtransport-go v0.8.0
 	github.com/rs/zerolog v1.33.0
+	github.com/things-go/go-socks5 v0.0.5
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/crypto v0.31.0
 	gopkg.in/yaml.v3 v3.0.1

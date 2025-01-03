@@ -3,7 +3,7 @@ package socks
 import (
 	"Goauld/agent/proxy"
 	"Goauld/common/log"
-	"github.com/armon/go-socks5"
+	"github.com/things-go/go-socks5"
 	stdlog "log"
 	"net"
 )
@@ -14,20 +14,10 @@ type SocksServer struct {
 
 // NewSocks returns a new SocksServer
 func NewSocks() (*SocksServer, error) {
-	s5Config := &socks5.Config{
-		AuthMethods: nil,
-		Credentials: nil,
-		Resolver:    nil,
-		Rules:       nil,
-		Rewriter:    nil,
-		BindIP:      nil,
-		Logger:      stdlog.Default(),
-		Dial:        proxy.NewProxyDialer(),
-	}
-	s5, err := socks5.New(s5Config)
-	if err != nil {
-		return nil, err
-	}
+
+	defaultLogger := socks5.NewLogger(stdlog.Default())
+	s5 := socks5.NewServer(socks5.WithLogger(defaultLogger), socks5.WithDial(proxy.NewProxyDialer()))
+
 	socksServer := &SocksServer{
 		socksServer: s5,
 	}
@@ -37,7 +27,12 @@ func NewSocks() (*SocksServer, error) {
 // Serve use the provided listener to listen and serve the Socks proxy
 func (s *SocksServer) Serve(l net.Listener) {
 	go func() {
-		defer l.Close()
+		defer func(l net.Listener) {
+			err := l.Close()
+			if err != nil {
+				log.Warn().Err(err).Str("Server", "Socks").Msg("close socks server")
+			}
+		}(l)
 		err := s.socksServer.Serve(l)
 		if err != nil {
 			log.Error().Err(err).Msg("socks server error")

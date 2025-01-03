@@ -42,6 +42,7 @@ var (
 
 	_allowed_ips  = "127.0.0.1,0.0.0.0/32"
 	_access_token = "TODO_TOKEN"
+	_admin_token  = "TODO_TOKEN"
 
 	defaultValues = kong.Vars{
 		"_age_privKey": _age_privKey,
@@ -61,6 +62,7 @@ var (
 
 		"_allowed_ips":  _allowed_ips,
 		"_access_token": _access_token,
+		"_admin_token":  _admin_token,
 	}
 )
 
@@ -82,6 +84,7 @@ type ServerConfig struct {
 
 	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ip" help:"List of IP allowed to access the /manage/ endpoint."`
 	AccessToken string   `default:"${_access_token}" help:"Access token required to access the /manage/ endpoint."`
+	AdminToken  string   `default:"${_access_token}" help:"Access token required to access the /manage/ endpoint."`
 }
 
 // InitServer initialize the application configuration

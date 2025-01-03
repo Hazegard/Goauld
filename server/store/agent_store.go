@@ -2,6 +2,8 @@ package store
 
 import (
 	socketio "Goauld/common/socket.io"
+	"Goauld/common/types"
+	"Goauld/common/utils"
 	"Goauld/server/persistence"
 	"errors"
 	"fmt"
@@ -106,4 +108,52 @@ func (a *AgentStore) KillAGent(id string) error {
 	}
 	socket.Emit(socketio.ExitEvent)
 	return nil
+}
+
+func (a *AgentStore) GetAllActivesId() []string {
+	var ids []string
+	a.tlsshAgentMapMu.Lock()
+	for id := range a.tlsshAgentMap {
+		ids = append(ids, id)
+	}
+	a.tlsshAgentMapMu.Unlock()
+
+	a.wsshAgentMapMu.Lock()
+	for id := range a.wsshAgentMap {
+		ids = append(ids, id)
+	}
+	a.wsshAgentMapMu.Unlock()
+
+	a.sshttpAgentMapMu.Lock()
+	for id := range a.sshttpAgentMap {
+		ids = append(ids, id)
+	}
+	a.sshttpAgentMapMu.Unlock()
+
+	a.sioSocketMapMu.Lock()
+	for id := range a.sioSocketMap {
+		ids = append(ids, id)
+	}
+	a.sioSocketMapMu.Unlock()
+
+	return utils.Unique(ids)
+}
+
+func (a *AgentStore) GetAllStates() []types.State {
+	var states []types.State
+	for _, id := range a.GetAllActivesId() {
+		states = append(states, a.GetState(id))
+	}
+	return states
+}
+
+func (a *AgentStore) GetState(id string) types.State {
+	state := types.State{
+		Id:       id,
+		TLSSH:    a.DumpTLSSH(id),
+		WSSH:     a.DumpWSSH(id),
+		SSHTTP:   a.DumpSSHTTP(id),
+		SocketIO: a.DumpSocketIO(id),
+	}
+	return state
 }

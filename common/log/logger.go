@@ -21,8 +21,9 @@ var (
 func initLoggers() {
 	l := zerolog.New(
 		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
-	).Level(logLevel).With().Timestamp().Caller().Logger()
+	).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
 	zerologger = &l
+	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 
 	gormlogger = NewGormLogger().
 		WithInfo(func() Event {
@@ -39,9 +40,29 @@ func initLoggers() {
 	log.SetFlags(0)
 }
 
+func UpdateLogLevel(level zerolog.Level) {
+	newLogger := zerologger.Level(level)
+	zerologger = &newLogger
+	gormlogger = gormlogger.LogMode(zerologLevelToGormLogLevel(level))
+}
+
 func SetLogLevel(verbosity int) {
-	logLevel = verbosityToLogLevel(verbosity)
+	logLevel = VerbosityToLogLevel(verbosity)
+	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	gormLogLevel = verbosityToGormLogLevel(verbosity)
+}
+
+func zerologLevelToGormLogLevel(level zerolog.Level) logger.LogLevel {
+	switch level {
+	case zerolog.ErrorLevel:
+		return logger.Error
+	case zerolog.WarnLevel:
+		return logger.Warn
+	case zerolog.InfoLevel:
+		return logger.Info
+	default:
+		return logger.Info
+	}
 }
 
 func verbosityToGormLogLevel(verbosity int) logger.LogLevel {
@@ -57,7 +78,7 @@ func verbosityToGormLogLevel(verbosity int) logger.LogLevel {
 	}
 }
 
-func verbosityToLogLevel(verbosity int) zerolog.Level {
+func VerbosityToLogLevel(verbosity int) zerolog.Level {
 	switch verbosity {
 	case 0:
 		return zerolog.InfoLevel

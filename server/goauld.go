@@ -38,9 +38,10 @@ func main() {
 	sshttp := transport.NewSSHHttpServer(agentStore, db)
 	tlssh := transport.NewTLSSHServer(agentStore, db)
 	manageRouter := router.NewManageRouter(db, agentStore)
+	adminRouter := router.NewAdminRouter(db, agentStore)
 
 	// Initialize the HTTP router
-	r := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter)
+	r := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter)
 
 	// Initialize and start the SSHD server
 	go sshd.StartSshd(ctx, db)

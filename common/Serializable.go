@@ -23,7 +23,6 @@ func (f Decryptor[U]) Decrypt(data []byte, c *crypto.SymCryptor, init func() *U)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting data: %s", err)
 	}
-
 	err = json.Unmarshal(d, a)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling data: %s", err)

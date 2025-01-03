@@ -7,7 +7,9 @@ import (
 	"Goauld/agent/ssh"
 	"Goauld/agent/sshd"
 	"Goauld/common/log"
+	ssh2 "Goauld/common/ssh"
 	"context"
+	"net"
 	"strconv"
 )
 
@@ -83,9 +85,10 @@ func main() {
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the Socks5 connection")
 			}
+			realPort := rListener.Addr().(*net.TCPAddr).Port
+			agent.Get().UpdateSocksPort(realPort)
 			socks5.Serve(rListener)
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote Socks5 server started")
-			agent.Get().AddSshdToRpf()
 		}
 
 		// For all porte forwards, launch the forwarding
@@ -100,9 +103,15 @@ func main() {
 
 			log.Info().Str("Local", rpf[i].GetLocal()).Str("Remote", rpf[i].GetRemote()).Msg("Port forwarding started")
 		}
-		err = controlPlanClient.SendPorts(rpf)
+		allPorts := append(rpf, ssh2.RemotePortForwarding{
+			ServerPort: agent.Get().RemoteForwardedSocksPort(),
+			AgentPort:  0,
+			AgentIP:    "0.0.0.0",
+			Tag:        "SOCKS",
+		})
+		err := controlPlanClient.SendPorts(allPorts)
 		if err != nil {
-			log.Error().Err(err).Msg("error sending the forwarded port list")
+			log.Error().Err(err).Msg("error sending the forwarded ports")
 		}
 	}()
 

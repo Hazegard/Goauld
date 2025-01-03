@@ -1,6 +1,7 @@
 package store
 
 import (
+	"Goauld/common/types"
 	"errors"
 	"net"
 	"strings"
@@ -45,4 +46,19 @@ func (a *AgentStore) TlsshCloseAgent(id string) error {
 		}
 	}
 	return errors.New(strings.Join(errs, " / "))
+}
+
+func (a *AgentStore) DumpTLSSH(id string) types.TLSSHState {
+	a.tlsshAgentMapMu.Lock()
+	agent := a.tlsshAgentMap[id]
+	defer a.tlsshAgentMapMu.Unlock()
+	state := types.TLSSHState{
+		AgentId:       id,
+		SSHLocaleAddr: agent.SSHConn.LocalAddr().String(),
+		SSHRemoteAddr: agent.SSHConn.RemoteAddr().String(),
+		TLSLocaleAddr: agent.TLSConn.LocalAddr().String(),
+		TLSRemoteAddr: agent.TLSConn.RemoteAddr().String(),
+	}
+
+	return state
 }

@@ -92,7 +92,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.SetSharedSecret(sharedSecret)
 			agent.SetName(agentName)
 			agent.SetConnect()
-			err = sio.db.UpdateAgent(agent)
+			err = sio.db.UpdateAgentField(agent, "SharedSecret", "Name")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}
@@ -113,6 +113,10 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					})
 					log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError error generating ssh keys")
 					return
+				}
+				err = sio.db.UpdateAgentField(agent, "PrivateKey", "PublicKey")
+				if err != nil {
+					log.Error().Err(err).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating ssh keys")
 				}
 			}
 
@@ -181,7 +185,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.Path = agentData.Path
 			agent.IPs = agentData.IPs
 
-			err = sio.db.UpdateAgent(agent)
+			err = sio.db.UpdateAgentField(agent, "SshPasswd", "Platform", "Architecture", "Username", "Hostname", "Path", "IPs")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Id", agent.Id).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}
@@ -194,7 +198,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 
 			agent := sio.agentStore.SioGetAgent(socket)
 			agent.SetDisconnect()
-			err := sio.db.UpdateAgent(agent)
+			err := sio.db.UpdateAgentField(agent, "Connected")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.RegisterError updating agent")
 			}
@@ -214,6 +218,44 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			log.Info().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Agent exited")
 		})
 
+		socket.OnEvent(socketio.SendRemotePortForwardingDataEvent, func(data []byte) {
+			// Retrieving the agent from the database
+			agent := sio.agentStore.SioGetAgent(socket)
+			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.SendAgentDataEvent")
+
+			cryptor, err := agent.GetCryptor()
+			if err != nil {
+				socket.Emit(socketio.SendRemotePortForwardingDataError, socketio.SioError{
+					Message: "error geting decryptor for agent ssh password",
+					Code:    socketio.SendRemotePortForwardingDataError,
+				})
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.SendRemotePortForwardingDataEvent error decrypting ssh password")
+				return
+			}
+
+			// Decrypting the SSH password using the shared encryption key
+			rpfData, err := socketio.DecryptRemotePortForwardingMessage(data, cryptor)
+			if err != nil {
+				socket.Emit(socketio.SendRemotePortForwardingDataError, socketio.SioError{
+					Message: "error decrypting agent ssh password",
+					Code:    socketio.SendRemotePortForwardingDataError,
+				})
+				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.SendRemotePortForwardingDataEvent error decrypting ssh password")
+				return
+			}
+			agent.SetRemotePortForwarding(rpfData)
+			err = sio.db.UpdateAgentField(agent, "RemotePortForwarding")
+			if err != nil {
+				socket.Emit(socketio.SendRemotePortForwardingDataError, socketio.SioError{
+					Message: "error decrypting agent ssh password",
+					Code:    socketio.SendRemotePortForwardingDataError,
+				})
+				log.Error().Err(err).Str("Agent.Id", agent.Id).Str("Agent.Name", agent.Name).Msg("socketio.SendRemotePortForwardingDataEvent error updating agent")
+			}
+			socket.Emit(socketio.SendRemotePortForwardingDataSuccess)
+			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("END socketio.SendRemotePortForwardingDataEvent")
+		})
+
 		socket.OnDisconnect(func(reason gosio.Reason) {
 			agent := sio.agentStore.SioGetAgent(socket)
 			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msgf("socketio.Disconnect: %s", reason)
@@ -231,7 +273,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				log.Warn().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect: error setting agent connection mode")
 			}
 			agent.SetDisconnect()
-			err = sio.db.UpdateAgent(agent)
+			err = sio.db.UpdateAgentField(agent, "Connected")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect updating agent")
 			}

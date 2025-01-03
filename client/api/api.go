@@ -2,7 +2,7 @@ package api
 
 import (
 	"Goauld/client/config"
-	"Goauld/common/types"
+	"Goauld/client/types"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -84,6 +84,9 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 	err = json.Unmarshal(body, &agents)
 	if err != nil {
 		return nil, err
+	}
+	for i := range agents {
+		agents[i].ParseFPR()
 	}
 	return agents, nil
 }

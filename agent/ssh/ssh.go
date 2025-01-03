@@ -19,12 +19,12 @@ type SSHAgent struct {
 	ctx    context.Context
 
 	remotePortMapMu sync.Mutex
-	remotePortMap   map[string]_ssh.ReversePortForwarding
+	remotePortMap   map[string]_ssh.RemotePortForwarding
 }
 
 func NewSSHAgent() *SSHAgent {
 	return &SSHAgent{
-		remotePortMap: make(map[string]_ssh.ReversePortForwarding),
+		remotePortMap: make(map[string]_ssh.RemotePortForwarding),
 	}
 }
 
@@ -69,7 +69,7 @@ func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error
 }
 
 // RemoteForward starts the
-func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.ReversePortForwarding, ctx context.Context) (int, error) {
+func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx context.Context) (int, error) {
 
 	// start the remote forwarding to remotely expose the local sshd server
 	remoteListener, err := sshAgent.client.Listen("tcp", rpf.GetRemote())
@@ -78,7 +78,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.ReversePortForwarding, ctx cont
 	}
 
 	remotePort := remoteListener.Addr().(*net.TCPAddr).Port
-	rpf.RemotePort = remotePort
+	rpf.ServerPort = remotePort
 
 	sshAgent.remotePortMapMu.Lock()
 	sshAgent.remotePortMap[rpf.String()] = rpf

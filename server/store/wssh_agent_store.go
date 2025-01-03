@@ -1,6 +1,7 @@
 package store
 
 import (
+	"Goauld/common/types"
 	"errors"
 	"net"
 	"strings"
@@ -54,4 +55,18 @@ func (a *AgentStore) WsshGetAgent(id string) *WsshAgent {
 	agent := a.wsshAgentMap[id]
 	a.wsshAgentMapMu.Unlock()
 	return agent
+}
+
+func (a *AgentStore) DumpWSSH(id string) types.WSHState {
+	a.wsshAgentMapMu.Lock()
+	agent := a.wsshAgentMap[id]
+	defer a.wsshAgentMapMu.Unlock()
+	state := types.WSHState{
+		AgentId:       id,
+		SSHLocaleAddr: agent.dstConn.LocalAddr().String(),
+		SSHRemoteAddr: agent.dstConn.RemoteAddr().String(),
+		WSLocaleAddr:  agent.srcConn.LocalAddr().String(),
+		WSRemoteAddr:  agent.srcConn.RemoteAddr().String(),
+	}
+	return state
 }

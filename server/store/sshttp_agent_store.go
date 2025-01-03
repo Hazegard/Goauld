@@ -1,6 +1,7 @@
 package store
 
 import (
+	"Goauld/common/types"
 	"net"
 )
 
@@ -44,4 +45,16 @@ func (a *AgentStore) SshttpCloseAgent(id string) error {
 	}
 	a.SshttpRemoveAgent(id)
 	return err
+}
+
+func (a *AgentStore) DumpSSHTTP(id string) types.SSHTTState {
+	a.sshttpAgentMapMu.Lock()
+	agent := a.sshttpAgentMap[id]
+	defer a.sshttpAgentMapMu.Unlock()
+	state := types.SSHTTState{
+		AgentId:       id,
+		SSHRemoteAddr: agent.SshConn.RemoteAddr().String(),
+		SSHLocaleAddr: agent.SshConn.LocalAddr().String(),
+	}
+	return state
 }
