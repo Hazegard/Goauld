@@ -9,7 +9,6 @@ import (
 	"Goauld/common/log"
 	ssh2 "Goauld/common/ssh"
 	"context"
-	"net"
 	"strconv"
 )
 
@@ -18,6 +17,9 @@ func main() {
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
+	socksErr := make(chan error)
+
+	forwardedPorts := []ssh2.RemotePortForwarding{}
 
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
 	_, err, warnings := agent.InitAgent()
@@ -52,13 +54,6 @@ func main() {
 		controlErr <- controlPlanClient.Start()
 	}()
 
-	// If the SSHD server is enabled, start it
-	if agent.Get().SshdEnabled() {
-		go func() {
-			sshdErr <- sshd.StartSShd()
-		}()
-	}
-
 	go func() {
 		// Waiting for the configuration to be completed
 		<-configDone
@@ -69,10 +64,34 @@ func main() {
 			return
 		}
 
-		// IF the SSHD server is enabled, we need to forward its port to the remote server
-		// so we add it to the ports to forward
+		// If the SSHD server is enabled, start it
 		if agent.Get().SshdEnabled() {
-			agent.Get().AddSshdToRpf()
+			sshdServer := sshd.NewSshdServer()
+
+			rListener, rPort, err := sshAgent.GetRemoteConn(agent.Get().RemoteForwardedSshdAddress())
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the SSHD connection")
+			}
+			agent.Get().UpdateSshdPort(rPort)
+			// agent.Get().AddSshdToRpf()
+
+			go func() {
+				sshdErr <- sshdServer.Serve(rListener)
+				if err != nil {
+					log.Error().Err(err).Msg("socks server error")
+				}
+				err := sshdServer.Close()
+				if err != nil {
+					log.Warn().Err(err).Msg("sshd close error")
+				}
+			}()
+			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote SSHD server started")
+			forwardedPorts = append(forwardedPorts, ssh2.RemotePortForwarding{
+				ServerPort: agent.Get().RemoteForwardedSshdPort(),
+				AgentPort:  -1,
+				AgentIP:    "0.0.0.0",
+				Tag:        "SSHD",
+			})
 		}
 
 		// If the socks5 server is enabled, start it
@@ -85,10 +104,24 @@ func main() {
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the Socks5 connection")
 			}
-			realPort := rListener.Addr().(*net.TCPAddr).Port
-			agent.Get().UpdateSocksPort(realPort)
-			socks5.Serve(rListener)
+			agent.Get().UpdateSocksPort(rPort)
+			go func() {
+				socksErr <- socks5.Serve(rListener)
+				if err != nil {
+					log.Error().Err(err).Msg("socks server error")
+				}
+				err := socks5.Close()
+				if err != nil {
+					log.Warn().Err(err).Msg("socks close error")
+				}
+			}()
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote Socks5 server started")
+			forwardedPorts = append(forwardedPorts, ssh2.RemotePortForwarding{
+				ServerPort: agent.Get().RemoteForwardedSocksPort(),
+				AgentPort:  -1,
+				AgentIP:    "0.0.0.0",
+				Tag:        "SOCKS",
+			})
 		}
 
 		// For all porte forwards, launch the forwarding
@@ -100,16 +133,11 @@ func main() {
 				continue
 			}
 			rpf[i].ServerPort = port
-
+			forwardedPorts = append(forwardedPorts, rpf[i])
 			log.Info().Str("Local", rpf[i].GetLocal()).Str("Remote", rpf[i].GetRemote()).Msg("Port forwarding started")
 		}
-		allPorts := append(rpf, ssh2.RemotePortForwarding{
-			ServerPort: agent.Get().RemoteForwardedSocksPort(),
-			AgentPort:  0,
-			AgentIP:    "0.0.0.0",
-			Tag:        "SOCKS",
-		})
-		err := controlPlanClient.SendPorts(allPorts)
+
+		err := controlPlanClient.SendPorts(forwardedPorts)
 		if err != nil {
 			log.Error().Err(err).Msg("error sending the forwarded ports")
 		}
@@ -123,6 +151,8 @@ func main() {
 		log.Error().Err(err).Msg("error starting the sshd server")
 	case err := <-sshErr:
 		log.Error().Err(err).Msg("error starting the ssh client")
+	case err := <-socksErr:
+		log.Error().Err(err).Msg("error starting the socks server")
 	}
 	//ctx.Done()
 

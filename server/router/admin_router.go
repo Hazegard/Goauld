@@ -47,7 +47,7 @@ func (ur *AdminRouter) GetRouter() *negroni.Negroni {
 func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	id := r.PostFormValue("id")
 	dump := ur.store.GetState(id)
-	agent, err := ur.db.FindAgent(dump.Id)
+	agent, err := ur.db.FindAgentById(dump.Id)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("dump fail")
 		http.NotFound(w, r)
@@ -79,7 +79,7 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	dump := ur.store.GetAllStates()
 	outDump := []types.State{}
 	for _, d := range dump {
-		agent, err := ur.db.FindAgent(d.Id)
+		agent, err := ur.db.FindAgentById(d.Id)
 		if err != nil {
 			outDump = append(outDump, d)
 			continue

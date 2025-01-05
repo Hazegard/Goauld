@@ -2,6 +2,7 @@ package sshd
 
 import (
 	"Goauld/common/log"
+	_net "Goauld/common/net"
 	_ssh "Goauld/common/ssh"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
@@ -9,6 +10,7 @@ import (
 	"github.com/gliderlabs/ssh"
 	"net"
 	"strconv"
+	"strings"
 
 	gossh "golang.org/x/crypto/ssh"
 )
@@ -25,7 +27,9 @@ func StartSshd(context context.Context, db *persistence.DB) {
 
 	// The SSHD server
 	s := &ssh.Server{
-		Addr:    "127.0.0.1:0",
+		/*KeyboardInteractiveHandler: func(ctx ssh.Context, challenger gossh.KeyboardInteractiveChallenge) bool {
+			answers, err := challenger()
+		},*/
 		Version: "Server",
 		Handler: func(s ssh.Session) {
 			srcAddr := s.RemoteAddr().String()
@@ -33,6 +37,25 @@ func StartSshd(context context.Context, db *persistence.DB) {
 
 			log.Error().Str("User", s.User()).Msgf("START SSH connection from: %s", s.RemoteAddr().String())
 			defer log.Error().Str("User", s.User()).Msgf("END  SSH connection from: %s", s.LocalAddr().String())
+		},
+		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
+			username := ctx.User()
+			sourceip := strings.Split(ctx.RemoteAddr().String(), ":")[0]
+
+			if !_net.IsIPAllowed(sourceip, config.Get().AllowedIPs) {
+				return false
+			}
+			log.Info().Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msgf("SSH local Port forwarding attempt from: %s", ctx.RemoteAddr().String())
+			agent, err := db.FindAgentByName(username)
+			if err != nil {
+				log.Warn().Err(err).Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msg("port forward failed, unable to find agent")
+				return false
+			}
+			if !agent.IsPortForwarded(int(destinationPort)) {
+				return false
+			}
+
+			return true
 		},
 		// Handle the reverse port forwarding, it gets the agent from the database
 		// and update the agent to add the port in the database
@@ -66,7 +89,7 @@ func StartSshd(context context.Context, db *persistence.DB) {
 			id := ctx.User()
 			remote := ctx.RemoteAddr().String()
 			log.Debug().Str("User", id).Str("Remote", remote).Msgf("SSH Connection attempt")
-			agent, err := db.FindAgent(id)
+			agent, err := db.FindAgentById(id)
 			if err != nil {
 				log.Debug().Msgf("Agent not found (%s)", id)
 				return false
@@ -88,10 +111,13 @@ func StartSshd(context context.Context, db *persistence.DB) {
 		},
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			remote := ctx.RemoteAddr().String()
-			id := ctx.User()
-			agent, err := db.FindAgent(id)
+			agentName := ctx.User()
+			agent, err := db.FindAgentByName(agentName)
 			if err != nil {
-				log.Debug().Msgf("Agent not found (%s)", id)
+				log.Debug().Msgf("Agent not found (%s)", agentName)
+				return false
+			}
+			if !agent.Connected {
 				return false
 			}
 			agent.Source = remote

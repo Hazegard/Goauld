@@ -121,9 +121,24 @@ func (a *Agent) SetName(name string) {
 	a.Name = name
 }
 
-// SetSharedSecret set the SSH password to the agent
+// SetSshPassword set the SSH password to the agent
 func (a *Agent) SetSshPassword(pwd string) {
 	a.SshPasswd = pwd
+}
+
+// GetForwardedPorts return the list of forwarded ports of the agent
+func (a *Agent) GetForwardedPorts() []int {
+	usedPorts := portStringToInt(a.UsedPorts)
+	a.ParseFPR()
+	for _, rpf := range a.Rpf {
+		usedPorts = append(usedPorts, rpf.ServerPort)
+	}
+	return utils.Unique(usedPorts)
+}
+
+// IsPortForwarded checks if the port is forwarded by the agent
+func (a *Agent) IsPortForwarded(port int) bool {
+	return utils.Contains(a.GetForwardedPorts(), port)
 }
 
 // GetAllAgents returns all the agents in the database
@@ -136,11 +151,22 @@ func (db *DB) GetAllAgents() ([]Agent, error) {
 	return agents, nil
 }
 
-// FindAgent returns the agent identified by id
-func (db *DB) FindAgent(id string) (*Agent, error) {
+// FindAgentById returns the agent identified by id
+func (db *DB) FindAgentById(id string) (*Agent, error) {
 	var agent Agent
 	// Pass the struct as a pointer
 	result := db.db.First(&agent, "id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &agent, nil
+}
+
+// FindAgentByName returns the agent identified by id
+func (db *DB) FindAgentByName(name string) (*Agent, error) {
+	var agent Agent
+	// Pass the struct as a pointer
+	result := db.db.First(&agent, "name = ?", name)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -168,7 +194,7 @@ func (db *DB) UpdateAgent(agent *Agent) error {
 
 // AddPortToAgent adds the port to the UsedPorts field of the agent
 func (db *DB) AddPortToAgent(id string, port int) error {
-	agent, err := db.FindAgent(id)
+	agent, err := db.FindAgentById(id)
 	if err != nil {
 		return err
 	}
@@ -178,7 +204,7 @@ func (db *DB) AddPortToAgent(id string, port int) error {
 
 // RemovePortToAgent removes the port from the UsedPorts field of the agent
 func (db *DB) RemovePortToAgent(id string, port int) error {
-	agent, err := db.FindAgent(id)
+	agent, err := db.FindAgentById(id)
 	if err != nil {
 		return err
 	}
@@ -190,7 +216,7 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 // If no agent corresponding to this ID exists
 // an empty one that will be populated later is returned
 func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
-	agent, _ := db.FindAgent(id)
+	agent, _ := db.FindAgentById(id)
 	if agent != nil {
 		return agent, nil
 	}
@@ -239,7 +265,7 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 	default:
 		return fmt.Errorf("unknown mode: %s", mode)
 	}
-	agent, err := db.FindAgent(id)
+	agent, err := db.FindAgentById(id)
 	if err != nil {
 		return fmt.Errorf("could not find agent: %s", err)
 	}

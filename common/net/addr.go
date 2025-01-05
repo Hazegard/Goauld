@@ -25,7 +25,7 @@ func validateCIDR(cidr string) error {
 }
 
 func IsValidPort(port int) bool {
-	return port >= 0 && port <= 65535
+	return port >= 0 && port <= 65535 || port == -1
 }
 
 // IsValidCIDR verify if the provided string is a valid CIDR range

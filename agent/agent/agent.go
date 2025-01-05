@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/user"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -127,16 +126,18 @@ func (a *Agent) Verbosity() int {
 	return a.cfg.Verbose
 }
 
+/*
 // LocalSShdAddress returns the local address the sshd server listens
 func (a *Agent) LocalSShdAddress() string {
 	return net.JoinHostPort("127.0.0.1", strconv.Itoa(a.cfg.SshdPort))
 }
-
+*/
 // LocalSShdPassword returns the current ssh password allowing to connect
 func (a *Agent) LocalSShdPassword() string {
 	return a.cfg.LocalSshPassword
 }
 
+/*
 // LocalSshdPort returns the local SSHD password
 func (a *Agent) LocalSshdPort() int {
 	return a.cfg.SshdPort
@@ -151,7 +152,7 @@ func (a *Agent) SetLocalSshdPort(p int) {
 func (a *Agent) IsLocalSshdRandomPort() bool {
 	return a.cfg.SshdPort == 0
 }
-
+*/
 // ControlSshServer returns the SSHD server
 func (a *Agent) ControlSshServer() string {
 	return a.cfg.SshServer
@@ -182,9 +183,19 @@ func (a *Agent) RemoteForwardedSocksPort() int {
 	return a.cfg.SocksPort
 }
 
+// RemoteForwardedSocksPort returns the remote forwarded Socks port
+func (a *Agent) RemoteForwardedSshdPort() int {
+	return a.cfg.RsshPort
+}
+
 // UpdateSocksPort set the new socks port
 func (a *Agent) UpdateSocksPort(port int) {
 	a.cfg.SocksPort = port
+}
+
+// UpdateSshdPort set the new socks port
+func (a *Agent) UpdateSshdPort(port int) {
+	a.cfg.RsshPort = port
 }
 
 // ServerUrl return the HTTP control server URL
@@ -244,7 +255,7 @@ func (a *Agent) AgePubKey() string {
 
 // SshdEnabled returns whether the sshd server is enabled
 func (a *Agent) SshdEnabled() bool {
-	return a.cfg.Sshd || a.cfg.SshdPort != 0
+	return a.cfg.Sshd
 }
 
 // SocksEnabled returns whether the socks server is enabled
@@ -256,8 +267,8 @@ func (a *Agent) SocksEnabled() bool {
 func (a *Agent) AddSshdToRpf() {
 	sshdRpf := ssh.RemotePortForwarding{
 		ServerPort: a.cfg.RsshPort,
-		AgentPort:  a.cfg.SshdPort,
-		AgentIP:    "127.0.0.1",
+		AgentPort:  -1,
+		AgentIP:    "0.0.0.0",
 		Tag:        "sshd",
 	}
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
@@ -267,8 +278,8 @@ func (a *Agent) AddSshdToRpf() {
 func (a *Agent) AddSocksToRpf() {
 	sshdRpf := ssh.RemotePortForwarding{
 		ServerPort: a.cfg.SocksPort,
-		AgentPort:  0,
-		AgentIP:    "127.0.0.1",
+		AgentPort:  -1,
+		AgentIP:    "0.0.0.0",
 		Tag:        "socks",
 	}
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)

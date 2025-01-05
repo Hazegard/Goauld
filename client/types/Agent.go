@@ -1,7 +1,6 @@
 package types
 
 import (
-	"Goauld/common/ssh"
 	"Goauld/common/types"
 	"strconv"
 	"strings"
@@ -11,6 +10,7 @@ type Agent struct {
 	types.Agent
 }
 
+// GetSSHPort returns the SSHD forwarded port
 func (a *Agent) GetSSHPort() string {
 	for _, rpf := range a.Rpf {
 		if strings.EqualFold(rpf.Tag, "sshd") {
@@ -20,6 +20,7 @@ func (a *Agent) GetSSHPort() string {
 	return "/"
 }
 
+// GetOtherPort returns the forwarded port, excepted the SSHD or Socks ports
 func (a *Agent) GetOtherPort() string {
 	var ports []string
 	for _, rpf := range a.Rpf {
@@ -35,6 +36,7 @@ func (a *Agent) GetOtherPort() string {
 	return res
 }
 
+// GetSocksPort returns the socks forwarded port
 func (a *Agent) GetSocksPort() string {
 	for _, rpf := range a.Rpf {
 		if strings.EqualFold(rpf.Tag, "socks") {
@@ -42,16 +44,4 @@ func (a *Agent) GetSocksPort() string {
 		}
 	}
 	return "/"
-}
-
-func (a *Agent) ParseFPR() {
-	rpfs := strings.Split(a.RemotePortForwarding, ",")
-	for _, rpf := range rpfs {
-		_rpf := ssh.RemotePortForwarding{}
-		err := _rpf.UnmarshalText([]byte(rpf))
-		if err != nil {
-			continue
-		}
-		a.Rpf = append(a.Rpf, _rpf)
-	}
 }

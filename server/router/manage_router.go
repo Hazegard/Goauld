@@ -51,7 +51,7 @@ func (ur *ManageRouter) GetRouter() *negroni.Negroni {
 func (ur *ManageRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
 	// Find the agent corresponding to the id
 	id := r.PathValue("id")
-	agent, err := ur.db.FindAgent(id)
+	agent, err := ur.db.FindAgentById(id)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("find agent failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

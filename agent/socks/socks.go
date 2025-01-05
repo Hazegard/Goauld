@@ -2,7 +2,6 @@ package socks
 
 import (
 	"Goauld/agent/proxy"
-	"Goauld/common/log"
 	"github.com/things-go/go-socks5"
 	stdlog "log"
 	"net"
@@ -10,6 +9,7 @@ import (
 
 type SocksServer struct {
 	socksServer *socks5.Server
+	listener    net.Listener
 }
 
 // NewSocks returns a new SocksServer
@@ -25,17 +25,12 @@ func NewSocks() (*SocksServer, error) {
 }
 
 // Serve use the provided listener to listen and serve the Socks proxy
-func (s *SocksServer) Serve(l net.Listener) {
-	go func() {
-		defer func(l net.Listener) {
-			err := l.Close()
-			if err != nil {
-				log.Warn().Err(err).Str("Server", "Socks").Msg("close socks server")
-			}
-		}(l)
-		err := s.socksServer.Serve(l)
-		if err != nil {
-			log.Error().Err(err).Msg("socks server error")
-		}
-	}()
+func (s *SocksServer) Serve(l net.Listener) error {
+	s.listener = l
+
+	return s.socksServer.Serve(l)
+}
+
+func (s *SocksServer) Close() error {
+	return s.listener.Close()
 }

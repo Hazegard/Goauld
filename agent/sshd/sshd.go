@@ -8,22 +8,32 @@ import (
 	"net"
 )
 
-func StartSShd() error {
-	sshdAddress := agent.Get().LocalSShdAddress()
-	listener, err := net.Listen("tcp", sshdAddress)
-	if err != nil {
-		return err
-	}
-	if agent.Get().IsLocalSshdRandomPort() {
-		agent.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
-	}
+type Sshd struct {
+	server   *ssh.Server
+	listener net.Listener
+}
 
-	log.Info().Msgf("Listening on port %s", agent.Get().LocalSShdAddress())
+/*
+	func (sshd *Sshd) ListenAndServe() error {
+		sshdAddress := agent.Get().LocalSShdAddress()
+		listener, err := net.Listen("tcp", sshdAddress)
+		if err != nil {
+			return err
+		}
+		if agent.Get().IsLocalSshdRandomPort() {
+			agent.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
+		}
+
+		log.Info().Msgf("Listening on port %s", agent.Get().LocalSShdAddress())
+		return sshd.server.Serve(listener)
+	}
+*/
+func NewSshdServer() *Sshd {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
 			log.Info().Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
-			err = shell.GivePty(s, s.Command())
+			err := shell.GivePty(s, s.Command())
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
 			}
@@ -73,5 +83,15 @@ func StartSShd() error {
 			"sftp": SftpHandler,
 		},
 	}
-	return s.Serve(listener)
+	return &Sshd{server: s}
+
+}
+
+func (sshd *Sshd) Serve(l net.Listener) error {
+	sshd.listener = l
+	return sshd.server.Serve(l)
+}
+
+func (sshd *Sshd) Close() error {
+	return sshd.listener.Close()
 }

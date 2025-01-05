@@ -24,7 +24,7 @@ var (
 	_ssh_server = "localhost:2222"
 	_tls_server = "localhost"
 
-	_sshd_port  = "0"
+	// _sshd_port  = "0"
 	_rssh_port  = "0"
 	_socks_port = "0"
 
@@ -48,7 +48,7 @@ var (
 		"_ssh_server": _ssh_server,
 		"_tls_server": _tls_server,
 
-		"_sshd_port":  _sshd_port,
+		// "_sshd_port":  _sshd_port,
 		"_rssh_port":  _rssh_port,
 		"_socks_port": _socks_port,
 
@@ -67,14 +67,14 @@ type Config struct {
 	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
 	Name             string `default:"user@hostname" name:"name" optional:"" help:"Nice name to identify the agent."`
 
-	Sshd  bool `default:"${_sshd}" name:"sshd" optional:"" help:"Start the SSHD server."`
-	Socks bool `default:"${_socks}" name:"socks" optional:"" help:"Start the Socks server."`
+	Sshd  bool `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
+	Socks bool `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
 
 	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
 	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"TLS Server to connect to."`
 
-	SshdPort  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
+	// SshdPort  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
 	RsshPort  int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
 	SocksPort int `default:"${_rssh_port}"  name:"socks-port" short:"D" optional:"" help:"Remote port to bind to, 0 => Random."`
 
