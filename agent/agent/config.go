@@ -17,8 +17,9 @@ var (
 	_localSshPassword = ""
 	_name             = "user@hostname"
 
-	_sshd  = "true"
-	_socks = "true"
+	_sshd                   = "true"
+	_socks                  = "true"
+	_socks_use_system_proxy = "true"
 
 	_server     = "localhost:3000"
 	_ssh_server = "localhost:2222"
@@ -41,8 +42,9 @@ var (
 		"_localSshPassword": _localSshPassword,
 		"_name":             _name,
 
-		"_sshd":  _sshd,
-		"_socks": _socks,
+		"_sshd":                   _sshd,
+		"_socks":                  _socks,
+		"_socks_use_system_proxy": _socks_use_system_proxy,
 
 		"_server":     _server,
 		"_ssh_server": _ssh_server,
@@ -67,8 +69,9 @@ type Config struct {
 	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
 	Name             string `default:"user@hostname" name:"name" optional:"" help:"Nice name to identify the agent."`
 
-	Sshd  bool `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
-	Socks bool `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
+	Sshd                bool `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
+	Socks               bool `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
+	SocksUseSystemProxy bool `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy on the underlying system if appicable."`
 
 	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`

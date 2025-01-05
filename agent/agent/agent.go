@@ -263,6 +263,11 @@ func (a *Agent) SocksEnabled() bool {
 	return a.cfg.Socks || a.cfg.SocksPort != 0
 }
 
+// SocksUseSystemProxy returns whether the agent Socks proxy should use the system proxy (if applicable)
+func (a *Agent) SocksUseSystemProxy() bool {
+	return a.cfg.SocksUseSystemProxy
+}
+
 // AddSshdToRpf adds the SSHD conf to the Remote port forwarding list
 func (a *Agent) AddSshdToRpf() {
 	sshdRpf := ssh.RemotePortForwarding{
