@@ -148,14 +148,3 @@ func (s *ServerConfig) Validate() error {
 	}
 	return nil
 }
-
-// Custom validation function to ensure all entries in AllowedIPs are valid IP or CIDR
-func validateAllowedIPs(ipList []string) error {
-	for _, ip := range ipList {
-		// Check if it's a valid IP or CIDR
-		if !net.IsValidIP(ip) && !net.IsValidCIDR(ip) {
-			return fmt.Errorf("invalid IP or CIDR: %s", ip)
-		}
-	}
-	return nil
-}

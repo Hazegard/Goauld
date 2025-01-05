@@ -7,7 +7,7 @@ import (
 	"Goauld/agent/ssh"
 	"Goauld/agent/sshd"
 	"Goauld/common/log"
-	ssh2 "Goauld/common/ssh"
+	common_ssh "Goauld/common/ssh"
 	"context"
 	"strconv"
 )
@@ -19,7 +19,7 @@ func main() {
 	sshErr := make(chan error)
 	socksErr := make(chan error)
 
-	forwardedPorts := []ssh2.RemotePortForwarding{}
+	var forwardedPorts []common_ssh.RemotePortForwarding
 
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
 	_, err, warnings := agent.InitAgent()
@@ -86,7 +86,7 @@ func main() {
 				}
 			}()
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote SSHD server started")
-			forwardedPorts = append(forwardedPorts, ssh2.RemotePortForwarding{
+			forwardedPorts = append(forwardedPorts, common_ssh.RemotePortForwarding{
 				ServerPort: agent.Get().RemoteForwardedSshdPort(),
 				AgentPort:  -1,
 				AgentIP:    "0.0.0.0",
@@ -116,7 +116,7 @@ func main() {
 				}
 			}()
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote Socks5 server started")
-			forwardedPorts = append(forwardedPorts, ssh2.RemotePortForwarding{
+			forwardedPorts = append(forwardedPorts, common_ssh.RemotePortForwarding{
 				ServerPort: agent.Get().RemoteForwardedSocksPort(),
 				AgentPort:  -1,
 				AgentIP:    "0.0.0.0",

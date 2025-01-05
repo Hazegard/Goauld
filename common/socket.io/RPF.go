@@ -24,6 +24,7 @@ func DecryptRemotePortForwardingMessage(data []byte, c *crypto.SymCryptor) ([]ss
 		rpf := ssh.RemotePortForwarding{}
 		err := rpf.UnmarshalText([]byte(d))
 		if err != nil {
+			return nil, err
 		}
 		rpfs = append(rpfs, rpf)
 	}

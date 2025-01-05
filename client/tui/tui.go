@@ -176,7 +176,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				text = msg.Message
 				m.statusText.TextStyle = textOk
 			} else {
-				text = fmt.Sprintf("%s", msg.Message)
+				text = msg.Message
 				m.statusText.TextStyle = textWarning
 			}
 			m.statusText.SetValue(text)
@@ -365,9 +365,9 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 				"Name":         agent.Name,
 				"Last updates": timeAgo(agent.LastUpdated),
 				"Mode":         agent.SshMode,
-				"SSHD Port":    agent.GetSSHPort(),
-				"Socks Ports":  agent.GetSocksPort(),
-				"Other Ports":  agent.GetOtherPort(),
+				"SSHD Port":    " " + agent.GetSSHPort(),
+				"Socks Ports":  " " + agent.GetSocksPort(),
+				"Other Ports":  " " + agent.GetOtherPort(),
 			})
 
 		rows = append(rows, row)

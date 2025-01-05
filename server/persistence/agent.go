@@ -83,6 +83,7 @@ func (a *Agent) DeletePort(port int) {
 		if p == (port) {
 			// Remove the port by slicing
 			usedPorts = append(usedPorts[:i], usedPorts[i+1:]...)
+			a.UsedPorts = portIntToString(usedPorts)
 			return // Exit after removing the port
 		}
 	}

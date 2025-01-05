@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	zerologger   *zerolog.Logger
-	once         sync.Once
-	gormlogger   logger.Interface
-	logLevel     = zerolog.InfoLevel
+	zerologger *zerolog.Logger
+	once       sync.Once
+	gormlogger logger.Interface
+	// logLevel     = zerolog.InfoLevel
 	gormLogLevel = logger.Warn
 )
 
@@ -47,7 +47,7 @@ func UpdateLogLevel(level zerolog.Level) {
 }
 
 func SetLogLevel(verbosity int) {
-	logLevel = VerbosityToLogLevel(verbosity)
+	// logLevel = VerbosityToLogLevel(verbosity)
 	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	gormLogLevel = verbosityToGormLogLevel(verbosity)
 }
