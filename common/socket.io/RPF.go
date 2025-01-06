@@ -10,33 +10,21 @@ const SendRemotePortForwardingDataEvent = "RemotePortForwarding Data"
 const SendRemotePortForwardingDataError = "RemotePortForwarding Data error"
 const SendRemotePortForwardingDataSuccess = "RemotePortForwarding Data success"
 
-func newRemotePortForwardingMessage() *[]string {
-	return &[]string{}
+func newRemotePortForwardingMessage() *[]ssh.RemotePortForwarding {
+	return &[]ssh.RemotePortForwarding{}
 }
 
 func DecryptRemotePortForwardingMessage(data []byte, c *crypto.SymCryptor) ([]ssh.RemotePortForwarding, error) {
-	decData, err := common.Decryptor[[]string]{}.Decrypt(data, c, newRemotePortForwardingMessage)
+	decData, err := common.Decryptor[[]ssh.RemotePortForwarding]{}.Decrypt(data, c, newRemotePortForwardingMessage)
 	if err != nil {
 		return nil, err
 	}
-	rpfs := make([]ssh.RemotePortForwarding, 0)
-	for _, d := range *decData {
-		rpf := ssh.RemotePortForwarding{}
-		err := rpf.UnmarshalText([]byte(d))
-		if err != nil {
-			return nil, err
-		}
-		rpfs = append(rpfs, rpf)
-	}
-	return rpfs, err
+
+	return *decData, err
 }
 
 func EncryptRemotePortForwardingMessage(rpf []ssh.RemotePortForwarding, c *crypto.SymCryptor) ([]byte, error) {
-	rpfString := []string{}
-	for _, v := range rpf {
-		rpfString = append(rpfString, v.Info())
-	}
-	return common.Encrypt(&rpfString, c)
+	return common.Encrypt(&rpf, c)
 }
 
 func NewEncryptedRemotePortForwardingMessage(err []ssh.RemotePortForwarding, cryptor *crypto.SymCryptor) ([]byte, error) {

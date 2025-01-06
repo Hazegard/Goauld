@@ -7,6 +7,8 @@ import (
 	"Goauld/server/config"
 	"Goauld/server/persistence"
 	"context"
+	"errors"
+	"fmt"
 	"github.com/gliderlabs/ssh"
 	"net"
 	"strconv"
@@ -40,18 +42,19 @@ func StartSshd(context context.Context, db *persistence.DB) {
 		},
 		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
 			username := ctx.User()
-			sourceip := strings.Split(ctx.RemoteAddr().String(), ":")[0]
-
-			if !_net.IsIPAllowed(sourceip, config.Get().AllowedIPs) {
+			sourceIp := strings.Split(ctx.RemoteAddr().String(), ":")[0]
+			log.Trace().Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msgf("SSH local Port forwarding attempt from: %s", ctx.RemoteAddr().String())
+			if !_net.IsIPAllowed(sourceIp, config.Get().AllowedIPs) {
+				log.Warn().Err(errors.New("ip not in whitelist")).Str("Source IP", sourceIp).Str("Agent.Name", username).Msg("unable to port forward")
 				return false
 			}
-			log.Info().Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msgf("SSH local Port forwarding attempt from: %s", ctx.RemoteAddr().String())
 			agent, err := db.FindAgentByName(username)
 			if err != nil {
 				log.Warn().Err(err).Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msg("port forward failed, unable to find agent")
 				return false
 			}
 			if !agent.IsPortForwarded(int(destinationPort)) {
+				log.Warn().Err(errors.New("attempt to forward forbidden port")).Str("Port", strconv.Itoa(int(destinationPort))).Msg("port forward failed")
 				return false
 			}
 
@@ -76,8 +79,8 @@ func StartSshd(context context.Context, db *persistence.DB) {
 			"ping":                 handlePing,
 		},
 		ChannelHandlers: map[string]ssh.ChannelHandler{
-			// "direct-tcpip": ssh.DirectTCPIPHandler,
-			"session": ssh.DefaultSessionHandler,
+			"direct-tcpip": ssh.DirectTCPIPHandler,
+			"session":      ssh.DefaultSessionHandler,
 		},
 		// PublicKeyHandler handles the public key authentication
 		// the username connecting is the id of the agent
@@ -102,37 +105,54 @@ func StartSshd(context context.Context, db *persistence.DB) {
 				return false
 			}
 			log.Trace().Str("User", id).Msg("Public Key found, checking public key...")
-			if ssh.KeysEqual(agentPubKey, key) {
-				log.Trace().Msgf("SSH connection succeeded from %s (%s)", ctx.User(), id)
-				return true
+			if !ssh.KeysEqual(agentPubKey, key) {
+				log.Warn().Str("User", id).Str("Remote", remote).Msg("Wrong Public Key...")
+				return false
 			}
-			log.Warn().Str("User", id).Str("Remote", remote).Msg("Wrong Public Key...")
-			return false
+
+			log.Trace().Msgf("SSH connection succeeded from %s (%s)", ctx.User(), id)
+			err = db.SetAgentSshMode(id, "SSH")
+			if err != nil {
+				log.Warn().Str("User", id).Str("Remote", remote).Str("SSH Mode", "SSH").Msg("Error updating connection mode...")
+			}
+			return true
 		},
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
-			remote := ctx.RemoteAddr().String()
+			sourceIp := strings.Split(ctx.RemoteAddr().String(), ":")[0]
+			if !_net.IsIPAllowed(sourceIp, config.Get().AllowedIPs) {
+				log.Trace().Str("Remote", sourceIp).Msg("Connection attempt from non whitelisted IP address")
+				return false
+			}
 			agentName := ctx.User()
 			agent, err := db.FindAgentByName(agentName)
 			if err != nil {
 				log.Debug().Msgf("Agent not found (%s)", agentName)
 				return false
 			}
-			if !agent.Connected {
+			if agent.SshMode == "/" {
+				log.Info().Str("Agent.Name", agent.Name).Msg("Agent not connected")
 				return false
 			}
-			agent.Source = remote
-			// TODO: ici c'est pas le mdp de l'agent mais le mdp du serveur à revoir
-			if password == agent.SharedSecret {
+			agent.Source = sourceIp
+			err = agent.ValidatePasswordAndRotateIfTrue(password)
+			if err != nil {
+				log.Warn().Err(err).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
 				return false
 			}
-			return false
+			err = db.UpdateAgentField(agent, "OneTimePassword")
+			if err != nil {
+				log.Warn().Err(err).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to update agent password")
+				return false
+			}
+			fmt.Println("PASSWORD ACCEPTED")
+			return true
 		},
 		// SessionRequestCallback logs information when a user requests a session
 		SessionRequestCallback: func(sess ssh.Session, requestType string) bool {
 			id := sess.User()
 			remote := sess.RemoteAddr().String()
 
-			log.Trace().Str("User", id).Str("Remote", remote).Msgf("SSH session requested from %s", id)
+			log.Info().Str("User", id).Str("Remote", remote).Msgf("SSH session requested from %s", id)
 			return false
 		},
 	}

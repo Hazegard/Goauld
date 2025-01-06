@@ -1,10 +1,13 @@
 package config
 
 import (
+	"Goauld/client/api"
+	"Goauld/client/tui"
 	"Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/log"
 	"Goauld/common/utils"
+	"fmt"
 	"github.com/alecthomas/kong"
 	"path/filepath"
 	"strings"
@@ -29,6 +32,31 @@ type ClientConfig struct {
 	AccessToken string `default:"${_access_token}" help:"Access token required to access the /manage/ endpoint."`
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+
+	Exec Exec `cmd:""`
+	Tui  Tui  `cmd:""`
+}
+
+type Exec struct {
+	Target string `arg:""`
+}
+
+func (e *Exec) Run(api *api.API, cfg ClientConfig) error {
+
+	agent, err := api.GetAgentByName(e.Target)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%+v\n", agent)
+	return nil
+}
+
+type Tui struct{}
+
+func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
+
+	tt := tui.NewTui(api)
+	return tt.Run()
 }
 
 func InitConfig() (*kong.Context, *ClientConfig, error) {

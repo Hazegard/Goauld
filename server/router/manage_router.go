@@ -28,7 +28,8 @@ func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter
 		userRouter: http.NewServeMux(),
 		store:      store,
 	}
-	r.userRouter.HandleFunc("GET /agent/{id}", r.GetAGentById)
+	r.userRouter.HandleFunc("GET /agent/{id}", r.GetAgentById)
+	r.userRouter.HandleFunc("GET /agent/by_name/{name}", r.GetAgentByName)
 	r.userRouter.HandleFunc("POST /agent/kill/{id}", r.KillAgent)
 	r.userRouter.HandleFunc("GET /agent/", r.GetAgents)
 	r.userRouter.HandleFunc("POST /clearport/", r.ClearPort)
@@ -46,9 +47,43 @@ func (ur *ManageRouter) GetRouter() *negroni.Negroni {
 	return n
 }
 
-// GetAGentById handles the /agent/{id} endpoints
+func (ur *ManageRouter) GetAgentByName(w http.ResponseWriter, r *http.Request) {
+	// Find the agent corresponding to the name
+	name := r.PathValue("name")
+	agent, err := ur.db.FindAgentByName(name)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Name", name).Msg("find agent failed")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if agent == nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Name", name).Msg("No agent found with corresponding name")
+		http.NotFound(w, r)
+		return
+	}
+	agent.SharedSecret = ""
+	agent.PrivateKey = ""
+	agent.PublicKey = ""
+
+	// Generate a JSON of the agent
+	jsonAgent, err := agent.JSON()
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Name", name).Msg("error generating json response")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	// return the json agent to the caller
+	_, err = w.Write(jsonAgent)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", name).Msg("error returning response")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+func (ur *ManageRouter) ReturnAgent(w http.ResponseWriter, r *http.Request) {}
+
+// GetAgentById handles the /agent/{id} endpoints
 // it returns to the caller the associated agent
-func (ur *ManageRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
+func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 	// Find the agent corresponding to the id
 	id := r.PathValue("id")
 	agent, err := ur.db.FindAgentById(id)
@@ -62,6 +97,10 @@ func (ur *ManageRouter) GetAGentById(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+
+	agent.SharedSecret = ""
+	agent.PrivateKey = ""
+	agent.PublicKey = ""
 
 	// Generate a JSON of the agent
 	jsonAgent, err := agent.JSON()
@@ -90,6 +129,7 @@ func (ur *ManageRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
 		agents[i].SharedSecret = ""
 		agents[i].PrivateKey = ""
 		agents[i].PublicKey = ""
+		agents[i].SshPasswd = ""
 
 	}
 	jsonAgent, err := json.Marshal(agents)

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"Goauld/client/config"
 	"Goauld/client/types"
 	"encoding/json"
 	"errors"
@@ -18,16 +17,16 @@ type API struct {
 }
 
 // NewAPI return a new API
-func NewAPI(cfg *config.ClientConfig) *API {
+func NewAPI(server string, accessToken string) *API {
 	return &API{
 		client:      &http.Client{},
-		server:      cfg.Server,
-		accessToken: cfg.AccessToken,
+		server:      server,
+		accessToken: accessToken,
 	}
 }
 
 // Delete generic method to perform DELETE request with the appropriate authentication header
-func (api *API) Delete(p string) (*http.Response, error) {
+func (api *API) delete(p string) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
 		return nil, err
@@ -41,7 +40,7 @@ func (api *API) Delete(p string) (*http.Response, error) {
 }
 
 // Get generic method to perform GET request with the appropriate authentication header
-func (api *API) Get(p string) (*http.Response, error) {
+func (api *API) get(p string) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
 		return nil, err
@@ -55,7 +54,7 @@ func (api *API) Get(p string) (*http.Response, error) {
 }
 
 // Post generic method to perform POST request with the appropriate authentication header
-func (api *API) Post(p string, body io.Reader) (*http.Response, error) {
+func (api *API) post(p string, body io.Reader) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
 		return nil, err
@@ -70,14 +69,15 @@ func (api *API) Post(p string, body io.Reader) (*http.Response, error) {
 
 // GetAgents fetch a list of the agents
 func (api *API) GetAgents() ([]types.Agent, error) {
-	res, err := api.Get("/manage/agent/")
+	res, err := api.get("/manage/agent/")
 	if err != nil {
+		fmt.Println("srbgbsjkisdnjsbdsbdj")
 		return nil, errors.New("Error while requesting agent list")
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.New("Error while requesting agent list")
+		return nil, errors.New("Error while reading agent list")
 	}
 
 	var agents []types.Agent
@@ -85,15 +85,62 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 	if err != nil {
 		return nil, err
 	}
-	for i := range agents {
-		agents[i].ParseFPR()
+	// for i := range agents {
+	// 	agents[i].ParseFPR()
+	// }
+	return agents, nil
+}
+
+// GetAgentById fetch the agent associated to the id
+func (api *API) GetAgentById(id string) (types.Agent, error) {
+	res, err := api.get("/manage/agent/" + id)
+	if err != nil {
+		return types.Agent{}, errors.New("Error while requesting agent by id")
 	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return types.Agent{}, errors.New("Error while reading agent by id")
+	}
+
+	var agents types.Agent
+	err = json.Unmarshal(body, &agents)
+	if err != nil {
+		return types.Agent{}, err
+	}
+	// for i := range agents {
+	// 	agents[i].ParseFPR()
+	// }
+	return agents, nil
+}
+
+// GetAgentByName fetch the agent associated to the name
+func (api *API) GetAgentByName(name string) (types.Agent, error) {
+	res, err := api.get("/manage/agent/by_name/" + name)
+	if err != nil {
+		return types.Agent{}, errors.New("Error while requesting agent by id")
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return types.Agent{}, errors.New("Error while reading agent by id")
+	}
+
+	fmt.Println(string(body))
+	var agents types.Agent
+	err = json.Unmarshal(body, &agents)
+	if err != nil {
+		return types.Agent{}, err
+	}
+	// for i := range agents {
+	// 	agents[i].ParseFPR()
+	// }
 	return agents, nil
 }
 
 // KillAgent kills the agent
 func (api *API) KillAgent(id string) error {
-	res, err := api.Post("/manage/agent/kill/"+id, nil)
+	res, err := api.post("/manage/agent/kill/"+id, nil)
 	if err != nil {
 		return err
 	}
@@ -105,7 +152,7 @@ func (api *API) KillAgent(id string) error {
 
 // DeleteAgent kills the agent
 func (api *API) DeleteAgent(id string) error {
-	res, err := api.Delete("/manage/agent/" + id)
+	res, err := api.delete("/manage/agent/" + id)
 	if err != nil {
 		return err
 	}

@@ -78,8 +78,8 @@ type ServerConfig struct {
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
-	Tls        bool   `default:"${_tls}" help:"Enable TLS."`
-	NoDB       bool   `default:"${_no_db}" help:"Disable database usage."`
+	Tls        bool   `default:"${_tls}" negatable:"" help:"Enable TLS."`
+	NoDB       bool   `default:"${_no_db}" negatable:"" help:"Disable database usage."`
 	DbFileName string `default:"${_db_name}" help:"Database filename to use."`
 
 	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ip" help:"List of IP allowed to access the /manage/ endpoint."`

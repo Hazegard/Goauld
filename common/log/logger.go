@@ -23,7 +23,6 @@ func initLoggers() {
 		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
 	).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
 	zerologger = &l
-	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 
 	gormlogger = NewGormLogger().
 		WithInfo(func() Event {
@@ -48,7 +47,7 @@ func UpdateLogLevel(level zerolog.Level) {
 
 func SetLogLevel(verbosity int) {
 	// logLevel = VerbosityToLogLevel(verbosity)
-	zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	zerolog.SetGlobalLevel(VerbosityToLogLevel(verbosity))
 	gormLogLevel = verbosityToGormLogLevel(verbosity)
 }
 

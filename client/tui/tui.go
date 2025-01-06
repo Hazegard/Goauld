@@ -51,6 +51,7 @@ func NewTui(api *api.API) Model {
 		fmt.Println(err)
 		return Model{}
 	}
+	fmt.Printf("%+v\n", agents)
 	m := Model{
 		agentsTable: GenerateAgentTable().WithRows(AgentsToRow(agents)),
 		agents:      agents,

@@ -12,7 +12,7 @@ type Agent struct {
 
 // GetSSHPort returns the SSHD forwarded port
 func (a *Agent) GetSSHPort() string {
-	for _, rpf := range a.Rpf {
+	for _, rpf := range a.RemotePortForwarding {
 		if strings.EqualFold(rpf.Tag, "sshd") {
 			return strconv.Itoa(rpf.ServerPort)
 		}
@@ -23,7 +23,7 @@ func (a *Agent) GetSSHPort() string {
 // GetOtherPort returns the forwarded port, excepted the SSHD or Socks ports
 func (a *Agent) GetOtherPort() string {
 	var ports []string
-	for _, rpf := range a.Rpf {
+	for _, rpf := range a.RemotePortForwarding {
 		if strings.EqualFold(rpf.Tag, "socks") || strings.EqualFold(rpf.Tag, "sshd") || rpf.ServerPort == 0 {
 			continue
 		}
@@ -38,7 +38,7 @@ func (a *Agent) GetOtherPort() string {
 
 // GetSocksPort returns the socks forwarded port
 func (a *Agent) GetSocksPort() string {
-	for _, rpf := range a.Rpf {
+	for _, rpf := range a.RemotePortForwarding {
 		if strings.EqualFold(rpf.Tag, "socks") {
 			return strconv.Itoa(rpf.ServerPort)
 		}

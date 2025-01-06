@@ -6,6 +6,7 @@ import (
 	"Goauld/common/types"
 	"Goauld/common/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"slices"
@@ -91,11 +92,12 @@ func (a *Agent) DeletePort(port int) {
 }
 
 func (a *Agent) SetRemotePortForwarding(rpf []ssh.RemotePortForwarding) {
-	var rpfString []string
-	for _, v := range rpf {
-		rpfString = append(rpfString, v.Info())
-	}
-	a.RemotePortForwarding = strings.Join(rpfString, ",")
+	a.RemotePortForwarding = rpf
+	// var rpfString []string
+	// for _, v := range rpf {
+	// 	rpfString = append(rpfString, v.Info())
+	// }
+	// a.RemotePortForwarding = strings.Join(rpfString, ",")
 
 }
 
@@ -117,7 +119,7 @@ func (a *Agent) SetSharedSecret(secret string) {
 	//a.save()
 }
 
-// SetSharedSecret set the name to the agent
+// SetName set the name to the agent
 func (a *Agent) SetName(name string) {
 	a.Name = name
 }
@@ -130,11 +132,23 @@ func (a *Agent) SetSshPassword(pwd string) {
 // GetForwardedPorts return the list of forwarded ports of the agent
 func (a *Agent) GetForwardedPorts() []int {
 	usedPorts := portStringToInt(a.UsedPorts)
-	a.ParseFPR()
-	for _, rpf := range a.Rpf {
+	for _, rpf := range a.RemotePortForwarding {
 		usedPorts = append(usedPorts, rpf.ServerPort)
 	}
 	return utils.Unique(usedPorts)
+}
+
+func (a *Agent) ValidatePasswordAndRotateIfTrue(password string) error {
+	isValid := password == a.OneTimePassword
+	if !isValid {
+		return errors.New("invalid password")
+	}
+	newPassword, err := crypto.GeneratePassword(32)
+	if err != nil {
+		return err
+	}
+	a.OneTimePassword = newPassword
+	return nil
 }
 
 // IsPortForwarded checks if the port is forwarded by the agent
@@ -185,7 +199,6 @@ func (db *DB) UpdateAgentField(agent *Agent, fields ...string) error {
 
 // UpdateAgent update the agent information in the database
 func (db *DB) UpdateAgent(agent *Agent) error {
-	fmt.Printf("%+v\n", agent)
 	result := db.db.Updates(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not update agent: %s", result.Error)
@@ -221,10 +234,15 @@ func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
 	if agent != nil {
 		return agent, nil
 	}
+	OneTimePassword, err := crypto.GeneratePassword(32)
+	if err != nil {
+		return nil, err
+	}
 	agent = &Agent{}
 	agent.Id = id
 	agent.Name = name
-	err := db.CreateAgent(agent)
+	agent.OneTimePassword = OneTimePassword
+	err = db.CreateAgent(agent)
 	if err != nil {
 		return nil, fmt.Errorf("could not create agent: %s", err)
 	}
@@ -278,7 +296,7 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 	if mode == "OFF" {
 		agent.UsedPorts = "/"
 		agent.Connected = false
-		agent.RemotePortForwarding = "/"
+		agent.RemotePortForwarding = []ssh.RemotePortForwarding{}
 	}
 	agent.LastUpdated = time.Now()
 	err = db.UpdateAgentField(agent, "SshMode", "LastUpdated", "UsedPorts", "Connected", "RemotePortForwarding")
