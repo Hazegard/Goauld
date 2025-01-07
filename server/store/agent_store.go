@@ -1,18 +1,22 @@
 package store
 
 import (
+	"errors"
+	"fmt"
+	"sync"
+
 	socketio "Goauld/common/socket.io"
 	"Goauld/common/types"
 	"Goauld/common/utils"
 	"Goauld/server/persistence"
-	"errors"
-	"fmt"
+
 	sio "github.com/karagenc/socket.io-go"
-	"sync"
 )
 
-var store *AgentStore
-var once sync.Once
+var (
+	store *AgentStore
+	once  sync.Once
+)
 
 // NewAgentStore saves in memory all the information related
 // to the actives connections

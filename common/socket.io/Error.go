@@ -24,6 +24,5 @@ func EncryptSioErrorMessage(err *SioError, c *crypto.SymCryptor) ([]byte, error)
 }
 
 func NewEncryptedSioErrorMessage(err *SioError, cryptor *crypto.SymCryptor) ([]byte, error) {
-
 	return EncryptSioErrorMessage(err, cryptor)
 }

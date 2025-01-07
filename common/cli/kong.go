@@ -3,11 +3,12 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"github.com/alecthomas/kong"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/alecthomas/kong"
+	"gopkg.in/yaml.v3"
 )
 
 // Taken from https://github.com/alecthomas/kong-yaml

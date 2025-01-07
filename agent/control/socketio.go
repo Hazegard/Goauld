@@ -1,21 +1,23 @@
 package control
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"time"
+
 	"Goauld/agent/agent"
 	"Goauld/agent/proxy"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
 	"Goauld/common/ssh"
-	"context"
-	"errors"
-	"fmt"
+
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
 	"github.com/quic-go/webtransport-go"
 	"nhooyr.io/websocket"
-	"os"
-	"time"
 )
 
 // ControlPlanClient Handle the socket.io interaction regarding the management of the agent

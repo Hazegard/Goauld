@@ -1,25 +1,26 @@
 package persistence
 
 import (
+	"sync"
+
 	"Goauld/common/log"
 	"Goauld/server/config"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"sync"
 )
 
 type DB struct {
 	db *gorm.DB
 }
 
-var (
-	dbTypes = []any{
-		Agent{},
-	}
-)
+var dbTypes = []any{
+	Agent{},
+}
 
-var once sync.Once
-var db *DB
+var (
+	once sync.Once
+	db   *DB
+)
 
 // InitDB initialize the database, performing migrations if needed
 func InitDB() (*DB, error) {

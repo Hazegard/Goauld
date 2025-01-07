@@ -2,9 +2,10 @@ package crypto
 
 import (
 	"bytes"
-	"filippo.io/age"
 	"fmt"
 	"io"
+
+	"filippo.io/age"
 )
 
 // ageAsymetric handle the asymetric cryptography using the age library

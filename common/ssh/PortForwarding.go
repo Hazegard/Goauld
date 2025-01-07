@@ -1,12 +1,13 @@
 package ssh
 
 import (
-	"Goauld/common/net"
 	"encoding/json"
 	"fmt"
 	stdnet "net"
 	"strconv"
 	"strings"
+
+	"Goauld/common/net"
 )
 
 // RemotePortForwarding holds the port forwarding information
@@ -93,7 +94,6 @@ func (rpf *RemotePortForwarding) UnmarshalText(text []byte) error {
 	// If AgentIP is not provided, set it to the default value
 	var localIP string
 	if len(parts) == 3 {
-
 		localIP = parts[1] // AgentIP is the second part when all three parts are present
 	} else {
 		localIP = "127.0.0.1" // Default value when AgentIP is missing

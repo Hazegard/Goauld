@@ -1,18 +1,20 @@
 package sshd
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"net"
+	"strconv"
+	"strings"
+
 	"Goauld/common/log"
 	_net "Goauld/common/net"
 	_ssh "Goauld/common/ssh"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
-	"context"
-	"errors"
-	"fmt"
+
 	"github.com/gliderlabs/ssh"
-	"net"
-	"strconv"
-	"strings"
 
 	gossh "golang.org/x/crypto/ssh"
 )
@@ -136,7 +138,7 @@ func StartSshd(context context.Context, db *persistence.DB) {
 			agent.Source = sourceIp
 			err = agent.ValidatePasswordAndRotateIfTrue(password)
 			if err != nil {
-				log.Warn().Err(err).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
+				log.Warn().Err(err).Str("Incomming", password).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
 				return false
 			}
 			err = db.UpdateAgentField(agent, "OneTimePassword")

@@ -1,9 +1,13 @@
 package socket_io
 
-const PingEvent = "Ping"
-const PingError = "Ping error"
-const PingSuccess = "Ping success"
+const (
+	PingEvent   = "Ping"
+	PingError   = "Ping error"
+	PingSuccess = "Ping success"
+)
 
-const PongEvent = "Pong"
-const PongError = "Pong error"
-const PongSuccess = "Pong error"
+const (
+	PongEvent   = "Pong"
+	PongError   = "Pong error"
+	PongSuccess = "Pong error"
+)

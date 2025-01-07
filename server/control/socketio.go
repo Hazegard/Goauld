@@ -1,12 +1,14 @@
 package control
 
 import (
+	"fmt"
+
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
 	"Goauld/server/store"
-	"fmt"
+
 	gosio "github.com/karagenc/socket.io-go"
 )
 
@@ -18,7 +20,6 @@ type SocketIO struct {
 
 // InitSocketIOServer intialize the server socket.io used to manage the agents
 func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*SocketIO, error) {
-
 	io := gosio.NewServer(&gosio.ServerConfig{})
 	socketIO := &SocketIO{
 		agentStore: agentStore,
@@ -36,7 +37,6 @@ func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*Sock
 
 func (sio *SocketIO) Setup(root *gosio.Namespace) {
 	root.OnConnection(func(socket gosio.ServerSocket) {
-
 		// RegisterEvent is emitted by the agent when connecting
 		// The data sent is
 		// - the ID of the agent (in cleartext)
@@ -44,7 +44,6 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 		// - the shared encryption key (encrypted using the age public key embedded in the agent)
 		// The shared encryption key will be used to encryt the next events
 		socket.OnEvent(socketio.RegisterEvent, func(data socketio.Register) {
-
 			// Retrieving the agent id from the received data
 			log.Debug().Str("Agent.Id", data.Id).Msg("socketio.RegisterEvent")
 
@@ -195,7 +194,6 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 
 		// DeregisterEvent is sent by the agent when disconnecting
 		socket.OnEvent(socketio.DeregisterEvent, func(data socketio.Deregister) {
-
 			agent := sio.agentStore.SioGetAgent(socket)
 			agent.SetDisconnect()
 			err := sio.db.UpdateAgentField(agent, "Connected")

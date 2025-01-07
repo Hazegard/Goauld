@@ -1,13 +1,14 @@
 package transport
 
 import (
+	"io"
+	"net"
+	"net/http"
+
 	"Goauld/common/log"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
 	"Goauld/server/store"
-	"io"
-	"net"
-	"net/http"
 )
 
 // SSHttpServer is the server allowing to perform SSH over HTTP
@@ -26,7 +27,6 @@ func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) *SSHttpServer
 
 // ServeHTTP handles all the connections performed to the SSHTTP router
 func (s *SSHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	id := r.PathValue("agentId")
 	// log.Trace()().Msgf("[SSHTTP] Received %s from %s", r.Method, id)
 	switch r.Method {
@@ -65,7 +65,6 @@ func (s *SSHttpServer) StartSSH(id string, w http.ResponseWriter, r *http.Reques
 	}
 	w.WriteHeader(http.StatusOK)
 	// log.Trace()()().Msgf("[SSHTTP] DONE HEAD Server %s", id)
-
 }
 
 // Get reads from the SSH connections and returns its content as a response
@@ -114,7 +113,7 @@ func (s *SSHttpServer) Post(id string, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Err(err).Str("ID", id).Str("SSH Mode", "error closing HTTP body")
 	}
-	//Write the received data to the SSH connection
+	// Write the received data to the SSH connection
 	_, err = agent.SshConn.Write(body)
 	if err != nil {
 		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Msgf("[SSHTTP] Post Agent Write Error")

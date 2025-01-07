@@ -1,11 +1,12 @@
 package socks
 
 import (
+	stdlog "log"
+	"net"
+
 	"Goauld/agent/agent"
 	"Goauld/agent/proxy"
 	"github.com/things-go/go-socks5"
-	stdlog "log"
-	"net"
 )
 
 type SocksServer struct {
@@ -15,7 +16,6 @@ type SocksServer struct {
 
 // NewSocks returns a new SocksServer
 func NewSocks() (*SocksServer, error) {
-
 	defaultLogger := socks5.NewLogger(stdlog.Default())
 	options := []socks5.Option{
 		socks5.WithLogger(defaultLogger),

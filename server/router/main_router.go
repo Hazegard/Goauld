@@ -1,16 +1,18 @@
 package router
 
 import (
+	"crypto/tls"
+	"errors"
+	"net/http"
+	"time"
+
 	"Goauld/common/log"
 	"Goauld/server/config"
 	"Goauld/server/control"
 	"Goauld/server/transport"
-	"crypto/tls"
-	"errors"
+
 	sio "github.com/karagenc/socket.io-go"
 	"github.com/urfave/negroni"
-	"net/http"
-	"time"
 )
 
 // MainRouter is the primary router that listen on
@@ -30,7 +32,6 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	manageRouter *ManageRouter,
 	adminRouter *AdminRouter,
 ) *MainRouter {
-
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
 	router.Handle("/socket.io/", controlServer.Server)
@@ -45,7 +46,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	n.Use(negroni.NewRecovery())
 	n.UseHandler(router)
 	server := &http.Server{
-		//Addr:    config.Get().LocalHttpServer(),
+		// Addr:    config.Get().LocalHttpServer(),
 		Handler: n,
 
 		// It is always a good practice to set timeouts.
@@ -94,7 +95,6 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	}
 
 	return httprouter
-
 }
 
 // Serve serves the Server

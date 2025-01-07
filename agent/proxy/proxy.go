@@ -1,9 +1,10 @@
 package proxy
 
 import (
+	"net/http"
+
 	"Goauld/common/log"
 	"github.com/aus/proxyplease"
-	"net/http"
 )
 
 // NewProxyDialer return a proxified dialer

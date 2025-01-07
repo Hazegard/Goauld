@@ -2,11 +2,12 @@ package ssh
 
 import (
 	"crypto"
-	"fmt"
-	"golang.org/x/crypto/ssh"
-
 	"crypto/rand"
 	"encoding/pem"
+	"fmt"
+
+	"golang.org/x/crypto/ssh"
+
 	"golang.org/x/crypto/ed25519"
 )
 

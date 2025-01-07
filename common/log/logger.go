@@ -1,11 +1,12 @@
 package log
 
 import (
-	"gorm.io/gorm/logger"
 	"log"
 	"os"
 	"sync"
 	"time"
+
+	"gorm.io/gorm/logger"
 
 	"github.com/rs/zerolog"
 )
@@ -91,7 +92,6 @@ func VerbosityToLogLevel(verbosity int) zerolog.Level {
 }
 
 func Get() *zerolog.Logger {
-
 	once.Do(initLoggers)
 
 	return zerologger

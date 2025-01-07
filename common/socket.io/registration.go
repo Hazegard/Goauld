@@ -7,24 +7,31 @@ type Register struct {
 	SharedKey []byte `json:"shared_key"`
 }
 
-const RegisterEvent = "register"
-const RegisterError = "register error"
-const RegisterSuccess_AskSSHPassword = "register success"
+const (
+	RegisterEvent                  = "register"
+	RegisterError                  = "register error"
+	RegisterSuccess_AskSSHPassword = "register success"
+)
 
 // Deregister is used to communicate when the agent disconnects
-type Deregister struct {
-}
+type Deregister struct{}
 
-const DeregisterEvent = "deregister"
-const DeregisterError = "deregister error"
-const DeregisterSuccess = "deregister success"
+const (
+	DeregisterEvent   = "deregister"
+	DeregisterError   = "deregister error"
+	DeregisterSuccess = "deregister success"
+)
 
-const Connect = "connect"
-const ConnectError = "connect error"
-const ConnectSuccess = "connect error"
+const (
+	Connect        = "connect"
+	ConnectError   = "connect error"
+	ConnectSuccess = "connect error"
+)
 
-const Disconnect = "connect"
-const DisconnectError = "connect error"
-const DisconnectSuccess = "connect error"
+const (
+	Disconnect        = "connect"
+	DisconnectError   = "connect error"
+	DisconnectSuccess = "connect error"
+)
 
 type DisconnectMessage struct{}

@@ -1,14 +1,15 @@
 package agent
 
 import (
+	"path/filepath"
+	"strings"
+
 	"Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/log"
 	"Goauld/common/ssh"
 	"Goauld/common/utils"
 	"github.com/alecthomas/kong"
-	"path/filepath"
-	"strings"
 )
 
 var (
@@ -21,7 +22,7 @@ var (
 	_socks                  = "true"
 	_socks_use_system_proxy = "true"
 
-	_server     = "localhost:3000"
+	_server     = "localhost"
 	_ssh_server = "localhost:2222"
 	_tls_server = "localhost"
 

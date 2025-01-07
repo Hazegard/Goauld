@@ -1,9 +1,10 @@
 package common
 
 import (
-	"Goauld/common/crypto"
 	"encoding/json"
 	"fmt"
+
+	"Goauld/common/crypto"
 )
 
 // Ptr constraining a type to its pointer type
@@ -17,7 +18,7 @@ type Decryptor[U any] struct{}
 // Decrypt decrypts the data and returns it as the provided struct
 func (f Decryptor[U]) Decrypt(data []byte, c *crypto.SymCryptor, init func() *U) (*U, error) {
 	// declare var of non-pointer type. this is not nil!
-	var a = init()
+	a := init()
 
 	d, err := c.Decrypt(data)
 	if err != nil {

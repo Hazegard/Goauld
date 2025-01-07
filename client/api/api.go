@@ -1,13 +1,14 @@
 package api
 
 import (
-	"Goauld/client/types"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+
+	"Goauld/client/types"
 )
 
 type API struct {
@@ -71,7 +72,6 @@ func (api *API) post(p string, body io.Reader) (*http.Response, error) {
 func (api *API) GetAgents() ([]types.Agent, error) {
 	res, err := api.get("/manage/agent/")
 	if err != nil {
-		fmt.Println("srbgbsjkisdnjsbdsbdj")
 		return nil, errors.New("Error while requesting agent list")
 	}
 	defer res.Body.Close()
@@ -118,19 +118,18 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	res, err := api.get("/manage/agent/by_name/" + name)
 	if err != nil {
-		return types.Agent{}, errors.New("Error while requesting agent by id")
+		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %v", err)
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return types.Agent{}, errors.New("Error while reading agent by id")
+		return types.Agent{}, fmt.Errorf("Error while reading agent by id: %v", err)
 	}
 
-	fmt.Println(string(body))
 	var agents types.Agent
 	err = json.Unmarshal(body, &agents)
 	if err != nil {
-		return types.Agent{}, err
+		return types.Agent{}, fmt.Errorf("%v: %s", err, string(body))
 	}
 	// for i := range agents {
 	// 	agents[i].ParseFPR()

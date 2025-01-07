@@ -1,8 +1,9 @@
 package midleware
 
 import (
-	"github.com/urfave/negroni"
 	"net/http"
+
+	"github.com/urfave/negroni"
 )
 
 // AuthMiddleware checks if the Authorization header matches a given token.

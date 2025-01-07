@@ -1,8 +1,9 @@
 package types
 
 import (
-	"Goauld/common/ssh"
 	"time"
+
+	"Goauld/common/ssh"
 )
 
 type Agent struct {

@@ -1,11 +1,12 @@
 package sshd
 
 import (
+	"net"
+
 	"Goauld/agent/agent"
 	"Goauld/agent/sshd/shell"
 	"Goauld/common/log"
 	"github.com/gliderlabs/ssh"
-	"net"
 )
 
 type Sshd struct {
@@ -37,7 +38,6 @@ func NewSshdServer() *Sshd {
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
 			}
-
 		}),
 		// Allows Local Port Forwarding
 		// Note: this might be unnecessary as users should only perform reverse port forwarding
@@ -84,7 +84,6 @@ func NewSshdServer() *Sshd {
 		},
 	}
 	return &Sshd{server: s}
-
 }
 
 func (sshd *Sshd) Serve(l net.Listener) error {

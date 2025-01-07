@@ -1,12 +1,14 @@
 package transport
 
 import (
-	"Goauld/agent/agent"
-	"Goauld/agent/proxy"
 	"context"
 	"fmt"
 	"io"
 	"net"
+
+	"Goauld/agent/agent"
+	"Goauld/agent/proxy"
+
 	"nhooyr.io/websocket"
 )
 

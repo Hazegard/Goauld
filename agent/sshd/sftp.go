@@ -1,11 +1,12 @@
 package sshd
 
 import (
+	"io"
+
 	"Goauld/common/log"
 	"github.com/gliderlabs/ssh"
 
 	"github.com/pkg/sftp"
-	"io"
 )
 
 // SftpHandler handle sftp connections

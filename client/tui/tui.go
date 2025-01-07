@@ -1,17 +1,19 @@
 package tui
 
 import (
+	"fmt"
+	"sort"
+	"strconv"
+	"time"
+
 	"Goauld/client/api"
 	"Goauld/client/types"
-	"fmt"
+
 	teatable "github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/evertras/bubble-table/table"
-	"sort"
-	"strconv"
-	"time"
 )
 
 const (
@@ -42,7 +44,6 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 func NewTui(api *api.API) Model {
-
 	ti := textinput.New()
 	ti.Width = 100
 
@@ -51,7 +52,6 @@ func NewTui(api *api.API) Model {
 		fmt.Println(err)
 		return Model{}
 	}
-	fmt.Printf("%+v\n", agents)
 	m := Model{
 		agentsTable: GenerateAgentTable().WithRows(AgentsToRow(agents)),
 		agents:      agents,
@@ -181,7 +181,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.TextStyle = textWarning
 			}
 			m.statusText.SetValue(text)
-
 		}
 	// Handle update agent list
 	case UpdateMessage:

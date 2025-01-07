@@ -1,19 +1,21 @@
 package agent
 
 import (
-	"Goauld/common/crypto"
-	ssh "Goauld/common/ssh"
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/alecthomas/kong"
-	"github.com/denisbrodbeck/machineid"
 	"net"
 	"os"
 	"os/user"
 	"runtime"
 	"strings"
 	"time"
+
+	"Goauld/common/crypto"
+	ssh "Goauld/common/ssh"
+
+	"github.com/alecthomas/kong"
+	"github.com/denisbrodbeck/machineid"
 )
 
 type Agent struct {

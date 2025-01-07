@@ -1,15 +1,18 @@
 package socket_io
 
 import (
+	"strings"
+
 	"Goauld/agent/agent"
 	"Goauld/common"
 	"Goauld/common/crypto"
-	"strings"
 )
 
-const SendAgentDataEvent = "Agent Data"
-const SendAgentDataError = "Agent Data error"
-const SendAgentDataSuccess = "Agent Data success"
+const (
+	SendAgentDataEvent   = "Agent Data"
+	SendAgentDataError   = "Agent Data error"
+	SendAgentDataSuccess = "Agent Data success"
+)
 
 // AgentData holds the ssh password used to authenticate on the agent
 type AgentData struct {

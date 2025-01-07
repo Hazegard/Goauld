@@ -1,13 +1,15 @@
 package transport
 
 import (
-	"Goauld/agent/agent"
 	"bufio"
 	"fmt"
-	"golang.org/x/crypto/ssh"
 	"net"
 	"strings"
 	"time"
+
+	"Goauld/agent/agent"
+
+	"golang.org/x/crypto/ssh"
 )
 
 const SSHD_BANNER = "SSH-2.0-"

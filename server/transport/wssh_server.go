@@ -1,15 +1,17 @@
 package transport
 
 import (
-	"Goauld/common/log"
-	"Goauld/server/config"
-	"Goauld/server/persistence"
-	"Goauld/server/store"
 	"context"
 	"errors"
 	"io"
 	"net"
 	"net/http"
+
+	"Goauld/common/log"
+	"Goauld/server/config"
+	"Goauld/server/persistence"
+	"Goauld/server/store"
+
 	"nhooyr.io/websocket"
 )
 
@@ -29,7 +31,6 @@ type WSshHandler struct {
 
 // ServeHTTP handle the SSH over Websockets connections
 func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	id := r.PathValue("agentId")

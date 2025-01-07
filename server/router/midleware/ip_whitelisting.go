@@ -1,10 +1,11 @@
 package midleware
 
 import (
-	"Goauld/common/net"
-	"github.com/urfave/negroni"
 	"net/http"
 	"strings"
+
+	"Goauld/common/net"
+	"github.com/urfave/negroni"
 )
 
 // WhitelistMiddleware checks if the request IP is in the allowed list.

@@ -1,15 +1,17 @@
 package ssh
 
 import (
-	"Goauld/agent/agent"
-	"Goauld/agent/ssh/transport"
-	"Goauld/common/log"
 	"context"
 	"fmt"
-	"golang.org/x/crypto/ssh"
 	"net"
 	"strings"
 	"time"
+
+	"Goauld/agent/agent"
+	"Goauld/agent/ssh/transport"
+	"Goauld/common/log"
+
+	"golang.org/x/crypto/ssh"
 )
 
 // getProxifiedClient return a connected SSH client
@@ -105,7 +107,7 @@ func proxifyHttp(sshConfig *ssh.ClientConfig) *ssh.Client {
 		return nil
 	}
 	log.Debug().Msg("Connection succedded, trying to mount SSH over the HTTP connection")
-	//httpConn.Start()
+	// httpConn.Start()
 	client, err := tryProxifySsh(sshConfig, httpConn)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")

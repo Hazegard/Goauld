@@ -1,8 +1,9 @@
 package store
 
 import (
-	"Goauld/common/types"
 	"net"
+
+	"Goauld/common/types"
 )
 
 type SSHTTPAgent struct {

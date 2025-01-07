@@ -1,17 +1,19 @@
 package ssh
 
 import (
-	"Goauld/agent/agent"
-	"Goauld/common/log"
-	_ssh "Goauld/common/ssh"
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/ssh"
 	"io"
 	"net"
 	"sync"
 	"time"
+
+	"Goauld/agent/agent"
+	"Goauld/common/log"
+	_ssh "Goauld/common/ssh"
+
+	"golang.org/x/crypto/ssh"
 )
 
 type SSHAgent struct {
@@ -70,7 +72,6 @@ func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error
 
 // RemoteForward starts the
 func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx context.Context) (int, error) {
-
 	// start the remote forwarding to remotely expose the local sshd server
 	remoteListener, err := sshAgent.client.Listen("tcp", rpf.GetRemote())
 	if err != nil {
@@ -111,7 +112,6 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 
 			// Handle the connection in a dedicated goroutine
 			go func() {
-
 				// Initialize a connection to the local SSHD server
 				localConn, err := net.Dial("tcp", rpf.GetLocal())
 				if err != nil {
@@ -170,7 +170,6 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop() {
 		case <-sshAgent.ctx.Done():
 			return
 		}
-
 	}
 }
 

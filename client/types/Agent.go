@@ -1,9 +1,10 @@
 package types
 
 import (
-	"Goauld/common/types"
 	"strconv"
 	"strings"
+
+	"Goauld/common/types"
 )
 
 type Agent struct {

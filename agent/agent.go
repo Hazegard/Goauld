@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"strconv"
+
 	"Goauld/agent/agent"
 	"Goauld/agent/control"
 	"Goauld/agent/socks"
@@ -8,12 +11,9 @@ import (
 	"Goauld/agent/sshd"
 	"Goauld/common/log"
 	common_ssh "Goauld/common/ssh"
-	"context"
-	"strconv"
 )
 
 func main() {
-
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
@@ -47,7 +47,7 @@ func main() {
 
 	// Create the client SSH
 	sshAgent := ssh.NewSSHAgent()
-	//defer sshAgent.Close()
+	// defer sshAgent.Close()
 
 	// Start the control socket.io
 	go func() {
@@ -154,6 +154,5 @@ func main() {
 	case err := <-socksErr:
 		log.Error().Err(err).Msg("error starting the socks server")
 	}
-	//ctx.Done()
-
+	// ctx.Done()
 }

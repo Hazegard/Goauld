@@ -6,9 +6,11 @@ import (
 	"Goauld/common/ssh"
 )
 
-const SendRemotePortForwardingDataEvent = "RemotePortForwarding Data"
-const SendRemotePortForwardingDataError = "RemotePortForwarding Data error"
-const SendRemotePortForwardingDataSuccess = "RemotePortForwarding Data success"
+const (
+	SendRemotePortForwardingDataEvent   = "RemotePortForwarding Data"
+	SendRemotePortForwardingDataError   = "RemotePortForwarding Data error"
+	SendRemotePortForwardingDataSuccess = "RemotePortForwarding Data success"
+)
 
 func newRemotePortForwardingMessage() *[]ssh.RemotePortForwarding {
 	return &[]ssh.RemotePortForwarding{}

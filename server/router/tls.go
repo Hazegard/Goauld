@@ -1,10 +1,11 @@
 package router
 
 import (
-	"Goauld/common/log"
-	"Goauld/server/config"
 	"crypto/tls"
 	"net"
+
+	"Goauld/common/log"
+	"Goauld/server/config"
 )
 
 // ServeTLS start a TLS listener on the configured port
@@ -33,7 +34,6 @@ func (router *MainRouter) ServeTLS() {
 // If the request matched the HTTP domain, forward this request to the HTTP router
 // If the request matches the TLS domain, forward this TLS traffic to the SSH over TLS
 func (router *MainRouter) HandleTls(c net.Conn) {
-
 	defer c.Close()
 	// Check if connection is TLS
 	if tlsConn, ok := c.(*tls.Conn); ok {
@@ -72,5 +72,4 @@ func (router *MainRouter) HandleTls(c net.Conn) {
 	} else {
 		log.Info().Msg("Non-TLS connection received")
 	}
-
 }

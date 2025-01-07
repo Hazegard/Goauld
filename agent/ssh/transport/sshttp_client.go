@@ -1,9 +1,6 @@
 package transport
 
 import (
-	"Goauld/agent/agent"
-	"Goauld/agent/proxy"
-	"Goauld/common/log"
 	"bytes"
 	"errors"
 	"fmt"
@@ -12,6 +9,10 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"Goauld/agent/agent"
+	"Goauld/agent/proxy"
+	"Goauld/common/log"
 )
 
 // SSHHttpClient handle the SSH connection over the HTTP traffic
@@ -37,7 +38,6 @@ func NewSSHTTPConn() *SSHHttpClient {
 func (c *SSHHttpClient) Connect() error {
 	log.Trace().Str("SSH Mode", "HTTP").Msgf("Connect to %s", c.url)
 	r, err := c.client.Head(c.url)
-
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (c *SSHHttpClient) Connect() error {
 func (c *SSHHttpClient) Read(b []byte) (int, error) {
 	c.bufMu.Lock()
 	if c.buffer.Len() > 0 {
-		//log.Trace().Msgf("read data in buffer")
+		// log.Trace().Msgf("read data in buffer")
 		return c.buffer.Read(b)
 	}
 
@@ -75,19 +75,18 @@ func (c *SSHHttpClient) Read(b []byte) (int, error) {
 		return 0, fmt.Errorf("error writing to buffer: %v", err)
 	}
 	return c.buffer.Read(b)
-
 }
 
 // Write performs a POST request to send data from the local SSH client
 // to the remote SSHD server
 func (c *SSHHttpClient) Write(b []byte) (int, error) {
-	//log.Trace().Msgf("WRITE START")
-	//defer log.Trace().Msgf("WRITE END")
+	// log.Trace().Msgf("WRITE START")
+	// defer log.Trace().Msgf("WRITE END")
 	_, err := c.client.Post(c.url, "application/octet-stream", bytes.NewReader(b))
 	if err != nil {
 		return 0, err
 	}
-	//log.Trace().Msgf("http client post response: %s", r.Status)
+	// log.Trace().Msgf("http client post response: %s", r.Status)
 	return len(b), nil
 }
 

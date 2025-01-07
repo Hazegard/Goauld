@@ -1,11 +1,12 @@
 package transport
 
 import (
-	"Goauld/agent/agent"
-	"Goauld/agent/proxy"
 	"context"
 	"crypto/tls"
 	"net"
+
+	"Goauld/agent/agent"
+	"Goauld/agent/proxy"
 )
 
 // GetTlsConn returns a TLS connection

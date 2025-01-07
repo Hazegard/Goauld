@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"Goauld/common/log"
 	"Goauld/server/config"
 	"Goauld/server/control"
@@ -9,11 +11,9 @@ import (
 	"Goauld/server/sshd"
 	"Goauld/server/store"
 	"Goauld/server/transport"
-	"context"
 )
 
 func main() {
-
 	ctx, cancel := context.WithCancel(context.Background())
 	// Initialize the server configuration from command line, environment variable and configuration files
 	_, _, err := config.InitServer()
@@ -46,7 +46,7 @@ func main() {
 	// Initialize and start the SSHD server
 	go sshd.StartSshd(ctx, db)
 	go func() {
-		//Start the HTTP server
+		// Start the HTTP server
 		err := r.Serve()
 		if err != nil {
 			log.Error().Err(err).Msg("error starting the HTTP server")

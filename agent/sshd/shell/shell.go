@@ -1,14 +1,16 @@
 package shell
 
 import (
-	"Goauld/common/log"
 	"fmt"
-	"github.com/aymanbagabas/go-pty"
-	"github.com/gliderlabs/ssh"
 	"io"
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"Goauld/common/log"
+
+	"github.com/aymanbagabas/go-pty"
+	"github.com/gliderlabs/ssh"
 )
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.

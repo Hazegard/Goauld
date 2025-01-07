@@ -1,18 +1,20 @@
 package persistence
 
 import (
-	"Goauld/common/crypto"
-	"Goauld/common/ssh"
-	"Goauld/common/types"
-	"Goauld/common/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"Goauld/common/crypto"
+	"Goauld/common/ssh"
+	"Goauld/common/types"
+	"Goauld/common/utils"
+
+	"gorm.io/gorm"
 )
 
 type Agent struct {
@@ -98,7 +100,6 @@ func (a *Agent) SetRemotePortForwarding(rpf []ssh.RemotePortForwarding) {
 	// 	rpfString = append(rpfString, v.Info())
 	// }
 	// a.RemotePortForwarding = strings.Join(rpfString, ",")
-
 }
 
 // SetConnect sets the agent state to connected
@@ -116,7 +117,7 @@ func (a *Agent) SetDisconnect() {
 // SetSharedSecret set the shared encryption key to the agent
 func (a *Agent) SetSharedSecret(secret string) {
 	a.SharedSecret = secret
-	//a.save()
+	// a.save()
 }
 
 // SetName set the name to the agent
