@@ -132,6 +132,12 @@ func (cpc *ControlPlanClient) Init() error {
 		os.Exit(0)
 	})
 
+	socket.OnEvent(socketio.AlreadyConnectedEvent, func() {
+		log.Info().Msg("AlreadyConnectedEvent: Exit requested because agent is already running")
+		socket.Emit(socketio.ExitSuccess)
+		os.Exit(0)
+	})
+
 	socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
 		log.Trace().Msg("OnEvent: SendRemotePortForwardingDataSuccess")
 		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")

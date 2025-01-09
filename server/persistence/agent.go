@@ -1,7 +1,6 @@
 package persistence
 
 import (
-	"Goauld/common/log"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -192,6 +191,8 @@ func (db *DB) FindAgentByName(name string) (*Agent, error) {
 
 // UpdateAgentField update the specified field information in the database
 func (db *DB) UpdateAgentField(agent *Agent, fields ...string) error {
+	agent.LastUpdated = time.Now()
+	fields = append(fields, "LastUpdated")
 	result := db.db.Select(fields).Updates(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not update agent: %s", result.Error)
@@ -233,7 +234,6 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 // an empty one that will be populated later is returned
 func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
 	agent, err := db.FindAgentById(id)
-	log.Error().Err(err).Msgf("Could not find agent by id: %s", id)
 	if agent != nil {
 		return agent, nil
 	}
@@ -257,6 +257,14 @@ func (db *DB) CreateAgent(agent *Agent) error {
 	result := db.db.Create(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not create agent: %s", result.Error)
+	}
+	return nil
+}
+
+func (db *DB) DeleteAgentById(id string) error {
+	res := db.db.Unscoped().Delete(&Agent{}, "id = ?", id)
+	if res.Error != nil {
+		return res.Error
 	}
 	return nil
 }

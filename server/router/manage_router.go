@@ -31,6 +31,7 @@ func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter
 		store:      store,
 	}
 	r.userRouter.HandleFunc("GET /agent/{id}", r.GetAgentById)
+	r.userRouter.HandleFunc("DELETE /agent/{id}", r.DeleteAgentById)
 	r.userRouter.HandleFunc("GET /agent/by_name/{name}", r.GetAgentByName)
 	r.userRouter.HandleFunc("POST /agent/kill/{id}", r.KillAgent)
 	r.userRouter.HandleFunc("GET /agent/", r.GetAgents)
@@ -117,6 +118,24 @@ func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("id")
+	err := ur.store.KillAGent(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
+	}
+	err = ur.db.DeleteAgentById(id)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("delete agent failed")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Info().Str("Path", r.URL.Path).Str("ID", id).Msg("delete agent success")
+	http.Redirect(w, r, "/", http.StatusNoContent)
 }
 
 // GetAgents return all agents stored in the database
@@ -214,7 +233,11 @@ func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	err := ur.store.KillAGent(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
+	}
+	err = ur.store.CloseAgentConnections(id)
+	if err != nil {
+		// http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -73,6 +73,11 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				log.Error().Str("Agent.name", "").Str("Agent.Id", data.Id).Err(err).Msg("socketio.RegisterError retriving agent")
 				return
 			}
+			if agent.Connected {
+				log.Error().Str("Agent.name", "").Str("Agent.Id", data.Id).Err(err).Msg("agent already connected... emotting kill")
+				socket.Emit(socketio.AlreadyConnectedEvent)
+				return
+			}
 
 			// Decrypting the shared key using the age private key
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("START socketio.RegisterEvent decrypting shared key")
@@ -91,7 +96,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.SetSharedSecret(sharedSecret)
 			agent.SetName(agentName)
 			agent.SetConnect()
-			err = sio.db.UpdateAgentField(agent, "SharedSecret", "Name")
+			err = sio.db.UpdateAgentField(agent, "SharedSecret", "Name", "Connected")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}
@@ -255,6 +260,9 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 		})
 
 		socket.OnDisconnect(func(reason gosio.Reason) {
+			if !socket.Connected() {
+				return
+			}
 			agent := sio.agentStore.SioGetAgent(socket)
 			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msgf("socketio.Disconnect: %s", reason)
 

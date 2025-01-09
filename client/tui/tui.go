@@ -58,6 +58,10 @@ func NewTui(api *api.API) Model {
 		statusText:  ti,
 		api:         api,
 	}
+	if len(m.agents) == 0 {
+		m.agentInfoTable = m.GenerateInfoTable(types.Agent{})
+		return m
+	}
 	m.agentInfoTable = m.GenerateInfoTable(agents[0])
 
 	return m
@@ -98,7 +102,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if data != nil {
 		id, err := strconv.Atoi(selRow.Data["N"].(string))
 		if err == nil {
-			selectedAgent = m.agents[id-1]
+			// fmt.Println(len(m.agents))
+			if len(m.agents) == 0 {
+				selectedAgent = types.Agent{}
+			} else {
+				selectedAgent = m.agents[id-1]
+			}
 		}
 	}
 
@@ -118,7 +127,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.SetValue(text)
 			} else if m.confirmAction == action_kill {
 				if selectedAgent.Id != "" {
-					m.confirmAction = action_kill
+					m.confirmAction = ""
 					if selectedAgent.Connected {
 						text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.Id)
 						m.statusText.TextStyle = textError
@@ -129,6 +138,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.statusText.SetValue(text)
 				}
+				m.confirmAction = ""
 			} else {
 				m.confirmAction = ""
 				m.statusText.SetValue("")
@@ -144,16 +154,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if m.confirmAction == action_delete {
 				if selectedAgent.Id != "" {
 					m.confirmAction = action_delete
-					if selectedAgent.Connected {
-						text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
-						m.statusText.TextStyle = textError
-						batch = append(batch, m.Delete(selectedAgent))
-					} else {
-						text = fmt.Sprintf("Already deleted %s (%s)", selectedAgent.Name, selectedAgent.Id)
-						m.statusText.TextStyle = textWarning
-					}
+					text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+					m.statusText.TextStyle = textError
+					batch = append(batch, m.Delete(selectedAgent))
 					m.statusText.SetValue(text)
 				}
+				m.confirmAction = ""
 			} else {
 				m.confirmAction = ""
 				m.statusText.SetValue("")
@@ -185,11 +191,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle update agent list
 	case UpdateMessage:
 		rows := AgentsToRow(msg.agents)
+		m.agents = msg.agents
 		m.agentsTable = m.agentsTable.WithRows(rows)
 
-		m.statusText.SetValue(msg.ErrorMessage)
-		m.statusText.TextStyle = textWarning
-		doUpdateStatus = true
+		if msg.ErrorMessage != "" {
+			m.statusText.SetValue(msg.ErrorMessage)
+			m.statusText.TextStyle = textWarning
+			doUpdateStatus = true
+		}
 		// Return your Tick command again to loop.
 		if msg.tick {
 			batch = append(batch, m.doTick(m.agents))
@@ -294,7 +303,7 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		Bold(false)
 
 	columns := []teatable.Column{
-		{Title: "Name", Width: 10},
+		{Title: "Name", Width: 12},
 		{Title: agent.Name, Width: length},
 	}
 	t := teatable.New(
