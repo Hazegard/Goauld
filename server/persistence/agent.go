@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"Goauld/common/log"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -231,7 +232,8 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 // If no agent corresponding to this ID exists
 // an empty one that will be populated later is returned
 func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
-	agent, _ := db.FindAgentById(id)
+	agent, err := db.FindAgentById(id)
+	log.Error().Err(err).Msgf("Could not find agent by id: %s", id)
 	if agent != nil {
 		return agent, nil
 	}

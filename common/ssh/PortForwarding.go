@@ -49,6 +49,9 @@ func (rpf *RemotePortForwarding) Info() string {
 
 func (rpf *RemotePortForwarding) UnmarshalJSON(data []byte) error {
 	tmp := internalRemotePortForwarding{}
+	if string(data) == "/" {
+		*rpf = RemotePortForwarding{}
+	}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
