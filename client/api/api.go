@@ -1,6 +1,8 @@
 package api
 
 import (
+	socket_io "Goauld/common/socket.io"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -138,8 +140,14 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 }
 
 // KillAgent kills the agent
-func (api *API) KillAgent(id string) error {
-	res, err := api.post("/manage/agent/kill/"+id, nil)
+func (api *API) KillAgent(id string, doExit bool) error {
+	u := fmt.Sprintf("/manage/agent/%s/kill", id)
+	body := socket_io.ExitData{Kill: doExit}
+	b, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	res, err := api.post(u, bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}

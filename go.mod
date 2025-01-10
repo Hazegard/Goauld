@@ -9,6 +9,7 @@ require (
 	github.com/alecthomas/kong v1.6.0
 	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
+	github.com/cenkalti/backoff/v5 v5.0.0
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0

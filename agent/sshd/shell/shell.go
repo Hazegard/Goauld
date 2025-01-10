@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os/exec"
@@ -15,7 +16,7 @@ import (
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.
 // It enables interaction with a shell (e.g., bash) through the session.
-func GivePty(s ssh.Session, c []string) error {
+func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 	// Extract PTY request and check if the session requested a PTY.
 	if len(c) == 0 {
 		if runtime.GOOS == "windows" {
@@ -34,12 +35,12 @@ func GivePty(s ssh.Session, c []string) error {
 		if err != nil {
 			return fmt.Errorf("error while opening pty: %s", err)
 		}
-		defer func(pseudo pty.Pty) {
+		defer func() {
 			err := pseudo.Close()
 			if err != nil {
 				log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing pty")
 			}
-		}(pseudo)
+		}()
 
 		// Resize the pty to the client window
 		w, h := ptyReq.Window.Width, ptyReq.Window.Height
@@ -53,7 +54,6 @@ func GivePty(s ssh.Session, c []string) error {
 		if err := cmd.Start(); err != nil {
 			return fmt.Errorf("error while starting command (%s): %s", c, err)
 		}
-
 		// start a loop to handle dynamic window size modification
 		go func() {
 			for win := range winCh {
@@ -65,7 +65,20 @@ func GivePty(s ssh.Session, c []string) error {
 		}()
 
 		go func() {
-			<-s.Context().Done() // Wait until the session context is canceled.
+			select {
+			case <-globalCtx.Done():
+			case <-s.Context().Done():
+			}
+
+			err = s.Close()
+			if err != nil {
+				log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing session")
+			}
+			// Wait until the session context is canceled.
+			err = pseudo.Close()
+			if err != nil {
+				log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing pty")
+			}
 			log.Debug().Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("session closed")
 		}()
 
@@ -84,7 +97,7 @@ func GivePty(s ssh.Session, c []string) error {
 		}()
 
 		if err := cmd.Wait(); err != nil {
-			return fmt.Errorf("error while waiting for command (%s): %s", c, err)
+			// return fmt.Errorf("error while waiting for command (%s): %s", c, err)
 		}
 	}
 	return nil

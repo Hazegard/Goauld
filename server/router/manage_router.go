@@ -1,6 +1,7 @@
 package router
 
 import (
+	socket_io "Goauld/common/socket.io"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,12 +31,12 @@ func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter
 		userRouter: http.NewServeMux(),
 		store:      store,
 	}
+	r.userRouter.HandleFunc("POST /agent/{id}/kill", r.KillAgent)
 	r.userRouter.HandleFunc("GET /agent/{id}", r.GetAgentById)
 	r.userRouter.HandleFunc("DELETE /agent/{id}", r.DeleteAgentById)
 	r.userRouter.HandleFunc("GET /agent/by_name/{name}", r.GetAgentByName)
-	r.userRouter.HandleFunc("POST /agent/kill/{id}", r.KillAgent)
-	r.userRouter.HandleFunc("GET /agent/", r.GetAgents)
-	r.userRouter.HandleFunc("POST /clearport/", r.ClearPort)
+	r.userRouter.HandleFunc("GET /agent/{$}", r.GetAgents)
+	r.userRouter.HandleFunc("POST /clearport/{$}", r.ClearPort)
 	return r
 }
 
@@ -123,7 +124,7 @@ func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
-	err := ur.store.KillAGent(id)
+	err := ur.store.KillAGent(id, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
@@ -231,7 +232,20 @@ func (ur *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWrite
 
 func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	err := ur.store.KillAGent(id)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error reading body")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jbody := socket_io.ExitData{}
+	err = json.Unmarshal(body, &jbody)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error unmarshaling json")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = ur.store.KillAGent(id, jbody.Kill)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}

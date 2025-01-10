@@ -1,6 +1,7 @@
 package socks
 
 import (
+	"Goauld/common/log"
 	stdlog "log"
 	"net"
 
@@ -39,5 +40,6 @@ func (s *SocksServer) Serve(l net.Listener) error {
 }
 
 func (s *SocksServer) Close() error {
+	log.Warn().Msgf("Shutting done the socks server")
 	return s.listener.Close()
 }

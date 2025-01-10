@@ -9,3 +9,7 @@ const (
 	AlreadyConnectedError   = "AlreadyConnected error"
 	AlreadyConnectedSuccess = "AlreadyConnected success"
 )
+
+type ExitData struct {
+	Kill bool
+}

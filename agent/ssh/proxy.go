@@ -18,35 +18,36 @@ import (
 // This client may be proxyfies (TLS, Websocket, HTTP), or not, depending
 // on the egress restrictions
 // The order of the connection attempt is defined in the agent configuration
-func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, error) {
+func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, net.Conn, error) {
 	var client *ssh.Client
+	var conn net.Conn
 	for _, proto := range agent.Get().GetRsshOrder() {
 		switch {
 		case strings.HasPrefix(proto, "ssh"):
 			client = directSSH(sshConfig)
 			if client != nil {
-				return client, nil
+				return client, nil, nil
 			}
 
 		case strings.HasPrefix(proto, "ws"):
-			client = proxifyWS(sshConfig, ctx)
+			client, conn = proxifyWS(sshConfig, ctx)
 			if client != nil {
-				return client, nil
+				return client, conn, nil
 			}
 		case strings.HasPrefix(proto, "http"):
-			client = proxifyHttp(sshConfig)
+			client, conn = proxifyHttp(sshConfig)
 			if client != nil {
-				return client, nil
+				return client, conn, nil
 			}
 		case strings.HasPrefix(proto, "tls"):
-			client = proxifyTls(sshConfig, ctx)
+			client, conn = proxifyTls(sshConfig, ctx)
 			if client != nil {
-				return client, nil
+				return client, conn, nil
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("failed to Proxify ssh connection")
+	return nil, nil, fmt.Errorf("failed to Proxify ssh connection")
 }
 
 // directSSH perform a direct ssh connection to the SSHD server
@@ -62,59 +63,59 @@ func directSSH(sshConfig *ssh.ClientConfig) *ssh.Client {
 }
 
 // proxifyTls proxifies the SSH traffic using a TLS connection to the server
-func proxifyTls(sshConfig *ssh.ClientConfig, ctx context.Context) *ssh.Client {
+func proxifyTls(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, net.Conn) {
 	log.Info().Msgf("Trying to proxify SSH using TLS")
 	tlsConn, err := transport.GetTlsConn(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create TLS connection")
-		return nil
+		return nil, nil
 	}
 	log.Debug().Msg("Connection succedded, trying to mount SSH over the TLS connection")
 	client, err := tryProxifySsh(sshConfig, tlsConn)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to proxify SSH over the TLS connection")
-		return nil
+		return nil, nil
 	}
 	log.Info().Msg("Proxify using TLS succeeded")
-	return client
+	return client, tlsConn
 }
 
 // proxifyTls proxifies the SSH traffic using a websocket connection to the server
-func proxifyWS(sshConfig *ssh.ClientConfig, ctx context.Context) *ssh.Client {
+func proxifyWS(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, net.Conn) {
 	log.Info().Msg("Trying to proxify SSH using websocket")
 	wsConn, err := transport.GetWebsocketConn(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create WebSocket connection")
-		return nil
+		return nil, nil
 	}
 	log.Debug().Msg("Connection succedded, trying to mount SSH over the Websocket connection")
 	client, err := tryProxifySsh(sshConfig, wsConn)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify ssh connection using websocket")
-		return nil
+		return nil, nil
 	}
 	log.Info().Msg("Proxify using websocket succeeded")
-	return client
+	return client, wsConn
 }
 
 // proxifyTls proxifies the SSH traffic using a HTTP connection to the server
-func proxifyHttp(sshConfig *ssh.ClientConfig) *ssh.Client {
+func proxifyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, net.Conn) {
 	log.Info().Msg("Trying to proxify SSH using HTTP")
 	httpConn := transport.NewSSHTTPConn()
 	err := httpConn.Connect()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify SSH using HTTP")
-		return nil
+		return nil, nil
 	}
 	log.Debug().Msg("Connection succedded, trying to mount SSH over the HTTP connection")
 	// httpConn.Start()
 	client, err := tryProxifySsh(sshConfig, httpConn)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
-		return nil
+		return nil, nil
 	}
 	log.Info().Msg("Proxify using HTTP succeeded")
-	return client
+	return client, httpConn
 }
 
 // tryProxifySsh attempts to proxifies the SSH connection using the provided net.Conn

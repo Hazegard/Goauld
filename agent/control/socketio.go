@@ -123,18 +123,23 @@ func (cpc *ControlPlanClient) Init() error {
 	socket.OnEvent(socketio.RegisterError, func(data socketio.SioError) {
 		log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
 		log.Info().Msgf("Quitting...")
+		socket.Disconnect()
 		os.Exit(2)
 	})
 
-	socket.OnEvent(socketio.ExitEvent, func() {
+	socket.OnEvent(socketio.ExitEvent, func(doExit bool) {
 		log.Info().Msg("OnEvent: Exit requested")
 		socket.Emit(socketio.ExitSuccess)
-		os.Exit(0)
+		socket.Disconnect()
+		if doExit {
+			os.Exit(0)
+		}
 	})
 
 	socket.OnEvent(socketio.AlreadyConnectedEvent, func() {
 		log.Info().Msg("AlreadyConnectedEvent: Exit requested because agent is already running")
 		socket.Emit(socketio.ExitSuccess)
+		socket.Disconnect()
 		os.Exit(0)
 	})
 
@@ -170,7 +175,7 @@ func (cpc *ControlPlanClient) Start() error {
 
 	cpc.socket.Connect()
 	// starts the keepalive in background
-	go cpc.keepAliveLoop()
+	go cpc.keepAliveLoop(cpc.ctx)
 	log.Debug().Msgf("Connected to the control server %s", cpc.url)
 	log.Trace().Msg("Event send: RegisterEvent")
 	// Waits for an error or the end of the socket
@@ -195,7 +200,7 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 
 // KeepAliveLoop starts a keepalive loop that will periodically send ping
 // in order to keep alive the connection
-func (cpc *ControlPlanClient) keepAliveLoop() {
+func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	cpc.socket.OnEvent(socketio.PongEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
 	})
@@ -206,10 +211,16 @@ func (cpc *ControlPlanClient) keepAliveLoop() {
 		case <-t.C:
 			log.Trace().Msg("OnEvent: PingEvent")
 			cpc.socket.Emit(socketio.PingEvent)
-		case <-cpc.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (cpc *ControlPlanClient) Close() {
+	cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
+	cpc.socket.Disconnect()
+	cpc.manager.Close()
 }
 
 // getEioConfig return the socket.io underlying configuration

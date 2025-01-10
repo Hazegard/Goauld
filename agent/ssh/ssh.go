@@ -19,6 +19,7 @@ import (
 type SSHAgent struct {
 	client *ssh.Client
 	ctx    context.Context
+	conn   net.Conn
 
 	remotePortMapMu sync.Mutex
 	remotePortMap   map[string]_ssh.RemotePortForwarding
@@ -30,7 +31,7 @@ func NewSSHAgent() *SSHAgent {
 	}
 }
 
-func (sshAgent *SSHAgent) Init() error {
+func (sshAgent *SSHAgent) Init(ctx context.Context) error {
 	log.Info().Msg("Connecting to the ssh server...")
 	// Get the private key used to authenticate to the server
 	privateKey, err := ssh.ParsePrivateKey([]byte(agent.Get().SShPrivateKey))
@@ -44,20 +45,32 @@ func (sshAgent *SSHAgent) Init() error {
 		ClientVersion:   "SSH-2.0-Client",
 	}
 
-	ctx := context.Background()
 	// defer cancel()
 	// Get the ssh client, which may be proxified to bypass proxies
-	client, err := getProxifiedClient(sshConfig, ctx)
+	client, conn, err := getProxifiedClient(sshConfig, ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
 		return err
 	}
 
 	// start a keepalive loop
-	go sshAgent.sshKeepAliveLoop()
+	go sshAgent.sshKeepAliveLoop(ctx)
 
 	sshAgent.client = client
 	sshAgent.ctx = ctx
+	sshAgent.conn = conn
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			err := sshAgent.Close()
+			if err != nil {
+				log.Error().Err(err).Msg("ssh client close failed")
+				return
+			}
+		}
+	}()
+
 	return nil
 }
 
@@ -97,6 +110,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 		defer remoteListener.Close()
 		for {
 			if ctx.Err() != nil {
+				remoteListener.Close()
 				return
 			}
 
@@ -142,10 +156,11 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 
 				// Waits for an error to occur
 				err = <-errChan
+				remoteConn.Close()
+				localConn.Close()
 				if err != nil {
 					log.Error().Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Err(err).Msg("Remote forwarding: end of forwarding")
 				}
-				sshAgent.Close()
 			}()
 		}
 	}()
@@ -155,7 +170,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 // sshKeepAliveLoop starts a loop that will periodically send ping messages to the server
 // in order to perform a keepalive to ensure that the connection is kept active even if no traffic
 // is transmitted within the connection
-func (sshAgent *SSHAgent) sshKeepAliveLoop() {
+func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 	t := time.NewTicker(agent.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
 	for {
@@ -167,13 +182,14 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop() {
 				return
 			}
 			log.Trace().Msgf("Keepalive %s recveived from server", string(b))
-		case <-sshAgent.ctx.Done():
+		case <-ctx.Done():
 			return
 		}
 	}
 }
 
 func (sshAgent *SSHAgent) Close() error {
-	sshAgent.ctx.Done()
+	log.Warn().Msg("Shutting down SSH agent...")
+	sshAgent.conn.Close()
 	return sshAgent.client.Close()
 }

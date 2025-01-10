@@ -29,9 +29,9 @@ const (
 )
 
 const (
-	Disconnect        = "connect"
-	DisconnectError   = "connect error"
-	DisconnectSuccess = "connect error"
+	Disconnect        = "SioDisconnect"
+	DisconnectError   = "SioDisconnect error"
+	DisconnectSuccess = "SioDisconnect error"
 )
 
 type DisconnectMessage struct{}

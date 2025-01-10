@@ -19,6 +19,7 @@ import (
 const (
 	action_delete = "ctrl+d"
 	action_kill   = "ctrl+k"
+	action_reset  = "ctrl+r"
 )
 
 var (
@@ -128,14 +129,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if m.confirmAction == action_kill {
 				if selectedAgent.Id != "" {
 					m.confirmAction = ""
-					if selectedAgent.Connected {
-						text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.Id)
-						m.statusText.TextStyle = textError
-						batch = append(batch, m.Kill(selectedAgent))
-					} else {
-						text = fmt.Sprintf("Already killed %s (%s)", selectedAgent.Name, selectedAgent.Id)
-						m.statusText.TextStyle = textWarning
-					}
+					// if selectedAgent.Connected {
+					text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+					m.statusText.TextStyle = textError
+					batch = append(batch, m.Kill(selectedAgent, true))
+					// } else {
+					// 	text = fmt.Sprintf("Already killed %s (%s)", selectedAgent.Name, selectedAgent.Id)
+					// 	m.statusText.TextStyle = textWarning
+					// }
+					m.statusText.SetValue(text)
+				}
+				m.confirmAction = ""
+			} else {
+				m.confirmAction = ""
+				m.statusText.SetValue("")
+			}
+			doUpdateStatus = true
+		case action_reset:
+			// if selected agent is not empty
+			if m.confirmAction == "" {
+				m.confirmAction = action_reset
+				text = fmt.Sprintf("Confirm reset %s? (%s to confirm)", selectedAgent.Name, action_reset)
+				m.statusText.TextStyle = textError
+				m.statusText.SetValue(text)
+			} else if m.confirmAction == action_reset {
+				if selectedAgent.Id != "" {
+					m.confirmAction = ""
+					// if selectedAgent.Connected {
+					text = fmt.Sprintf("Resetting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+					m.statusText.TextStyle = textError
+					batch = append(batch, m.Kill(selectedAgent, false))
+					// } else {
+					// 	text = fmt.Sprintf("Already reseted %s (%s)", selectedAgent.Name, selectedAgent.Id)
+					// 	m.statusText.TextStyle = textWarning
+					// }
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
@@ -166,8 +193,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			doUpdateStatus = true
 
-		// ctrl+r: shortcut to update the agent list
-		case "ctrl+r":
+		// r: shortcut to update the agent list
+		case "r":
 			return m, m.UpdateAgents(m.agents)
 		default:
 			m.confirmAction = ""
@@ -249,7 +276,7 @@ func (m Model) doUpdate(prevAgents []types.Agent) UpdateMessage {
 }
 
 func (m Model) Help() string {
-	return textHelp.SetString("  [↑]:Up [↓]:Down  [←]:Previous  [→]:Next  [q]/[ctrl+c]:Quit  [ctrl+k]:Kill agent  [ctrl+d]:Delete agent  ").String()
+	return textHelp.SetString("  [ctrl+r]:Reset agent [ctrl+k]:Kill agent  [ctrl+d]:Delete agent    [r]:Refresh view\n  [↑]:Up [↓]:Down  [←]:Previous  [→]:Next  [q]/[ctrl+c]:Quit").String()
 }
 
 // doTick handle the periodic update
@@ -386,9 +413,9 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 }
 
 // Kill performs a call to the API to kill the selected agent
-func (m Model) Kill(agent types.Agent) tea.Cmd {
+func (m Model) Kill(agent types.Agent, doExit bool) tea.Cmd {
 	return func() tea.Msg {
-		err := m.api.KillAgent(agent.Id)
+		err := m.api.KillAgent(agent.Id, doExit)
 		if err != nil {
 			return CmdResponse{
 				Success: false,

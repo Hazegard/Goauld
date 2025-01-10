@@ -104,13 +104,17 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 	return errors.Join(err1, err2, err3)
 }
 
-func (a *AgentStore) KillAGent(id string) error {
+func (a *AgentStore) KillAGent(id string, doKill bool) error {
 	socket := a.SioGetSocket(id)
 	if socket == nil {
-		_ = a.db.SetAgentSshMode(id, "OFF")
+		err := a.db.SetAgentSshMode(id, "OFF")
+		if err != nil {
+			return fmt.Errorf("socket not found, error while disconnecting agent: %v", err)
+		}
 		return errors.New("socket not found")
 	}
-	socket.Emit(socketio.ExitEvent)
+
+	socket.Emit(socketio.ExitEvent, doKill)
 	return nil
 }
 

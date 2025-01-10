@@ -1,25 +1,53 @@
 package main
 
 import (
-	"context"
-	"strconv"
-
 	"Goauld/agent/agent"
 	"Goauld/agent/control"
 	"Goauld/agent/socks"
 	"Goauld/agent/ssh"
 	"Goauld/agent/sshd"
 	"Goauld/common/log"
-	common_ssh "Goauld/common/ssh"
+	commonssh "Goauld/common/ssh"
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cenkalti/backoff/v5"
+	"strconv"
+	"time"
 )
 
 func main() {
+
+	// Define an operation function that returns a value and an error.
+	// The value can be any type.
+	// We'll pass this operation to Retry function
+
+	exp := &backoff.ExponentialBackOff{
+		InitialInterval:     time.Second,
+		RandomizationFactor: 2,
+		Multiplier:          0.5,
+		MaxInterval:         5 * time.Minute,
+	}
+	operation := func() (any, error) {
+		run()
+		return nil, errors.New("")
+	}
+
+	result, err := backoff.Retry(context.TODO(), operation, backoff.WithBackOff(exp))
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Println(result)
+}
+
+func run() {
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
 	socksErr := make(chan error)
 
-	var forwardedPorts []common_ssh.RemotePortForwarding
+	var forwardedPorts []commonssh.RemotePortForwarding
 
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
 	_, err, warnings := agent.InitAgent()
@@ -34,8 +62,10 @@ func main() {
 	}
 	// Announce to hanging goroutines that the configuration is completed
 	configDone := make(chan struct{})
+	log.Info().Msg("Agent init done")
 
-	ctx := context.Background()
+	ctx, done := context.WithCancel(context.Background())
+	defer done()
 
 	// Initialize the control socket.io
 	controlPlanClient := control.NewControlPlanClient(ctx, configDone)
@@ -51,14 +81,19 @@ func main() {
 
 	// Start the control socket.io
 	go func() {
-		controlErr <- controlPlanClient.Start()
+		select {
+		case controlErr <- controlPlanClient.Start():
+		case <-ctx.Done():
+			controlPlanClient.Close()
+		}
+
 	}()
 
 	go func() {
 		// Waiting for the configuration to be completed
 		<-configDone
 		// Initialize the client SSH
-		err = sshAgent.Init()
+		err = sshAgent.Init(ctx)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
 			return
@@ -66,7 +101,7 @@ func main() {
 
 		// If the SSHD server is enabled, start it
 		if agent.Get().SshdEnabled() {
-			sshdServer := sshd.NewSshdServer()
+			sshdServer := sshd.NewSshdServer(ctx)
 
 			rListener, rPort, err := sshAgent.GetRemoteConn(agent.Get().RemoteForwardedSshdAddress())
 			if err != nil {
@@ -76,17 +111,25 @@ func main() {
 			// agent.Get().AddSshdToRpf()
 
 			go func() {
-				sshdErr <- sshdServer.Serve(rListener)
-				if err != nil {
-					log.Error().Err(err).Msg("socks server error")
-				}
-				err := sshdServer.Close()
-				if err != nil {
-					log.Warn().Err(err).Msg("sshd close error")
+				select {
+				case sshdErr <- sshdServer.Serve(rListener):
+					if err != nil {
+						log.Error().Err(err).Msg("socks server error")
+					}
+					err := sshdServer.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("sshd close error")
+					}
+				case <-ctx.Done():
+
+					err := sshdServer.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("sshd close error")
+					}
 				}
 			}()
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote SSHD server started")
-			forwardedPorts = append(forwardedPorts, common_ssh.RemotePortForwarding{
+			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
 				ServerPort: agent.Get().RemoteForwardedSshdPort(),
 				AgentPort:  -1,
 				AgentIP:    "0.0.0.0",
@@ -106,17 +149,25 @@ func main() {
 			}
 			agent.Get().UpdateSocksPort(rPort)
 			go func() {
-				socksErr <- socks5.Serve(rListener)
-				if err != nil {
-					log.Error().Err(err).Msg("socks server error")
+				select {
+				case socksErr <- socks5.Serve(rListener):
+					if err != nil {
+						log.Error().Err(err).Msg("socks server error")
+					}
+					err := socks5.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("socks close error")
+					}
+				case <-ctx.Done():
+					err := socks5.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("socks close error")
+					}
 				}
-				err := socks5.Close()
-				if err != nil {
-					log.Warn().Err(err).Msg("socks close error")
-				}
+
 			}()
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote Socks5 server started")
-			forwardedPorts = append(forwardedPorts, common_ssh.RemotePortForwarding{
+			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
 				ServerPort: agent.Get().RemoteForwardedSocksPort(),
 				AgentPort:  -1,
 				AgentIP:    "0.0.0.0",
@@ -154,5 +205,4 @@ func main() {
 	case err := <-socksErr:
 		log.Error().Err(err).Msg("error starting the socks server")
 	}
-	// ctx.Done()
 }

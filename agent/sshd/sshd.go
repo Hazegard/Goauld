@@ -1,6 +1,7 @@
 package sshd
 
 import (
+	"context"
 	"net"
 
 	"Goauld/agent/agent"
@@ -29,15 +30,16 @@ type Sshd struct {
 		return sshd.server.Serve(listener)
 	}
 */
-func NewSshdServer() *Sshd {
+func NewSshdServer(ctx context.Context) *Sshd {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
 			log.Info().Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
-			err := shell.GivePty(s, s.Command())
+			err := shell.GivePty(s, s.Command(), ctx)
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
 			}
+			s.Close()
 		}),
 		// Allows Local Port Forwarding
 		// Note: this might be unnecessary as users should only perform reverse port forwarding
@@ -92,5 +94,10 @@ func (sshd *Sshd) Serve(l net.Listener) error {
 }
 
 func (sshd *Sshd) Close() error {
-	return sshd.listener.Close()
+	log.Warn().Msg("Shutting done the SSHD server")
+	err := sshd.listener.Close()
+	if err != nil {
+		log.Error().Err(err).Msg("Error closing SSHD listener")
+	}
+	return sshd.server.Close()
 }
