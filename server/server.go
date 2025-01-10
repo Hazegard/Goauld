@@ -41,7 +41,11 @@ func main() {
 	adminRouter := router.NewAdminRouter(db, agentStore)
 
 	// Initialize the HTTP router
-	r := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter)
+	r, err := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter)
+	if err != nil {
+		log.Error().Err(err).Msgf("error initializing http router")
+		return
+	}
 
 	// Initialize and start the SSHD server
 	go sshd.StartSshd(ctx, db)

@@ -10,6 +10,7 @@ import (
 	"Goauld/server/config"
 	"Goauld/server/control"
 	"Goauld/server/transport"
+	"github.com/caddyserver/certmagic"
 
 	sio "github.com/karagenc/socket.io-go"
 	"github.com/urfave/negroni"
@@ -31,7 +32,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	tlssh *transport.TLSSHServer,
 	manageRouter *ManageRouter,
 	adminRouter *AdminRouter,
-) *MainRouter {
+) (*MainRouter, error) {
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
 	router.Handle("/socket.io/", controlServer.Server)
@@ -69,32 +70,30 @@ func NewHttpRouter(controlServer *control.SocketIO,
 
 	// If the TLS is enabled, configure the server to used TLS
 	if config.Get().Tls {
-		/*cfg := certmagic.NewDefault()
-		certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
-		_, err := cfg.CacheUnmanagedCertificatePEMFile(context.Background(), "./tls_cert.pem", "./key.pem", []string{"*.hazegard.fr", "a.hazegard.fr"})
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to load TLS certificate")
-			return nil
+		if config.Get().IsCustomTLS() {
+			cert, err := tls.LoadX509KeyPair("./tls_cert.pem", "./key.pem")
+			if err != nil {
+				log.Error().Err(err).Msg("failed to load key pair")
+			}
+			tlsC := &tls.Config{
+				NextProtos:   []string{"http/1.1"},
+				Certificates: []tls.Certificate{cert},
+			}
+			httprouter.tlsConfig = tlsC
+		} else {
+			certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+			tlsConfig, err := certmagic.TLS(config.Get().GetTlsDomains())
+			if err != nil {
+				return nil, err
+			}
+			tlsConfig.NextProtos = []string{"http/1.1"}
+			tlsConfig.MinVersion = tls.VersionSSL30
+			httprouter.tlsConfig = tlsConfig
 		}
 
-		//cmg := certmagic.New(cache, *cfg)
-		tlsconf, err := certmagic.TLS([]string{"*.hazegard.fr", "a.hazegard.fr"})*/
-
-		//tlsconf := cmg.TLSConfig()
-		/*		tlsconf.NextProtos = []string{"http/1.1"}
-				tlsconf.MinVersion = tls.VersionSSL30*/
-		cert, err := tls.LoadX509KeyPair("./tls_cert.pem", "./key.pem")
-		if err != nil {
-			log.Error().Err(err).Msg("failed to load key pair")
-		}
-		tlsC := &tls.Config{
-			NextProtos:   []string{"http/1.1"},
-			Certificates: []tls.Certificate{cert},
-		}
-		httprouter.tlsConfig = tlsC
 	}
 
-	return httprouter
+	return httprouter, nil
 }
 
 // Serve serves the Server

@@ -32,6 +32,7 @@ var (
 	_http_domain = "a.hazegard.fr"
 	_tls_domain  = "b.hazegard.fr"
 
+	// TODO: voir pour listen sur ine IP spécifique
 	_http_port  = "80"
 	_https_port = "443"
 	_sshd_port  = "2222"
@@ -81,6 +82,8 @@ type ServerConfig struct {
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
 	Tls        bool   `default:"${_tls}" negatable:"" help:"Enable TLS."`
+	TlsKey     string `help:"Path to TLS certificate key."`
+	TlsCert    string `help:"Path to TLS certificate."`
 	NoDB       bool   `default:"${_no_db}" negatable:"" help:"Disable database usage."`
 	DbFileName string `default:"${_db_name}" help:"Database filename to use."`
 
@@ -133,12 +136,12 @@ func (s *ServerConfig) LocalSShServer() string {
 
 // LocalHttpsServer return the local HTTPS address
 func (s *ServerConfig) LocalHttpsServer() string {
-	return fmt.Sprintf("%s:%d", "127.0.0.1", s.HttpsPort)
+	return fmt.Sprintf("%s:%d", "0.0.0.0", s.HttpsPort)
 }
 
 // LocalHttpServer return the local HTTP address
 func (s *ServerConfig) LocalHttpServer() string {
-	return fmt.Sprintf("%s:%d", "127.0.0.1", s.HttpPort)
+	return fmt.Sprintf("%s:%d", "0.0.0.0", s.HttpPort)
 }
 
 // Validate perform kong validation to ensure that fields are correct
@@ -149,4 +152,12 @@ func (s *ServerConfig) Validate() error {
 		}
 	}
 	return nil
+}
+
+func (s *ServerConfig) IsCustomTLS() bool {
+	return s.TlsCert != "" && s.TlsKey != ""
+}
+
+func (s *ServerConfig) GetTlsDomains() []string {
+	return []string{s.TlsDomain, s.HttpDomain}
 }

@@ -13,7 +13,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	httpclient := api.NewAPI(cfg.ServerUrl(), cfg.AccessToken)
+	httpclient := api.NewAPI(cfg.ServerUrl(), cfg.AccessToken, cfg.Insecure)
 	kong.Bind(*cfg, httpclient)
 
 	err = kong.Run(httpclient, cfg)

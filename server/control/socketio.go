@@ -260,9 +260,6 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 		})
 
 		socket.OnDisconnect(func(reason gosio.Reason) {
-			if !socket.Connected() {
-				return
-			}
 			agent := sio.agentStore.SioGetAgent(socket)
 			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msgf("socketio.Disconnect: %s", reason)
 

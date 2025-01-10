@@ -3,6 +3,7 @@ package api
 import (
 	socket_io "Goauld/common/socket.io"
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,15 +18,24 @@ type API struct {
 	client      *http.Client
 	server      string
 	accessToken string
+	insecure    bool
 }
 
 // NewAPI return a new API
-func NewAPI(server string, accessToken string) *API {
-	return &API{
+func NewAPI(server string, accessToken string, insecure bool) *API {
+	api := &API{
 		client:      &http.Client{},
 		server:      server,
 		accessToken: accessToken,
 	}
+	if insecure {
+		api.client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+	}
+	return api
 }
 
 // Delete generic method to perform DELETE request with the appropriate authentication header
