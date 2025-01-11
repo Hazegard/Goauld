@@ -70,11 +70,11 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Message: errorMsg.Error(),
 					Code:    socketio.RegisterError,
 				})
-				log.Error().Str("Agent.name", "").Str("Agent.Id", data.Id).Err(err).Msg("socketio.RegisterError retriving agent")
+				log.Error().Str("Agent.name", "").Str("Agent.Id", data.Id).Err(err).Msg("socketio.RegisterError retrieving agent")
 				return
 			}
-			if agent.Connected {
-				log.Error().Str("Agent.name", "").Str("Agent.Id", data.Id).Err(err).Msg("agent already connected... emotting kill")
+			if agent.Connected || agent.SocketId != "" {
+				log.Error().Str("Agent.name", "").Str("Agent.Id", data.Id).Err(err).Msg("agent already connected... emitting kill")
 				socket.Emit(socketio.AlreadyConnectedEvent)
 				return
 			}
@@ -96,7 +96,8 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.SetSharedSecret(sharedSecret)
 			agent.SetName(agentName)
 			agent.SetConnect()
-			err = sio.db.UpdateAgentField(agent, "SharedSecret", "Name", "Connected")
+			agent.SocketId = string(socket.ID())
+			err = sio.db.UpdateAgentField(agent, "SharedSecret", "Name", "Connected", "SocketId")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}
@@ -261,6 +262,10 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 
 		socket.OnDisconnect(func(reason gosio.Reason) {
 			agent := sio.agentStore.SioGetAgent(socket)
+			if agent.SocketId != string(socket.ID()) {
+				log.Info().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msgf("socketio.Disconnect: %s", "already connected")
+				return
+			}
 			log.Debug().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msgf("socketio.Disconnect: %s", reason)
 
 			// Close all active connections related to the agent
@@ -276,7 +281,8 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				log.Warn().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect: error setting agent connection mode")
 			}
 			agent.SetDisconnect()
-			err = sio.db.UpdateAgentField(agent, "Connected")
+			agent.SocketId = ""
+			err = sio.db.UpdateAgentField(agent, "Connected", "SocketId")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect updating agent")
 			}

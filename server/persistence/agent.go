@@ -21,6 +21,7 @@ type Agent struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+	SocketId  string
 	types.Agent
 	cryptor *crypto.SymCryptor
 }
@@ -308,9 +309,10 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 		agent.UsedPorts = "/"
 		agent.Connected = false
 		agent.RemotePortForwarding = []ssh.RemotePortForwarding{}
+		agent.SocketId = ""
 	}
 	agent.LastUpdated = time.Now()
-	err = db.UpdateAgentField(agent, "SshMode", "LastUpdated", "UsedPorts", "Connected", "RemotePortForwarding")
+	err = db.UpdateAgentField(agent, "SshMode", "LastUpdated", "UsedPorts", "Connected", "RemotePortForwarding", "SocketId")
 	if err != nil {
 		return fmt.Errorf("could not update agent: %s", err)
 	}

@@ -325,3 +325,7 @@ func getIps() ([]string, []error) {
 	}
 	return IPS, errs
 }
+
+func (a *Agent) GetMexRetries() uint {
+	return uint(a.cfg.MaxRetries)
+}

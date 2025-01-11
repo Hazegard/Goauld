@@ -37,6 +37,8 @@ var (
 
 	_remote_port_forwarding = ""
 
+	_max_retries = "0"
+
 	defaultValues = kong.Vars{
 		"_age_pubkey": _agePubKey,
 
@@ -61,6 +63,8 @@ var (
 		"_rssh_order": _rssh_order,
 
 		"_remote_port_forwarding": _remote_port_forwarding,
+
+		"_max_retries": _max_retries,
 	}
 )
 
@@ -88,6 +92,8 @@ type Config struct {
 	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order of ssh connection attempts."`
 
 	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT)."`
+
+	MaxRetries int `default:"${_max_retries}" help:"Max retries before giving up" name:"max-retries" short:"M"`
 }
 
 // parse parses the command line arguments

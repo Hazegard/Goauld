@@ -3,3 +3,6 @@
 *.db
 *.pem
 *.der
+
+# Added by goreleaser init:
+dist/

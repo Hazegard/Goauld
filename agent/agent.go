@@ -18,6 +18,18 @@ import (
 
 func main() {
 
+	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
+	_, err, warnings := agent.InitAgent()
+	if err != nil {
+		log.Error().Err(err).Msg("error initializing the agent")
+		return
+	}
+	if len(warnings) > 0 {
+		for _, warning := range warnings {
+			log.Warn().Err(warning).Msgf("agent init error")
+		}
+	}
+
 	// Define an operation function that returns a value and an error.
 	// The value can be any type.
 	// We'll pass this operation to Retry function
@@ -33,7 +45,7 @@ func main() {
 		return nil, errors.New("")
 	}
 
-	result, err := backoff.Retry(context.TODO(), operation, backoff.WithBackOff(exp))
+	result, err := backoff.Retry(context.TODO(), operation, backoff.WithBackOff(exp), backoff.WithMaxTries(agent.Get().GetMexRetries()))
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -49,17 +61,6 @@ func run() {
 
 	var forwardedPorts []commonssh.RemotePortForwarding
 
-	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
-	_, err, warnings := agent.InitAgent()
-	if err != nil {
-		log.Error().Err(err).Msg("error initializing the agent")
-		return
-	}
-	if len(warnings) > 0 {
-		for _, warning := range warnings {
-			log.Warn().Err(warning).Msgf("agent init error")
-		}
-	}
 	// Announce to hanging goroutines that the configuration is completed
 	configDone := make(chan struct{})
 	log.Info().Msg("Agent init done")
@@ -69,7 +70,7 @@ func run() {
 
 	// Initialize the control socket.io
 	controlPlanClient := control.NewControlPlanClient(ctx, configDone)
-	err = controlPlanClient.Init()
+	err := controlPlanClient.Init()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the control plan")
 		return
@@ -106,6 +107,7 @@ func run() {
 			rListener, rPort, err := sshAgent.GetRemoteConn(agent.Get().RemoteForwardedSshdAddress())
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the SSHD connection")
+				return
 			}
 			agent.Get().UpdateSshdPort(rPort)
 			// agent.Get().AddSshdToRpf()

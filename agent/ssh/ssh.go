@@ -77,7 +77,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context) error {
 func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error) {
 	l, err := sshAgent.client.Listen("tcp", remote)
 	if err != nil {
-		return nil, 0, nil
+		return nil, 0, err
 	}
 	port := l.Addr().(*net.TCPAddr).Port
 	return l, port, err
