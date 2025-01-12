@@ -1,4 +1,4 @@
-package agent
+package config
 
 import (
 	"crypto/md5"
@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"Goauld/common/crypto"
-	ssh "Goauld/common/ssh"
+	"Goauld/common/ssh"
 
 	"github.com/alecthomas/kong"
 	"github.com/denisbrodbeck/machineid"
@@ -23,7 +23,7 @@ type Agent struct {
 	SShPrivateKey            string
 	SharedSecret             string
 	Cryptor                  *crypto.SymCryptor
-	cfg                      *Config
+	cfg                      *AgentConfig
 	RemoteDynamicPortForward []int
 	RemotePortForward        []int
 	Platform                 string

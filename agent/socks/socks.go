@@ -5,7 +5,7 @@ import (
 	stdlog "log"
 	"net"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/agent/proxy"
 	"github.com/things-go/go-socks5"
 )
@@ -21,7 +21,7 @@ func NewSocks() (*SocksServer, error) {
 	options := []socks5.Option{
 		socks5.WithLogger(defaultLogger),
 	}
-	if agent.Get().SocksUseSystemProxy() {
+	if config.Get().SocksUseSystemProxy() {
 		options = append(options, socks5.WithDial(proxy.NewProxyDialer()))
 	}
 	s5 := socks5.NewServer(options...)

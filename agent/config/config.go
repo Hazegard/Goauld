@@ -1,4 +1,4 @@
-package agent
+package config
 
 import (
 	"path/filepath"
@@ -68,7 +68,7 @@ var (
 	}
 )
 
-type Config struct {
+type AgentConfig struct {
 	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age" short:"A"`
 
 	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
@@ -97,8 +97,8 @@ type Config struct {
 }
 
 // parse parses the command line arguments
-func parse() (*kong.Context, *Config, error) {
-	cfg := &Config{}
+func parse() (*kong.Context, *AgentConfig, error) {
+	cfg := &AgentConfig{}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
 		return nil, cfg, err

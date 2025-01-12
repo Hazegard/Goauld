@@ -6,7 +6,7 @@ import (
 	"io"
 	"net"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/agent/proxy"
 
 	"nhooyr.io/websocket"
@@ -14,7 +14,7 @@ import (
 
 // GetWebsocketConn returns a net.Conn wrapping a websocket connection
 func GetWebsocketConn(ctx context.Context) (net.Conn, error) {
-	url := agent.Get().WSshUrl()
+	url := config.Get().WSshUrl()
 
 	httpclient := proxy.NewHttpClientProxy()
 

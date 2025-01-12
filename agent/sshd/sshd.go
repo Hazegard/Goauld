@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/agent/sshd/shell"
 	"Goauld/common/log"
 	"github.com/gliderlabs/ssh"
@@ -17,16 +17,16 @@ type Sshd struct {
 
 /*
 	func (sshd *Sshd) ListenAndServe() error {
-		sshdAddress := agent.Get().LocalSShdAddress()
+		sshdAddress := config.Get().LocalSShdAddress()
 		listener, err := net.Listen("tcp", sshdAddress)
 		if err != nil {
 			return err
 		}
-		if agent.Get().IsLocalSshdRandomPort() {
-			agent.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
+		if config.Get().IsLocalSshdRandomPort() {
+			config.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
 		}
 
-		log.Info().Msgf("Listening on port %s", agent.Get().LocalSShdAddress())
+		log.Info().Msgf("Listening on port %s", config.Get().LocalSShdAddress())
 		return sshd.server.Serve(listener)
 	}
 */
@@ -65,7 +65,7 @@ func NewSshdServer(ctx context.Context) *Sshd {
 		// Allows tcp traffic within the SSH connection
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			log.Debug().Msgf("Received connection from user: %s", ctx.User())
-			if password == agent.Get().LocalSShdPassword() {
+			if password == config.Get().LocalSShdPassword() {
 				log.Debug().Msgf("Connnection using password succecced from user: %s", ctx.User())
 				return true
 			}

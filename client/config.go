@@ -21,7 +21,7 @@ var (
 	_access_token = "TODO_TOKEN"
 
 	_verbosity = "0"
-	insecure   = "false"
+	_insecure  = "false"
 
 	_exec_ssh   = "true"
 	_exec_socks = "true"
@@ -37,7 +37,7 @@ var (
 		"_access_token": _access_token,
 
 		"_verbosity": _verbosity,
-		"insecure":   insecure,
+		"_insecure":  _insecure,
 
 		"_exec_ssh":   _exec_ssh,
 		"_exec_socks": _exec_socks,
@@ -55,7 +55,7 @@ type ClientConfig struct {
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
 
 	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
-	Insecure bool `default:"${_exec_print}" short:"k" help:"Allow insecure connection."`
+	Insecure bool `default:"${_insecure}" short:"k" help:"Allow insecure connection."`
 
 	Exec Exec     `cmd:""`
 	Tui  Tui      `cmd:""`

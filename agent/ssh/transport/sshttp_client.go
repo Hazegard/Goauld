@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/agent/proxy"
 	"Goauld/common/log"
 )
@@ -30,7 +30,7 @@ func NewSSHTTPConn() *SSHHttpClient {
 	}
 	return &SSHHttpClient{
 		client: httpClient,
-		url:    agent.Get().SSHTTPUrl(),
+		url:    config.Get().SSHTTPUrl(),
 	}
 }
 

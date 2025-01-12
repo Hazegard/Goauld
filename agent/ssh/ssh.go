@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/common/log"
 	_ssh "Goauld/common/ssh"
 
@@ -34,12 +34,12 @@ func NewSSHAgent() *SSHAgent {
 func (sshAgent *SSHAgent) Init(ctx context.Context) error {
 	log.Info().Msg("Connecting to the ssh server...")
 	// Get the private key used to authenticate to the server
-	privateKey, err := ssh.ParsePrivateKey([]byte(agent.Get().SShPrivateKey))
+	privateKey, err := ssh.ParsePrivateKey([]byte(config.Get().SShPrivateKey))
 	if err != nil {
 		return err
 	}
 	sshConfig := &ssh.ClientConfig{
-		User:            agent.Get().Id,
+		User:            config.Get().Id,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		ClientVersion:   "SSH-2.0-Client",
@@ -171,7 +171,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 // in order to perform a keepalive to ensure that the connection is kept active even if no traffic
 // is transmitted within the connection
 func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
-	t := time.NewTicker(agent.Get().GetKeepalive() * time.Second)
+	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
 	for {
 		select {

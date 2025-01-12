@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/agent/proxy"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
@@ -33,7 +33,7 @@ type ControlPlanClient struct {
 func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
-		url:        agent.Get().SocketIoUrl(),
+		url:        config.Get().SocketIoUrl(),
 		configDone: configDone,
 	}
 }
@@ -70,17 +70,17 @@ func (cpc *ControlPlanClient) Init() error {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
 		log.Trace().Msgf("SshPrivateKeyEvent: data reveived")
 		// Decrypt the SSH private key
-		privateKey, err := socketio.DecryptSshPrivateKeyMessage(data, agent.Get().Cryptor)
+		privateKey, err := socketio.DecryptSshPrivateKeyMessage(data, config.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error decrypting private key")
 		}
 
 		// Add the decrypted SSH private key to the agent configuration
-		agent.Get().SShPrivateKey = privateKey.SshPrivateKey
+		config.Get().SShPrivateKey = privateKey.SshPrivateKey
 		log.Debug().Msgf("Ssh private key received and successfully decrypted")
 		log.Debug().Msgf("Sending local sshd password")
 		// Encrypt the SSH password used by the client to authenticate to the agent SSHD server
-		localSshPassword, err := socketio.NewEncryptedAgentSshPasswordMessage(agent.Get(), agent.Get().Cryptor)
+		localSshPassword, err := socketio.NewEncryptedAgentSshPasswordMessage(config.Get(), config.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error encrypting local sshd password")
 		}
@@ -156,19 +156,19 @@ func (cpc *ControlPlanClient) Init() error {
 
 // Start starts the socket and initiates the configuration exchages with the server
 func (cpc *ControlPlanClient) Start() error {
-	encryptedKey, err := crypto.AsymEncrypt(agent.Get().AgePubKey(), agent.Get().SharedSecret)
+	encryptedKey, err := crypto.AsymEncrypt(config.Get().AgePubKey(), config.Get().SharedSecret)
 	if err != nil {
 		return fmt.Errorf("error encrypting shared secret: %v", err)
 	}
 
-	encryptedName, err := crypto.AsymEncrypt(agent.Get().AgePubKey(), agent.Get().Name())
+	encryptedName, err := crypto.AsymEncrypt(config.Get().AgePubKey(), config.Get().Name())
 	if err != nil {
 		return fmt.Errorf("error encrypting shared secret: %v", err)
 	}
 
 	// This will be emitted after the socket is connected.
 	cpc.socket.Emit(socketio.RegisterEvent, socketio.Register{
-		Id:        agent.Get().Id,
+		Id:        config.Get().Id,
 		SharedKey: encryptedKey,
 		Name:      encryptedName,
 	})
@@ -190,7 +190,7 @@ func (cpc *ControlPlanClient) Start() error {
 }
 
 func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
-	data, err := socketio.EncryptRemotePortForwardingMessage(rpf, agent.Get().Cryptor)
+	data, err := socketio.EncryptRemotePortForwardingMessage(rpf, config.Get().Cryptor)
 	if err != nil {
 		return fmt.Errorf("error encrypting remote port forwarding message: %v", err)
 	}
@@ -204,7 +204,7 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	cpc.socket.OnEvent(socketio.PongEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
 	})
-	t := time.NewTicker(agent.Get().GetKeepalive() * time.Second)
+	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
 	for {
 		select {

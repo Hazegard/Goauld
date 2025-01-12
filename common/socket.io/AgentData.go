@@ -3,7 +3,7 @@ package socket_io
 import (
 	"strings"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/common"
 	"Goauld/common/crypto"
 )
@@ -38,7 +38,7 @@ func EncryptAgentSshPasswordMessage(agent *AgentData, c *crypto.SymCryptor) ([]b
 	return common.Encrypt(agent, c)
 }
 
-func NewEncryptedAgentSshPasswordMessage(a *agent.Agent, cryptor *crypto.SymCryptor) ([]byte, error) {
+func NewEncryptedAgentSshPasswordMessage(a *config.Agent, cryptor *crypto.SymCryptor) ([]byte, error) {
 	message := &AgentData{
 		AgentSshPassword: a.LocalSShdPassword(),
 		Platform:         a.Platform,

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -50,13 +50,13 @@ func CheckDirectSshAccess(address string) error {
 
 // DirectSshConnect perform direct SSH connection to the server
 func DirectSshConnect(sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	err := CheckDirectSshAccess(agent.Get().ControlSshServer())
+	err := CheckDirectSshAccess(config.Get().ControlSshServer())
 	if err != nil {
-		return nil, fmt.Errorf("unable to access the ssh server directly (%s): %w", agent.Get().ControlSshServer(), err)
+		return nil, fmt.Errorf("unable to access the ssh server directly (%s): %w", config.Get().ControlSshServer(), err)
 	}
-	client, err := ssh.Dial("tcp", agent.Get().ControlSshServer(), sshConfig)
+	client, err := ssh.Dial("tcp", config.Get().ControlSshServer(), sshConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to %s: %w", agent.Get().ControlSshServer(), err)
+		return nil, fmt.Errorf("failed to connect to %s: %w", config.Get().ControlSshServer(), err)
 	}
 	return client, nil
 }

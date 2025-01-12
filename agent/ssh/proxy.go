@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"Goauld/agent/agent"
+	"Goauld/agent/config"
 	"Goauld/agent/ssh/transport"
 	"Goauld/common/log"
 
@@ -21,7 +21,7 @@ import (
 func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, net.Conn, error) {
 	var client *ssh.Client
 	var conn net.Conn
-	for _, proto := range agent.Get().GetRsshOrder() {
+	for _, proto := range config.Get().GetRsshOrder() {
 		switch {
 		case strings.HasPrefix(proto, "ssh"):
 			client = directSSH(sshConfig)
@@ -128,7 +128,7 @@ func tryProxifySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error
 	var err error
 
 	go func() {
-		_conn, ch, req, _err := ssh.NewClientConn(netConn, agent.Get().WSshUrl(), conf)
+		_conn, ch, req, _err := ssh.NewClientConn(netConn, config.Get().WSshUrl(), conf)
 		if _err != nil {
 			err = _err
 			chanErr <- err
