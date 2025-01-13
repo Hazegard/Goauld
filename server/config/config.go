@@ -87,18 +87,18 @@ type ServerConfig struct {
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
-	Tls        bool   `default:"${_tls}" negatable:"" help:"Enable TLS."`
-	TlsKey     string `help:"Path to TLS certificate key."`
-	TlsCert    string `help:"Path to TLS certificate."`
-	NoDB       bool   `default:"${_no_db}" negatable:"" help:"Disable database usage."`
-	DbFileName string `default:"${_db_name}" help:"Database filename to use."`
+	Tls        bool   `default:"${_tls}" negatable:"" name:"tls" help:"Enable TLS."`
+	TlsKey     string `help:"Path to TLS certificate key." name:"tls-key"`
+	TlsCert    string `help:"Path to TLS certificate." name:"tls-cert"`
+	NoDB       bool   `default:"${_no_db}" negatable:"" name:"db" help:"Disable database usage."`
+	DbFileName string `default:"${_db_name}" name:"db-file-name" help:"Database filename to use."`
 
 	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ips" help:"List of IP allowed to access the /manage/ endpoint."`
-	AccessToken string   `default:"${_access_token}" help:"Access token required to access the /manage/ endpoint."`
-	AdminToken  string   `default:"${_access_token}" help:"Access token required to access the /manage/ endpoint."`
+	AccessToken string   `default:"${_access_token}" name:"access-token" help:"Access token required to access the /manage/ endpoint."`
+	AdminToken  string   `default:"${_access_token}" name:"admin-token" help:"Access token required to access the /manage/ endpoint."`
 
-	BinariesBasicAuth    string `default:"${_binaries_basicauth}" help:"HTTP Basic Auth used to access the binaries endpoint."`
-	BinariesPathLocation string `default:"${_binaries_path}" help:"Path where are stored binaries on the filesystem."`
+	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
+	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
 }
 
 // InitServer initialize the application configuration
