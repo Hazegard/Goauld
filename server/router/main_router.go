@@ -32,6 +32,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	tlssh *transport.TLSSHServer,
 	manageRouter *ManageRouter,
 	adminRouter *AdminRouter,
+	staticRouter *StaticRouter,
 ) (*MainRouter, error) {
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
@@ -40,6 +41,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	router.Handle("/sshttp/{agentId}", sshttp)
 	router.Handle("/manage/", http.StripPrefix("/manage", manageRouter.GetRouter()))
 	router.Handle("/admin/", http.StripPrefix("/admin", adminRouter.GetRouter()))
+	router.Handle("/binaries/", http.StripPrefix("/binaries", staticRouter.GetRouter()))
 
 	// Negroni allow to used middleware, such as logger and recovery mecanism
 	n := negroni.New()
@@ -90,7 +92,6 @@ func NewHttpRouter(controlServer *control.SocketIO,
 			tlsConfig.MinVersion = tls.VersionSSL30
 			httprouter.tlsConfig = tlsConfig
 		}
-
 	}
 
 	return httprouter, nil

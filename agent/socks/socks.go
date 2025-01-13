@@ -1,9 +1,10 @@
 package socks
 
 import (
-	"Goauld/common/log"
 	stdlog "log"
 	"net"
+
+	"Goauld/common/log"
 
 	"Goauld/agent/config"
 	"Goauld/agent/proxy"

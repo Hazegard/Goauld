@@ -69,7 +69,7 @@ var (
 )
 
 type AgentConfig struct {
-	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age" short:"A"`
+	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age-pubkey" short:"A"`
 
 	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
 	Name             string `default:"user@hostname" name:"name" optional:"" help:"Nice name to identify the agent."`

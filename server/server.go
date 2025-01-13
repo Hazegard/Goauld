@@ -39,9 +39,10 @@ func main() {
 	tlssh := transport.NewTLSSHServer(agentStore, db)
 	manageRouter := router.NewManageRouter(db, agentStore)
 	adminRouter := router.NewAdminRouter(db, agentStore)
+	staticRouter := router.NewStaticRouter()
 
 	// Initialize the HTTP router
-	r, err := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter)
+	r, err := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter, staticRouter)
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing http router")
 		return

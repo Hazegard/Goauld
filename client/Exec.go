@@ -69,7 +69,6 @@ func (e *Exec) Run(api *api.API, cfg ClientConfig) error {
 
 // Execute start the ssh
 func (e *Exec) Execute(api *api.API, cfg ClientConfig) error {
-
 	agent, err := api.GetAgentByName(cfg.Exec.Target)
 	if err != nil {
 		return err
@@ -169,7 +168,6 @@ func buildAllSshOptions(cfg ClientConfig) []string {
 
 // buildSshOptions returns the SSH options required to access the agents
 func buildInnerSshOptions(cfg ClientConfig) []string {
-
 	options := []string{
 		"-oClearAllForwardings=no",
 		//"-vv",

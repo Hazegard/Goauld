@@ -22,3 +22,21 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 		next(w, r)
 	}
 }
+
+// BasicAuthMiddleware validates the basic authentication header.
+func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		u, p, ok := r.BasicAuth()
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if u != username || p != password {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		// If authentication passes, call the next handler
+		next(w, r)
+	}
+}

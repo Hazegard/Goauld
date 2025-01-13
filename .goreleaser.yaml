@@ -38,11 +38,11 @@ builds:
       - '{{ if (index .Env "SERVER__HTTPS_PORT") }} -X Goauld/server/config._https_port={{ .Env.SERVER__HTTPS_PORT }}{{end}}'
       - '{{ if (index .Env "SERVER__SSHD_PORT") }} -X Goauld/server/config._sshd_port={{ .Env.SERVER__SSHD_PORT }}{{end}}'
 
-      - '{{ if (index .Env "SERVER__VERBOSITY") }} -X Goauld/server/config._verbosity={{ .Env.SERVER__VERBOSITY }}{{end}}'
+      - '{{ if (index .Env "SERVER__VERBOSE") }} -X Goauld/server/config._verbosity={{ .Env.SERVER__VERBOSE }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS") }} -X Goauld/server/config._tls={{ .Env.SERVER__TLS }}{{end}}'
 
       - '{{ if (index .Env "SERVER__NO_DB") }} -X Goauld/server/config._no_db={{ .Env.SERVER__NO_DB }}{{end}}'
-      - '{{ if (index .Env "SERVER__DB_NAME") }} -X Goauld/server/config._db_name={{ .Env.SERVER__DB_NAME }}{{end}}'
+      - '{{ if (index .Env "SERVER__DB_FILE_NAME") }} -X Goauld/server/config._db_name={{ .Env.SERVER__DB_FILE_NAME }}{{end}}'
 
       - '{{ if (index .Env "SERVER__ALLOWED_IPS") }} -X Goauld/server/config._allowed_ips={{ .Env.SERVER__ALLOWED_IPS }}{{end}}'
       - '{{ if (index .Env "SERVER__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.SERVER__ACCESS_TOKEN }}{{end}}'
@@ -71,7 +71,7 @@ builds:
 
       - '{{ if (index .Env "AGENT__SSHD") }} -X Goauld/agent/config._sshd={{ .Env.AGENT__SSHD }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS") }} -X Goauld/agent/config._socks={{ .Env.AGENT__SOCKS }}{{end}}'
-      - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SERVER") }} -X Goauld/agent/config._server={{ .Env.AGENT__SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__SSH_SERVER") }} -X Goauld/agent/config._ssh_server={{ .Env.AGENT__SSH_SERVER }}{{end}}'
@@ -81,11 +81,11 @@ builds:
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
-      - '{{ if (index .Env "AGENT__VERBOSITY") }} -X Goauld/agent/config._verbosity={{ .Env.AGENT__VERBOSITY }}{{end}}'
+      - '{{ if (index .Env "AGENT__VERBOSE") }} -X Goauld/agent/config._verbosity={{ .Env.AGENT__VERBOSE }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_ORDER") }} -X Goauld/agent/config._rssh_order={{ .Env.AGENT__RSSH_ORDER }}{{end}}'
 
-      - '{{ if (index .Env "AGENT__REMOTE_PORT_FORWARDING") }} -X Goauld/agent/config._remote_port_forwarding={{ .Env.AGENT__REMOTE_PORT_FORWARDING }}{{end}}'
+      - '{{ if (index .Env "AGENT__RPF") }} -X Goauld/agent/config._remote_port_forwarding={{ .Env.AGENT__RPF }}{{end}}'
 
       - '{{ if (index .Env "AGENT__MAX_RETRIES") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__MAX_RETRIES }}{{end}}'
 

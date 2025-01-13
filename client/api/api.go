@@ -1,7 +1,6 @@
 package api
 
 import (
-	socket_io "Goauld/common/socket.io"
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
@@ -10,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	socket_io "Goauld/common/socket.io"
 
 	"Goauld/client/types"
 )

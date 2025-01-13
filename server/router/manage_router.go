@@ -1,12 +1,13 @@
 package router
 
 import (
-	socket_io "Goauld/common/socket.io"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+
+	socket_io "Goauld/common/socket.io"
 
 	"Goauld/common/log"
 	"Goauld/server/config"
@@ -122,7 +123,6 @@ func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) {
-
 	id := r.PathValue("id")
 	err := ur.store.KillAGent(id, true)
 	if err != nil {

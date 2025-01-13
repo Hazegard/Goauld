@@ -47,6 +47,9 @@ var (
 	_access_token = "TODO_TOKEN"
 	_admin_token  = "TODO_TOKEN"
 
+	_binaries_basicauth = "M6FWvoAMszJV@5Zj5R9JugbpsieCE9qumDIv6UWLZbxjKKz2j"
+	_binaries_path      = "./binaries"
+
 	defaultValues = kong.Vars{
 		"_age_privKey": _age_privKey,
 
@@ -66,11 +69,14 @@ var (
 		"_allowed_ips":  _allowed_ips,
 		"_access_token": _access_token,
 		"_admin_token":  _admin_token,
+
+		"_binaries_basicauth": _binaries_basicauth,
+		"_binaries_path":      _binaries_path,
 	}
 )
 
 type ServerConfig struct {
-	PrivKey string `default:"${_age_privKey}"  name:"age-key" optional:"" help:"Age private key to use."`
+	PrivKey string `default:"${_age_privKey}"  name:"age-privkey" optional:"" help:"Age private key to use."`
 
 	HttpDomain string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
 	TlsDomain  string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
@@ -87,9 +93,12 @@ type ServerConfig struct {
 	NoDB       bool   `default:"${_no_db}" negatable:"" help:"Disable database usage."`
 	DbFileName string `default:"${_db_name}" help:"Database filename to use."`
 
-	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ip" help:"List of IP allowed to access the /manage/ endpoint."`
+	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ips" help:"List of IP allowed to access the /manage/ endpoint."`
 	AccessToken string   `default:"${_access_token}" help:"Access token required to access the /manage/ endpoint."`
 	AdminToken  string   `default:"${_access_token}" help:"Access token required to access the /manage/ endpoint."`
+
+	BinariesBasicAuth    string `default:"${_binaries_basicauth}" help:"HTTP Basic Auth used to access the binaries endpoint."`
+	BinariesPathLocation string `default:"${_binaries_path}" help:"Path where are stored binaries on the filesystem."`
 }
 
 // InitServer initialize the application configuration
@@ -151,6 +160,15 @@ func (s *ServerConfig) Validate() error {
 			return fmt.Errorf("invalid IP address: %s", ip)
 		}
 	}
+
+	basicAuth := strings.Split(s.BinariesBasicAuth, "@")
+	if len(basicAuth) != 2 {
+		return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
+	}
+	if basicAuth[0] == "" || basicAuth[1] == "" {
+		return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
+	}
+
 	return nil
 }
 
@@ -160,4 +178,9 @@ func (s *ServerConfig) IsCustomTLS() bool {
 
 func (s *ServerConfig) GetTlsDomains() []string {
 	return []string{s.TlsDomain, s.HttpDomain}
+}
+
+func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
+	split := strings.Split(s.BinariesBasicAuth, "@")
+	return split[0], split[1]
 }

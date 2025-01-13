@@ -30,5 +30,4 @@ func Schedule(ctx context.Context, p time.Duration, o time.Duration, f func(time
 			return
 		}
 	}
-
 }

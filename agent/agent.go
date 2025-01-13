@@ -1,6 +1,12 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"time"
+
 	"Goauld/agent/config"
 	"Goauld/agent/control"
 	"Goauld/agent/socks"
@@ -8,16 +14,11 @@ import (
 	"Goauld/agent/sshd"
 	"Goauld/common/log"
 	commonssh "Goauld/common/ssh"
-	"context"
-	"errors"
-	"fmt"
+
 	"github.com/cenkalti/backoff/v5"
-	"strconv"
-	"time"
 )
 
 func main() {
-
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
 	_, err, warnings := config.InitAgent()
 	if err != nil {
@@ -87,7 +88,6 @@ func run() {
 		case <-ctx.Done():
 			controlPlanClient.Close()
 		}
-
 	}()
 
 	go func() {
@@ -166,7 +166,6 @@ func run() {
 						log.Warn().Err(err).Msg("socks close error")
 					}
 				}
-
 			}()
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote Socks5 server started")
 			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
