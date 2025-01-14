@@ -61,7 +61,8 @@ type ClientConfig struct {
 	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection."`
 
-	GenerateConfig bool `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
 
 	Exec Exec     `cmd:""`
 	Tui  Tui      `cmd:""`
@@ -126,19 +127,27 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 }
 
 func InitConfig() (*kong.Context, *ClientConfig, error) {
-	cfg := &ClientConfig{}
+	cfgTmp := &ClientConfig{}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
-		return nil, cfg, err
+		return nil, cfgTmp, err
 	}
-	app := kong.Parse(cfg,
+
+	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description("TODO"),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower("client_"+common.APP_NAME)+".yaml")),
+		kong.Configuration(cli.YAMLKeepEnvVar, filepath.Join(dir, "client_config.yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
-	)
+	}
+	_ = kong.Parse(cfgTmp, kongOptions...)
+	if cfgTmp.ConfigFile != "" {
+		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar, cfgTmp.ConfigFile))
+
+	}
+	cfg := &ClientConfig{}
+	app := kong.Parse(cfg, kongOptions...)
 
 	log.SetLogLevel(cfg.Verbose)
 	return app, cfg, nil

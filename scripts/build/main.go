@@ -39,7 +39,7 @@ var (
 func main() {
 	_, cfg, err := parse()
 	if err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Msg("failed to parse config")
 	}
 	missingCommands := checkCommands(requiredCommands)
 	if len(missingCommands) > 0 {

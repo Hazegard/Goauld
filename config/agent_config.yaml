@@ -8,7 +8,7 @@ keepalive: 20
 max-retries: 0
 
 # Nice name to identify the agent.
-name: TESTTTTT
+name: ""
 
 # SSH password to access the agent.
 password: ""

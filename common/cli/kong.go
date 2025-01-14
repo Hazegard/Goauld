@@ -19,7 +19,15 @@ import (
 // if the corresponding value is found in the environment variables.
 // This is done in order to have environment variable precedence over
 // the configuration files
-func YAML(r io.Reader) (kong.Resolver, error) {
+
+func YAMLKeepEnvVar(r io.Reader) (kong.Resolver, error) {
+	return YAML(r, true)
+}
+
+func YAMLOverwriteEnvVar(r io.Reader) (kong.Resolver, error) {
+	return YAML(r, false)
+}
+func YAML(r io.Reader, overwriteEnvVar bool) (kong.Resolver, error) {
 	decoder := yaml.NewDecoder(r)
 	config := map[string]interface{}{}
 	err := decoder.Decode(config)
@@ -27,10 +35,12 @@ func YAML(r io.Reader) (kong.Resolver, error) {
 		return nil, fmt.Errorf("YAML agent decode error: %w", err)
 	}
 	return kong.ResolverFunc(func(context *kong.Context, parent *kong.Path, flag *kong.Flag) (interface{}, error) {
-		for _, env := range flag.Envs {
-			_, ok := os.LookupEnv(env)
-			if ok {
-				return nil, nil
+		if overwriteEnvVar {
+			for _, env := range flag.Envs {
+				_, ok := os.LookupEnv(env)
+				if ok {
+					return nil, nil
+				}
 			}
 		}
 		// Build a string path up to this flag.

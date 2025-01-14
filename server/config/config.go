@@ -103,28 +103,35 @@ type ServerConfig struct {
 	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
 	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
 
-	GenerateConfig bool `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
 }
 
 // InitServer initialize the application configuration
 func InitServer() (*kong.Context, *ServerConfig, error) {
-	cfg := &ServerConfig{}
+	cfgTmp := &ServerConfig{}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
-		return nil, cfg, err
+		return nil, cfgTmp, err
 	}
-	app := kong.Parse(cfg,
+	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description("TODO"),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower(common.APP_NAME)+".yaml")),
+		kong.Configuration(cli.YAMLKeepEnvVar, filepath.Join(dir, "server_config.yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
-	)
+	}
+	_ = kong.Parse(cfgTmp, kongOptions...)
+	if cfgTmp.ConfigFile != "" {
+		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar, cfgTmp.ConfigFile))
+	}
+	cfg := &ServerConfig{}
+	app := kong.Parse(cfg, kongOptions...)
 	srvCfg = cfg
 
 	log.SetLogLevel(cfg.Verbose)
-	return app, srvCfg, nil
+	return app, cfg, nil
 }
 
 func Get() *ServerConfig {
@@ -187,6 +194,10 @@ func (s *ServerConfig) GetTlsDomains() []string {
 
 func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
 	split := strings.Split(s.BinariesBasicAuth, "@")
+	if len(s.BinariesBasicAuth) != 2 {
+		return "", ""
+	}
+
 	return split[0], split[1]
 }
 

@@ -26,6 +26,10 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 // BasicAuthMiddleware validates the basic authentication header.
 func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		if username == "" && password == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 		u, p, ok := r.BasicAuth()
 		if !ok {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

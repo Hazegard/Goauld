@@ -40,6 +40,7 @@ var (
 	_max_retries = "0"
 
 	_generate_config = "false"
+	_config_file     = ""
 
 	defaultValues = kong.Vars{
 		"_age_pubkey": _agePubKey,
@@ -69,6 +70,7 @@ var (
 		"_max_retries": _max_retries,
 
 		"_generate_config": _generate_config,
+		"_config_file":     _config_file,
 	}
 )
 
@@ -99,24 +101,33 @@ type AgentConfig struct {
 
 	MaxRetries int `default:"${_max_retries}" help:"Max retries before giving up" name:"max-retries" short:"M"`
 
-	GenerateConfig bool `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
 }
 
 // parse parses the command line arguments
 func parse() (*kong.Context, *AgentConfig, error) {
-	cfg := &AgentConfig{}
+	cfgTmp := &AgentConfig{}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
-		return nil, cfg, err
+		return nil, cfgTmp, err
 	}
-	app := kong.Parse(cfg,
+	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description("TODO"),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower("agent_"+common.APP_NAME)+".yaml")),
+		kong.Configuration(cli.YAMLKeepEnvVar, filepath.Join(dir, "agent_config.yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
-	)
+	}
+	_ = kong.Parse(cfgTmp, kongOptions...)
+
+	if cfgTmp.ConfigFile != "" {
+		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar, cfgTmp.ConfigFile))
+	}
+	cfg := &AgentConfig{}
+	app := kong.Parse(cfg, kongOptions...)
+
 	log.SetLogLevel(cfg.Verbose)
 	cfg.RsshOrder = utils.ToLower(utils.Unique(cfg.RsshOrder))
 	return app, cfg, nil
