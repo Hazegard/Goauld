@@ -1,0 +1,15 @@
+# Access token required to access the /manage/ endpoint.
+access-token: TODO_TOKEN
+
+# Allow insecure connection.
+insecure: false
+
+# HTTP Server to connect to.
+server: https://a.hazegard.fr
+
+# SSH Server to connect to.
+ssh-server: localhost:2222
+
+# Verbosity. Repeat to increase
+verbose: 0
+

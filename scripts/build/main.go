@@ -97,7 +97,6 @@ type Artifact struct {
 }
 
 func goreleaser(envFile string) error {
-	return nil
 	cmd := exec.Command("goreleaser", "release", "--clean", "--skip", "publish", "--snapshot")
 	env, err := ParseEnvFile(envFile)
 	if err != nil {

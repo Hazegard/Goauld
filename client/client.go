@@ -13,6 +13,15 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	if cfg.GenerateConfig {
+		c, err := cfg.GenerateYAMLConfig()
+		if err != nil {
+			log.Error().Err(err).Msg("error generating the agent config")
+			return
+		}
+		fmt.Println(c)
+		return
+	}
 	httpclient := api.NewAPI(cfg.ServerUrl(), cfg.AccessToken, cfg.Insecure)
 	kong.Bind(*cfg, httpclient)
 

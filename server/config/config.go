@@ -50,7 +50,8 @@ var (
 	_binaries_basicauth = "M6FWvoAMszJV@5Zj5R9JugbpsieCE9qumDIv6UWLZbxjKKz2j"
 	_binaries_path      = "./binaries"
 
-	defaultValues = kong.Vars{
+	_generate_config = "false"
+	defaultValues    = kong.Vars{
 		"_age_privKey": _age_privKey,
 
 		"_http_domain": _http_domain,
@@ -72,6 +73,8 @@ var (
 
 		"_binaries_basicauth": _binaries_basicauth,
 		"_binaries_path":      _binaries_path,
+
+		"_generate_config": _generate_config,
 	}
 )
 
@@ -99,6 +102,8 @@ type ServerConfig struct {
 
 	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
 	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
+
+	GenerateConfig bool `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
 }
 
 // InitServer initialize the application configuration
@@ -183,4 +188,8 @@ func (s *ServerConfig) GetTlsDomains() []string {
 func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
 	split := strings.Split(s.BinariesBasicAuth, "@")
 	return split[0], split[1]
+}
+
+func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
+	return cli.GenerateYAMLWithComments(*s)
 }

@@ -30,7 +30,15 @@ func main() {
 			log.Warn().Err(warning).Msgf("agent init error")
 		}
 	}
-
+	if config.Get().DoGenerateConfig() {
+		conf, err := config.Get().GenerateYAMLConfig()
+		if err != nil {
+			log.Error().Err(err).Msg("error generating the agent config")
+			return
+		}
+		fmt.Println(conf)
+		return
+	}
 	// Define an operation function that returns a value and an error.
 	// The value can be any type.
 	// We'll pass this operation to Retry function

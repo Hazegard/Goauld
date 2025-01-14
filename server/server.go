@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"Goauld/common/log"
 	"Goauld/server/config"
@@ -19,6 +20,16 @@ func main() {
 	_, _, err := config.InitServer()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the server")
+		return
+	}
+
+	if config.Get().GenerateConfig {
+		c, err := config.Get().GenerateYAMLConfig()
+		if err != nil {
+			log.Error().Err(err).Msg("error generating the agent config")
+			return
+		}
+		fmt.Println(c)
 		return
 	}
 	// Initialize the database

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"Goauld/common/cli"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -45,6 +46,12 @@ func InitAgent() (*kong.Context, error, []error) {
 		return nil, fmt.Errorf("parsing arguments: %v", err), nil
 	}
 	// Generate the shared secret
+	if cfg.GenerateConfig {
+		agent = &Agent{
+			cfg: cfg,
+		}
+		return ctx, nil, warnings
+	}
 	sharedSecret, err := crypto.GeneratePassword(crypto.PasswordLength)
 	if err != nil {
 		return nil, fmt.Errorf("error generating ssh password: %v", err), nil
@@ -328,4 +335,15 @@ func getIps() ([]string, []error) {
 
 func (a *Agent) GetMexRetries() uint {
 	return uint(a.cfg.MaxRetries)
+}
+
+func (a *Agent) DoGenerateConfig() bool {
+	return a.cfg.GenerateConfig
+}
+
+func (a *Agent) GenerateYAMLConfig() (string, error) {
+	c := a.cfg
+	c.LocalSshPassword = ""
+	c.AgePubKey = ""
+	return cli.GenerateYAMLWithComments(*c)
 }

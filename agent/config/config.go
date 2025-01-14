@@ -39,6 +39,8 @@ var (
 
 	_max_retries = "0"
 
+	_generate_config = "false"
+
 	defaultValues = kong.Vars{
 		"_age_pubkey": _agePubKey,
 
@@ -65,6 +67,8 @@ var (
 		"_remote_port_forwarding": _remote_port_forwarding,
 
 		"_max_retries": _max_retries,
+
+		"_generate_config": _generate_config,
 	}
 )
 
@@ -72,7 +76,7 @@ type AgentConfig struct {
 	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age-pubkey" short:"A"`
 
 	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
-	Name             string `default:"user@hostname" name:"name" optional:"" help:"Nice name to identify the agent."`
+	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent."`
 
 	Sshd                bool `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
 	Socks               bool `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
@@ -94,6 +98,8 @@ type AgentConfig struct {
 	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT)."`
 
 	MaxRetries int `default:"${_max_retries}" help:"Max retries before giving up" name:"max-retries" short:"M"`
+
+	GenerateConfig bool `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
 }
 
 // parse parses the command line arguments
@@ -107,7 +113,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 		kong.Name(common.APP_NAME),
 		kong.Description("TODO"),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower(common.APP_NAME)+".yaml")),
+		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower("agent_"+common.APP_NAME)+".yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
 	)

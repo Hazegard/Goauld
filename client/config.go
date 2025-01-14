@@ -31,6 +31,8 @@ var (
 	_local_socks_port = "1080"
 	_local_sshd_port  = "22222"
 
+	_generate_config = "false"
+
 	defaultValues = kong.Vars{
 		"_server":       _server,
 		"_ssh_server":   _ssh_server,
@@ -45,6 +47,8 @@ var (
 
 		"_local_socks_port": _local_socks_port,
 		"_local_sshd_port":  _local_sshd_port,
+
+		"_generate_config": _generate_config,
 	}
 )
 
@@ -56,6 +60,8 @@ type ClientConfig struct {
 
 	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection."`
+
+	GenerateConfig bool `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
 
 	Exec Exec     `cmd:""`
 	Tui  Tui      `cmd:""`
@@ -75,17 +81,21 @@ func (c *ClientConfig) GetSshdPort() string {
 	return ""
 }
 
-func (a *ClientConfig) ServerUrl() string {
+func (c *ClientConfig) ServerUrl() string {
 	url := ""
-	if strings.HasPrefix(a.Server, "http://") {
-		url = a.Server
-	} else if strings.HasPrefix(a.Server, "https://") {
-		url = a.Server
+	if strings.HasPrefix(c.Server, "http://") {
+		url = c.Server
+	} else if strings.HasPrefix(c.Server, "https://") {
+		url = c.Server
 	} else {
-		url = "http://" + a.Server
+		url = "http://" + c.Server
 	}
 
 	return url
+}
+
+func (c *ClientConfig) GenerateYAMLConfig() (string, error) {
+	return cli.GenerateYAMLWithComments(*c)
 }
 
 type Tui struct{}
@@ -96,9 +106,9 @@ func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 }
 
 type Password struct {
-	Agent   string   `name:"agent" help:"Agent to retrieve password."`
-	Type    string   `name:"type" help:"Password to retrieve (OTP/Agent)."`
-	Garbage []string `arg:""`
+	Agent string   `name:"agent" help:"Agent to retrieve password."`
+	Type  string   `name:"type" help:"Password to retrieve (OTP/Agent)."`
+	Args  []string `arg:"" optional:""`
 }
 
 func (p *Password) Run(api *api.API, cfg ClientConfig) error {
@@ -125,7 +135,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 		kong.Name(common.APP_NAME),
 		kong.Description("TODO"),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower(common.APP_NAME)+".yaml")),
+		kong.Configuration(cli.YAML, filepath.Join(dir, strings.ToLower("client_"+common.APP_NAME)+".yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
 	)
