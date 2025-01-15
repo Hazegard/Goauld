@@ -398,7 +398,7 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 			table.RowData{
 				"Id":           agent.Id,
 				"N":            strconv.Itoa(i + 1),
-				"Name":         agent.Name,
+				"Name":         " " + agent.Name,
 				"Last updates": timeAgo(agent.LastUpdated),
 				"Mode":         agent.SshMode,
 				"SSHD Port":    " " + agent.GetSSHPort(),
