@@ -1,8 +1,17 @@
 version: 2
 
 env:
-  - CGO_ENABLED=0
   - APP_NAME=goauld
+  - COMMON__ACCESS_TOKEN=UX65dBqYU1wxUX65dBqYU1wxR5mxDwNGbgW7v
+
+  - SERVER__AGE_PRIVKEY=
+  - AGENT__AGE_PUBKEY=
+
+  - HTTP_DOMAIN=blog.example.com
+  - TLS_DOMAIN=api.example.com
+  - SSHD_PORT=2222
+  - HTTP_PORT=80
+  - HTTPS_PORT=443
 
 before:
   hooks:
@@ -17,18 +26,24 @@ builds:
     binary: goauld_server
     main: ./server
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
+      - SERVER__HTTP_DOMAIN={{ .Env.HTTP_DOMAIN }}
+      - SERVER__TLS_DOMAIN={{ .Env.TLS_DOMAIN }}
+      - SERVER__HTTP_PORT={{ .Env.HTTP_PORT }}
+      - SERVER__HTTPS_PORT={{ .Env.HTTPS_PORT }}
+      - SERVER__SSHD_PORT={{ .Env.SSHD_PORT }}
+      - CC=zig cc -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none -Wno-availability -Wno-nullability-completeness --sysroot=/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/ -I/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/usr/include -L/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/usr/lib -F/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/System/Library/Frameworks -framework CoreFoundation{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
+      - CXX=zig c++ -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
     goos:
       - linux
       - windows
       - darwin
     goarch:
       - amd64
-      - "386"
-      - arm
+#      - "386"
+#      - arm
       - arm64
     ldflags:
-      - -s -w
       - '{{ if (index .Env "SERVER__AGE_PRIVKEY") }} -X Goauld/server/config._age_privKey={{ .Env.SERVER__AGE_PRIVKEY }}{{end}}'
 
       - '{{ if (index .Env "SERVER__HTTP_DOMAIN") }} -X Goauld/server/config._http_domain={{ .Env.SERVER__HTTP_DOMAIN }}{{end}}'
@@ -45,14 +60,17 @@ builds:
       - '{{ if (index .Env "SERVER__DB_FILE_NAME") }} -X Goauld/server/config._db_name={{ .Env.SERVER__DB_FILE_NAME }}{{end}}'
 
       - '{{ if (index .Env "SERVER__ALLOWED_IPS") }} -X Goauld/server/config._allowed_ips={{ .Env.SERVER__ALLOWED_IPS }}{{end}}'
-      - '{{ if (index .Env "SERVER__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.SERVER__ACCESS_TOKEN }}{{end}}'
+      - '{{ if (index .Env "COMMON__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.COMMON__ACCESS_TOKEN }}{{end}}'
       - '{{ if (index .Env "SERVER__ADMIN_TOKEN") }} -X Goauld/server/config._admin_token={{ .Env.SERVER__ADMIN_TOKEN }}{{end}}'
 
   - id: "agent"
     binary: goauld_agent
     main: ./agent
     env:
-      - CGO_ENABLED=0
+      - AGENT__SERVER={{ if (index .Env "HTTPS_PORT") }}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTPS_PORT}}{{else}}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTP_PORT}}{{end}}
+      - AGENT__SSH_SERVER={{.Env.HTTP_DOMAIN}}:{{.Env.SSHD_PORT}}
+      - AGENT__TLS_SERVER={{ if (and (index .Env "HTTPS_PORT") (index .Env "HTTPS_PORT")) }}{{.Env.TLS_DOMAIN}}:{{.Env.HTTPS_PORT}}{{end}}
+
     goos:
       - linux
       - windows
@@ -93,7 +111,9 @@ builds:
     binary: goauld_client
     main: ./client
     env:
-      - CGO_ENABLED=0
+      - CLIENT__SERVER={{ if (index .Env "HTTPS_PORT") }}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTPS_PORT}}{{else}}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTP_PORT}}{{end}}
+      - CLIENT__SSH_SERVER={{.Env.HTTP_DOMAIN}}:{{.Env.SSHD_PORT}}
+
     goos:
       - linux
       - windows
@@ -107,7 +127,7 @@ builds:
       - -s -w
       - '{{ if (index .Env "CLIENT__SERVER") }} -X main._server={{ .Env.CLIENT__SERVER }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_SERVER") }} -X main._ssh_server={{ .Env.CLIENT__SSH_SERVER }}{{end}}'
-      - '{{ if (index .Env "CLIENT__ACCESS_TOKEN") }} -X main._access_token={{ .Env.CLIENT__ACCESS_TOKEN }}{{end}}'
+      - '{{ if (index .Env "COMMON__ACCESS_TOKEN") }} -X main._access_token={{ .Env.COMMON__ACCESS_TOKEN }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__VERBOSITY") }} -X main._verbosity={{ .Env.CLIENT__VERBOSITY }}{{end}}'
       - '{{ if (index .Env "CLIENT__INSECURE") }} -X main._insecure={{ .Env.CLIENT__INSECURE }}{{end}}'
