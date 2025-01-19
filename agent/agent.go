@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"os/signal"
 	"strconv"
 	"time"
 
@@ -49,20 +51,23 @@ func main() {
 		Multiplier:          0.5,
 		MaxInterval:         5 * time.Minute,
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	operation := func() (any, error) {
-		run()
+		run(ctx, cancel)
 		return nil, errors.New("")
 	}
 
-	result, err := backoff.Retry(context.TODO(), operation, backoff.WithBackOff(exp), backoff.WithMaxTries(config.Get().GetMexRetries()))
+	result, err := backoff.Retry(ctx, operation, backoff.WithBackOff(exp), backoff.WithMaxTries(config.Get().GetMexRetries()))
 	if err != nil {
-		fmt.Println("Error:", err)
+		log.Info().Err(err).Msg("Agent shut down")
 		return
 	}
 	fmt.Println(result)
 }
 
-func run() {
+func run(ctx context.Context, cancel context.CancelFunc) {
+
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
@@ -84,6 +89,7 @@ func run() {
 		log.Error().Err(err).Msg("error initializing the control plan")
 		return
 	}
+	HandleCtrlC(controlPlanClient, cancel)
 
 	// Create the client SSH
 	sshAgent := ssh.NewSSHAgent()
@@ -214,4 +220,19 @@ func run() {
 	case err := <-socksErr:
 		log.Error().Err(err).Msg("error starting the socks server")
 	}
+}
+
+func HandleCtrlC(controlPlanClient *control.ControlPlanClient, cancel context.CancelFunc) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for sig := range c {
+			cancel()
+			log.Info().Str("signal", sig.String()).Msg("received signal")
+			log.Info().Msg("Shutting down control plan")
+			controlPlanClient.Close()
+			time.Sleep(1 * time.Second)
+			os.Exit(0)
+		}
+	}()
 }

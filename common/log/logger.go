@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -12,9 +13,10 @@ import (
 )
 
 var (
-	zerologger *zerolog.Logger
-	once       sync.Once
-	gormlogger logger.Interface
+	zerologger    *zerolog.Logger
+	once          sync.Once
+	gormlogger    logger.Interface
+	negronilogger *NegroniLogger
 	// logLevel     = zerolog.InfoLevel
 	gormLogLevel = logger.Warn
 )
@@ -36,6 +38,12 @@ func initLoggers() {
 			return &GormLoggerEvent{Event: zerologger.Warn().Str("Src", "Gorm")}
 		}).LogMode(gormLogLevel)
 
+	nl := zerolog.New(
+		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
+	).Level(zerolog.TraceLevel).With().Timestamp().Str("Src", "Negroni").Logger()
+	negronilogger = &NegroniLogger{
+		logger: nl,
+	}
 	log.SetOutput(zerologger)
 	log.SetFlags(0)
 }
@@ -49,7 +57,13 @@ func UpdateLogLevel(level zerolog.Level) {
 func SetLogLevel(verbosity int) {
 	// logLevel = VerbosityToLogLevel(verbosity)
 	zerolog.SetGlobalLevel(VerbosityToLogLevel(verbosity))
-	gormLogLevel = verbosityToGormLogLevel(verbosity)
+
+	if verbosity > 3 {
+		gormLogLevel = verbosityToGormLogLevel(verbosity)
+	} else {
+		gormLogLevel = -1
+	}
+
 }
 
 func zerologLevelToGormLogLevel(level zerolog.Level) logger.LogLevel {
@@ -95,6 +109,22 @@ func Get() *zerolog.Logger {
 	once.Do(initLoggers)
 
 	return zerologger
+}
+
+type NegroniLogger struct {
+	logger zerolog.Logger
+}
+
+func GetNegroniLogger() *NegroniLogger {
+	once.Do(initLoggers)
+	return negronilogger
+}
+
+func (n *NegroniLogger) Println(v ...interface{}) {
+	n.logger.Trace().Msg(fmt.Sprint(v...))
+}
+func (n *NegroniLogger) Printf(format string, v ...interface{}) {
+	n.logger.Trace().Msg(fmt.Sprint(format, v))
 }
 
 func GetGormLogger() logger.Interface {

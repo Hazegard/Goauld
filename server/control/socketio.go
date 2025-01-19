@@ -1,7 +1,9 @@
 package control
 
 import (
+	common_net "Goauld/common/net"
 	"fmt"
+	"net/http"
 
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
@@ -16,6 +18,11 @@ type SocketIO struct {
 	db         *persistence.DB
 	agentStore *store.AgentStore
 	Server     *gosio.Server
+}
+
+func (socketIO *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = common_net.Http10ToHttp11FakeUpgrader(r)
+	socketIO.Server.ServeHTTP(w, r)
 }
 
 // InitSocketIOServer intialize the server socket.io used to manage the agents

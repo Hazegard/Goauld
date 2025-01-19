@@ -1,16 +1,16 @@
 package transport
 
 import (
+	"Goauld/common/log"
+	net2 "Goauld/common/net"
+	"Goauld/server/config"
+	"Goauld/server/persistence"
+	"Goauld/server/store"
 	"context"
 	"errors"
 	"io"
 	"net"
 	"net/http"
-
-	"Goauld/common/log"
-	"Goauld/server/config"
-	"Goauld/server/persistence"
-	"Goauld/server/store"
 
 	"nhooyr.io/websocket"
 )
@@ -34,6 +34,8 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	id := r.PathValue("agentId")
+
+	r = net2.Http10ToHttp11FakeUpgrader(r)
 
 	// Handle the websocket connection
 	wsConn, err := websocket.Accept(w, r, &websocket.AcceptOptions{

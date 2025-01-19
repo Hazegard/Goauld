@@ -45,11 +45,13 @@ func NewHttpRouter(controlServer *control.SocketIO,
 
 	// Negroni allow to used middleware, such as logger and recovery mecanism
 	n := negroni.New()
-	n.Use(negroni.NewLogger())
+	logger := negroni.NewLogger()
+	logger.ALogger = log.GetNegroniLogger()
+	n.Use(logger)
 	n.Use(negroni.NewRecovery())
 	n.UseHandler(router)
 	server := &http.Server{
-		// Addr:    config.Get().LocalHttpServer(),
+		Addr:    config.Get().LocalHttpServer(),
 		Handler: n,
 
 		// It is always a good practice to set timeouts.

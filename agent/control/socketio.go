@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/quic-go/webtransport-go"
 	"os"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
-	"github.com/quic-go/webtransport-go"
 	"nhooyr.io/websocket"
 )
 
@@ -218,8 +218,8 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 }
 
 func (cpc *ControlPlanClient) Close() {
-	cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
 	cpc.socket.Disconnect()
+	cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
 	cpc.manager.Close()
 }
 
