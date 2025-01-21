@@ -114,7 +114,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	}
 	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
-		kong.Description("TODO"),
+		kong.Description(common.Title("Agent")),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, filepath.Join(dir, "agent_config.yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),

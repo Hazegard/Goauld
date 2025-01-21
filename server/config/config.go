@@ -116,7 +116,7 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 	}
 	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
-		kong.Description("TODO"),
+		kong.Description(common.Title("Server")),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, filepath.Join(dir, "server_config.yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),

@@ -3,6 +3,7 @@
 *.db
 *.pem
 *.der
+scripts/build/MacOSX15*
 
 # Added by goreleaser init:
 dist/
