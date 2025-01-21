@@ -23,6 +23,7 @@ before:
 
 builds:
   - id: "server"
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: goauld_server
     main: ./server
     env:
@@ -44,6 +45,7 @@ builds:
 #      - arm
       - arm64
     ldflags:
+      - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.Date}}
       - '{{ if (index .Env "SERVER__AGE_PRIVKEY") }} -X Goauld/server/config._age_privKey={{ .Env.SERVER__AGE_PRIVKEY }}{{end}}'
 
       - '{{ if (index .Env "SERVER__HTTP_DOMAIN") }} -X Goauld/server/config._http_domain={{ .Env.SERVER__HTTP_DOMAIN }}{{end}}'
@@ -64,6 +66,7 @@ builds:
       - '{{ if (index .Env "SERVER__ADMIN_TOKEN") }} -X Goauld/server/config._admin_token={{ .Env.SERVER__ADMIN_TOKEN }}{{end}}'
 
   - id: "agent"
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: goauld_agent
     main: ./agent
     env:
@@ -82,6 +85,7 @@ builds:
       - arm64
     ldflags:
       - -s -w
+      - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.Date}}
       - '{{ if (index .Env "AGENT__AGE_PUBKEY") }} -X Goauld/agent/config._agePubKey={{ .Env.AGENT__AGE_PUBKEY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__LOCAL_SSH_PASSWORD") }} -X Goauld/agent/config._localSshPassword={{ .Env.AGENT__LOCAL_SSH_PASSWORD }}{{end}}'
@@ -108,6 +112,7 @@ builds:
       - '{{ if (index .Env "AGENT__MAX_RETRIES") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__MAX_RETRIES }}{{end}}'
 
   - id: "client"
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: goauld_client
     main: ./client
     env:
@@ -125,6 +130,7 @@ builds:
       - arm64
     ldflags:
       - -s -w
+      - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.Date}}
       - '{{ if (index .Env "CLIENT__SERVER") }} -X main._server={{ .Env.CLIENT__SERVER }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_SERVER") }} -X main._ssh_server={{ .Env.CLIENT__SSH_SERVER }}{{end}}'
       - '{{ if (index .Env "COMMON__ACCESS_TOKEN") }} -X main._access_token={{ .Env.COMMON__ACCESS_TOKEN }}{{end}}'
