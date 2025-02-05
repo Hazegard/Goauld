@@ -1,6 +1,7 @@
 package socks
 
 import (
+	"fmt"
 	stdlog "log"
 	"net"
 
@@ -34,13 +35,23 @@ func NewSocks() (*SocksServer, error) {
 }
 
 // Serve use the provided listener to listen and serve the Socks proxy
-func (s *SocksServer) Serve(l net.Listener) error {
+func (s *SocksServer) Serve(l net.Listener) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
 	s.listener = l
 
 	return s.socksServer.Serve(l)
 }
 
-func (s *SocksServer) Close() error {
+func (s *SocksServer) Close() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
 	log.Warn().Msgf("Shutting done the socks server")
 	return s.listener.Close()
 }
