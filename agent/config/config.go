@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -21,6 +22,8 @@ var (
 	_sshd                   = "true"
 	_socks                  = "true"
 	_socks_use_system_proxy = "true"
+	_proxy                  = ""
+	_no_proxy               = "false"
 
 	_server     = "localhost"
 	_ssh_server = "localhost:2222"
@@ -51,6 +54,7 @@ var (
 		"_sshd":                   _sshd,
 		"_socks":                  _socks,
 		"_socks_use_system_proxy": _socks_use_system_proxy,
+		"_proxy":                  _proxy,
 
 		"_server":     _server,
 		"_ssh_server": _ssh_server,
@@ -80,9 +84,11 @@ type AgentConfig struct {
 	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
 	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent."`
 
-	Sshd                bool `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
-	Socks               bool `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
-	SocksUseSystemProxy bool `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy on the underlying system if appicable."`
+	Sshd                bool     `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
+	Socks               bool     `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
+	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy on the underlying system if applicable for all requests going through the socks proxy."`
+	Proxy               *url.URL `default:"${_proxy}" name:"proxy" optional:"" negatable:"" help:"Use the provided proxy to connect the control server."`
+	NoProxy             bool     `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy'"`
 
 	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`

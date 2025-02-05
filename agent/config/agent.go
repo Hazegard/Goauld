@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"os/user"
 	"runtime"
@@ -286,6 +287,14 @@ func (a *Agent) AddSshdToRpf() {
 		Tag:        "sshd",
 	}
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
+}
+
+func (a *Agent) NoProxy() bool {
+	return a.cfg.NoProxy
+}
+
+func (a *Agent) Proxy() *url.URL {
+	return a.cfg.Proxy
 }
 
 // AddSocksToRpf adds the SSHD conf to the Remote port forwarding list
