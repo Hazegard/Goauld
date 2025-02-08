@@ -73,6 +73,9 @@ func (e *Exec) Execute(api *api.API, cfg ClientConfig) error {
 	if err != nil {
 		return err
 	}
+	if !agent.Connected {
+		return fmt.Errorf("unable to connect, agent %s (%s) not connected", agent.Name, agent.Id)
+	}
 
 	exePath, err := getPath()
 	if err != nil {

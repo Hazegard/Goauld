@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -114,11 +115,18 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 	if err != nil {
 		return nil, cfgTmp, err
 	}
+	configSearchDir := []string{
+		filepath.Join(dir, "agent_config.yaml"),
+	}
+	home, err := os.UserHomeDir()
+	if err == nil {
+		configSearchDir = append(configSearchDir, home)
+	}
 	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description(common.Title("Server")),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAMLKeepEnvVar, filepath.Join(dir, "server_config.yaml")),
+		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
 	}

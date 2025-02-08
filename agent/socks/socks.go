@@ -24,7 +24,7 @@ func NewSocks() (*SocksServer, error) {
 		socks5.WithLogger(defaultLogger),
 	}
 	if config.Get().SocksUseSystemProxy() {
-		options = append(options, socks5.WithDial(proxy.NewProxyDialer()))
+		options = append(options, socks5.WithDial(proxy.NewProxyDialer(config.Get().Proxy())))
 	}
 	s5 := socks5.NewServer(options...)
 
