@@ -9,7 +9,7 @@ const APP_NAME = "Goa'uld"
 
 var (
 	commit  = "none"
-	date    = ""
+	date    = "2006-01-02T15:04:05Z"
 	version = "dev"
 )
 

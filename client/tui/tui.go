@@ -414,18 +414,24 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 
 // Kill performs a call to the API to kill the selected agent
 func (m Model) Kill(agent types.Agent, doExit bool) tea.Cmd {
+	killing := "resetting"
+	reset := "Reset"
+	if doExit {
+		killing = "killing"
+		reset = "Killed"
+	}
 	return func() tea.Msg {
 		err := m.api.KillAgent(agent.Id, doExit)
 		if err != nil {
 			return CmdResponse{
 				Success: false,
-				Message: fmt.Sprintf("Error killing %s (%s): %s", agent.Name, agent.Id, err),
+				Message: fmt.Sprintf("Error %s %s (%s): %s", killing, agent.Name, agent.Id, err),
 				Action:  "kill",
 			}
 		}
 		return CmdResponse{
 			Success: false,
-			Message: fmt.Sprintf("Killed %s (%s)", agent.Name, agent.Id),
+			Message: fmt.Sprintf("%s %s (%s)", reset, agent.Name, agent.Id),
 			Action:  "kill",
 		}
 	}

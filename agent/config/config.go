@@ -2,6 +2,7 @@ package config
 
 import (
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -55,6 +56,7 @@ var (
 		"_socks":                  _socks,
 		"_socks_use_system_proxy": _socks_use_system_proxy,
 		"_proxy":                  _proxy,
+		"_no_proxy":               _no_proxy,
 
 		"_server":     _server,
 		"_ssh_server": _ssh_server,
@@ -87,7 +89,7 @@ type AgentConfig struct {
 	Sshd                bool     `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
 	Socks               bool     `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
 	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy on the underlying system if applicable for all requests going through the socks proxy."`
-	Proxy               *url.URL `default:"${_proxy}" name:"proxy" optional:"" negatable:"" help:"Use the provided proxy to connect the control server."`
+	Proxy               *url.URL `default:"${_proxy}" name:"proxy" optional:"" help:"Use the provided proxy to connect the control server."`
 	NoProxy             bool     `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy'"`
 
 	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
@@ -118,11 +120,18 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	if err != nil {
 		return nil, cfgTmp, err
 	}
+	configSearchDir := []string{
+		filepath.Join(dir, "agent_config.yaml"),
+	}
+	home, err := os.UserHomeDir()
+	if err == nil {
+		configSearchDir = append(configSearchDir, home)
+	}
 	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description(common.Title("Agent")),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAMLKeepEnvVar, filepath.Join(dir, "agent_config.yaml")),
+		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
 		defaultValues,
 	}
