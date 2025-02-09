@@ -13,12 +13,13 @@ import (
 )
 
 type Exec struct {
-	Target         string `arg:""`
-	Socks          bool   `default:"${_exec_socks}" name:"socks" negatable:""  optional:"" help:"Expose the agent SOCKS service."`
-	LocalSocksPort int    `default:"${_local_socks_port}" name:"socksPort" optional:"" help:"Forwarded SOCKS Port."`
-	Ssh            bool   `default:"${_exec_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
-	Print          bool   `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Proxy          bool   `default:"${_exec_print}" name:"proxy" optional:"" help:"Allow to use proxycommand ."`
+	Target         string   `arg:""`
+	Socks          bool     `default:"${_exec_socks}" name:"socks" negatable:""  optional:"" help:"Expose the agent SOCKS service."`
+	LocalSocksPort int      `default:"${_local_socks_port}" name:"socksPort" optional:"" help:"Forwarded SOCKS Port."`
+	Ssh            bool     `default:"${_exec_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
+	Print          bool     `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
+	Proxy          bool     `default:"${_exec_print}" name:"proxy" optional:"" help:"Allow to use proxycommand ."`
+	SshArgs        []string `arg:"" passthrough:""`
 }
 
 type Command struct {
@@ -120,6 +121,7 @@ func (e *Exec) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath
 	}
 	proxyCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.InlineEnv().String(), sep)
 	cmd.Args = append(cmd.Args, proxyCmd)
+	cmd.Args = append(cmd.Args, cfg.Exec.SshArgs...)
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.Id))
 	return cmd
 }

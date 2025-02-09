@@ -116,11 +116,12 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 		return nil, cfgTmp, err
 	}
 	configSearchDir := []string{
-		filepath.Join(dir, "agent_config.yaml"),
+		filepath.Join(dir, "server_config.yaml"),
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		configSearchDir = append(configSearchDir, home)
+		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.APP_NAME), "server_config.yaml")
+		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	var kongOptions = []kong.Option{
 		kong.Name(common.APP_NAME),
