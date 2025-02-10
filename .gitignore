@@ -8,3 +8,4 @@ scripts/build/MacOSX15*
 # Added by goreleaser init:
 dist/
 output
+scripts/build/MacOSX15.sdk/
