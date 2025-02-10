@@ -7,3 +7,4 @@
 # Added by goreleaser init:
 dist/
 output
+scripts/build/MacOSX15.sdk/
