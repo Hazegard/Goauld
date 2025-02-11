@@ -63,11 +63,12 @@ func main() {
 		log.Error().Err(err).Msg("error updating artifacts")
 		return
 	}
+	copyFile(envFile, filepath.Join("output", _envFile))
 
 }
 
 func goreleaser(envFile string) error {
-	cmd := exec.Command("goreleaser", "release", "--clean", "--skip", "publish", "--snapshot")
+	cmd := exec.Command("goreleaser", "release", "--clean", "--skip", "publish,archive", "--snapshot")
 	env, err := ParseEnvFile(envFile)
 	if err != nil {
 		return err

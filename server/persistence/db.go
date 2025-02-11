@@ -5,7 +5,7 @@ import (
 
 	"Goauld/common/log"
 	"Goauld/server/config"
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 

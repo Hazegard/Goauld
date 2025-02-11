@@ -190,6 +190,8 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 
 func (sshAgent *SSHAgent) Close() error {
 	log.Warn().Msg("Shutting down SSH agent...")
-	sshAgent.conn.Close()
+	if sshAgent.conn != nil {
+		sshAgent.conn.Close()
+	}
 	return sshAgent.client.Close()
 }

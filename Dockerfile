@@ -1,14 +1,15 @@
-FROM alpine:3.21 as build
+FROM alpine:3.21 AS build
 
-RUN apk add go
+RUN apk add go alpine-sdk
 RUN go install github.com/goreleaser/goreleaser/v2@latest
 
 COPY . /app
 
 WORKDIR /app
-RUN go run ./scripts/build.go
+ENV PATH="$PATH:/root/go/bin"
+RUN go run ./scripts/build/
 
-FROM alpine:3.21 as run
+FROM alpine:3.21 AS run
 
 COPY --from=build /app/output/server/*_linux-amd64 /app/server
 COPY --from=build /app/output/agent/* /app/binaries/

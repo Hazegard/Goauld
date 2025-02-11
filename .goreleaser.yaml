@@ -28,14 +28,14 @@ builds:
     binary: goauld_server
     main: ./server
     env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
       - SERVER__HTTP_DOMAIN={{ .Env.HTTP_DOMAIN }}
       - SERVER__TLS_DOMAIN={{ .Env.TLS_DOMAIN }}
       - SERVER__HTTP_PORT={{ .Env.HTTP_PORT }}
       - SERVER__HTTPS_PORT={{ .Env.HTTPS_PORT }}
       - SERVER__SSHD_PORT={{ .Env.SSHD_PORT }}
-      - CC=zig cc -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none -Wno-availability -Wno-nullability-completeness --sysroot=/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/ -I/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/usr/include -L/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/usr/lib -F/Users/hazegard/Workspace/Goauld/Goauld/scripts/build/MacOSX15.sdk/System/Library/Frameworks -framework CoreFoundation{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
-      - CXX=zig c++ -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
+      # - CC=zig cc -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none -Wno-availability -Wno-nullability-completeness --sysroot=./scripts/build/MacOSX15.sdk/ -I./scripts/build/MacOSX15.sdk/usr/include -L./scripts/build/MacOSX15.sdk/usr/lib -F./scripts/build/MacOSX15.sdk/System/Library/Frameworks -framework CoreFoundation{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
+      # - CXX=zig c++ -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
     goos:
       - linux
       - windows
@@ -65,12 +65,13 @@ builds:
       - '{{ if (index .Env "SERVER__ALLOWED_IPS") }} -X Goauld/server/config._allowed_ips={{ .Env.SERVER__ALLOWED_IPS }}{{end}}'
       - '{{ if (index .Env "COMMON__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.COMMON__ACCESS_TOKEN }}{{end}}'
       - '{{ if (index .Env "SERVER__ADMIN_TOKEN") }} -X Goauld/server/config._admin_token={{ .Env.SERVER__ADMIN_TOKEN }}{{end}}'
-
+      - "-s -w"
   - id: "agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
     binary: goauld_agent
     main: ./agent
     env:
+      - CGO_ENABLED=0
       - AGENT__SERVER={{ if (index .Env "HTTPS_PORT") }}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTPS_PORT}}{{else}}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTP_PORT}}{{end}}
       - AGENT__SSH_SERVER={{.Env.HTTP_DOMAIN}}:{{.Env.SSHD_PORT}}
       - AGENT__TLS_SERVER={{ if (and (index .Env "HTTPS_PORT") (index .Env "HTTPS_PORT")) }}{{.Env.TLS_DOMAIN}}:{{.Env.HTTPS_PORT}}{{end}}
@@ -117,6 +118,7 @@ builds:
     binary: goauld_client
     main: ./client
     env:
+      - CGO_ENABLED=0
       - CLIENT__SERVER={{ if (index .Env "HTTPS_PORT") }}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTPS_PORT}}{{else}}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTP_PORT}}{{end}}
       - CLIENT__SSH_SERVER={{.Env.HTTP_DOMAIN}}:{{.Env.SSHD_PORT}}
 
@@ -126,8 +128,8 @@ builds:
       - darwin
     goarch:
       - amd64
-      - "386"
-      - arm
+      # - "386"
+      # - arm
       - arm64
     ldflags:
       - -s -w
@@ -149,20 +151,21 @@ builds:
 
 
 
-archives:
-  - format: tar.gz
-    # this name template makes the OS and Arch compatible with the results of `uname`.
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        format: zip
+# archives:
+#   - formats: tar.gz
+#     allow_different_binary_count: true
+#     # this name template makes the OS and Arch compatible with the results of `uname`.
+#     name_template: >-
+#       {{ .ProjectName }}_
+#       {{- title .Os }}_
+#       {{- if eq .Arch "amd64" }}x86_64
+#       {{- else if eq .Arch "386" }}i386
+#       {{- else }}{{ .Arch }}{{ end }}
+#       {{- if .Arm }}v{{ .Arm }}{{ end }}
+#     # use zip for windows archives
+#     format_overrides:
+#       - goos: windows
+#         formats: zip
 
 changelog:
   sort: asc
