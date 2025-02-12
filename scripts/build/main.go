@@ -42,6 +42,10 @@ func main() {
 		return
 	}
 
+	err = MkdirAll("output")
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create directory")
+	}
 	envFile, err := GenEnvFile(_envFile, *cfg)
 	if err != nil {
 		log.Error().Err(err).Msg("genEnvFile()")
@@ -68,7 +72,7 @@ func main() {
 }
 
 func goreleaser(envFile string) error {
-	cmd := exec.Command("goreleaser", "release", "--clean", "--skip", "publish,archive", "--snapshot")
+	cmd := exec.Command("goreleaser", "release", "--clean", "--skip", "publish,archive")
 	env, err := ParseEnvFile(envFile)
 	if err != nil {
 		return err

@@ -5,12 +5,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
 func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
-	newEnv := fmt.Sprintf("%s.%s", envFile, time.Now().Format("2006-01-02T15:04:05"))
+	newEnv := filepath.Join("output", fmt.Sprintf("%s.%s", envFile, time.Now().Format("2006-01-02T15:04:05")))
 	err := copyFile(envFile, newEnv)
 	if err != nil {
 		return "", err
