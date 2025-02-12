@@ -66,7 +66,7 @@ func main() {
 	fmt.Println(result)
 }
 
-func run(ctx context.Context, cancel context.CancelFunc) {
+func run(context.Context, context.CancelFunc) {
 
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
@@ -79,11 +79,11 @@ func run(ctx context.Context, cancel context.CancelFunc) {
 	configDone := make(chan struct{})
 	log.Info().Msg("Agent init done")
 
-	ctx, done := context.WithCancel(context.Background())
-	defer done()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Initialize the control socket.io
-	controlPlanClient := control.NewControlPlanClient(ctx, configDone)
+	controlPlanClient := control.NewControlPlanClient(ctx, configDone, cancel)
 	err := controlPlanClient.Init()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the control plan")
@@ -100,8 +100,8 @@ func run(ctx context.Context, cancel context.CancelFunc) {
 		select {
 		case controlErr <- controlPlanClient.Start():
 		case <-ctx.Done():
-			controlPlanClient.Close()
 		}
+		controlPlanClient.Close()
 	}()
 
 	go func() {
@@ -219,6 +219,8 @@ func run(ctx context.Context, cancel context.CancelFunc) {
 		log.Error().Err(err).Msg("error starting the ssh client")
 	case err := <-socksErr:
 		log.Error().Err(err).Msg("error starting the socks server")
+	case <-ctx.Done():
+		log.Error().Err(ctx.Err())
 	}
 }
 

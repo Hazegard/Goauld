@@ -19,7 +19,7 @@ type Exec struct {
 	Ssh            bool     `default:"${_exec_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_exec_print}" name:"proxy" optional:"" help:"Allow to use proxycommand ."`
-	SshArgs        []string `arg:"" passthrough:""`
+	SshArgs        []string `arg:"" passthrough:"" optional:""`
 }
 
 type Command struct {
@@ -165,8 +165,9 @@ func buildAllSshOptions(cfg ClientConfig) []string {
 		"-oPubkeyAuthentication=no",
 		"-oPreferredAuthentications=password",
 	}
+
 	if cfg.Verbose > 0 {
-		options = append(options, "-v")
+		options = append(options, fmt.Sprintf("-%s", strings.Repeat("v", cfg.Verbose)))
 	}
 	return options
 }

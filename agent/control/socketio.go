@@ -27,14 +27,16 @@ type ControlPlanClient struct {
 	configDone chan<- struct{}
 	ctx        context.Context
 	url        string
+	cancel     context.CancelFunc
 }
 
 // NewControlPlanClient returns a new ControlPlanClient
-func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}) *ControlPlanClient {
+func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, cancel context.CancelFunc) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
 		url:        config.Get().SocketIoUrl(),
 		configDone: configDone,
+		cancel:     cancel,
 	}
 }
 
@@ -134,6 +136,8 @@ func (cpc *ControlPlanClient) Init() error {
 		if doExit {
 			os.Exit(0)
 		}
+		cpc.cancel()
+		cpc.Close()
 	})
 
 	socket.OnEvent(socketio.AlreadyConnectedEvent, func() {

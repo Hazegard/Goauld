@@ -114,6 +114,9 @@ type Password struct {
 }
 
 func (p *Password) Run(api *api.API, cfg ClientConfig) error {
+	if len(cfg.Pass.Args) > 0 && cfg.Pass.Agent == "" {
+		cfg.Pass.Agent = cfg.Pass.Args[0]
+	}
 	agent, err := api.GetAgentByName(cfg.Pass.Agent)
 	if err != nil {
 		return err
@@ -123,6 +126,8 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 		fmt.Println(agent.OneTimePassword)
 	case "agent":
 		fmt.Println(agent.SshPasswd)
+	default:
+		fmt.Printf("OTP:   %s\nAgent: %s\n", agent.OneTimePassword, agent.SshPasswd)
 	}
 	return nil
 }
