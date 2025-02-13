@@ -1,7 +1,6 @@
 package config
 
 import (
-	"Goauld/common/cli"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -12,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"Goauld/common/cli"
 
 	"Goauld/common/crypto"
 	"Goauld/common/ssh"

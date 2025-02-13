@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/alecthomas/kong"
+	"gopkg.in/yaml.v3"
 	"io"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
-
-	"github.com/alecthomas/kong"
-	"gopkg.in/yaml.v3"
 )
 
 // Taken from https://github.com/alecthomas/kong-yaml
@@ -27,6 +27,7 @@ func YAMLKeepEnvVar(r io.Reader) (kong.Resolver, error) {
 func YAMLOverwriteEnvVar(r io.Reader) (kong.Resolver, error) {
 	return YAML(r, false)
 }
+
 func YAML(r io.Reader, overwriteEnvVar bool) (kong.Resolver, error) {
 	decoder := yaml.NewDecoder(r)
 	config := map[string]interface{}{}
@@ -81,14 +82,14 @@ func GenerateYAMLWithComments(cfg any) (string, error) {
 	}
 
 	nameHelpMap := make(map[string]string)
-	//v := reflect.ValueOf(cfg)
+	// v := reflect.ValueOf(cfg)
 	t := reflect.TypeOf(cfg)
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		//value := v.Field(i)
-		//fmt.Println(field)
-		//fmt.Println(value)
+		// value := v.Field(i)
+		// fmt.Println(field)
+		// fmt.Println(value)
 		// Get the "name" tag.
 		help := field.Tag.Get("help")
 		if help == "" {
@@ -100,7 +101,7 @@ func GenerateYAMLWithComments(cfg any) (string, error) {
 		}
 		nameHelpMap[name] = help
 	}
-	//node.Content[0].Content[i].HeadComment = tag
+	// node.Content[0].Content[i].HeadComment = tag
 
 	for i, n := range node.Content[0].Content {
 		v := n.Value
@@ -125,6 +126,8 @@ func MarshalYAML(c any) ([]byte, error) {
 	v := reflect.ValueOf(c)
 	t := reflect.TypeOf(c)
 
+	// Precompute the pointer type for *url.URL.
+	urlPtrType := reflect.TypeOf((*url.URL)(nil))
 	// Create a map to hold the resulting YAML key-value pairs.
 	mapped := make(map[string]interface{})
 
@@ -139,8 +142,19 @@ func MarshalYAML(c any) ([]byte, error) {
 			continue // Skip fields without the "name" tag.
 		}
 
-		// Add the field value to the map using the tag as the key.
-		mapped[tag] = value.Interface()
+		// If the field is of type *url.URL, use its string representation.
+		if field.Type == urlPtrType {
+			if value.IsNil() {
+				mapped[tag] = "" // or nil, depending on your preference
+			} else {
+				// Convert the *url.URL to its string representation.
+				u := value.Interface().(*url.URL)
+				mapped[tag] = u.String()
+			}
+		} else {
+			mapped[tag] = value.Interface()
+		}
+
 	}
 
 	return yaml.Marshal(mapped)

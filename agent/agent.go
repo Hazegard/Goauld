@@ -67,7 +67,6 @@ func main() {
 }
 
 func run(context.Context, context.CancelFunc) {
-
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)

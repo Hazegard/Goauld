@@ -1,18 +1,20 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
 	"Goauld/common"
 	"Goauld/common/cli"
 
 	"Goauld/common/log"
 	"Goauld/common/utils"
 	"filippo.io/age"
-	"fmt"
+
 	"github.com/alecthomas/kong"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
 )
 
 type BuildConfig struct {
@@ -25,11 +27,9 @@ const (
 	_envFile      = ".env.build"
 )
 
-var (
-	requiredCommands = []string{
-		"goreleaser",
-	}
-)
+var requiredCommands = []string{
+	"goreleaser",
+}
 
 func main() {
 	_, cfg, err := parse()
@@ -68,7 +68,6 @@ func main() {
 		return
 	}
 	copyFile(envFile, filepath.Join("output", _envFile))
-
 }
 
 func goreleaser(envFile string) error {
@@ -109,7 +108,7 @@ func parse() (*kong.Context, *BuildConfig, error) {
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLOverwriteEnvVar, filepath.Join(dir, strings.ToLower(common.APP_NAME)+".yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
-		//defaultValues,
+		// defaultValues,
 	)
 	log.SetLogLevel(2)
 	return app, cfg, nil

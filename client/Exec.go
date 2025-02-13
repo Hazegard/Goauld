@@ -18,7 +18,7 @@ type Exec struct {
 	LocalSocksPort int      `default:"${_local_socks_port}" name:"socksPort" optional:"" help:"Forwarded SOCKS Port."`
 	Ssh            bool     `default:"${_exec_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Proxy          bool     `default:"${_exec_print}" name:"proxy" optional:"" help:"Allow to use proxycommand ."`
+	Proxy          bool     `default:"${_exec_proxy}" name:"proxy" optional:"" help:"Allow to use proxycommand ."`
 	SshArgs        []string `arg:"" passthrough:"" optional:""`
 }
 

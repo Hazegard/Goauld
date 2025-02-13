@@ -1,9 +1,10 @@
 package control
 
 import (
-	common_net "Goauld/common/net"
 	"fmt"
 	"net/http"
+
+	common_net "Goauld/common/net"
 
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"

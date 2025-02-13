@@ -63,7 +63,6 @@ func SetLogLevel(verbosity int) {
 	} else {
 		gormLogLevel = -1
 	}
-
 }
 
 func zerologLevelToGormLogLevel(level zerolog.Level) logger.LogLevel {
@@ -123,6 +122,7 @@ func GetNegroniLogger() *NegroniLogger {
 func (n *NegroniLogger) Println(v ...interface{}) {
 	n.logger.Trace().Msg(fmt.Sprint(v...))
 }
+
 func (n *NegroniLogger) Printf(format string, v ...interface{}) {
 	n.logger.Trace().Msg(fmt.Sprint(format, v))
 }

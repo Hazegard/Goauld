@@ -1,9 +1,10 @@
 package proxy
 
 import (
-	"Goauld/agent/config"
 	"net/http"
 	"net/url"
+
+	"Goauld/agent/config"
 
 	"Goauld/common/log"
 	"github.com/aus/proxyplease"

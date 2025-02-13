@@ -45,5 +45,5 @@ func copyFile(src, dst string) error {
 }
 
 func MkdirAll(path string) error {
-	return os.MkdirAll(path, 0755)
+	return os.MkdirAll(path, 0o755)
 }

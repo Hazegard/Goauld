@@ -18,6 +18,9 @@ binaries-basic-auth: M6FWvoAMszJV@5Zj5R9JugbpsieCE9qumDIv6UWLZbxjKKz2j
 # Path where are stored binaries on the filesystem.
 binaries-path-location: ./binaries
 
+# Configuration file to use.
+config-file: ""
+
 # Disable database usage.
 db: false
 

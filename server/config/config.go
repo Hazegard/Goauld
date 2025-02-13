@@ -123,7 +123,7 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.APP_NAME), "server_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
-	var kongOptions = []kong.Option{
+	kongOptions := []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description(common.Title("Server")),
 		kong.UsageOnError(),

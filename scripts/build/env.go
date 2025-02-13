@@ -1,13 +1,14 @@
 package main
 
 import (
-	"Goauld/common/crypto"
 	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"Goauld/common/crypto"
 )
 
 func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
@@ -40,7 +41,7 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 		content = replaceInFile(content, "SERVER__ACCESS_TOKEN", fmt.Sprintf("SERVER__ACCESS_TOKEN=%s", newtoken))
 	}
 
-	return envFile, os.WriteFile(newEnv, []byte(content), 0700)
+	return envFile, os.WriteFile(newEnv, []byte(content), 0o700)
 }
 
 // ParseEnvFile reads an .env file and returns a slice of strings in "KEY=VALUE" format.

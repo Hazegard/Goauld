@@ -1,6 +1,9 @@
 # Age public key associated to the server
 age-pubkey: ""
 
+# Configuration file to use.
+config-file: ""
+
 # Seconds between two keepalive messages in seconds).
 keepalive: 20
 
@@ -8,10 +11,16 @@ keepalive: 20
 max-retries: 0
 
 # Nice name to identify the agent.
-name: ""
+name: user@hostname
+
+# Don't use the system proxy'
+no-proxy: false
 
 # SSH password to access the agent.
 password: ""
+
+# Use the provided proxy to connect the control server.
+proxy: ""
 
 # Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT).
 rpf: []
@@ -35,7 +44,7 @@ socks: true
 # Remote port to bind to, 0 => Random.
 socks-port: 0
 
-# Use the proxy on the underlying system if appicable.
+# Use the proxy on the underlying system if applicable for all requests going through the socks proxy.
 socks-proxy: true
 
 # SSH Server to connect to.

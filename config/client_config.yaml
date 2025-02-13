@@ -1,11 +1,14 @@
 # Access token required to access the /manage/ endpoint.
 access-token: TODO_TOKEN
 
+# Configuration file to use.
+config-file: ""
+
 # Allow insecure connection.
 insecure: false
 
 # HTTP Server to connect to.
-server: https://a.hazegard.fr
+server: http://localhost
 
 # SSH Server to connect to.
 ssh-server: localhost:2222

@@ -128,7 +128,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.APP_NAME), "agent_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
-	var kongOptions = []kong.Option{
+	kongOptions := []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description(common.Title("Agent")),
 		kong.UsageOnError(),

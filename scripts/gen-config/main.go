@@ -1,11 +1,12 @@
 package main
 
 import (
-	"Goauld/common/log"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
+
+	"Goauld/common/log"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func GenerateConfig(sourceFile string, configFile string) error {
 }
 
 func writeConfig(filename string, content string) error {
-	return os.WriteFile(filename, []byte(content), 0644)
+	return os.WriteFile(filename, []byte(content), 0o644)
 }
 
 func generateConfig(filename string) (error, string) {

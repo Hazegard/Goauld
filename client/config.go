@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	_server       = "https://a.hazegard.fr"
+	_server       = "http://localhost" // "https://a.hazegard.fr"
 	_ssh_server   = "localhost:2222"
 	_access_token = "TODO_TOKEN"
 
@@ -45,6 +45,7 @@ var (
 		"_exec_ssh":   _exec_ssh,
 		"_exec_socks": _exec_socks,
 		"_exec_print": _exec_print,
+		"_exec_proxy": _exec_proxy,
 
 		"_local_socks_port": _local_socks_port,
 		"_local_sshd_port":  _local_sshd_port,
@@ -146,7 +147,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.APP_NAME), "agent_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
-	var kongOptions = []kong.Option{
+	kongOptions := []kong.Option{
 		kong.Name(common.APP_NAME),
 		kong.Description(common.Title("Client")),
 		kong.UsageOnError(),
@@ -157,7 +158,6 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	_ = kong.Parse(cfgTmp, kongOptions...)
 	if cfgTmp.ConfigFile != "" {
 		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar, cfgTmp.ConfigFile))
-
 	}
 	cfg := &ClientConfig{}
 	app := kong.Parse(cfg, kongOptions...)

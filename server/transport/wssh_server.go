@@ -1,16 +1,17 @@
 package transport
 
 import (
-	"Goauld/common/log"
-	net2 "Goauld/common/net"
-	"Goauld/server/config"
-	"Goauld/server/persistence"
-	"Goauld/server/store"
 	"context"
 	"errors"
 	"io"
 	"net"
 	"net/http"
+
+	"Goauld/common/log"
+	net2 "Goauld/common/net"
+	"Goauld/server/config"
+	"Goauld/server/persistence"
+	"Goauld/server/store"
 
 	"nhooyr.io/websocket"
 )

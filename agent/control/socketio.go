@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/quic-go/webtransport-go"
 	"os"
 	"time"
+
+	"github.com/quic-go/webtransport-go"
 
 	"Goauld/agent/config"
 	"Goauld/agent/proxy"
