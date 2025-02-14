@@ -54,6 +54,12 @@ var (
 	}
 )
 
+var (
+	description = "Client used to connect and manage the server ahd the connection to the agent." +
+		"\nThe client will try to load configuration from " + filepath.Join("$HOME", ".config", strings.ToLower(common.AppName()), "client_config.yaml") +
+		"\nAs well as client_config.yaml on the current directory."
+)
+
 type ClientConfig struct {
 	Server      string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
 	AccessToken string `default:"${_access_token}" name:"access-token" help:"Access token required to access the /manage/ endpoint."`
@@ -61,7 +67,7 @@ type ClientConfig struct {
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
 
 	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
-	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection."`
+	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
 	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
@@ -109,7 +115,7 @@ func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 }
 
 type Password struct {
-	Agent string   `name:"agent" help:"Agent to retrieve password."`
+	Agent string   `name:"agent" help:"Agent name to retrieve password."`
 	Type  string   `name:"type" help:"Password to retrieve (OTP/Agent)."`
 	Args  []string `arg:"" optional:""`
 }
@@ -144,15 +150,15 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.APP_NAME), "agent_config.yaml")
+		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "agent_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
-		kong.Name(common.APP_NAME),
-		kong.Description(common.Title("Client")),
+		kong.Name(strings.ToLower(common.AppName())),
+		kong.Description(description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
-		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
+		kong.DefaultEnvars(strings.ToUpper(common.AppName())),
 		defaultValues,
 	}
 	_ = kong.Parse(cfgTmp, kongOptions...)

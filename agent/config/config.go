@@ -80,34 +80,40 @@ var (
 	}
 )
 
-type AgentConfig struct {
-	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server" name:"age-pubkey" short:"A"`
+var (
+	description = "Agent used to initiate the connection to the agent." +
+		"\nThe agent will try to load configuration from " + filepath.Join("$HOME", ".config", strings.ToLower(common.AppName()), "agent_config.yaml") + "\n" +
+		"\nAs well as agent_config.yaml on the current directory."
+)
 
-	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent."`
-	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent."`
+type AgentConfig struct {
+	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server. The provided public key should match the server public key" name:"age-pubkey" short:"A"`
+
+	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent.\nIf not password is provided, an random password is automatically generated."`
+	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
 	Sshd                bool     `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
 	Socks               bool     `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks server."`
-	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy on the underlying system if applicable for all requests going through the socks proxy."`
-	Proxy               *url.URL `default:"${_proxy}" name:"proxy" optional:"" help:"Use the provided proxy to connect the control server."`
-	NoProxy             bool     `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy'"`
+	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy of the underlying system if applicable for all requests going through the socks proxy."`
+	Proxy               *url.URL `default:"${_proxy}" name:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
+	NoProxy             bool     `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy."`
 
-	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
-	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
-	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"TLS Server to connect to."`
+	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"THe control HTTP server  to connect to."`
+	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
+	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
 
 	// SshdPort  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
-	RsshPort  int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
-	SocksPort int `default:"${_rssh_port}"  name:"socks-port" short:"D" optional:"" help:"Remote port to bind to, 0 => Random."`
+	RsshPort  int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.\n By default, the port is 0 meaning the port will be random on the server."`
+	SocksPort int `default:"${_rssh_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
 
-	KeepAlive int `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds)."`
-	Verbose   int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+	KeepAlive int `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
+	Verbose   int `default:"${_verbosity}" help:"Verbosity of the logs. Repeat -v to increase" name:"verbose" short:"v" type:"counter"`
 
-	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order of ssh connection attempts."`
+	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
 
-	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT)."`
+	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT).\nIf REMOTE_PORT is 0, the port will be randomly chosen on the server"`
 
-	MaxRetries int `default:"${_max_retries}" help:"Max retries before giving up" name:"max-retries" short:"M"`
+	MaxRetries int `default:"${_max_retries}" help:"Max retries connection attempts before giving up" name:"max-retries" short:"M"`
 
 	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
@@ -125,15 +131,15 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.APP_NAME), "agent_config.yaml")
+		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "agent_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
-		kong.Name(common.APP_NAME),
-		kong.Description(common.Title("Agent")),
+		kong.Name(common.AppName()),
+		kong.Description(description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
-		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
+		kong.DefaultEnvars(strings.ToUpper(common.AppName())),
 		defaultValues,
 	}
 	_ = kong.Parse(cfgTmp, kongOptions...)

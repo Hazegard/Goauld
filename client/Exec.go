@@ -14,11 +14,11 @@ import (
 
 type Exec struct {
 	Target         string   `arg:""`
-	Socks          bool     `default:"${_exec_socks}" name:"socks" negatable:""  optional:"" help:"Expose the agent SOCKS service."`
-	LocalSocksPort int      `default:"${_local_socks_port}" name:"socksPort" optional:"" help:"Forwarded SOCKS Port."`
+	Socks          bool     `default:"${_exec_socks}" name:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
+	LocalSocksPort int      `default:"${_local_socks_port}" name:"socksPort" optional:"" help:"Local port to bind the SOCKS to."`
 	Ssh            bool     `default:"${_exec_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Proxy          bool     `default:"${_exec_proxy}" name:"proxy" optional:"" help:"Allow to use proxycommand ."`
+	Proxy          bool     `default:"${_exec_proxy}" name:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand ."`
 	SshArgs        []string `arg:"" passthrough:"" optional:""`
 }
 
@@ -184,7 +184,7 @@ func buildInnerSshOptions(cfg ClientConfig) []string {
 // prefixEnv adds the application name to the provided value and returns it
 // as an environment variable
 func prefixEnv(name string, value string) string {
-	return fmt.Sprintf("%s_%s=%s", strings.ToUpper(common.APP_NAME), strings.ToUpper(name), value)
+	return fmt.Sprintf("%s_%s=%s", strings.ToUpper(common.AppName()), strings.ToUpper(name), value)
 }
 
 // getPath returns the path of the binary currently being executed

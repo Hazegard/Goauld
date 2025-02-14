@@ -4,7 +4,7 @@ access-token: TODO_TOKEN
 # Configuration file to use.
 config-file: ""
 
-# Allow insecure connection.
+# Allow insecure connection (do not validate TLS certificate).
 insecure: false
 
 # HTTP Server to connect to.

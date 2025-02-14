@@ -42,7 +42,7 @@ var (
 	_tls       = "true"
 
 	_no_db   = "false"
-	_db_name = common.APP_NAME + ".db"
+	_db_name = common.AppName() + ".db"
 
 	_allowed_ips  = "127.0.0.1,0.0.0.0/32"
 	_access_token = "TODO_TOKEN"
@@ -77,6 +77,12 @@ var (
 
 		"_generate_config": _generate_config,
 	}
+)
+
+var (
+	description = "Server used to listen and manage the agent connections." +
+		"\nThe server will try to load configuration from " + filepath.Join("$HOME", ".config", strings.ToLower(common.AppName()), "server_config.yaml") +
+		"\nAs well as server_config.yaml on the current directory."
 )
 
 type ServerConfig struct {
@@ -120,15 +126,15 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.APP_NAME), "server_config.yaml")
+		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "server_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
-		kong.Name(common.APP_NAME),
-		kong.Description(common.Title("Server")),
+		kong.Name(common.AppName()),
+		kong.Description(description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
-		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
+		kong.DefaultEnvars(strings.ToUpper(common.AppName())),
 		defaultValues,
 	}
 	_ = kong.Parse(cfgTmp, kongOptions...)

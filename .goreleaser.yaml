@@ -1,7 +1,7 @@
 version: 2
 
 env:
-  - APP_NAME=goauld
+  - APP_NAME=goa'uld
   - COMMON__ACCESS_TOKEN=UX65dBqYU1wxUX65dBqYU1wxR5mxDwNGbgW7v
 
   - SERVER__AGE_PRIVKEY=

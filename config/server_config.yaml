@@ -25,7 +25,7 @@ config-file: ""
 db: false
 
 # Database filename to use.
-db-file-name: Goa'uld.db
+db-file-name: Goauld.db
 
 # Domain used to serve HTTP content (HTTP/Websockets).
 http-domain: a.hazegard.fr

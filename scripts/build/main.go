@@ -38,7 +38,7 @@ func main() {
 	}
 	missingCommands := checkCommands(requiredCommands)
 	if len(missingCommands) > 0 {
-		log.Error().Err(fmt.Errorf("commands required to build %s", common.APP_NAME)).Str("commands", strings.Join(missingCommands, "\n")).Msg("Missing required commands")
+		log.Error().Err(fmt.Errorf("commands required to build %s", common.App_Name)).Str("commands", strings.Join(missingCommands, "\n")).Msg("Missing required commands")
 		return
 	}
 
@@ -67,7 +67,10 @@ func main() {
 		log.Error().Err(err).Msg("error updating artifacts")
 		return
 	}
-	copyFile(envFile, filepath.Join("output", _envFile))
+	err = copyFile(envFile, filepath.Join("output", _envFile))
+	if err != nil {
+		log.Error().Err(err).Msg("error copying env file")
+	}
 }
 
 func goreleaser(envFile string) error {
@@ -103,11 +106,11 @@ func parse() (*kong.Context, *BuildConfig, error) {
 		return nil, cfg, err
 	}
 	app := kong.Parse(cfg,
-		kong.Name(common.APP_NAME),
+		kong.Name(common.AppName()),
 		kong.Description(common.Title("Build script")),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAMLOverwriteEnvVar, filepath.Join(dir, strings.ToLower(common.APP_NAME)+".yaml")),
-		kong.DefaultEnvars(strings.ToUpper(common.APP_NAME)),
+		kong.Configuration(cli.YAMLOverwriteEnvVar, filepath.Join(dir, strings.ToLower(common.AppName())+".yaml")),
+		kong.DefaultEnvars(strings.ToUpper(common.AppName())),
 		// defaultValues,
 	)
 	log.SetLogLevel(2)

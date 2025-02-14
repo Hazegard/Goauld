@@ -1,61 +1,65 @@
-# Age public key associated to the server
+# Age public key associated to the server. The provided public key should match the server public key
 age-pubkey: ""
 
 # Configuration file to use.
 config-file: ""
 
-# Seconds between two keepalive messages in seconds).
+# Seconds between two keepalive messages in seconds, reduce this value if the connection drops.
 keepalive: 20
 
-# Max retries before giving up
+# Max retries connection attempts before giving up
 max-retries: 0
 
-# Nice name to identify the agent.
+# Nice name to identify the agent. Defaults to 'user@hostname'
 name: user@hostname
 
-# Don't use the system proxy'
+# Don't use the system proxy.
 no-proxy: false
 
 # SSH password to access the agent.
+# If not password is provided, an random password is automatically generated.
 password: ""
 
-# Use the provided proxy to connect the control server.
+# Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
 proxy: ""
 
 # Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT).
+# If REMOTE_PORT is 0, the port will be randomly chosen on the server
 rpf: []
 
-# Order of ssh connection attempts.
+# Order the SSH tunnels connection attempts.
 rssh-order:
   - ssh
   - tls
   - ws
   - http
 
-# Remote port to bind to, 0 => Random.
+# The remote SSH port to bind to on the server.
+#  By default, the port is 0 meaning the port will be random on the server.
 rssh-port: 0
 
-# HTTP Server to connect to.
+# THe control HTTP server  to connect to.
 server: localhost
 
 # Start the Socks server.
 socks: true
 
-# Remote port to bind to, 0 => Random.
+# The remote SOCKS port to bind to on the server,
+#  By default, the port is 0 meaning the port will be random on the server.
 socks-port: 0
 
-# Use the proxy on the underlying system if applicable for all requests going through the socks proxy.
+# Use the proxy of the underlying system if applicable for all requests going through the socks proxy.
 socks-proxy: true
 
-# SSH Server to connect to.
+# The SSH server to connect to when using direct SSH connections.
 ssh-server: localhost:2222
 
 # Start the SSHD server.
 sshd: true
 
-# TLS Server to connect to.
+# The TLS server to connect to when using SSH over TLS connections.
 tls-server: localhost
 
-# Verbosity. Repeat to increase
+# Verbosity of the logs. Repeat -v to increase
 verbose: 0
 
