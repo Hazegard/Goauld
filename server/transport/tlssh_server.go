@@ -31,7 +31,7 @@ func NewTLSSHServer(store *store.AgentStore, db *persistence.DB) *TLSSHServer {
 // and the SSH connection
 func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 	// Initializes a connection to the SSH server
-	sshConn, err := net.Dial("tcp", config.Get().LocalSShServer())
+	sshConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
 	if err != nil {
 		log.Error().Str("ID", id).Str("SSH Mode", "TLS").Err(err).Msg("error connecting to server")
 		return

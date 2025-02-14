@@ -20,13 +20,13 @@ import (
 )
 
 func StartSshd(context context.Context, db *persistence.DB) {
-	listener, err := net.Listen("tcp", config.Get().LocalSShServer())
+	listener, err := net.Listen("tcp", config.Get().LocalSShAddr())
 	if err != nil {
 		panic(err)
 	}
 	// Update if listening on 0 to get the real port
-	config.Get().SshdPort = listener.Addr().(*net.TCPAddr).Port
-	log.Info().Str("Address", config.Get().LocalSShServer()).Msgf("SSH server listening")
+	config.Get().UpdateSSHAddr(listener.Addr().(*net.TCPAddr).Port)
+	log.Info().Str("Address", config.Get().LocalSShAddr()).Msgf("SSH server listening")
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 
 	// The SSHD server

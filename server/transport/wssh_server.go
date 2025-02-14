@@ -54,11 +54,11 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Warn().Err(err).Str("ID", id).Str("SSH Mode", "WSSH").Msg("error closing connection")
 		}
 	}(wsConn)
-	log.Info().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msgf("connecting to agent SSH server %s", config.Get().LocalSShServer())
+	log.Info().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msgf("connecting to agent SSH server %s", config.Get().LocalSShAddr())
 	// Initializes the connection to the SSH server
-	targetConn, err := net.Dial("tcp", config.Get().LocalSShServer())
+	targetConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
 	if err != nil {
-		log.Error().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msgf("failed to connect to %s", config.Get().LocalSShServer())
+		log.Error().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msgf("failed to connect to %s", config.Get().LocalSShAddr())
 		return
 	}
 	defer func(targetConn net.Conn) {

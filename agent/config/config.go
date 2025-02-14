@@ -102,7 +102,7 @@ type AgentConfig struct {
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
 	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
 
-	// SshdPort  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
+	// SshdAddr  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
 	RsshPort  int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.\n By default, the port is 0 meaning the port will be random on the server."`
 	SocksPort int `default:"${_rssh_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
 

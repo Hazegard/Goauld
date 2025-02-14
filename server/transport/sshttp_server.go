@@ -48,8 +48,8 @@ func (s *SSHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // And responds 200 OK of the connection succeeds
 func (s *SSHttpServer) StartSSH(id string, w http.ResponseWriter, r *http.Request) {
 	// Initialize the connection to the SSH server
-	conn, err := net.Dial("tcp", config.Get().LocalSShServer())
-	// log.Trace()()().Msgf("[SSHTTP] Connect to %s", config.Get().LocalSShServer())
+	conn, err := net.Dial("tcp", config.Get().LocalSShAddr())
+	// log.Trace()()().Msgf("[SSHTTP] Connect to %s", config.Get().LocalSShAddr())
 	if err != nil {
 		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Start SSH Server error")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

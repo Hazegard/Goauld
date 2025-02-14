@@ -34,9 +34,9 @@ var (
 	_tls_domain  = "app.example.com"
 
 	// TODO: voir pour listen sur ine IP spécifique
-	_http_port  = "80"
-	_https_port = "443"
-	_sshd_port  = "2222"
+	_http_listen_addr  = ":80"
+	_https_listen_addr = ":443"
+	_sshd_listen_addr  = ":2222"
 
 	_verbosity = "0"
 	_tls       = "true"
@@ -58,9 +58,9 @@ var (
 		"_http_domain": _http_domain,
 		"_tls_domain":  _tls_domain,
 
-		"_http_port":  _http_port,
-		"_https_port": _https_port,
-		"_sshd_port":  _sshd_port,
+		"_http_listen_addr":  _http_listen_addr,
+		"_https_listen_addr": _https_listen_addr,
+		"_sshd_listen_addr":  _sshd_listen_addr,
 
 		"_verbosity": _verbosity,
 		"_tls":       _tls,
@@ -91,9 +91,9 @@ type ServerConfig struct {
 	HttpDomain string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
 	TlsDomain  string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
 
-	HttpPort  int `default:"${_http_port}"  name:"http-port" optional:"" help:"HTTP port to bind to, 0 => Random."`
-	HttpsPort int `default:"${_https_port}"  name:"https-port" optional:"" help:"HTTPS port to bind to, 0 => Random."`
-	SshdPort  int `default:"${_sshd_port}"  name:"ssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
+	HttpAddr  string `default:"${_http_listen_addr}"  name:"http-port" optional:"" help:"HTTP port to bind to, 0 => Random."`
+	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-port" optional:"" help:"HTTPS port to bind to, 0 => Random."`
+	SshdAddr  string `default:"${_sshd_listen_addr}"  name:"ssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
@@ -165,19 +165,43 @@ func (s *ServerConfig) Decrypt(data []byte) (string, error) {
 	return crypto.AsymDecrypt(s.PrivKey, data)
 }
 
-// LocalSShServer return the local SSH address
-func (s *ServerConfig) LocalSShServer() string {
-	return fmt.Sprintf("%s:%d", "127.0.0.1", s.SshdPort)
+// LocalSShAddr return the local SSH address
+func (s *ServerConfig) LocalSShAddr() string {
+	return s.SshdAddr
 }
 
-// LocalHttpsServer return the local HTTPS address
-func (s *ServerConfig) LocalHttpsServer() string {
-	return fmt.Sprintf("%s:%d", "0.0.0.0", s.HttpsPort)
+// UpdateSSHAddr return the local SSH address
+func (s *ServerConfig) UpdateSSHAddr(port int) {
+	split := strings.Split(s.SshdAddr, ":")
+	if len(split) == 2 && split[1] == "0" {
+		s.SshdAddr = fmt.Sprintf("%s:%d", split[0], port)
+	}
 }
 
-// LocalHttpServer return the local HTTP address
-func (s *ServerConfig) LocalHttpServer() string {
-	return fmt.Sprintf("%s:%d", "0.0.0.0", s.HttpPort)
+// LocalHttpsAddr return the local HTTPS address
+func (s *ServerConfig) LocalHttpsAddr() string {
+	return s.HttpsAddr
+}
+
+// UpdateHTTPSAddr return the local SSH address
+func (s *ServerConfig) UpdateHTTPSAddr(port int) {
+	split := strings.Split(s.HttpsAddr, ":")
+	if len(split) == 2 && split[1] == "0" {
+		s.HttpsAddr = fmt.Sprintf("%s:%d", split[0], port)
+	}
+}
+
+// UpdateHTTPAddr return the local SSH address
+func (s *ServerConfig) UpdateHTTPAddr(port int) {
+	split := strings.Split(s.HttpsAddr, ":")
+	if len(split) == 2 && split[1] == "0" {
+		s.HttpsAddr = fmt.Sprintf("%s:%d", split[0], port)
+	}
+}
+
+// LocalHttpAddr return the local HTTP address
+func (s *ServerConfig) LocalHttpAddr() string {
+	return s.HttpAddr
 }
 
 // Validate perform kong validation to ensure that fields are correct

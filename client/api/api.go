@@ -28,6 +28,7 @@ func NewAPI(server string, accessToken string, insecure bool) *API {
 		client:      &http.Client{},
 		server:      server,
 		accessToken: accessToken,
+		insecure:    insecure,
 	}
 	if insecure {
 		api.client.Transport = &http.Transport{

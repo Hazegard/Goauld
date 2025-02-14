@@ -3,6 +3,7 @@ package router
 import (
 	"crypto/tls"
 	"errors"
+	"net"
 	"net/http"
 	"time"
 
@@ -51,7 +52,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	n.Use(negroni.NewRecovery())
 	n.UseHandler(router)
 	server := &http.Server{
-		Addr:    config.Get().LocalHttpServer(),
+		// Addr:    config.Get().LocalHttpAddr(),
 		Handler: n,
 
 		// It is always a good practice to set timeouts.
@@ -101,7 +102,6 @@ func NewHttpRouter(controlServer *control.SocketIO,
 
 // Serve serves the Server
 func (router *MainRouter) Serve() error {
-	log.Info().Str("Address", config.Get().LocalHttpServer()).Msgf("HTTP server listening")
 	var err error
 
 	// If the TLS is enabled, run the TLS server in a dedicated goroutine
@@ -109,7 +109,14 @@ func (router *MainRouter) Serve() error {
 		go router.ServeTLS()
 	}
 	// serve the HTTP server
-	err = router.server.ListenAndServe()
+	listener, err := net.Listen("tcp", config.Get().LocalHttpAddr())
+	if err != nil {
+		return err
+	}
+	config.Get().UpdateHTTPAddr(listener.Addr().(*net.TCPAddr).Port)
+
+	log.Info().Str("Address", config.Get().LocalHttpAddr()).Msgf("HTTP server listening")
+	err = router.server.Serve(listener)
 
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err

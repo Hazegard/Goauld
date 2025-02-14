@@ -10,15 +10,15 @@ import (
 
 // ServeTLS start a TLS listener on the configured port
 func (router *MainRouter) ServeTLS() {
-	port := config.Get().LocalHttpsServer()
-	listener, err := tls.Listen("tcp", port, router.tlsConfig)
+	httpsAddr := config.Get().LocalHttpsAddr()
+	listener, err := tls.Listen("tcp", httpsAddr, router.tlsConfig)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to start TLS listener")
 		return
 	}
 	defer listener.Close()
-
-	log.Info().Str("Address", port).Msgf("HTTPS server listening")
+	config.Get().UpdateHTTPSAddr(listener.Addr().(*net.TCPAddr).Port)
+	log.Info().Str("Address", config.Get().LocalHttpsAddr()).Msgf("HTTPS server listening")
 
 	for {
 		conn, err := listener.Accept()

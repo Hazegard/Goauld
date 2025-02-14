@@ -234,7 +234,7 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 // If no agent corresponding to this ID exists
 // an empty one that will be populated later is returned
 func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
-	agent, err := db.FindAgentById(id)
+	agent, _ := db.FindAgentById(id)
 	if agent != nil {
 		return agent, nil
 	}
