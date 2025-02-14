@@ -21,6 +21,10 @@ func replaceInFile(content string, pattern string, new string) string {
 
 func copyFile(src, dst string) error {
 	// Open the source file for reading.
+	srcStat, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return err
@@ -36,6 +40,10 @@ func copyFile(src, dst string) error {
 
 	// Copy the contents using io.Copy.
 	_, err = io.Copy(destinationFile, sourceFile)
+	if err != nil {
+		return err
+	}
+	err = destinationFile.Chmod(srcStat.Mode())
 	if err != nil {
 		return err
 	}

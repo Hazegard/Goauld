@@ -85,7 +85,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 			}
 			httprouter.tlsConfig = tlsC
 		} else {
-			certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+			// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 			tlsConfig, err := certmagic.TLS(config.Get().GetTlsDomains())
 			if err != nil {
 				return nil, err

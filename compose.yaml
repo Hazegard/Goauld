@@ -1,0 +1,14 @@
+services:
+  goauld_server:
+    build:
+      context: .
+    # platform: linux/amd64
+    container_name: server
+    image: goauld_server
+    ports:
+      - "X.X.X.X:80:80"
+      - "X.X.X.X:443:443"
+      - "X.X.X.X:2222:2222"
+    volumes:
+      - ./Goauld.db:/app/Goauld.db
+      - ./server_config.yaml:/app/server_config.yaml
