@@ -30,8 +30,8 @@ var srvCfg *ServerConfig
 var (
 	_age_privKey = ""
 
-	_http_domain = "a.hazegard.fr"
-	_tls_domain  = "b.hazegard.fr"
+	_http_domain = "www.example.com"
+	_tls_domain  = "app.example.com"
 
 	// TODO: voir pour listen sur ine IP spécifique
 	_http_port  = "80"
@@ -48,7 +48,7 @@ var (
 	_access_token = "TODO_TOKEN"
 	_admin_token  = "TODO_TOKEN"
 
-	_binaries_basicauth = "M6FWvoAMszJV@5Zj5R9JugbpsieCE9qumDIv6UWLZbxjKKz2j"
+	_binaries_basicauth = "username:password"
 	_binaries_path      = "./binaries"
 
 	_generate_config = "false"

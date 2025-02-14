@@ -26,9 +26,9 @@ var (
 	_proxy                  = ""
 	_no_proxy               = "false"
 
-	_server     = "localhost"
-	_ssh_server = "localhost:2222"
-	_tls_server = "localhost"
+	_server     = "www.example.com"
+	_ssh_server = "www.example.com:2222"
+	_tls_server = "app.example.com"
 
 	// _sshd_port  = "0"
 	_rssh_port  = "0"

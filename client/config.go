@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	_server       = "http://localhost" // "https://a.hazegard.fr"
+	_server       = "http://localhost"
 	_ssh_server   = "localhost:2222"
 	_access_token = "TODO_TOKEN"
 
