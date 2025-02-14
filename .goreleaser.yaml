@@ -2,17 +2,17 @@ version: 2
 
 env:
   - APP_NAME=goa'uld
-  # - COMMON__ACCESS_TOKEN=UX65dBqYU1wxUX65dBqYU1wxR5mxDwNGbgW7v
+  - COMMON__ACCESS_TOKEN=
 
-  # - SERVER__AGE_PRIVKEY=
-  # - AGENT__AGE_PUBKEY=
+  - SERVER__AGE_PRIVKEY=
+  - AGENT__AGE_PUBKEY=age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p
 
-  # - HTTP_DOMAIN=blog.example.com
-  # - TLS_DOMAIN=api.example.com
-  # - SSHD_PORT=2222
-  # - HTTP_PORT=80
-  # - HTTPS_PORT=443
-  # - AGENT__RSSH_ORDER=
+  - HTTP_DOMAIN=blog.example.com
+  - TLS_DOMAIN=api.example.com
+  - SSHD_PORT=2222
+  - HTTP_PORT=80
+  - HTTPS_PORT=443
+  - AGENT__RSSH_ORDER=
 
 before:
   hooks:
