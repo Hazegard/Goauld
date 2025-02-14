@@ -18,8 +18,8 @@ import (
 )
 
 type BuildConfig struct {
-	GenAgeKey      bool `default:"true" optional:"" help:"generate Age keys."`
-	GenAccessToken bool `default:"true" help:"Generate the Access Token."`
+	GenAgeKey      bool `default:"false" optional:"" help:"generate Age keys."`
+	GenAccessToken bool `default:"false" help:"Generate the Access Token."`
 }
 
 const (
