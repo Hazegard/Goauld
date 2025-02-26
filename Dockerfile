@@ -14,4 +14,5 @@ FROM alpine:3.21 AS run
 COPY --from=build --chmod=755 /app/output/server/*_linux-amd64 /app/server
 COPY --from=build /app/output/agent/* /app/binaries/
 
+WORKDIR /app
 CMD /app/server

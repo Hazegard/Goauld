@@ -19,8 +19,6 @@ func NewStaticRouter() *StaticRouter {
 		staticRouter: http.NewServeMux(),
 	}
 	r.staticRouter.Handle("/", http.FileServer(http.Dir(config.Get().BinariesPathLocation)))
-	n := negroni.New()
-	n.Use(midleware.BasicAuthMiddleware(config.Get().GetBinariesBasicAuth()))
 	return r
 }
 
