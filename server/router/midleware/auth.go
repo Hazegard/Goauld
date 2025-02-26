@@ -27,11 +27,15 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		if username == "" && password == "" {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 		u, p, ok := r.BasicAuth()
 		if !ok {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
