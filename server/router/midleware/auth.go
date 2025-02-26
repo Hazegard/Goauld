@@ -1,6 +1,7 @@
 package midleware
 
 import (
+	"Goauld/common/log"
 	"net/http"
 
 	"github.com/urfave/negroni"
@@ -26,6 +27,7 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 // BasicAuthMiddleware validates the basic authentication header.
 func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		log.Info().Str("username", username).Str("password", password).Msg("BasicAuthMiddleware")
 		if username == "" && password == "" {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			w.WriteHeader(http.StatusUnauthorized)
@@ -33,6 +35,7 @@ func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 			return
 		}
 		u, p, ok := r.BasicAuth()
+		log.Info().Str("username", username).Str("password", password).Msg("HTTP auth")
 		if !ok {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			w.WriteHeader(http.StatusUnauthorized)
