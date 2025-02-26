@@ -212,11 +212,11 @@ func (s *ServerConfig) Validate() error {
 		}
 	}
 
-	basicAuth := strings.Split(s.BinariesBasicAuth, "@")
-	if len(basicAuth) != 2 {
+	basicAuth := strings.Split(s.BinariesBasicAuth, ":")
+	if len(basicAuth) < 2 {
 		return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
 	}
-	if basicAuth[0] == "" || basicAuth[1] == "" {
+	if basicAuth[0] == "" || strings.Join(basicAuth[1:], ":") == "" {
 		return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
 	}
 
@@ -232,12 +232,12 @@ func (s *ServerConfig) GetTlsDomains() []string {
 }
 
 func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
-	split := strings.Split(s.BinariesBasicAuth, "@")
-	if len(s.BinariesBasicAuth) != 2 {
+	split := strings.Split(s.BinariesBasicAuth, ":")
+	if len(s.BinariesBasicAuth) < 2 {
 		return "", ""
 	}
 
-	return split[0], split[1]
+	return split[0], strings.Join(split[1:], ":")
 }
 
 func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
