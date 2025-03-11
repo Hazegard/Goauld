@@ -1,6 +1,7 @@
 package midleware
 
 import (
+	"Goauld/common/log"
 	"net/http"
 
 	"github.com/urfave/negroni"
@@ -15,6 +16,7 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 		if authHeader != expectedAuthToken {
 			// If the token is not correct, return 403 Forbidden
 			http.Error(w, "Forbidden", http.StatusForbidden)
+			log.Get().Trace().Str("Header", authHeader).Msg("Header not allowed")
 			return
 		}
 

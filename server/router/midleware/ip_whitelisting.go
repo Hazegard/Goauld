@@ -1,6 +1,7 @@
 package midleware
 
 import (
+	"Goauld/common/log"
 	"net/http"
 	"strings"
 
@@ -17,6 +18,7 @@ func WhitelistMiddleware(allowedIPs []string) negroni.HandlerFunc {
 		// Check if the IP is in the whitelist
 		if !net.IsIPAllowed(clientIP, allowedIPs) {
 			// If not allowed, return 403 Forbidden
+			log.Get().Trace().Str("ClientIP", clientIP).Msg("ClientIP not allowed")
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
