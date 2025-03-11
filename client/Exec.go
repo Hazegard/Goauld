@@ -15,7 +15,7 @@ import (
 type Exec struct {
 	Target         string   `arg:""`
 	Socks          bool     `default:"${_exec_socks}" name:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
-	LocalSocksPort int      `default:"${_local_socks_port}" name:"socksPort" optional:"" help:"Local port to bind the SOCKS to."`
+	LocalSocksPort int      `default:"${_local_socks_port}" name:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
 	Ssh            bool     `default:"${_exec_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_exec_proxy}" name:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand ."`
@@ -154,6 +154,7 @@ func buildEnvironments(cfg ClientConfig, typePass string, exePath string) []stri
 		prefixEnv("SERVER", cfg.Server),
 		prefixEnv("AGENT", cfg.Exec.Target),
 		prefixEnv("TYPE", typePass),
+		prefixEnv("CONFIG_FILE", cfg.ConfigFile),
 	}
 }
 

@@ -8,10 +8,10 @@ config-file: ""
 insecure: false
 
 # HTTP Server to connect to.
-server: http://localhost
+server: https://www.example.com
 
 # SSH Server to connect to.
-ssh-server: localhost:2222
+ssh-server: www.example.com:22222
 
 # Verbosity. Repeat to increase
 verbose: 0

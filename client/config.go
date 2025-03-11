@@ -70,7 +70,7 @@ type ClientConfig struct {
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
 	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
+	ConfigFile     string `name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 
 	Exec Exec     `cmd:""`
 	Tui  Tui      `cmd:""`

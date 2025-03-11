@@ -31,13 +31,13 @@ db-file-name: Goauld.db
 http-domain: www.example.com
 
 # HTTP port to bind to, 0 => Random.
-http-port: 80
+http-port: :80
 
 # HTTPS port to bind to, 0 => Random.
-https-port: 443
+https-port: :443
 
 # Remote port to bind to, 0 => Random.
-ssh-port: 2222
+ssh-port: :2222
 
 # Enable TLS.
 tls: true
