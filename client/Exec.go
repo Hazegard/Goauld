@@ -113,7 +113,11 @@ func (e *Exec) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath
 	cmd.Executable = "ssh"
 	cmd.Args = buildAllSshOptions(cfg)
 	cmd.Env = buildEnvironments(cfg, "agent", exePath)
-
+	if e.Print {
+		for i := range cmd.Env {
+			cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
+		}
+	}
 	// We display the proxycommand inside single quotes in order to allow users to copy and paste the command
 	sep := ""
 	if e.Print {
@@ -134,6 +138,9 @@ func (e *Exec) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePat
 		Executable: "ssh",
 	}
 	cmd.Env = buildEnvironments(cfg, "otp", exePath)
+	for i := range cmd.Env {
+		cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
+	}
 	cmd.Args = buildInnerSshOptions(cfg)
 	cmd.Args = append(cmd.Args, fmt.Sprintf("-p%s", cfg.GetSshdPort()))
 	if e.Ssh || e.Proxy {

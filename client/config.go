@@ -150,7 +150,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "agent_config.yaml")
+		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "client_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{

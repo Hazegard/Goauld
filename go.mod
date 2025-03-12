@@ -1,8 +1,8 @@
 module Goauld
 
-go 1.23.1
+go 1.24
 
-toolchain go1.23.4
+toolchain go1.24.1
 
 require (
 	filippo.io/age v1.2.1
@@ -18,13 +18,14 @@ require (
 	github.com/evertras/bubble-table v0.17.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gliderlabs/ssh v0.3.7
+	github.com/gokrazy/rsync v0.2.5
 	github.com/karagenc/socket.io-go v0.1.0
 	github.com/pkg/sftp v1.13.7
 	github.com/quic-go/webtransport-go v0.8.0
 	github.com/rs/zerolog v1.33.0
 	github.com/things-go/go-socks5 v0.0.5
 	github.com/urfave/negroni v1.0.0
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.33.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.12
 	nhooyr.io/websocket v1.8.11
@@ -48,6 +49,7 @@ require (
 	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
+	github.com/google/renameio/v2 v2.0.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -62,6 +64,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mholt/acmez/v3 v3.0.0 // indirect
 	github.com/miekg/dns v1.1.62 // indirect
+	github.com/mmcloughlin/md4 v0.1.2 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
@@ -84,9 +87,9 @@ require (
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	h12.io/socks v1.0.1 // indirect
