@@ -112,7 +112,7 @@ func (e *Exec) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath
 	cmd := Command{}
 	cmd.Executable = "ssh"
 	cmd.Args = buildAllSshOptions(cfg)
-	cmd.Env = buildEnvironments(cfg, "agent", exePath)
+	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.Exec.Target)
 	if e.Print {
 		for i := range cmd.Env {
 			cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
@@ -137,7 +137,7 @@ func (e *Exec) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePat
 	cmd := Command{
 		Executable: "ssh",
 	}
-	cmd.Env = buildEnvironments(cfg, "otp", exePath)
+	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.Exec.Target)
 	for i := range cmd.Env {
 		cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
 	}
@@ -154,12 +154,12 @@ func (e *Exec) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePat
 }
 
 // buildEnvironments returns the environment variables required to access the agents
-func buildEnvironments(cfg ClientConfig, typePass string, exePath string) []string {
+func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target string) []string {
 	return []string{
 		"SSH_ASKPASS_REQUIRE=force",
 		"SSH_ASKPASS=" + exePath,
 		prefixEnv("SERVER", cfg.Server),
-		prefixEnv("AGENT", cfg.Exec.Target),
+		prefixEnv("AGENT", target),
 		prefixEnv("TYPE", typePass),
 		prefixEnv("CONFIG_FILE", cfg.ConfigFile),
 	}

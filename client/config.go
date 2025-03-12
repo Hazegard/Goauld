@@ -73,6 +73,7 @@ type ClientConfig struct {
 	ConfigFile     string `name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 
 	Exec Exec     `cmd:""`
+	Scp  Scp      `cmd:""`
 	Tui  Tui      `cmd:""`
 	Pass Password `cmd:"" default:"withargs"`
 }
