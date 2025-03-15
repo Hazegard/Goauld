@@ -9,7 +9,7 @@ import (
 	"Goauld/agent/config"
 	"Goauld/agent/proxy"
 
-	"github.com/coder/websocket"
+	"nhooyr.io/websocket"
 )
 
 // GetWebsocketConn returns a net.Conn wrapping a websocket connection

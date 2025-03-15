@@ -12,14 +12,14 @@ import (
 	"Goauld/common"
 )
 
-type Exec struct {
-	Target         string   `arg:""`
+type Ssh struct {
+	Target         string   `arg:"" help:"The target agent."`
 	Socks          bool     `default:"${_exec_socks}" name:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
 	LocalSocksPort int      `default:"${_local_socks_port}" name:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
 	Ssh            bool     `default:"${_exec_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Proxy          bool     `default:"${_exec_proxy}" name:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand ."`
-	SshArgs        []string `arg:"" passthrough:"" optional:""`
+	Proxy          bool     `default:"${_exec_proxy}" name:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
+	SshArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
 }
 
 type Command struct {
@@ -61,7 +61,23 @@ func (c *Command) Execute() error {
 	return cmd.Run()
 }
 
-func (e *Exec) Run(api *api.API, cfg ClientConfig) error {
+func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
+	if cfg.Socks.Target != "" {
+		// we are in socks mode, so apply the socks option to the ssh
+		cfg.Ssh.Socks = true
+		cfg.Ssh.Target = cfg.Socks.Target
+		cfg.Ssh.LocalSocksPort = e.LocalSocksPort
+		cfg.Ssh.Ssh = false
+		cfg.Ssh = Ssh{
+			Target:         cfg.Socks.Target,
+			Socks:          cfg.Socks.Socks,
+			LocalSocksPort: cfg.Socks.LocalSocksPort,
+			Ssh:            false,
+			Print:          cfg.Ssh.Print,
+			Proxy:          false,
+			SshArgs:        cfg.Socks.SshArgs,
+		}
+	}
 	if e.Proxy {
 		e.Socks = false
 	}
@@ -69,8 +85,8 @@ func (e *Exec) Run(api *api.API, cfg ClientConfig) error {
 }
 
 // Execute start the ssh
-func (e *Exec) Execute(api *api.API, cfg ClientConfig) error {
-	agent, err := api.GetAgentByName(cfg.Exec.Target)
+func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
+	agent, err := api.GetAgentByName(cfg.Ssh.Target)
 	if err != nil {
 		return err
 	}
@@ -95,24 +111,26 @@ func (e *Exec) Execute(api *api.API, cfg ClientConfig) error {
 	return cmd.Execute()
 }
 
-func (e *Exec) buildCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
+func (e *Ssh) buildCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	if e.Proxy {
 		return e.buildTunnelSshCommand(cfg, agent, exePath)
 	}
 	if e.Ssh {
 		return e.buildOuterSshCommand(cfg, agent, exePath)
 	}
-	return e.buildTunnelSshCommand(cfg, agent, exePath)
+	cmd := e.buildTunnelSshCommand(cfg, agent, exePath)
+	cmd.Args = append(cmd.Args, "-N")
+	return cmd
 }
 
 // buildOuterSshCommand build the outer SSH command. This SSH command will be executed in second
 // through the ProxyCommand
-func (e *Exec) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
+func (e *Ssh) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	innerCmd := e.buildTunnelSshCommand(cfg, agent, exePath)
 	cmd := Command{}
 	cmd.Executable = "ssh"
 	cmd.Args = buildAllSshOptions(cfg)
-	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.Exec.Target)
+	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.Ssh.Target)
 	if e.Print {
 		for i := range cmd.Env {
 			cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
@@ -125,7 +143,7 @@ func (e *Exec) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath
 	}
 	proxyCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.InlineEnv().String(), sep)
 	cmd.Args = append(cmd.Args, proxyCmd)
-	cmd.Args = append(cmd.Args, cfg.Exec.SshArgs...)
+	cmd.Args = append(cmd.Args, cfg.Ssh.SshArgs...)
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.Id))
 	return cmd
 }
@@ -133,11 +151,11 @@ func (e *Exec) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath
 // buildTunnelSshCommand create the ssh command used in the SSH proxycommand
 // this SSH command is the tunnel one in the ssh command, but is actually the outer one
 // when being executed (ie: it will be executed first)
-func (e *Exec) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
+func (e *Ssh) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	cmd := Command{
 		Executable: "ssh",
 	}
-	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.Exec.Target)
+	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.Ssh.Target)
 	for i := range cmd.Env {
 		cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
 	}
@@ -147,7 +165,7 @@ func (e *Exec) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePat
 		cmd.Args = append(cmd.Args, fmt.Sprintf("-W127.0.0.1:%s", agent.GetSSHPort()))
 	}
 	if e.Socks {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Exec.LocalSocksPort, agent.GetSocksPort()))
+		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Ssh.LocalSocksPort, agent.GetSocksPort()))
 	}
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
 	return cmd

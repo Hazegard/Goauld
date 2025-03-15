@@ -89,7 +89,7 @@ var (
 type AgentConfig struct {
 	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server. The provided public key should match the server public key" name:"age-pubkey" short:"A"`
 
-	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent.\nIf not password is provided, an random password is automatically generated."`
+	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent.\nIf no password is provided, a random password is automatically generated."`
 	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
 	Sshd                bool     `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`

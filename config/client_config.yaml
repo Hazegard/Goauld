@@ -1,18 +1,77 @@
-# Access token required to access the /manage/ endpoint.
-access-token: TODO_TOKEN
-
-# Configuration file to use.
-config-file: ""
-
-# Allow insecure connection (do not validate TLS certificate).
-insecure: false
-
 # HTTP Server to connect to.
 server: https://www.example.com
+
+# Access token required to access the /manage/ endpoint.
+access-token: 
 
 # SSH Server to connect to.
 ssh-server: www.example.com:22222
 
 # Verbosity. Repeat to increase
 verbose: 0
+
+# Allow insecure connection (do not validate TLS certificate).
+insecure: false
+
+# Generate configuration file based on the current options.
+generateconfig: true
+
+# Configuration file to use.
+config-file: ""
+
+# Connect to the agent through SSH.
+ssh:
+    # The target agent.
+    target: ""
+    # Forward the SOCKS ports on the local host.
+    socks: true
+    # Local port to bind the SOCKS to.
+    socks-port: 1080
+    # Connect to the agent SSHD service.
+    ssh: true
+    # Show the SSH command instead of executing it.
+    print: false
+    # Enable direct STDIN/STDOUT connections to Allow to use proxycommand.
+    proxy: false
+    # Additional args directly passed to the SSH command.
+    sshargs: []
+
+# Mount the socks server exposed by the agent.
+socks:
+    # The target agent.
+    target: ""
+    # Forward the SOCKS ports on the local host.
+    socks: true
+    # Local port to bind the SOCKS to.
+    socks-port: 1080
+    # Connect to the agent SSHD service.
+    ssh: true
+    # Show the SSH command instead of executing it.
+    print: false
+    # Enable direct STDIN/STDOUT connections to Allow to use proxycommand.
+    proxy: false
+    # Additional args directly passed to the SSH command.
+    sshargs: []
+
+# Transfer files using SCP from/to the agent.
+scp:
+    target: ""
+    # Show the SSH command instead of executing it.
+    print: false
+    # Origin copy.
+    source: ""
+    # Destination to copy.
+    destination: ""
+    scpargs: []
+
+# TUI used to manage the connected agents
+tui: {}
+
+# Retrieve the passwords used to connect to the agent.
+pass:
+    # Agent name to retrieve password.
+    agent: ""
+    # Password to retrieve (OTP/Agent).
+    type: ""
+    args: []
 

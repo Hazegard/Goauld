@@ -14,12 +14,12 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.0.0
-	github.com/coder/websocket v1.8.12
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/evertras/bubble-table v0.17.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gliderlabs/ssh v0.3.8
 	github.com/karagenc/socket.io-go v0.1.0
+	github.com/maruel/natural v1.1.1
 	github.com/pkg/sftp v1.13.8
 	github.com/quic-go/webtransport-go v0.8.0
 	github.com/rs/zerolog v1.33.0
@@ -28,6 +28,7 @@ require (
 	golang.org/x/crypto v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.12
+	nhooyr.io/websocket v1.8.11
 )
 
 require (
@@ -70,7 +71,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.0 // indirect
 	github.com/petermattis/goid v0.0.0-20250303134427-723919f7f203 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	github.com/quic-go/quic-go v0.50.0 // indirect
+	// Cannot upgrade quic-go as it breaks socket.io
+	github.com/quic-go/quic-go v0.47.0 // indirect
 	github.com/rapid7/go-get-proxied v0.0.0-20250207205329-09112877ac70 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -95,5 +97,4 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
 	modernc.org/sqlite v1.36.0 // indirect
-	nhooyr.io/websocket v1.8.17 // indirect
 )

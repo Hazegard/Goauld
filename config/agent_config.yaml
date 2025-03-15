@@ -1,65 +1,72 @@
 # Age public key associated to the server. The provided public key should match the server public key
 age-pubkey: ""
 
-# Configuration file to use.
-config-file: ""
+# SSH password to access the agent.
 
-# Seconds between two keepalive messages in seconds, reduce this value if the connection drops.
-keepalive: 20
-
-# Max retries connection attempts before giving up
-max-retries: 0
+# If no password is provided, a random password is automatically generated.
+password: ""
 
 # Nice name to identify the agent. Defaults to 'user@hostname'
 name: user@hostname
 
-# Don't use the system proxy.
-no-proxy: false
-
-# SSH password to access the agent.
-# If not password is provided, an random password is automatically generated.
-password: ""
-
-# Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
-proxy: ""
-
-# Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT).
-# If REMOTE_PORT is 0, the port will be randomly chosen on the server
-rpf: []
-
-# Order the SSH tunnels connection attempts.
-rssh-order:
-  - ssh
-  - tls
-  - ws
-  - http
-
-# The remote SSH port to bind to on the server.
-#  By default, the port is 0 meaning the port will be random on the server.
-rssh-port: 0
-
-# THe control HTTP server  to connect to.
-server: www.example.com
+# Start the SSHD server.
+sshd: true
 
 # Start the Socks server.
 socks: true
 
-# The remote SOCKS port to bind to on the server,
-#  By default, the port is 0 meaning the port will be random on the server.
-socks-port: 0
-
 # Use the proxy of the underlying system if applicable for all requests going through the socks proxy.
 socks-proxy: true
+
+# Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
+proxy:
+
+# Don't use the system proxy.
+no-proxy: false
+
+# THe control HTTP server  to connect to.
+server: www.example.com
 
 # The SSH server to connect to when using direct SSH connections.
 ssh-server: www.example.com:2222
 
-# Start the SSHD server.
-sshd: true
-
 # The TLS server to connect to when using SSH over TLS connections.
 tls-server: app.example.com
 
+# The remote SSH port to bind to on the server.
+
+#  By default, the port is 0 meaning the port will be random on the server.
+rssh-port: 0
+
+# The remote SOCKS port to bind to on the server,
+
+#  By default, the port is 0 meaning the port will be random on the server.
+socks-port: 0
+
+# Seconds between two keepalive messages in seconds, reduce this value if the connection drops.
+keepalive: 20
+
 # Verbosity of the logs. Repeat -v to increase
 verbose: 0
+
+# Order the SSH tunnels connection attempts.
+rssh-order:
+    - ssh
+    - tls
+    - ws
+    - http
+
+# Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT).
+
+# If REMOTE_PORT is 0, the port will be randomly chosen on the server
+rpf: []
+
+# Max retries connection attempts before giving up
+max-retries: 0
+
+# Generate configuration file based on the current options.
+generateconfig: true
+
+# Configuration file to use.
+config-file: ""
 

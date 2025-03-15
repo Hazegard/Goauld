@@ -13,7 +13,7 @@ import (
 	"Goauld/server/persistence"
 	"Goauld/server/store"
 
-	"github.com/coder/websocket"
+	"nhooyr.io/websocket"
 )
 
 // NewWSshHandler returns a new WSshHandler

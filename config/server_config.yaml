@@ -1,34 +1,11 @@
-# Access token required to access the /manage/ endpoint.
-access-token: TODO_TOKEN
-
-# Access token required to access the /manage/ endpoint.
-admin-token: TODO_TOKEN
-
 # Age private key to use.
 age-privkey: 
 
-# List of IP allowed to access the /manage/ endpoint.
-allowed-ips:
-  - 127.0.0.1
-  - 0.0.0.0/32
-
-# HTTP Basic Auth used to access the binaries endpoint.
-binaries-basic-auth: username:password
-
-# Path where are stored binaries on the filesystem.
-binaries-path-location: ./binaries
-
-# Configuration file to use.
-config-file: ""
-
-# Disable database usage.
-db: false
-
-# Database filename to use.
-db-file-name: Goauld.db
-
 # Domain used to serve HTTP content (HTTP/Websockets).
 http-domain: www.example.com
+
+# Domain used to serve raw TLS content (SSH over TLS).
+tls-domain: app.example.com
 
 # HTTP port to bind to, 0 => Random.
 http-port: :80
@@ -39,18 +16,44 @@ https-port: :443
 # Remote port to bind to, 0 => Random.
 ssh-port: :2222
 
+# Verbosity. Repeat to increase
+verbose: 0
+
 # Enable TLS.
 tls: true
-
-# Path to TLS certificate.
-tls-cert: ""
-
-# Domain used to serve raw TLS content (SSH over TLS).
-tls-domain: app.example.com
 
 # Path to TLS certificate key.
 tls-key: ""
 
-# Verbosity. Repeat to increase
-verbose: 0
+# Path to TLS certificate.
+tls-cert: ""
+
+# Disable database usage.
+db: false
+
+# Database filename to use.
+db-file-name: Goauld.db
+
+# List of IP allowed to access the /manage/ endpoint.
+allowed-ips:
+    - 127.0.0.1
+    - 0.0.0.0/32
+
+# Access token required to access the /manage/ endpoint.
+access-token: TODO_TOKEN
+
+# Access token required to access the /manage/ endpoint.
+admin-token: TODO_TOKEN
+
+# HTTP Basic Auth used to access the binaries endpoint.
+binaries-basic-auth: username:password
+
+# Path where are stored binaries on the filesystem.
+binaries-path-location: ./binaries
+
+# Generate configuration file based on the current options.
+generateconfig: true
+
+# Configuration file to use.
+config-file: ""
 

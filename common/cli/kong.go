@@ -68,8 +68,42 @@ func find(config map[string]interface{}, path []string) interface{} {
 	return config[strings.Join(path, "-")]
 }
 
+func GenerateNameHelpMap(cfg any) map[string]string {
+
+	nameHelpMap := make(map[string]string)
+	// v := reflect.ValueOf(cfg)
+	t := reflect.TypeOf(cfg)
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		// value := v.Field(i)
+		// fmt.Println(field)
+		// fmt.Println(value)
+		// Get the "name" tag.
+		help := field.Tag.Get("help")
+		if help == "" {
+			continue // Skip fields without the "name" tag.
+		}
+		name := field.Tag.Get("name")
+		if name == "" {
+			continue // Skip fields without the "name" tag.
+		}
+		if field.Type.Kind() == reflect.Struct {
+			help = "" //GenerateNameHelpMap(field)
+		}
+		nameHelpMap[name] = help
+	}
+	return nameHelpMap
+}
+
 // generateYAMLWithComments generates a YAML file with comments.
 func GenerateYAMLWithComments(cfg any) (string, error) {
+	d, e := Marshal(cfg)
+	if e != nil {
+		return "", e
+	}
+	d = bytes.ReplaceAll(d, []byte("\n#"), []byte("\n\n#"))
+	return string(d), e
 	var node yaml.Node
 
 	// Marshal the struct into a yaml.Node.
@@ -121,15 +155,30 @@ func GenerateYAMLWithComments(cfg any) (string, error) {
 	return buf.String(), nil
 }
 
-// MarshalYAML implements the yaml.Marshaler interface and uses reflection.
+// MarshalYAML implements the yaml.Marshaller interface and uses reflection.
 func MarshalYAML(c any) ([]byte, error) {
-	v := reflect.ValueOf(c)
-	t := reflect.TypeOf(c)
+	mapped, err := marshalStruct(reflect.ValueOf(c))
+	if err != nil {
+		return nil, err
+	}
+	return yaml.Marshal(mapped)
+}
 
+// marshalStruct recursively converts a struct (or pointer to struct) to a map[string]interface{} using the "name" tag.
+func marshalStruct(v reflect.Value) (map[string]interface{}, error) {
+	// Dereference pointers to get to the underlying struct.
+
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return nil, nil
+		}
+		v = v.Elem()
+	}
+
+	t := v.Type()
+	mapped := make(map[string]interface{})
 	// Precompute the pointer type for *url.URL.
 	urlPtrType := reflect.TypeOf((*url.URL)(nil))
-	// Create a map to hold the resulting YAML key-value pairs.
-	mapped := make(map[string]interface{})
 
 	// Iterate through the struct fields.
 	for i := 0; i < t.NumField(); i++ {
@@ -142,20 +191,40 @@ func MarshalYAML(c any) ([]byte, error) {
 			continue // Skip fields without the "name" tag.
 		}
 
-		// If the field is of type *url.URL, use its string representation.
+		// Handle *url.URL specially.
 		if field.Type == urlPtrType {
 			if value.IsNil() {
-				mapped[tag] = "" // or nil, depending on your preference
+				mapped[tag] = "" // or nil, based on your preference
 			} else {
-				// Convert the *url.URL to its string representation.
 				u := value.Interface().(*url.URL)
 				mapped[tag] = u.String()
 			}
-		} else {
+			continue
+		}
+		// If the field is a nested struct, recursively marshal it.
+		switch value.Kind() {
+		case reflect.Struct:
+			nested, err := marshalStruct(value)
+			if err != nil {
+				return nil, err
+			}
+			mapped[tag] = nested
+		case reflect.Ptr:
+			// If it's a pointer to a struct, and non-nil, process the underlying struct.
+			if !value.IsNil() && value.Elem().Kind() == reflect.Struct {
+				nested, err := marshalStruct(value)
+				if err != nil {
+					return nil, err
+				}
+				mapped[tag] = nested
+			} else {
+				// Otherwise, assign the pointer value directly.
+				mapped[tag] = value.Interface()
+			}
+		default:
+			// For all other types, assign the value directly.
 			mapped[tag] = value.Interface()
 		}
-
 	}
-
-	return yaml.Marshal(mapped)
+	return mapped, nil
 }
