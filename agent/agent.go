@@ -32,6 +32,13 @@ func main() {
 			log.Warn().Err(warning).Msgf("agent init error")
 		}
 	}
+	if config.Get().ShouldRunInBackground() {
+		err := config.Get().StartInBackground()
+		if err != nil {
+			log.Error().Err(err).Msg("error starting the agent in background")
+		}
+		return
+	}
 	if config.Get().DoGenerateConfig() {
 		conf, err := config.Get().GenerateYAMLConfig()
 		if err != nil {

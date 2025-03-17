@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/user"
 	"runtime"
 	"strings"
@@ -357,6 +358,20 @@ func (a *Agent) GetMexRetries() uint {
 
 func (a *Agent) DoGenerateConfig() bool {
 	return a.cfg.GenerateConfig
+}
+
+func (a *Agent) ShouldRunInBackground() bool {
+	return a.cfg.Background && !a.cfg.HiddenBackground
+}
+
+func (a *Agent) StartInBackground() error {
+	args := append(os.Args, "--hidden-background")
+	c := exec.Command(args[0], args[1:]...)
+	err := c.Start()
+	if err != nil {
+		return fmt.Errorf("failed to start agent: %s", err)
+	}
+	return nil
 }
 
 func (a *Agent) GenerateYAMLConfig() (string, error) {

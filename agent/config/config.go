@@ -46,6 +46,8 @@ var (
 	_generate_config = "false"
 	_config_file     = ""
 
+	_background = "false"
+
 	defaultValues = kong.Vars{
 		"_age_pubkey": _agePubKey,
 
@@ -77,6 +79,8 @@ var (
 
 		"_generate_config": _generate_config,
 		"_config_file":     _config_file,
+
+		"_background": _background,
 	}
 )
 
@@ -115,8 +119,11 @@ type AgentConfig struct {
 
 	MaxRetries int `default:"${_max_retries}" help:"Max retries connection attempts before giving up" name:"max-retries" short:"M"`
 
-	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
+
+	Background       bool `name:"background" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
+	HiddenBackground bool `name:"hidden-background" hidden:"" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
 }
 
 // parse parses the command line arguments

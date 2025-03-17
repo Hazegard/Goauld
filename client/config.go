@@ -69,7 +69,7 @@ type ClientConfig struct {
 	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
-	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 
 	Ssh   Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`

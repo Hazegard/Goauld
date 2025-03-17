@@ -110,7 +110,7 @@ type ServerConfig struct {
 	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
 	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
 
-	GenerateConfig bool   `default:"${_generate_config}" help:"Generate configuration file based on the current options."`
+	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
 }
 
