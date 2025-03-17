@@ -19,7 +19,7 @@ before:
     # You may remove this if you don't use go modules.
     - go mod tidy
     # you may remove this if you don't need go generate
-    - go generate ./...
+    # - go generate ./...
 
 
 builds:
@@ -117,6 +117,8 @@ builds:
       - '{{ if (index .Env "AGENT__RPF") }} -X Goauld/agent/config._remote_port_forwarding={{ .Env.AGENT__RPF }}{{end}}'
 
       - '{{ if (index .Env "AGENT__MAX_RETRIES") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__MAX_RETRIES }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__BACKGROUND") }} -X Goauld/agent/config._background={{ .Env.AGENT__BACKGROUND }}{{end}}'
 
   - id: "client"
     mod_timestamp: "{{ .CommitTimestamp }}"

@@ -53,7 +53,7 @@ func parseArtifacts(filePath string) ([]Artifact, error) {
 		return nil, fmt.Errorf("error unmarshaling JSON: %v", err)
 	}
 
-	// Return the unmarshaled struct
+	// Return the unmarshalled struct
 	return result, nil
 }
 
