@@ -35,12 +35,14 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("error while opening pty: %s", err)
 		}
-		defer func() {
-			err := pseudo.Close()
-			if err != nil {
-				log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing pty")
-			}
-		}()
+		// Removed because windows crashing if pseudo closed twice
+		// defer func() {
+		// 	defer r("")
+		// 	err := pseudo.Close()
+		// 	if err != nil {
+		// 		log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing pty")
+		// 	}
+		// }()
 
 		// Resize the pty to the client window
 		w, h := ptyReq.Window.Width, ptyReq.Window.Height
