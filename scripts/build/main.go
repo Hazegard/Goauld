@@ -18,8 +18,11 @@ import (
 )
 
 type BuildConfig struct {
-	GenAgeKey      bool `default:"false" optional:"" help:"generate Age keys."`
-	GenAccessToken bool `default:"false" help:"Generate the Access Token."`
+	GenAgeKey      bool   `default:"false" optional:"" help:"generate Age keys."`
+	GenAccessToken bool   `default:"false" help:"Generate the Access Token."`
+	Id             string `default:"" help:"[client|server|agent]."`
+	Goos           string `default:"" help:"[darwin|linux|windows]."`
+	Goarch         string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
 }
 
 const (
@@ -51,7 +54,7 @@ func main() {
 		log.Error().Err(err).Msg("genEnvFile()")
 		return
 	}
-	err = goreleaser(envFile)
+	err = goreleaser(*cfg, envFile)
 	if err != nil {
 		log.Error().Err(err).Msg("error running goreleaser command")
 		return
@@ -73,9 +76,22 @@ func main() {
 	}
 }
 
-func goreleaser(envFile string) error {
-	cmd := exec.Command("goreleaser", "release", "--clean", "--skip", "publish,archive")
-	env, err := ParseEnvFile(envFile)
+func goreleaser(cfg BuildConfig, envFile string) error {
+	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate"}
+	customBuild, err := DoSpecificBuild(cfg)
+	if err != nil {
+		return fmt.Errorf("error building: %s", err)
+	}
+	var env []string
+	if customBuild {
+		c = append(c, "--id", cfg.Id, "--single-target")
+		env = append(env, "GOOS="+cfg.Goos)
+		env = append(env, "GOARCH="+cfg.Goarch)
+	}
+	cmd := exec.Command(c[0], c[1:]...)
+
+	_env, err := ParseEnvFile(envFile)
+	env = append(env, _env...)
 	if err != nil {
 		return err
 	}
@@ -125,4 +141,19 @@ func genAgeKey() (string, string, error) {
 	pubkey := key.Recipient().String()
 	privkey := key.String()
 	return pubkey, privkey, err
+}
+
+func DoSpecificBuild(cfg BuildConfig) (bool, error) {
+	// All strings empty → return false.
+	if cfg.Id == "" && cfg.Goos == "" && cfg.Goarch == "" {
+		return false, nil
+	}
+
+	// All strings non-empty → return true.
+	if cfg.Id != "" && cfg.Goos != "" && cfg.Goarch != "" {
+		return true, nil
+	}
+
+	// Mixed values → return an error.
+	return false, fmt.Errorf("error: mixed empty and non-empty values")
 }
