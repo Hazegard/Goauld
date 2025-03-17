@@ -1,11 +1,13 @@
 package main
 
 import (
+	"Goauld/client/compiler"
+	"Goauld/common/crypto"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"Goauld/common"
 	"Goauld/common/cli"
@@ -25,93 +27,73 @@ type BuildConfig struct {
 	Goarch         string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
 }
 
-const (
-	artifactsFile = "./dist/artifacts.json"
-	_envFile      = ".env.build"
-)
-
-var requiredCommands = []string{
-	"goreleaser",
-}
-
 func main() {
 	_, cfg, err := parse()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse config")
 	}
-	missingCommands := checkCommands(requiredCommands)
-	if len(missingCommands) > 0 {
-		log.Error().Err(fmt.Errorf("commands required to build %s", common.App_Name)).Str("commands", strings.Join(missingCommands, "\n")).Msg("Missing required commands")
-		return
-	}
 
-	err = MkdirAll("output")
+	err = compiler.MkdirAll("output")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create directory")
 	}
-	envFile, err := GenEnvFile(_envFile, *cfg)
+	envFile, err := GenEnvFile(compiler.EnvFile, *cfg)
 	if err != nil {
 		log.Error().Err(err).Msg("genEnvFile()")
 		return
 	}
-	err = goreleaser(*cfg, envFile)
+	pwd, err := os.Getwd()
 	if err != nil {
-		log.Error().Err(err).Msg("error running goreleaser command")
+		log.Error().Err(err).Msg("os.Getwd()")
 		return
 	}
 
-	artifacts, err := parseArtifacts(artifactsFile)
-	if err != nil {
-		log.Error().Err(err).Msg("error parsing artifacts.json")
+	cpl := compiler.Compiler{
+		Id:      cfg.Id,
+		Goos:    cfg.Goos,
+		Goarch:  cfg.Goarch,
+		Source:  pwd,
+		EnvFile: envFile,
 	}
 
-	err = moveArtifacts(artifacts)
+	err = cpl.Run()
 	if err != nil {
-		log.Error().Err(err).Msg("error updating artifacts")
-		return
+		log.Error().Err(err).Msg("compiler.Compile()")
 	}
-	err = copyFile(envFile, filepath.Join("output", _envFile))
-	if err != nil {
-		log.Error().Err(err).Msg("error copying env file")
-	}
+
 }
 
-func goreleaser(cfg BuildConfig, envFile string) error {
-	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate"}
-	customBuild, err := DoSpecificBuild(cfg)
+func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
+	newEnv := filepath.Join("output", fmt.Sprintf("%s.%s", envFile, time.Now().Format("2006-01-02T15:04:05")))
+	err := compiler.CopyFile(envFile, newEnv)
 	if err != nil {
-		return fmt.Errorf("error building: %s", err)
+		return "", err
 	}
-	var env []string
-	if customBuild {
-		c = append(c, "--id", cfg.Id, "--single-target")
-		env = append(env, "GOOS="+cfg.Goos)
-		env = append(env, "GOARCH="+cfg.Goarch)
-	}
-	cmd := exec.Command(c[0], c[1:]...)
 
-	_env, err := ParseEnvFile(envFile)
-	env = append(env, _env...)
+	bytes, err := os.ReadFile(newEnv)
 	if err != nil {
-		return err
+		return "", err
 	}
-	cmd.Env = append(cmd.Environ(), env...)
+	content := string(bytes)
 
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	return cmd.Run()
-}
-
-func checkCommands(cmds []string) []string {
-	var notFound []string
-	for _, cmd := range cmds {
-		_, err := exec.LookPath(cmd)
+	if cfg.GenAgeKey {
+		pubKey, privKey, err := genAgeKey()
 		if err != nil {
-			notFound = append(notFound, cmd)
+			return "", err
 		}
-
+		content = compiler.ReplaceInFile(content, "SERVER__AGE_PRIVKEY", fmt.Sprintf("SERVER__AGE_PRIVKEY=%s", pubKey))
+		content = compiler.ReplaceInFile(content, "AGENT__AGE_PUBKEY", fmt.Sprintf("AGENT__AGE_PUBKEY=%s", privKey))
 	}
-	return notFound
+
+	if cfg.GenAccessToken {
+		newtoken, err := crypto.GeneratePassword(42)
+		if err != nil {
+			return "", err
+		}
+		content = compiler.ReplaceInFile(content, "SERVER__ACCESS_TOKEN", fmt.Sprintf("SERVER__ACCESS_TOKEN=%s", newtoken))
+	}
+
+	return envFile, os.WriteFile(newEnv, []byte(content), 0o700)
 }
 
 // parse parses the command line arguments
@@ -141,19 +123,4 @@ func genAgeKey() (string, string, error) {
 	pubkey := key.Recipient().String()
 	privkey := key.String()
 	return pubkey, privkey, err
-}
-
-func DoSpecificBuild(cfg BuildConfig) (bool, error) {
-	// All strings empty → return false.
-	if cfg.Id == "" && cfg.Goos == "" && cfg.Goarch == "" {
-		return false, nil
-	}
-
-	// All strings non-empty → return true.
-	if cfg.Id != "" && cfg.Goos != "" && cfg.Goarch != "" {
-		return true, nil
-	}
-
-	// Mixed values → return an error.
-	return false, fmt.Errorf("error: mixed empty and non-empty values")
 }

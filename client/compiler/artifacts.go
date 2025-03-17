@@ -1,4 +1,4 @@
-package main
+package compiler
 
 import (
 	"encoding/json"
@@ -33,7 +33,7 @@ type Artifact struct {
 	Goarm64 string `json:"goarm64,omitempty"`
 }
 
-func parseArtifacts(filePath string) ([]Artifact, error) {
+func ParseArtifacts(filePath string) ([]Artifact, error) {
 	// Open the JSON file
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -57,19 +57,19 @@ func parseArtifacts(filePath string) ([]Artifact, error) {
 	return result, nil
 }
 
-func moveArtifacts(artifacts []Artifact) error {
+func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 	for _, artifact := range artifacts {
 		if artifact.Type == "Metadata" || artifact.Type == "Checksum" || artifact.Type == "Archive" {
 			continue
 		}
-		outDir := filepath.Join("output", artifact.Extra.ID)
+		outDir := filepath.Join(output, artifact.Extra.ID)
 		err := MkdirAll(outDir)
 		if err != nil {
 			return fmt.Errorf("error creating dir: %v", err)
 		}
 		outFile := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, artifact.Extra.Ext)
 		outPath := filepath.Join(outDir, outFile)
-		err = copyFile(artifact.Path, outPath)
+		err = CopyFile(filepath.Join(source, artifact.Path), outPath)
 		if err != nil {
 			return fmt.Errorf("error copying files: %v", err)
 		}

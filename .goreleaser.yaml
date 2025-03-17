@@ -2,17 +2,58 @@ version: 2
 
 env:
   - APP_NAME=goa'uld
-  - COMMON__ACCESS_TOKEN=
+  - COMMON__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
 
-  - SERVER__AGE_PRIVKEY=
   - AGENT__AGE_PUBKEY=age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p
 
-  - HTTP_DOMAIN=www.example.com
-  - TLS_DOMAIN=app.example.com
-  - SSHD_PORT=2222
-  - HTTP_PORT=80
-  - HTTPS_PORT=443
-  - AGENT__RSSH_ORDER=
+
+  - HTTP_DOMAIN={{ .Env.HTTP_DOMAIN }}
+  - TLS_DOMAIN={{ .Env.TLS_DOMAIN }}
+  - SSHD_PORT={{ .Env.SSHD_PORT }}
+  - HTTP_PORT={{ .Env.HTTP_PORT }}
+  - HTTPS_PORT={{ .Env.HTTPS_PORT }}
+
+  - SERVER__AGE_PRIVKEY={{ .Env.SERVER__AGE_PRIVKEY }}
+  - SERVER__HTTP_DOMAIN={{ .Env.SERVER__HTTP_DOMAIN }}
+  - SERVER__HTTPS_DOMAIN={{ .Env.SERVER__HTTPS_DOMAIN }}
+  - SERVER__TLS_DOMAIN={{ .Env.SERVER__TLS_DOMAIN }}
+  - SERVER__VERBOSE={{ .Env.SERVER__VERBOSE }}
+  - SERVER__TLS={{ .Env.SERVER__TLS }}
+  - SERVER__NO_DB={{ .Env.SERVER__NO_DB }}
+  - SERVER__DB_FILE_NAME={{ .Env.SERVER__DB_FILE_NAME }}
+  - SERVER__ALLOWED_IPS={{ .Env.SERVER__ALLOWED_IPS }}
+  - SERVER__ADMIN_TOKEN={{ .Env.SERVER__ADMIN_TOKEN }}
+  - SERVER__BINARIES_BASIC_AUTH={{ .Env.SERVER__BINARIES_BASIC_AUTH }}
+
+  - AGENT__SERVER={{ .Env.AGENT__SERVER }}
+  - AGENT__SSH_SERVER={{ .Env.AGENT__SSH_SERVER }}
+  - AGENT__TLS_SERVER={{ .Env.AGENT__TLS_SERVER }}
+  - AGENT__AGE_PUBKEY={{ .Env.AGENT__AGE_PUBKEY }}
+  - AGENT__PASSWORD={{ .Env.AGENT__PASSWORD }}
+  - AGENT__NAME={{ .Env.AGENT__NAME }}
+  - AGENT__SSHD={{ .Env.AGENT__SSHD }}
+  - AGENT__SOCKS={{ .Env.AGENT__SOCKS }}
+  - AGENT__SOCKS_PROXY={{ .Env.AGENT__SOCKS_PROXY }}
+  - AGENT__RSSH_PORT={{ .Env.AGENT__RSSH_PORT }}
+  - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
+  - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
+  - AGENT__VERBOSE={{ .Env.AGENT__VERBOSE }}
+  - AGENT__RSSH_ORDER={{ .Env.AGENT__RSSH_ORDER }}
+  - AGENT__RPF={{ .Env.AGENT__RPF }}
+  - AGENT__MAX_RETRIES={{ .Env.AGENT__MAX_RETRIES }}
+
+  - CLIENT__SERVER={{ .Env.CLIENT__SERVER }}
+  - CLIENT__SSH_SERVER={{ .Env.CLIENT__SSH_SERVER }}
+  - CLIENT__ACCESS_TOKEN={{ .Env.CLIENT__ACCESS_TOKEN }}
+  - CLIENT__VERBOSITY={{ .Env.CLIENT__VERBOSITY }}
+  - CLIENT__INSECURE={{ .Env.CLIENT__INSECURE }}
+  - CLIENT__EXEC_SSH={{ .Env.CLIENT__EXEC_SSH }}
+  - CLIENT__EXEC_SOCKS={{ .Env.CLIENT__EXEC_SOCKS }}
+  - CLIENT__EXEC_PRINT={{ .Env.CLIENT__EXEC_PRINT }}
+  - CLIENT__EXEC_PROXY={{ .Env.CLIENT__EXEC_PROXY }}
+  - CLIENT__LOCAL_SOCKS_PORT={{ .Env.CLIENT__LOCAL_SOCKS_PORT }}
+  - CLIENT__LOCAL_SSHD_PORT={{ .Env.CLIENT__LOCAL_SSHD_PORT }}
+
 
 before:
   hooks:
@@ -71,7 +112,7 @@ builds:
       - "-s -w -buildid="
   - id: "agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
-    binary: goauld_agent
+    binary: goauld
     main: ./agent
     env:
       - CGO_ENABLED=0
@@ -122,7 +163,7 @@ builds:
 
   - id: "client"
     mod_timestamp: "{{ .CommitTimestamp }}"
-    binary: goauld_client
+    binary: tealc
     main: ./client
     env:
       - CGO_ENABLED=0

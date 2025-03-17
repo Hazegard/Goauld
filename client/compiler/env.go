@@ -1,48 +1,10 @@
-package main
+package compiler
 
 import (
 	"bufio"
-	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
-	"time"
-
-	"Goauld/common/crypto"
 )
-
-func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
-	newEnv := filepath.Join("output", fmt.Sprintf("%s.%s", envFile, time.Now().Format("2006-01-02T15:04:05")))
-	err := copyFile(envFile, newEnv)
-	if err != nil {
-		return "", err
-	}
-
-	bytes, err := os.ReadFile(newEnv)
-	if err != nil {
-		return "", err
-	}
-	content := string(bytes)
-
-	if cfg.GenAgeKey {
-		pubKey, privKey, err := genAgeKey()
-		if err != nil {
-			return "", err
-		}
-		content = replaceInFile(content, "SERVER__AGE_PRIVKEY", fmt.Sprintf("SERVER__AGE_PRIVKEY=%s", pubKey))
-		content = replaceInFile(content, "AGENT__AGE_PUBKEY", fmt.Sprintf("AGENT__AGE_PUBKEY=%s", privKey))
-	}
-
-	if cfg.GenAccessToken {
-		newtoken, err := crypto.GeneratePassword(42)
-		if err != nil {
-			return "", err
-		}
-		content = replaceInFile(content, "SERVER__ACCESS_TOKEN", fmt.Sprintf("SERVER__ACCESS_TOKEN=%s", newtoken))
-	}
-
-	return envFile, os.WriteFile(newEnv, []byte(content), 0o700)
-}
 
 // ParseEnvFile reads an .env file and returns a slice of strings in "KEY=VALUE" format.
 func ParseEnvFile(filepath string) ([]string, error) {

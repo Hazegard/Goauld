@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Goauld/client/compiler"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -72,11 +73,12 @@ type ClientConfig struct {
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 
-	Ssh   Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
-	Socks Ssh      `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
-	Scp   Scp      `cmd:"" name:"scp"  help:"Transfer files using SCP from/to the agent."`
-	Tui   Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
-	Pass  Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
+	Ssh      Ssh               `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
+	Socks    Ssh               `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
+	Scp      Scp               `cmd:"" name:"scp"  help:"Transfer files using SCP from/to the agent."`
+	Tui      Tui               `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
+	Pass     Password          `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
+	Compiler compiler.Compiler `cmd:"" name:"compiler" help:"Compiler used to use the compiler."`
 }
 
 func (c *ClientConfig) GetSshdHost() string {

@@ -1,4 +1,4 @@
-package main
+package compiler
 
 import (
 	"io"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func replaceInFile(content string, pattern string, new string) string {
+func ReplaceInFile(content string, pattern string, new string) string {
 	lines := strings.Split(content, "\n")
 	newLines := []string{}
 	for _, line := range lines {
@@ -19,7 +19,7 @@ func replaceInFile(content string, pattern string, new string) string {
 	return strings.Join(newLines, "\n")
 }
 
-func copyFile(src, dst string) error {
+func CopyFile(src, dst string) error {
 	// Open the source file for reading.
 	srcStat, err := os.Stat(src)
 	if err != nil {
