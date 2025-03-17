@@ -122,7 +122,7 @@ type AgentConfig struct {
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
 
-	Background       bool `name:"background" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
+	Background       bool `name:"background" short:"B" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
 	HiddenBackground bool `name:"hidden-background" hidden:"" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
 }
 
