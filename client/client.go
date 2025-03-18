@@ -23,6 +23,7 @@ func main() {
 		if err != nil {
 			log.Error().Err(err).Msg("error running compiler")
 		}
+		return
 	}
 	kong, cfg, err := InitConfig()
 	if err != nil {
