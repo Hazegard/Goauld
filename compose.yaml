@@ -11,4 +11,4 @@ services:
       - "X.X.X.X:2222:2222"
     volumes:
       - ./Goauld.db:/app/Goauld.db
-      - ./server_config.yaml:/app/server_config.yaml
+      - ./goauld_server.yaml:/app/goauld_server.yaml

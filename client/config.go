@@ -147,11 +147,11 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 		return nil, cfgTmp, err
 	}
 	configSearchDir := []string{
-		filepath.Join(dir, "client_config.yaml"),
+		filepath.Join(dir, fmt.Sprintf("%s.yaml", APP_NAME)),
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(APP_NAME), "client_config.yaml")
+		homeConfig := filepath.Join(home, ".config", fmt.Sprintf("%s.yaml", APP_NAME))
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{

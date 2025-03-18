@@ -86,8 +86,8 @@ var (
 
 var (
 	description = "Agent used to initiate the connection to the agent." +
-		"\nThe agent will try to load configuration from " + filepath.Join("$HOME", ".config", strings.ToLower(common.AppName()), "agent_config.yaml") + "\n" +
-		"\nAs well as agent_config.yaml on the current directory."
+		"\nThe agent will try to load configuration from " + filepath.Join("$HOME", ".config", "goauld_agent.yaml") + "\n" +
+		"\nAs well as goauld_agent.yaml on the current directory."
 )
 
 type AgentConfig struct {
@@ -102,7 +102,7 @@ type AgentConfig struct {
 	Proxy               *url.URL `default:"${_proxy}" name:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	NoProxy             bool     `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy."`
 
-	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"THe control HTTP server  to connect to."`
+	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server  to connect to."`
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
 	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
 
@@ -134,11 +134,11 @@ func parse() (*kong.Context, *AgentConfig, error) {
 		return nil, cfgTmp, err
 	}
 	configSearchDir := []string{
-		filepath.Join(dir, "agent_config.yaml"),
+		filepath.Join(dir, "goauld_agent.yaml"),
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "agent_config.yaml")
+		homeConfig := filepath.Join(home, ".config", "goauld_agent.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{

@@ -81,8 +81,8 @@ var (
 
 var (
 	description = "Server used to listen and manage the agent connections." +
-		"\nThe server will try to load configuration from " + filepath.Join("$HOME", ".config", strings.ToLower(common.AppName()), "server_config.yaml") +
-		"\nAs well as server_config.yaml on the current directory."
+		"\nThe server will try to load configuration from " + filepath.Join("$HOME", ".config", "goauld_server.yaml") +
+		"\nAs well as goauld_server.yaml on the current directory."
 )
 
 type ServerConfig struct {
@@ -122,11 +122,11 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 		return nil, cfgTmp, err
 	}
 	configSearchDir := []string{
-		filepath.Join(dir, "server_config.yaml"),
+		filepath.Join(dir, "goauld_server.yaml"),
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "server_config.yaml")
+		homeConfig := filepath.Join(home, ".config", "goauld_server.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
