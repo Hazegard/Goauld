@@ -1,22 +1,22 @@
 package main
 
 import (
-	"Goauld/client/compiler"
-	"encoding/base64"
+	"Goauld/common/cli"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"Goauld/client/api"
+	"Goauld/client/common"
 	"Goauld/client/tui"
-	"Goauld/common"
-	"Goauld/common/cli"
 	"Goauld/common/log"
 	"Goauld/common/utils"
 
 	"github.com/alecthomas/kong"
 )
+
+const APP_NAME = "tealc"
 
 var (
 	_server       = "http://localhost"
@@ -56,13 +56,6 @@ var (
 	}
 )
 
-var (
-	description = "Client used to connect and manage the server ahd the connection to the agent." +
-		"\nThe client will try to load configuration from " + filepath.Join("$HOME", ".config", strings.ToLower(common.AppName()), "client_config.yaml") +
-		"\nAs well as client_config.yaml on the current directory."
-	b64banner = `ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLUAlJSogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgQEBAQEAlICAgICAgICAgICNAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgKkBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICBAQEAgICAgICAgICArKiAgICAgICAgICAgCiAgICAgICAgQCAgICAgICAgK0BAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI0BAICAgICAgICAgQCAgICAgICAgICAKICAgICAgQEAgICAgICAgIEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQCAgICAgICAgQEAgICAgICAgIAogICAgIEBAICAgICAgICBAQEAgICAgICAgICAgICAgICAgICAgICAgICAqQEBAQEBAKyAgICAgIEBAQCAgICAgICAgQEAgICAgICAgCiAgICBAQCAgICAgICAgIEBAICAgICBAQEBAQEBAQEAgICAgICAgICBAQEBAQEAjQEBAQEA9ICAgIEBAICAgICAgICAgQEAgICAgICAKICAgQEAgICAgICAgICBAQCAgICBAQEAgICAgQEBAQEBAICAgICAgQEBAQEAgICAgIEBAQEBAICAgKkBAICAgICAgICAgQEAgICAgIAogICBAQCAgICAgICAgIEBAICAgQEAgICAgICAqQEBAQEAtICAgICBAQEBAICAgICAgIEBAQEBAICAgQEAgICAgICAgICBAQEAgICAgCiAgQEBAICAgICAgICAgQEAgIEBAICAgICAgIEBAQEBAQCAgICAgIEBAQEBAICAgICAgICAqQCAgICBAQCAgICAgICAgIEBAQCAgICAKICBAQEAgICAgICAgICBAQCAgIEBAJSAgICAgQEBAQEBAICAgICAgQEBAQEBAICAgICAgICAgICAgIEBAICAgICAgICAgQEBAKiAgIAogIEBAQCAgICAgICAgIEBAICAgICNAQEBAICBAQEBAQEAgICAgICBAQEBAQEAgICAgICAgICAgICAgQEAgICAgICAgICBAQEBAICAgCiAgQEBAQCAgICAgICAgIEBAICAgICAgICAgIEBAQEBAQCAgICAgIEBAQEBAQEAgICAgICAgICAgIEBAICAgICAgICAgJUBAQCUgICAKICBAQEBAICAgICAgICAgQEAlICAgICAgICAgQEBAQEBAQEBAQEBAQEBAQEBAICAgICAgICAgICBAQEAgICAgICAgICBAQEBAICAgIAogICBAQEBAICAgICAgICAgQEBAICAgICAgICAgQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgQEBAICAgICAgICAgQEBAQEAgICAgCiAgIEBAQEBAICAgICAgICAgIEBAICAgICAgICAgIEBAQEBAQEBAQEBAICAgICAgICAgICAgIEBAICAgICAgICAgIEBAQEBAICAgICAKICAgIEBAQEBAQCAgICAgICAgICBAQCogICAgICAgICAgICAgICAgICAgICAgICAgICAgJUBAICAgICAgICAgIEBAQEBAQCAgICAgIAogICAgIEBAQEBAQCUgICAgICAgICAgQEBAQCAgICAgICAgICAgICAgICAgICAgICBAQEArICAgICAgICAgIEBAQEBAQEAgICAgICAgCiAgICAgIEBAQEBAQEBAICAgICAgICAgICAgQEBAQEAgICAgICAgICAgICBAQEBAJSAgICAgICAgICAgIEBAQEBAQEBAICAgICAgICAKICAgICAgICBAQEBAQEBAQEAgICAgICAgICAgICAgICAgICBAJSVAICAgICAgICAgICAgICAgICAgQEBAQEBAQEBAICAgICAgICAgIAogICAgICAgICAgQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAICAgICAgICAgICAgCiAgICAgICAgICAgIEBAQEBAQEBAQEBAQEAjICAgICAgICAgICAgICAgICAgICAgQEBAQEBAQEBAQEBAQEBAICAgICAgICAgICAgICAKICAgICAgICAgICAgICAlQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICA9QEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLSVAQEBAQEBAQEBAQD0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA==`
-)
-
 type ClientConfig struct {
 	Server      string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
 	AccessToken string `default:"${_access_token}" name:"access-token" help:"Access token required to access the /manage/ endpoint."`
@@ -73,14 +66,13 @@ type ClientConfig struct {
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
+	ConfigFile     string `name:"config-file" optional:"" short:"c" help:"Configuration file to use."`
 
-	Ssh      Ssh               `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
-	Socks    Ssh               `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
-	Scp      Scp               `cmd:"" name:"scp"  help:"Transfer files using SCP from/to the agent."`
-	Tui      Tui               `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
-	Pass     Password          `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
-	Compiler compiler.Compiler `cmd:"" name:"compiler" help:"Compiler used to use the compiler."`
+	Ssh   Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
+	Socks Ssh      `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
+	Scp   Scp      `cmd:"" name:"scp"  help:"Transfer files using SCP from/to the agent."`
+	Tui   Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
+	Pass  Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
 }
 
 func (c *ClientConfig) GetSshdHost() string {
@@ -156,18 +148,19 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(common.AppName()), "client_config.yaml")
+		homeConfig := filepath.Join(home, ".config", strings.ToLower(APP_NAME), "client_config.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
-		kong.Name(strings.ToLower(common.AppName())),
-		kong.Description(description),
+		kong.Name(strings.ToLower(APP_NAME)),
+		kong.Description(common.Description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
-		kong.DefaultEnvars(strings.ToUpper(common.AppName())),
+		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
 		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
 			if ctx.Error == nil {
-				fmt.Println(GetBanner())
+				fmt.Println(common.GetBanner())
+				fmt.Println()
 			}
 			return kong.DefaultHelpPrinter(options, ctx)
 		}),
@@ -182,12 +175,4 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 
 	log.SetLogLevel(cfg.Verbose)
 	return app, cfg, nil
-}
-
-func GetBanner() string {
-	res, err := base64.StdEncoding.DecodeString(b64banner)
-	if err != nil {
-		return ""
-	}
-	return string(res)
 }

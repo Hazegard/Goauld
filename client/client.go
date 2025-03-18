@@ -1,13 +1,29 @@
 package main
 
 import (
+	"Goauld/client/common"
+	"Goauld/client/compiler"
 	"fmt"
+	"os"
 
 	"Goauld/client/api"
 	"Goauld/common/log"
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "compile" {
+		os.Args = os.Args[1:]
+		kong, cfg, err := compiler.InitCompilerConfig(APP_NAME)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		kong.Bind(*cfg)
+		err = kong.Run(cfg)
+		if err != nil {
+			log.Error().Err(err).Msg("error running compiler")
+		}
+	}
 	kong, cfg, err := InitConfig()
 	if err != nil {
 		fmt.Println(err)
@@ -27,6 +43,10 @@ func main() {
 
 	err = kong.Run(httpclient, cfg)
 	if err != nil {
-		log.Error().Err(err).Msg("error running ui")
+		mode := ""
+		if len(os.Args) > 1 {
+			mode = os.Args[1]
+		}
+		log.Error().Err(err).Str("Mode", mode).Msg("error running " + common.APP_NAME)
 	}
 }

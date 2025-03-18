@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_agePubKey = "age1fz7j9zck3qmafdkynu3ldvkjdrsstanhz8py8scx07hw7vja7aysuccrtn"
+	_agePubKey = "age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p"
 
 	_localSshPassword = ""
 	_name             = "user@hostname"

@@ -2,10 +2,14 @@ package compiler
 
 import (
 	"Goauld"
-	"Goauld/common"
+	"Goauld/client/common"
+	goauldcommon "Goauld/common"
+	"Goauld/common/cli"
 	"Goauld/common/log"
+	"Goauld/common/utils"
 	"embed"
 	"fmt"
+	"github.com/alecthomas/kong"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -19,11 +23,11 @@ type Compiler struct {
 	Source  string `default:"" help:"Source goa'uld directory."`
 	EnvFile string `default:"" help:"File containing environment variables."`
 	Output  string `default:"output" help:"File containing compiled compiled sources."`
+	Verbose int    `default:"0" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 }
 
 const (
-	artifactsFile = "./dist/artifacts.json"
-	EnvFile       = ".env.build"
+	EnvFile = ".env.build"
 )
 
 var requiredCommands = []string{
@@ -37,7 +41,7 @@ func (c *Compiler) Run() error {
 		if err != nil {
 			return fmt.Errorf("could not create temp dir: %v", err)
 		}
-		// defer os.RemoveAll(tempDir)
+		defer os.RemoveAll(tempDir)
 		c.Source = tempDir
 		err = drop(tempDir, Sources.Sources)
 		if err != nil {
@@ -52,12 +56,46 @@ func (c *Compiler) Run() error {
 	return nil
 }
 
+func InitCompilerConfig(appName string) (*kong.Context, *Compiler, error) {
+	cfg := &Compiler{}
+	dir, err := utils.GetCurrentDirectory()
+	if err != nil {
+		return nil, cfg, err
+	}
+	configSearchDir := []string{
+		filepath.Join(dir, "client_config.yaml"),
+	}
+	home, err := os.UserHomeDir()
+	if err == nil {
+		homeConfig := filepath.Join(home, ".config", strings.ToLower(appName), "client_config.yaml")
+		configSearchDir = append(configSearchDir, homeConfig)
+	}
+	kongOptions := []kong.Option{
+		kong.Name(strings.ToLower(appName)),
+		kong.Description(common.Description),
+		kong.UsageOnError(),
+		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
+		kong.DefaultEnvars(strings.ToUpper(appName)),
+		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
+			if ctx.Error == nil {
+				fmt.Println(common.GetBanner())
+				fmt.Println()
+			}
+			return kong.DefaultHelpPrinter(options, ctx)
+		}),
+	}
+	app := kong.Parse(cfg, kongOptions...)
+
+	log.SetLogLevel(cfg.Verbose)
+	return app, cfg, nil
+}
+
 func run(config Compiler) error {
 	log.Info().Msgf("compiling %s", config.Id)
 	missingCommands := CheckCommands(requiredCommands)
 	if len(missingCommands) > 0 {
-		log.Error().Err(fmt.Errorf("commands required to build %s", common.App_Name)).Str("commands", strings.Join(missingCommands, "\n")).Msg("Missing required commands")
-		return fmt.Errorf("commands required to build %s", common.App_Name)
+		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.App_Name)).Str("commands", strings.Join(missingCommands, "\n")).Msg("Missing required commands")
+		return fmt.Errorf("commands required to build %s", goauldcommon.App_Name)
 	}
 
 	err := Goreleaser(config)
@@ -77,15 +115,6 @@ func run(config Compiler) error {
 		log.Error().Err(err).Msg("error updating artifacts")
 		return fmt.Errorf("error updating artifacts: %v", err)
 	}
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
-	fmt.Println(config.EnvFile)
 	err = CopyFile(config.EnvFile, filepath.Join(config.Output, EnvFile))
 	if err != nil {
 		log.Error().Err(err).Msg("error copying env file")
