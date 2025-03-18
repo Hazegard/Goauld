@@ -107,6 +107,7 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 
 // GetAgentById fetch the agent associated to the id
 func (api *API) GetAgentById(id string) (types.Agent, error) {
+	id = url.PathEscape(id)
 	res, err := api.get("/manage/agent/" + id)
 	if err != nil {
 		return types.Agent{}, errors.New("Error while requesting agent by id")
@@ -130,6 +131,7 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 
 // GetAgentByName fetch the agent associated to the name
 func (api *API) GetAgentByName(name string) (types.Agent, error) {
+	name = url.PathEscape(name)
 	res, err := api.get("/manage/agent/by_name/" + name)
 	if err != nil {
 		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %v", err)
@@ -153,6 +155,7 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 
 // KillAgent kills the agent
 func (api *API) KillAgent(id string, doExit bool) error {
+	id = url.PathEscape(id)
 	u := fmt.Sprintf("/manage/agent/%s/kill", id)
 	body := socket_io.ExitData{Kill: doExit}
 	b, err := json.Marshal(body)
@@ -171,6 +174,7 @@ func (api *API) KillAgent(id string, doExit bool) error {
 
 // DeleteAgent kills the agent
 func (api *API) DeleteAgent(id string) error {
+	id = url.PathEscape(id)
 	res, err := api.delete("/manage/agent/" + id)
 	if err != nil {
 		return err

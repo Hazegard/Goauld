@@ -83,15 +83,28 @@ func InitAgent() (*kong.Context, error, []error) {
 
 	// Generate the agent name if not provided
 	if cfg.Name == _name {
+		name := ""
 		userName, err := user.Current()
 		if err != nil {
 			return nil, fmt.Errorf("error getting current user: %v", err), nil
 		}
+		if strings.Contains(userName.Username, "\\") {
+			parts := strings.Split(userName.Username, "\\")
+			if parts[1] != "" {
+				name = parts[1]
+			} else {
+				name = strings.ReplaceAll(userName.Username, "\\", "_")
+			}
+		} else {
+			name = userName.Username
+		}
+		fmt.Println(userName.Name)
+
 		hostname, err := os.Hostname()
 		if err != nil {
 			return nil, fmt.Errorf("error getting hostname: %v", err), nil
 		}
-		cfg.Name = fmt.Sprintf("%s@%s", userName.Username, hostname)
+		cfg.Name = fmt.Sprintf("%s@%s", name, hostname)
 	}
 
 	host, err := os.Hostname()

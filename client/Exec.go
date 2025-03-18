@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"Goauld/client/api"
+	"Goauld/client/common"
 	"Goauld/client/types"
-	"Goauld/common"
 )
 
 type Ssh struct {
@@ -210,7 +210,7 @@ func buildInnerSshOptions(cfg ClientConfig) []string {
 // prefixEnv adds the application name to the provided value and returns it
 // as an environment variable
 func prefixEnv(name string, value string) string {
-	return fmt.Sprintf("%s_%s=%s", strings.ToUpper(common.AppName()), strings.ToUpper(name), value)
+	return fmt.Sprintf("%s_%s=%s", strings.ToUpper(common.APP_NAME), strings.ToUpper(name), value)
 }
 
 // getPath returns the path of the binary currently being executed
