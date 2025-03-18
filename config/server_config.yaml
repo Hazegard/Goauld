@@ -45,7 +45,7 @@ access-token: TODO_TOKEN
 # Access token required to access the /manage/ endpoint.
 admin-token: TODO_TOKEN
 
-# HTTP Basic Auth used to access the binaries endpoint.
+# HTTP Basic Auth used to access the binaries' endpoint.
 binaries-basic-auth: username:password
 
 # Path where are stored binaries on the filesystem.

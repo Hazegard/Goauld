@@ -24,6 +24,7 @@ type Compiler struct {
 	EnvFile string `default:"" help:"File containing environment variables."`
 	Output  string `default:"output" help:"File containing compiled compiled sources."`
 	Verbose int    `default:"0" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+	DropEnv bool   `default:"false" name:"drop-env" help:"Show then environment files required to compile the agent."`
 }
 
 const (
@@ -35,6 +36,13 @@ var requiredCommands = []string{
 }
 
 func (c *Compiler) Run() error {
+	if c.DropEnv {
+		err := HandleDropEnv(Sources.Sources)
+		if err != nil {
+			return fmt.Errorf("error reading embed .env file: %v", err)
+		}
+		return nil
+	}
 	log.Info().Msg("Compiler started")
 	if c.Source == "" {
 		tempDir, err := os.MkdirTemp("", "goauld_")
@@ -53,6 +61,15 @@ func (c *Compiler) Run() error {
 		return fmt.Errorf("compilation failed: %v", err)
 	}
 
+	return nil
+}
+
+func HandleDropEnv(source embed.FS) error {
+	fileContent, err := source.ReadFile(".env.build.tmpl")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(fileContent))
 	return nil
 }
 
