@@ -391,5 +391,6 @@ func (a *Agent) GenerateYAMLConfig() (string, error) {
 	c := a.cfg
 	c.LocalSshPassword = ""
 	c.AgePubKey = ""
+	c.GenerateConfig = false
 	return cli.GenerateYAMLWithComments(*c)
 }

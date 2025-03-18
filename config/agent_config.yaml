@@ -24,7 +24,7 @@ proxy:
 # Don't use the system proxy.
 no-proxy: false
 
-# THe control HTTP server  to connect to.
+# The control HTTP server to connect to.
 server: www.example.com
 
 # The SSH server to connect to when using direct SSH connections.
@@ -65,8 +65,14 @@ rpf: []
 max-retries: 0
 
 # Generate configuration file based on the current options.
-generateconfig: true
+generate-config: false
 
 # Configuration file to use.
 config-file: ""
+
+# Start the agent in the background.
+background: false
+
+# Start the agent in the background.
+hidden-background: false
 

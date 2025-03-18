@@ -49,7 +49,7 @@ var (
 	_background = "false"
 
 	defaultValues = kong.Vars{
-		"_age_pubkey": _agePubKey,
+		"_agePubKey": _agePubKey,
 
 		"_localSshPassword": _localSshPassword,
 		"_name":             _name,
@@ -57,14 +57,14 @@ var (
 		"_sshd":                   _sshd,
 		"_socks":                  _socks,
 		"_socks_use_system_proxy": _socks_use_system_proxy,
-		"_proxy":                  _proxy,
-		"_no_proxy":               _no_proxy,
+
+		"_proxy":    _proxy,
+		"_no_proxy": _no_proxy,
 
 		"_server":     _server,
 		"_ssh_server": _ssh_server,
 		"_tls_server": _tls_server,
 
-		// "_sshd_port":  _sshd_port,
 		"_rssh_port":  _rssh_port,
 		"_socks_port": _socks_port,
 
@@ -91,7 +91,7 @@ var (
 )
 
 type AgentConfig struct {
-	AgePubKey string `default:"${_age_pubkey}" help:"Age public key associated to the server. The provided public key should match the server public key" name:"age-pubkey" short:"A"`
+	AgePubKey string `default:"${_agePubKey}" help:"Age public key associated to the server. The provided public key should match the server public key" name:"age-pubkey" short:"A"`
 
 	LocalSshPassword string `default:"${_localSshPassword}" short:"p" name:"password" optional:"" help:"SSH password to access the agent.\nIf no password is provided, a random password is automatically generated."`
 	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
@@ -102,13 +102,13 @@ type AgentConfig struct {
 	Proxy               *url.URL `default:"${_proxy}" name:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	NoProxy             bool     `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy."`
 
-	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server  to connect to."`
+	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server to connect to."`
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
 	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
 
 	// SshdAddr  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
 	RsshPort  int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.\n By default, the port is 0 meaning the port will be random on the server."`
-	SocksPort int `default:"${_rssh_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
+	SocksPort int `default:"${_socks_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
 
 	KeepAlive int `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
 	Verbose   int `default:"${_verbosity}" help:"Verbosity of the logs. Repeat -v to increase" name:"verbose" short:"v" type:"counter"`
@@ -120,7 +120,7 @@ type AgentConfig struct {
 	MaxRetries int `default:"${_max_retries}" help:"Max retries connection attempts before giving up" name:"max-retries" short:"M"`
 
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
+	ConfigFile     string `default:"${_config_file}" name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 
 	Background       bool `name:"background" short:"B" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
 	HiddenBackground bool `name:"hidden-background" hidden:"" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`

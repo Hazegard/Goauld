@@ -7,14 +7,14 @@ http-domain: www.example.com
 # Domain used to serve raw TLS content (SSH over TLS).
 tls-domain: app.example.com
 
-# HTTP port to bind to, 0 => Random.
-http-port: :80
+# HTTP address to bind to, port 0 => Random.
+http-listen-addr: :80
 
-# HTTPS port to bind to, 0 => Random.
-https-port: :443
+# HTTPS address to bind to, port 0 => Random.
+https-listen-addr: :443
 
-# Remote port to bind to, 0 => Random.
-ssh-port: :2222
+# Remote address to bind to, port 0 => Random.
+ssh-listen-addr: :2222
 
 # Verbosity. Repeat to increase
 verbose: 0
@@ -45,14 +45,14 @@ access-token: TODO_TOKEN
 # Access token required to access the /manage/ endpoint.
 admin-token: TODO_TOKEN
 
-# HTTP Basic Auth used to access the binaries' endpoint.
+# HTTP Basic Auth used to access the binaries endpoint.
 binaries-basic-auth: username:password
 
 # Path where are stored binaries on the filesystem.
 binaries-path-location: ./binaries
 
 # Generate configuration file based on the current options.
-generateconfig: true
+generate-config: false
 
 # Configuration file to use.
 config-file: ""

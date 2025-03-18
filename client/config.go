@@ -73,7 +73,7 @@ type ClientConfig struct {
 	Scp     Scp      `cmd:"" name:"scp"  help:"Transfer files using SCP from/to the agent."`
 	Tui     Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
 	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
-	Compile Compiler `cmd:"" name:"compile" help:"Compile a the agent."`
+	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
 }
 
 type Compiler struct{}

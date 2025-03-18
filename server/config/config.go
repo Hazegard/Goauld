@@ -39,7 +39,10 @@ var (
 	_sshd_listen_addr  = ":2222"
 
 	_verbosity = "0"
-	_tls       = "true"
+
+	_tls      = "true"
+	_tls_cert = ""
+	_tls_key  = ""
 
 	_no_db   = "false"
 	_db_name = common.AppName() + ".db"
@@ -52,7 +55,9 @@ var (
 	_binaries_path      = "./binaries"
 
 	_generate_config = "false"
-	defaultValues    = kong.Vars{
+	_config_file     = ""
+
+	defaultValues = kong.Vars{
 		"_age_privKey": _age_privKey,
 
 		"_http_domain": _http_domain,
@@ -63,7 +68,10 @@ var (
 		"_sshd_listen_addr":  _sshd_listen_addr,
 
 		"_verbosity": _verbosity,
-		"_tls":       _tls,
+
+		"_tls":      _tls,
+		"_tls_cert": _tls_cert,
+		"_tls_key":  _tls_key,
 
 		"_no_db":   _no_db,
 		"_db_name": _db_name,
@@ -76,6 +84,7 @@ var (
 		"_binaries_path":      _binaries_path,
 
 		"_generate_config": _generate_config,
+		"_config_file":     _config_file,
 	}
 )
 
@@ -91,15 +100,16 @@ type ServerConfig struct {
 	HttpDomain string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
 	TlsDomain  string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
 
-	HttpAddr  string `default:"${_http_listen_addr}"  name:"http-port" optional:"" help:"HTTP port to bind to, 0 => Random."`
-	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-port" optional:"" help:"HTTPS port to bind to, 0 => Random."`
-	SshdAddr  string `default:"${_sshd_listen_addr}"  name:"ssh-port" optional:"" help:"Remote port to bind to, 0 => Random."`
+	HttpAddr  string `default:"${_http_listen_addr}"  name:"http-listen-addr" optional:"" help:"HTTP address to bind to, port 0 => Random."`
+	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-listen-addr" optional:"" help:"HTTPS address to bind to, port 0 => Random."`
+	SshdAddr  string `default:"${_sshd_listen_addr}"  name:"ssh-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
-	Tls        bool   `default:"${_tls}" negatable:"" name:"tls" help:"Enable TLS."`
-	TlsKey     string `help:"Path to TLS certificate key." name:"tls-key"`
-	TlsCert    string `help:"Path to TLS certificate." name:"tls-cert"`
+	Tls     bool   `default:"${_tls}" negatable:"" name:"tls" help:"Enable TLS."`
+	TlsKey  string `default:"${_tls_key}" help:"Path to TLS certificate key." name:"tls-key"`
+	TlsCert string `default:"${_tls_cert}" help:"Path to TLS certificate." name:"tls-cert"`
+
 	NoDB       bool   `default:"${_no_db}" negatable:"" name:"db" help:"Disable database usage."`
 	DbFileName string `default:"${_db_name}" name:"db-file-name" help:"Database filename to use."`
 
@@ -111,7 +121,7 @@ type ServerConfig struct {
 	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
 
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `name:"config-file" type:"existingfile" optionnal:"" short:"c" help:"Configuration file to use."`
+	ConfigFile     string `default:"${_config_file}" name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 }
 
 // InitServer initialize the application configuration
@@ -241,5 +251,6 @@ func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
 }
 
 func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
+	s.GenerateConfig = false
 	return cli.GenerateYAMLWithComments(*s)
 }

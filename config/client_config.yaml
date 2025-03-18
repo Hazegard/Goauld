@@ -14,7 +14,7 @@ verbose: 0
 insecure: false
 
 # Generate configuration file based on the current options.
-generateconfig: true
+generate-config: false
 
 # Configuration file to use.
 config-file: ""
@@ -74,4 +74,7 @@ pass:
     # Password to retrieve (OTP/Agent).
     type: ""
     args: []
+
+# Compile the agent.
+compile: {}
 
