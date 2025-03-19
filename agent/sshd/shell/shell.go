@@ -101,6 +101,48 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 		if err := cmd.Wait(); err != nil {
 			// return fmt.Errorf("error while waiting for command (%s): %s", c, err)
 		}
+	} else {
+		cmd := exec.Command(c[0], c[1:]...)
+		cmd.Stdout = s.Stderr()
+
+		go func() {
+			select {
+			case <-globalCtx.Done():
+			case <-s.Context().Done():
+			}
+
+			err := s.Close()
+			if err != nil {
+				log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing session")
+			}
+		}()
+
+		go func() {
+			_, err := io.Copy(io.MultiWriter(cmd.Stdout, cmd.Stderr), s)
+			if err != nil {
+				log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while copying pty to client")
+			}
+		}()
+
+		go func() {
+			if cmd.Stdin != nil {
+				_, err := io.Copy(s, cmd.Stdin)
+				if err != nil {
+					log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while copying input to pty")
+				}
+			}
+		}()
+		err := cmd.Start()
+		if err != nil {
+			log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while starting command")
+		}
+
+		// Wait until the session context is canceled.
+		err = cmd.Wait()
+		if err != nil {
+			log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing sesion")
+		}
+		log.Debug().Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("session closed")
 	}
 	return nil
 }
