@@ -35,16 +35,13 @@ var (
 	_ssh_ssh              = "true"
 	_ssh_print            = "false"
 	_ssh_proxy            = "false"
-	_ssh_ssh_args         = ""
 
 	_socks_socks            = "true"
 	_socks_local_socks_port = "1080"
 	_socks_ssh              = "false"
 	_socks_print            = "false"
 	_socks_proxy            = "false"
-	_socks_ssh_args         = ""
 
-	_scp_target      = ""
 	_scp_print       = "false"
 	_scp_source      = ""
 	_scp_destination = ""
@@ -78,14 +75,12 @@ var (
 		"_ssh_ssh":              _ssh_ssh,
 		"_ssh_print":            _ssh_print,
 		"_ssh_proxy":            _ssh_proxy,
-		"_ssh_ssh_args":         _ssh_ssh_args,
 
 		"_socks_socks":            _socks_socks,
 		"_socks_local_socks_port": _socks_local_socks_port,
 		"_socks_ssh":              _socks_ssh,
 		"_socks_print":            _socks_print,
 		"_socks_proxy":            _socks_proxy,
-		"_socks_ssh_args":         _socks_ssh_args,
 
 		"_scp_print":       _scp_print,
 		"_scp_source":      _scp_source,

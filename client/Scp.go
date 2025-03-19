@@ -13,7 +13,7 @@ type Scp struct {
 	Print       bool     `default:"${_scp_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
 	Destination string   `default:"${_scp_destination}" arg:"" name:"destination" help:"Destination to copy."`
-	ScpArgs     []string `default:"${_scp_args}" arg:"" passthrough:"" optional:""`
+	ScpArgs     []string `arg:"" passthrough:"" optional:""`
 }
 
 func (s *Scp) Run(api *api.API, cfg ClientConfig) error {

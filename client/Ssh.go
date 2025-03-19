@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,7 +20,7 @@ type Ssh struct {
 	Ssh            bool     `default:"${_ssh_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_ssh_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
-	SshArgs        []string `arg:"" default:"${_ssh_ssh_args}" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
+	SshArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
 }
 
 type Command struct {
@@ -86,6 +87,9 @@ func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
 
 // Execute start the ssh
 func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
+	if len(e.SshArgs) == 1 && e.SshArgs[0] == "" {
+		e.SshArgs = []string{}
+	}
 	agent, err := api.GetAgentByName(cfg.Ssh.Target)
 	if err != nil {
 		return err
@@ -108,7 +112,22 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 		return cmd.InlineEnv().Execute()
 	}
 
-	return cmd.Execute()
+	err = cmd.Execute()
+	if err != nil {
+		var exitError *exec.ExitError
+		ok := errors.As(err, &exitError)
+		if ok {
+			// Get the exit status
+			exitStatus := exitError.ExitCode()
+			if exitStatus == 255 {
+				return nil
+			}
+			return err
+		} else {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *Ssh) buildCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
@@ -143,8 +162,8 @@ func (e *Ssh) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath 
 	}
 	proxyCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.InlineEnv().String(), sep)
 	cmd.Args = append(cmd.Args, proxyCmd)
-	cmd.Args = append(cmd.Args, cfg.Ssh.SshArgs...)
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.Id))
+	cmd.Args = append(cmd.Args, cfg.Ssh.SshArgs...)
 	return cmd
 }
 
@@ -190,6 +209,7 @@ func buildAllSshOptions(cfg ClientConfig) []string {
 		"-oUserKnownHostsFile=/dev/null",
 		"-oPubkeyAuthentication=no",
 		"-oPreferredAuthentications=password",
+		"-oLogLevel=ERROR",
 	}
 
 	if cfg.Verbose > 0 {
