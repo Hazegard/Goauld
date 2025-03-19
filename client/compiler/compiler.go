@@ -73,7 +73,7 @@ func HandleDropEnv(source embed.FS) error {
 	return nil
 }
 
-func InitCompilerConfig(appName string) (*kong.Context, *Compiler, error) {
+func InitCompilerConfig(appName string, defaultValues kong.Vars) (*kong.Context, *Compiler, error) {
 	cfg := &Compiler{}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
@@ -100,6 +100,7 @@ func InitCompilerConfig(appName string) (*kong.Context, *Compiler, error) {
 			}
 			return kong.DefaultHelpPrinter(options, ctx)
 		}),
+		defaultValues,
 	}
 	app := kong.Parse(cfg, kongOptions...)
 

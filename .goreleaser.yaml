@@ -4,23 +4,19 @@ env:
   - APP_NAME=goa'uld
   - COMMON__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
 
-  - AGENT__AGE_PUBKEY=age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p
-
-
   - HTTP_DOMAIN={{ .Env.HTTP_DOMAIN }}
   - TLS_DOMAIN={{ .Env.TLS_DOMAIN }}
   - SSHD_PORT={{ .Env.SSHD_PORT }}
   - HTTP_PORT={{ .Env.HTTP_PORT }}
   - HTTPS_PORT={{ .Env.HTTPS_PORT }}
 
-  - SERVER__AGE_PRIVKEY={{ .Env.SERVER__AGE_PRIVKEY }}
 
   - SERVER__HTTP_DOMAIN={{ .Env.SERVER__HTTP_DOMAIN }}
   - SERVER__TLS_DOMAIN={{ .Env.SERVER__TLS_DOMAIN }}
 
-  - AGENT__HTTP_LISTEN_ADDR={{ .Env.AGENT__HTTP_LISTEN_ADDR }}
-  - AGENT__HTTPS_LISTEN_ADDR={{ .Env.AGENT__HTTPS_LISTEN_ADDR }}
-  - AGENT__SSH_LISTEN_ADDR={{ .Env.AGENT__SSH_LISTEN_ADDR }}
+  - SERVER__HTTP_LISTEN_ADDR={{ .Env.SERVER__HTTP_LISTEN_ADDR }}
+  - SERVER__HTTPS_LISTEN_ADDR={{ .Env.SERVER__HTTPS_LISTEN_ADDR }}
+  - SERVER__SSHD_LISTEN_ADDR={{ .Env.SERVER__SSHD_LISTEN_ADDR }}
 
   - SERVER__VERBOSE={{ .Env.SERVER__VERBOSE }}
 
@@ -32,7 +28,7 @@ env:
   - SERVER__DB_FILE_NAME={{ .Env.SERVER__DB_FILE_NAME }}
 
   - SERVER__ALLOWED_IPS={{ .Env.SERVER__ALLOWED_IPS }}
-  - SERVER__ACCESS_TOKEN={{ .Env.SERVER__ACCESS_TOKEN }}
+  - SERVER__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
   - SERVER__ADMIN_TOKEN={{ .Env.SERVER__ADMIN_TOKEN }}
 
   - SERVER__BINARIES_BASIC_AUTH={{ .Env.SERVER__BINARIES_BASIC_AUTH }}
@@ -42,12 +38,11 @@ env:
   - SERVER__CONFIG_FILE={{ .Env.SERVER__CONFIG_FILE }}
 
 
+  - AGENT__AGE_PUBKEY={{ .Env.AGENT__AGE_PUBKEY }}
 
   - AGENT__SERVER={{ .Env.AGENT__SERVER }}
   - AGENT__SSH_SERVER={{ .Env.AGENT__SSH_SERVER }}
   - AGENT__TLS_SERVER={{ .Env.AGENT__TLS_SERVER }}
-
-  - AGENT__AGE_PUBKEY={{ .Env.AGENT__AGE_PUBKEY }}
 
   - AGENT__PASSWORD={{ .Env.AGENT__PASSWORD }}
   - AGENT__NAME={{ .Env.AGENT__NAME }}
@@ -58,7 +53,6 @@ env:
 
   - AGENT__PROXY={{ .Env.AGENT__PROXY }}
   - AGENT__NO_PROXY={{ .Env.AGENT__NO_PROXY }}
-
 
   - AGENT__RSSH_PORT={{ .Env.AGENT__RSSH_PORT }}
   - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
@@ -82,20 +76,44 @@ env:
   - CLIENT__SERVER={{ .Env.CLIENT__SERVER }}
   - CLIENT__SSH_SERVER={{ .Env.CLIENT__SSH_SERVER }}
 
-  - CLIENT__ACCESS_TOKEN={{ .Env.CLIENT__ACCESS_TOKEN }}
+  - CLIENT__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
 
   - CLIENT__VERBOSE={{ .Env.CLIENT__VERBOSE }}
   - CLIENT__INSECURE={{ .Env.CLIENT__INSECURE }}
 
-  - CLIENT__EXEC_SSH={{ .Env.CLIENT__EXEC_SSH }}
+  - CLIENT__GENERATE_CONFIG={{ .Env.CLIENT__GENERATE_CONFIG }}
+  - CLIENT__CONFIG_FILE={{ .Env.CLIENT__CONFIG_FILE }}
 
+  - CLIENT__SSH_SOCKS={{ .Env.CLIENT__SSH_SOCKS }}
+  - CLIENT__SSH_SOCKS_PORT={{ .Env.CLIENT__SSH_SOCKS_PORT }}
+  - CLIENT__SSH_SSH={{ .Env.CLIENT__SSH_SSH }}
+  - CLIENT__SSH_PRINT={{ .Env.CLIENT__SSH_PRINT }}
+  - CLIENT__SSH_PROXY={{ .Env.CLIENT__SSH_PROXY }}
+  - CLIENT__SSH_ARGS={{ .Env.CLIENT__SSH_ARGS }}
 
+  - CLIENT__SOCKS_SOCKS={{ .Env.CLIENT__SOCKS_SOCKS }}
+  - CLIENT__SOCKS_SOCKS_PORT={{ .Env.CLIENT__SOCKS_SOCKS_PORT }}
+  - CLIENT__SOCKS_SSH={{ .Env.CLIENT__SOCKS_SSH }}
+  - CLIENT__SOCKS_PRINT={{ .Env.CLIENT__SOCKS_PRINT }}
+  - CLIENT__SOCKS_PROXY={{ .Env.CLIENT__SOCKS_PROXY }}
+  - CLIENT__SOCKS_ARGS={{ .Env.CLIENT__SOCKS_ARGS }}
 
-  - CLIENT__EXEC_SOCKS={{ .Env.CLIENT__EXEC_SOCKS }}
-  - CLIENT__EXEC_PRINT={{ .Env.CLIENT__EXEC_PRINT }}
-  - CLIENT__EXEC_PROXY={{ .Env.CLIENT__EXEC_PROXY }}
-  - CLIENT__LOCAL_SOCKS_PORT={{ .Env.CLIENT__LOCAL_SOCKS_PORT }}
-  - CLIENT__LOCAL_SSHD_PORT={{ .Env.CLIENT__LOCAL_SSHD_PORT }}
+  - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
+  - CLIENT__SCP_SOURCE={{ .Env.CLIENT__SCP_SOURCE }}
+  - CLIENT__SCP_DESTINATION={{ .Env.CLIENT__SCP_DESTINATION }}
+  - CLIENT__SCP_ARGS={{ .Env.CLIENT__SCP_ARGS }}
+
+  - CLIENT__PASS_AGENT={{ .Env.CLIENT__PASS_AGENT }}
+  - CLIENT__PASS_TYPE={{ .Env.CLIENT__PASS_TYPE }}
+
+  - CLIENT__COMPILE_ID={{ .Env.CLIENT__COMPILE_ID }}
+  - CLIENT__COMPILE_GOOS={{ .Env.CLIENT__COMPILE_GOOS }}
+  - CLIENT__COMPILE_GOARCH={{ .Env.CLIENT__COMPILE_GOARCH }}
+  - CLIENT__COMPILE_SOURCE={{ .Env.CLIENT__COMPILE_SOURCE }}
+  - CLIENT__COMPILE_ENV_FILE={{ .Env.CLIENT__COMPILE_ENV_FILE }}
+  - CLIENT__COMPILE_OUTPUT={{ .Env.CLIENT__COMPILE_OUTPUT }}
+  - CLIENT__COMPILE_VERBOSE={{ .Env.CLIENT__COMPILE_VERBOSE }}
+  - CLIENT__COMPILE_DROP_ENV={{ .Env.CLIENT__COMPILE_DROP_ENV }}
 
 
 before:
@@ -119,8 +137,6 @@ builds:
       - AGENT__HTTP_LISTEN_ADDR={{ .Env.HTTP_PORT }}
       - AGENT__HTTPS_LISTEN_ADDR={{ .Env.HTTPS_PORT }}
       - SERVER__SSHD_PORT={{ .Env.SSHD_PORT }}
-      # - CC=zig cc -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none -Wno-availability -Wno-nullability-completeness --sysroot=./scripts/build/MacOSX15.sdk/ -I./scripts/build/MacOSX15.sdk/usr/include -L./scripts/build/MacOSX15.sdk/usr/lib -F./scripts/build/MacOSX15.sdk/System/Library/Frameworks -framework CoreFoundation{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
-      # - CXX=zig c++ -target {{if eq .Arch "arm64"}}aarch64{{else if eq .Arch "arm"}}arm{{else if eq .Arch "amd64"}}x86_64{{else if eq .Arch "386"}}x86{{else}} RUNTIME.GOARCH{{end}}-{{ if eq .Os "darwin"}}macos-none{{else if eq .Os "windows"}}windows-gnu{{else if eq .Os "linux"}}linux-musl{{else}}ERROR RUNTIME.GOOS{{end}}
     goos:
       - linux
       - windows
@@ -139,9 +155,9 @@ builds:
       - '{{ if (index .Env "SERVER__HTTP_DOMAIN") }} -X Goauld/server/config._http_domain={{ .Env.SERVER__HTTP_DOMAIN }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_DOMAIN") }} -X Goauld/server/config._tls_domain={{ .Env.SERVER__TLS_DOMAIN }}{{end}}'
 
-      - '{{ if (index .Env "AGENT__HTTP_LISTEN_ADDR") }} -X Goauld/server/config._http_listen_addr={{ .Env.AGENT__HTTP_LISTEN_ADDR }}{{end}}'
-      - '{{ if (index .Env "AGENT__HTTPS_LISTEN_ADDR") }} -X Goauld/server/config._https_listen_addr={{ .Env.AGENT__HTTPS_LISTEN_ADDR }}{{end}}'
-      - '{{ if (index .Env "SERVER__SSHD_PORT") }} -X Goauld/server/config._sshd_listen_addr={{ .Env.SERVER__SSHD_PORT }}{{end}}'
+      - '{{ if (index .Env "SERVER__HTTP_LISTEN_ADDR") }} -X Goauld/server/config._http_listen_addr={{ .Env.SERVER__HTTP_LISTEN_ADDR }}{{end}}'
+      - '{{ if (index .Env "SERVER__HTTPS_LISTEN_ADDR") }} -X Goauld/server/config._https_listen_addr={{ .Env.SERVER__HTTPS_LISTEN_ADDR }}{{end}}'
+      - '{{ if (index .Env "SERVER__DSSH_LISTEN_ADDR") }} -X Goauld/server/config._sshd_listen_addr={{ .Env.SERVER__SSHD_LISTEN_ADDR }}{{end}}'
 
       - '{{ if (index .Env "SERVER__VERBOSE") }} -X Goauld/server/config._verbosity={{ .Env.SERVER__VERBOSE }}{{end}}'
 
@@ -149,18 +165,18 @@ builds:
       - '{{ if (index .Env "SERVER__TLS_KEY") }} -X Goauld/server/config._tls_cert={{ .Env.SERVER__TLS_KEY }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_CERT") }} -X Goauld/server/config._tls_key={{ .Env.SERVER__TLS_CERT }}{{end}}'
 
-      - '{{ if (index .Env "SERVER__DB") }} -X Goauld/server/config._no_db={{ .Env.SERVER__DB }}{{end}}'
+      - '{{ if (index .Env "SERVER__NO_DB") }} -X Goauld/server/config._no_db={{ .Env.SERVER__NO_DB }}{{end}}'
       - '{{ if (index .Env "SERVER__DB_FILE_NAME") }} -X Goauld/server/config._db_name={{ .Env.SERVER__DB_FILE_NAME }}{{end}}'
 
       - '{{ if (index .Env "SERVER__ALLOWED_IPS") }} -X Goauld/server/config._allowed_ips={{ .Env.SERVER__ALLOWED_IPS }}{{end}}'
-      - '{{ if (index .Env "COMMON__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.COMMON__ACCESS_TOKEN }}{{end}}'
+      - '{{ if (index .Env "SERVER__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.SERVER__ACCESS_TOKEN }}{{end}}'
       - '{{ if (index .Env "SERVER__ADMIN_TOKEN") }} -X Goauld/server/config._admin_token={{ .Env.SERVER__ADMIN_TOKEN }}{{end}}'
 
-      - '{{ if (index .Env "SERVER__BINARIES_BASIC_AUTH") }} -X Goauld/server/config._binaries_basicauth={{ .Env.SERVER__BINARIES_BASIC_AUTH }}{{end}}' TODO
-      - '{{ if (index .Env "SERVER__BINARIES_PATH_LOCATION") }} -X Goauld/server/config._binaries_path={{ .Env.SERVER__BINARIES_PATH_LOCATION }}{{end}}' TODO
+      - '{{ if (index .Env "SERVER__BINARIES_BASIC_AUTH") }} -X Goauld/server/config._binaries_basicauth={{ .Env.SERVER__BINARIES_BASIC_AUTH }}{{end}}'
+      - '{{ if (index .Env "SERVER__BINARIES_PATH_LOCATION") }} -X Goauld/server/config._binaries_path={{ .Env.SERVER__BINARIES_PATH_LOCATION }}{{end}}'
 
-      - '{{ if (index .Env "SERVER__GENERATE_CONFIG") }} -X Goauld/server/config._generate_config={{ .Env.SERVER__GENERATE_CONFIG }}{{end}}' TODO
-      - '{{ if (index .Env "SERVER__CONFIG_FILE") }} -X Goauld/server/config._admin_token={{ .Env.SERVER__CONFIG_FILE }}{{end}}' TODO
+      - '{{ if (index .Env "SERVER__GENERATE_CONFIG") }} -X Goauld/server/config._generate_config={{ .Env.SERVER__GENERATE_CONFIG }}{{end}}'
+      - '{{ if (index .Env "SERVER__CONFIG_FILE") }} -X Goauld/server/config._admin_token={{ .Env.SERVER__CONFIG_FILE }}{{end}}'
       - "-s -w -buildid="
   - id: "agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
@@ -188,19 +204,19 @@ builds:
       - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.CommitDate}}
       - '{{ if (index .Env "AGENT__AGE_PUBKEY") }} -X Goauld/agent/config._agePubKey={{ .Env.AGENT__AGE_PUBKEY }}{{end}}'
 
-      - '{{ if (index .Env "AGENT__SERVER") }} -X Goauld/agent/config._server={{ .Env.AGENT__SERVER }}{{end}}' TODO
-      - '{{ if (index .Env "AGENT__SSH_SERVER") }} -X Goauld/agent/config._ssh_server={{ .Env.AGENT__SSH_SERVER }}{{end}}' TODO
-      - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}' TODO
+      - '{{ if (index .Env "AGENT__SERVER") }} -X Goauld/agent/config._server={{ .Env.AGENT__SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__SSH_SERVER") }} -X Goauld/agent/config._ssh_server={{ .Env.AGENT__SSH_SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
 
-      - '{{ if (index .Env "AGENT__PASSWORD") }} -X Goauld/agent/config._localSshPassword={{ .Env.AGENT__PASSWORD }}{{end}}' TODO
+      - '{{ if (index .Env "AGENT__PASSWORD") }} -X Goauld/agent/config._localSshPassword={{ .Env.AGENT__PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__NAME") }} -X Goauld/agent/config._name={{ .Env.AGENT__NAME }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SSHD") }} -X Goauld/agent/config._sshd={{ .Env.AGENT__SSHD }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS") }} -X Goauld/agent/config._socks={{ .Env.AGENT__SOCKS }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_PROXY }}{{end}}'
 
-      - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}' TODO
-      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}' TODO
+      - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
@@ -214,8 +230,8 @@ builds:
 
       - '{{ if (index .Env "AGENT__MAX_RETRIES") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__MAX_RETRIES }}{{end}}'
 
-      - '{{ if (index .Env "AGENT__GENERATE_CONFIG") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__GENERATE_CONFIG }}{{end}}' TODO
-      - '{{ if (index .Env "AGENT__CONFIG_FILE") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__CONFIG_FILE }}{{end}}' TODO
+      - '{{ if (index .Env "AGENT__GENERATE_CONFIG") }} -X Goauld/agent/config._generate_config={{ .Env.AGENT__GENERATE_CONFIG }}{{end}}'
+      - '{{ if (index .Env "AGENT__CONFIG_FILE") }} -X Goauld/agent/config._config_file={{ .Env.AGENT__CONFIG_FILE }}{{end}}'
 
       - '{{ if (index .Env "AGENT__BACKGROUND") }} -X Goauld/agent/config._background={{ .Env.AGENT__BACKGROUND }}{{end}}'
 
@@ -225,8 +241,6 @@ builds:
     main: ./client
     env:
       - CGO_ENABLED=0
-      - CLIENT__SERVER={{ if (index .Env "HTTPS_PORT") }}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTPS_PORT}}{{else}}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTP_PORT}}{{end}}
-      - CLIENT__SSH_SERVER={{.Env.HTTP_DOMAIN}}:{{.Env.SSHD_PORT}}
 
     goos:
       - linux
@@ -244,19 +258,45 @@ builds:
       - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.CommitDate}}
       - '{{ if (index .Env "CLIENT__SERVER") }} -X main._server={{ .Env.CLIENT__SERVER }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_SERVER") }} -X main._ssh_server={{ .Env.CLIENT__SSH_SERVER }}{{end}}'
-      - '{{ if (index .Env "COMMON__ACCESS_TOKEN") }} -X main._access_token={{ .Env.COMMON__ACCESS_TOKEN }}{{end}}'
 
-      - '{{ if (index .Env "CLIENT__VERBOSITY") }} -X main._verbosity={{ .Env.CLIENT__VERBOSITY }}{{end}}'
+      - '{{ if (index .Env "CLIENT__ACCESS_TOKEN") }} -X main._access_token={{ .Env.CLIENT__ACCESS_TOKEN }}{{end}}'
+
+      - '{{ if (index .Env "CLIENT__VERBOSE") }} -X main._verbosity={{ .Env.CLIENT__VERBOSE }}{{end}}'
       - '{{ if (index .Env "CLIENT__INSECURE") }} -X main._insecure={{ .Env.CLIENT__INSECURE }}{{end}}'
 
-      - '{{ if (index .Env "CLIENT__EXEC_SSH") }} -X main._exec_ssh={{ .Env.CLIENT__EXEC_SSH }}{{end}}'
-      - '{{ if (index .Env "CLIENT__EXEC_SOCKS") }} -X main._exec_socks={{ .Env.CLIENT__EXEC_SOCKS }}{{end}}'
-      - '{{ if (index .Env "CLIENT__EXEC_PRINT") }} -X main._exec_print={{ .Env.CLIENT__EXEC_PRINT }}{{end}}'
-      - '{{ if (index .Env "CLIENT__EXEC_PROXY") }} -X main._exec_proxy={{ .Env.CLIENT__EXEC_PROXY }}{{end}}'
+      - '{{ if (index .Env "CLIENT__GENERATE_CONFIG") }} -X main._insecure={{ .Env.CLIENT__GENERATE_CONFIG }}{{end}}'
+      - '{{ if (index .Env "CLIENT__CONFIG_FILE") }} -X main._insecure={{ .Env.CLIENT__CONFIG_FILE }}{{end}}'
 
-      - '{{ if (index .Env "CLIENT__LOCAL_SOCKS_PORT") }} -X main._local_socks_port={{ .Env.CLIENT__LOCAL_SOCKS_PORT }}{{end}}'
-      - '{{ if (index .Env "CLIENT__LOCAL_SSHD_PORT") }} -X main._local_sshd_port={{ .Env.CLIENT__LOCAL_SSHD_PORT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_SOCKS") }} -X main._ssh_socks={{ .Env.CLIENT__SSH_SOCKS }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_SOCKS_PORT") }} -X main._ssh_local_socks_port={{ .Env.CLIENT__SSH_SOCKS_PORT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_SSH") }} -X main._ssh_ssh={{ .Env.CLIENT__SSH_SSH }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_PRINT") }} -X main._ssh_print={{ .Env.CLIENT__SSH_PRINT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_PROXY") }} -X main._ssh_proxy={{ .Env.CLIENT__SSH_PROXY }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_ARGS") }} -X main._ssh_ssh_args={{ .Env.CLIENT__SSH_ARGS }}{{end}}'
 
+      - '{{ if (index .Env "CLIENT__SOCKS_SOCKS") }} -X main._socks_socks={{ .Env.CLIENT__SOCKS_SOCKS }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SOCKS_SOCKS_PORT") }} -X main._socks_local_socks_port={{ .Env.CLIENT__SOCKS_SOCKS_PORT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SOCKS_SSH") }} -X main._socks_ssh={{ .Env.CLIENT__SOCKS_SSH }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SOCKS_PRINT") }} -X main._socks_print={{ .Env.CLIENT__SOCKS_PRINT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SOCKS_PROXY") }} -X main._socks_proxy={{ .Env.CLIENT__SOCKS_PROXY }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SOCKS_ARGS") }} -X main._ssh_ssh_args={{ .Env._socks_ssh_args }}{{end}}'
+
+      - '{{ if (index .Env "CLIENT__SCP_PRINT") }} -X main._scp_print={{ .Env.CLIENT__SCP_PRINT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SCP_SOURCE") }} -X main._scp_source={{ .Env.CLIENT__SCP_SOURCE }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SCP_DESTINATION") }} -X main._scp_destination={{ .Env.CLIENT__SCP_DESTINATION }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SCP_ARGS") }} -X main._scp_args={{ .Env.CLIENT__SCP_ARGS }}{{end}}'
+
+      - '{{ if (index .Env "CLIENT__PASS_AGENT") }} -X main._pass_agent={{ .Env.CLIENT__PASS_AGENT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__PASS_TYPE") }} -X main._pass_type={{ .Env.CLIENT__PASS_TYPE }}{{end}}'
+
+      - '{{ if (index .Env "CLIENT__COMPILE_ID") }} -X main._compile_id={{ .Env.CLIENT__COMPILE_ID }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_GOOS") }} -X main._compile_goos={{ .Env.CLIENT__COMPILE_GOOS }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_GOARCH") }} -X main._compile_goarch={{ .Env.CLIENT__COMPILE_GOARCH }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_SOURCE") }} -X main._compile_source={{ .Env.CLIENT__COMPILE_SOURCE }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_ENV_FILE") }} -X main._compile_env_file={{ .Env.CLIENT__COMPILE_ENV_FILE }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_OUTPUT") }} -X main._compile_output={{ .Env.CLIENT__COMPILE_OUTPUT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_VERBOSE") }} -X main._compile_verbose={{ .Env.CLIENT__COMPILE_VERBOSE }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_DROP_ENV") }} -X main._compile_drop_env={{ .Env.CLIENT__COMPILE_DROP_ENV }}{{end}}'
 
 
 # archives:

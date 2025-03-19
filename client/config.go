@@ -19,22 +19,48 @@ import (
 const APP_NAME = "tealc"
 
 var (
-	_server       = "http://localhost"
-	_ssh_server   = "localhost:2222"
+	_server     = "http://localhost"
+	_ssh_server = "localhost:2222"
+
 	_access_token = "TODO_TOKEN"
 
 	_verbosity = "0"
 	_insecure  = "false"
 
-	_exec_ssh   = "true"
-	_exec_socks = "true"
-	_exec_print = "false"
-	_exec_proxy = "false"
-
-	_local_socks_port = "1080"
-	_local_sshd_port  = "22222"
-
 	_generate_config = "false"
+	_config_file     = ""
+
+	_ssh_socks            = "true"
+	_ssh_local_socks_port = "1080"
+	_ssh_ssh              = "true"
+	_ssh_print            = "false"
+	_ssh_proxy            = "false"
+	_ssh_ssh_args         = ""
+
+	_socks_socks            = "true"
+	_socks_local_socks_port = "1080"
+	_socks_ssh              = "false"
+	_socks_print            = "false"
+	_socks_proxy            = "false"
+	_socks_ssh_args         = ""
+
+	_scp_target      = ""
+	_scp_print       = "false"
+	_scp_source      = ""
+	_scp_destination = ""
+	_scp_args        = ""
+
+	_pass_agent = ""
+	_pass_type  = ""
+
+	_compile_id       = ""
+	_compile_goos     = ""
+	_compile_goarch   = ""
+	_compile_source   = ""
+	_compile_env_file = ""
+	_compile_output   = ""
+	_compile_verbose  = ""
+	_compile_drop_env = ""
 
 	defaultValues = kong.Vars{
 		"_server":       _server,
@@ -44,15 +70,39 @@ var (
 		"_verbosity": _verbosity,
 		"_insecure":  _insecure,
 
-		"_exec_ssh":   _exec_ssh,
-		"_exec_socks": _exec_socks,
-		"_exec_print": _exec_print,
-		"_exec_proxy": _exec_proxy,
-
-		"_local_socks_port": _local_socks_port,
-		"_local_sshd_port":  _local_sshd_port,
-
 		"_generate_config": _generate_config,
+		"_config_file":     _config_file,
+
+		"_ssh_socks":            _ssh_socks,
+		"_ssh_local_socks_port": _ssh_local_socks_port,
+		"_ssh_ssh":              _ssh_ssh,
+		"_ssh_print":            _ssh_print,
+		"_ssh_proxy":            _ssh_proxy,
+		"_ssh_ssh_args":         _ssh_ssh_args,
+
+		"_socks_socks":            _socks_socks,
+		"_socks_local_socks_port": _socks_local_socks_port,
+		"_socks_ssh":              _socks_ssh,
+		"_socks_print":            _socks_print,
+		"_socks_proxy":            _socks_proxy,
+		"_socks_ssh_args":         _socks_ssh_args,
+
+		"_scp_print":       _scp_print,
+		"_scp_source":      _scp_source,
+		"_scp_destination": _scp_destination,
+		"_scp_args":        _scp_args,
+
+		"_pass_agent": _pass_agent,
+		"_pass_type":  _pass_type,
+
+		"_compile_id":       _compile_id,
+		"_compile_goos":     _compile_goos,
+		"_compile_goarch":   _compile_goarch,
+		"_compile_source":   _compile_source,
+		"_compile_env_file": _compile_env_file,
+		"_compile_output":   _compile_output,
+		"_compile_verbose":  _compile_verbose,
+		"_compile_drop_env": _compile_drop_env,
 	}
 )
 
@@ -66,10 +116,10 @@ type ClientConfig struct {
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `name:"config-file" optional:"" short:"c" help:"Configuration file to use."`
+	ConfigFile     string `default:"${_config_file}" name:"config-file" optional:"" short:"c" help:"Configuration file to use."`
 
 	Ssh     Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
-	Socks   Ssh      `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
+	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
 	Scp     Scp      `cmd:"" name:"scp"  help:"Transfer files using SCP from/to the agent."`
 	Tui     Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
 	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`

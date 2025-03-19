@@ -13,7 +13,7 @@ import (
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "compile" {
 		os.Args = os.Args[1:]
-		kong, cfg, err := compiler.InitCompilerConfig(APP_NAME)
+		kong, cfg, err := compiler.InitCompilerConfig(APP_NAME, defaultValues)
 		if err != nil {
 			fmt.Println(err)
 			return

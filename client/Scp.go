@@ -10,10 +10,10 @@ import (
 
 type Scp struct {
 	Target      string
-	Print       bool     `default:"${_exec_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Source      string   `arg:"" name:"source" help:"Origin copy."`
-	Destination string   `arg:"" name:"destination" help:"Destination to copy."`
-	ScpArgs     []string `arg:"" passthrough:"" optional:""`
+	Print       bool     `default:"${_scp_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
+	Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
+	Destination string   `default:"${_scp_destination}" arg:"" name:"destination" help:"Destination to copy."`
+	ScpArgs     []string `default:"${_scp_args}" arg:"" passthrough:"" optional:""`
 }
 
 func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
