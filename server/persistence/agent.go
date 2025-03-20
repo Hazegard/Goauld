@@ -140,6 +140,8 @@ func (a *Agent) GetForwardedPorts() []int {
 	return utils.Unique(usedPorts)
 }
 
+// ValidatePasswordAndRotateIfTrue check if the incoming password match the current password.
+// If the password matches, we rotate it
 func (a *Agent) ValidatePasswordAndRotateIfTrue(password string) error {
 	isValid := password == a.OneTimePassword
 	if !isValid {
@@ -262,6 +264,7 @@ func (db *DB) CreateAgent(agent *Agent) error {
 	return nil
 }
 
+// DeleteAgentById delete the agent from the database
 func (db *DB) DeleteAgentById(id string) error {
 	res := db.db.Unscoped().Delete(&Agent{}, "id = ?", id)
 	if res.Error != nil {

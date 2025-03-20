@@ -62,6 +62,7 @@ func (c *Command) Execute() error {
 	return cmd.Run()
 }
 
+// Run execute the ssh subcommand
 func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
 	if cfg.Socks.Target != "" {
 		// we are in socks mode, so apply the socks option to the ssh

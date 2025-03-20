@@ -16,6 +16,7 @@ var (
 
 const APP_NAME = "tealc"
 
+// GetBanner returns the banner used when the help is called by users
 func GetBanner() string {
 	res, err := base64.StdEncoding.DecodeString(b64banner)
 	if err != nil {

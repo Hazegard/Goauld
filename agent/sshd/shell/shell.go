@@ -16,6 +16,8 @@ import (
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.
 // It enables interaction with a shell (e.g., bash) through the session.
+// If the session is not interactive, it executes directly the command, without
+// wrapping it in a pty.
 func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 	// Extract PTY request and check if the session requested a PTY.
 	if len(c) == 0 {
@@ -66,6 +68,8 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 			}
 		}()
 
+		// Start a goroutine that waits for the end of the ssh session
+		// And close the remaining readers and writers
 		go func() {
 			select {
 			case <-globalCtx.Done():
@@ -102,6 +106,7 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 			// return fmt.Errorf("error while waiting for command (%s): %s", c, err)
 		}
 	} else {
+		// If no pty is requested, we execute the command directly
 		cmd := exec.Command(c[0], c[1:]...)
 		cmd.Stdout = s.Stderr()
 

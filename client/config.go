@@ -123,11 +123,13 @@ type ClientConfig struct {
 
 type Compiler struct{}
 
+// GetSshdHost returns the configured sshd host
 func (c *ClientConfig) GetSshdHost() string {
 	split := strings.Split(c.SshServer, ":")
 	return split[0]
 }
 
+// GetSshdPort returns the configured sshd port
 func (c *ClientConfig) GetSshdPort() string {
 	split := strings.Split(c.SshServer, ":")
 	if len(split) == 2 {
@@ -136,6 +138,7 @@ func (c *ClientConfig) GetSshdPort() string {
 	return ""
 }
 
+// ServerUrl returns control server URL
 func (c *ClientConfig) ServerUrl() string {
 	url := ""
 	if strings.HasPrefix(c.Server, "http://") {
@@ -149,12 +152,14 @@ func (c *ClientConfig) ServerUrl() string {
 	return url
 }
 
+// GenerateYAMLConfig generate a yaml configuration associated to the currently running configuration
 func (c *ClientConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*c)
 }
 
 type Tui struct{}
 
+// Run executes the tui subcommand
 func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 	tt := tui.NewTui(api)
 	return tt.Run()
@@ -166,6 +171,7 @@ type Password struct {
 	Args  []string `arg:"" optional:""`
 }
 
+// Run executes the pass subcommand
 func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 	if len(cfg.Pass.Args) > 0 && cfg.Pass.Agent == "" {
 		cfg.Pass.Agent = cfg.Pass.Args[0]
@@ -185,6 +191,7 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 	return nil
 }
 
+// InitConfig return the configuration depending on the command line arguments as well as the configuration files
 func InitConfig() (*kong.Context, *ClientConfig, error) {
 	cfgTmp := &ClientConfig{}
 	dir, err := utils.GetCurrentDirectory()

@@ -44,6 +44,7 @@ type UpdateMessage struct {
 var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
+// NewTui returns the Model holding the TUI
 func NewTui(api *api.API) Model {
 	ti := textinput.New()
 	ti.Width = 100

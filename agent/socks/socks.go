@@ -46,6 +46,7 @@ func (s *SocksServer) Serve(l net.Listener) (err error) {
 	return s.socksServer.Serve(l)
 }
 
+// Close closes the socks server
 func (s *SocksServer) Close() (err error) {
 	defer func() {
 		if r := recover(); r != nil {

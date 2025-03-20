@@ -19,6 +19,7 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
+// StartSshd init and start the sshd server
 func StartSshd(context context.Context, db *persistence.DB) {
 	listener, err := net.Listen("tcp", config.Get().LocalSShAddr())
 	if err != nil {

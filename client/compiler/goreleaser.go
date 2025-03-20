@@ -33,6 +33,7 @@ func Goreleaser(cfg Compiler) error {
 	return cmd.Run()
 }
 
+// CheckCommands checks whether
 func CheckCommands(cmds []string) []string {
 	var notFound []string
 	for _, cmd := range cmds {
@@ -45,6 +46,7 @@ func CheckCommands(cmds []string) []string {
 	return notFound
 }
 
+// DoSpecificBuild returns whether a specific build should be performed
 func DoSpecificBuild(cfg Compiler) (bool, error) {
 	// All strings empty → return false.
 	if cfg.Id == "" && cfg.Goos == "" && cfg.Goarch == "" {

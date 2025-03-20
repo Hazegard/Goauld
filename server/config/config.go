@@ -233,14 +233,17 @@ func (s *ServerConfig) Validate() error {
 	return nil
 }
 
+// IsCustomTLS return whether a TLS certificate is provided
 func (s *ServerConfig) IsCustomTLS() bool {
 	return s.TlsCert != "" && s.TlsKey != ""
 }
 
+// GetTlsDomains return the list of domains served under TLS
 func (s *ServerConfig) GetTlsDomains() []string {
 	return []string{s.TlsDomain, s.HttpDomain}
 }
 
+// GetBinariesBasicAuth return the username and password used to restrict the hosted binaries
 func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
 	split := strings.Split(s.BinariesBasicAuth, ":")
 	if len(s.BinariesBasicAuth) < 2 {
@@ -250,6 +253,8 @@ func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
 	return split[0], strings.Join(split[1:], ":")
 }
 
+// GenerateYAMLConfig return the yaml configuration using the current configuration
+// (command line argument and parsed configuration files)
 func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
 	s.GenerateConfig = false
 	return cli.GenerateYAMLWithComments(*s)

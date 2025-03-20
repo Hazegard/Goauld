@@ -25,12 +25,14 @@ type SSHAgent struct {
 	remotePortMap   map[string]_ssh.RemotePortForwarding
 }
 
+// NewSSHAgent returns a new Agent
 func NewSSHAgent() *SSHAgent {
 	return &SSHAgent{
 		remotePortMap: make(map[string]_ssh.RemotePortForwarding),
 	}
 }
 
+// Init initialize the ssh client using the configuration
 func (sshAgent *SSHAgent) Init(ctx context.Context) error {
 	log.Info().Msg("Connecting to the ssh server...")
 	// Get the private key used to authenticate to the server
@@ -74,6 +76,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context) error {
 	return nil
 }
 
+// GetRemoteConn returns a net.Listener listening on the ssh server host, as well as the port used by the remote listener
 func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error) {
 	l, err := sshAgent.client.Listen("tcp", remote)
 	if err != nil {
@@ -83,7 +86,7 @@ func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error
 	return l, port, err
 }
 
-// RemoteForward starts the
+// RemoteForward starts the remote port forwarded in background. It returns the remote listening port
 func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx context.Context) (int, error) {
 	// start the remote forwarding to remotely expose the local sshd server
 	remoteListener, err := sshAgent.client.Listen("tcp", rpf.GetRemote())
@@ -117,7 +120,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 			// Waits for a connection
 			remoteConn, err := remoteListener.Accept()
 			if err != nil {
-				// TODO faire du throttle si on garde l'erreur, voir pour cuoper proprement après un temp ?
+				// TODO faire du throttle si on garde l'erreur, voir pour couper proprement après un temp ?
 				log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to accept remote connection")
 				// Pseudo throttle en attendant
 				time.Sleep(1 * time.Second)
@@ -188,6 +191,7 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 	}
 }
 
+// Close closes the ssh connection
 func (sshAgent *SSHAgent) Close() error {
 	log.Warn().Msg("Shutting down SSH agent...")
 	if sshAgent.conn != nil {

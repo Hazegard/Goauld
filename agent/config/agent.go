@@ -142,6 +142,7 @@ func InitAgent() (*kong.Context, error, []error) {
 	return ctx, nil, warnings
 }
 
+// Get return the Agent global object
 func Get() *Agent {
 	return agent
 }
@@ -312,10 +313,12 @@ func (a *Agent) AddSshdToRpf() {
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
 }
 
+// NoProxy return whether the agent should ignore the potential system proxy
 func (a *Agent) NoProxy() bool {
 	return a.cfg.NoProxy
 }
 
+// Proxy returns the proxy provided by the configuration
 func (a *Agent) Proxy() *url.URL {
 	return a.cfg.Proxy
 }
@@ -331,6 +334,7 @@ func (a *Agent) AddSocksToRpf() {
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
 }
 
+// GetRemotePortForwarding returns the configured remote port forwarding
 func (a *Agent) GetRemotePortForwarding() []ssh.RemotePortForwarding {
 	return a.cfg.RemotePortForwarding
 }
@@ -339,6 +343,7 @@ func (a *Agent) GetRemotePortForwarding() []ssh.RemotePortForwarding {
 // 	id, err != machin
 // }
 
+// getIps returns the IP on the hosts, excluding local network addresses
 func getIps() ([]string, []error) {
 	IPS := make([]string, 0)
 
@@ -365,18 +370,23 @@ func getIps() ([]string, []error) {
 	return IPS, errs
 }
 
+// GetMexRetries returns the configured max retries before killing the agent
 func (a *Agent) GetMexRetries() uint {
 	return uint(a.cfg.MaxRetries)
 }
 
+// DoGenerateConfig return whether the configuration generation should is enabled
 func (a *Agent) DoGenerateConfig() bool {
 	return a.cfg.GenerateConfig
 }
 
+// ShouldRunInBackground returns whether the agent should be run in background
 func (a *Agent) ShouldRunInBackground() bool {
 	return a.cfg.Background && !a.cfg.HiddenBackground
 }
 
+// StartInBackground re-execute the agent in background. A hidden flag is appended to the command line
+// In order to notify the child process that is already running in background
 func (a *Agent) StartInBackground() error {
 	args := append(os.Args, "--hidden-background")
 	c := exec.Command(args[0], args[1:]...)
@@ -387,6 +397,7 @@ func (a *Agent) StartInBackground() error {
 	return nil
 }
 
+// GenerateYAMLConfig returns the yaml configuration file corresponding to the currently running configuration
 func (a *Agent) GenerateYAMLConfig() (string, error) {
 	c := a.cfg
 	c.LocalSshPassword = ""

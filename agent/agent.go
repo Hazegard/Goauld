@@ -230,6 +230,9 @@ func run(context.Context, context.CancelFunc) {
 	}
 }
 
+// HandleCtrlC intercepts the ctrl-c events.
+// It signals to close all running goroutine, and wait one second to allow the agent to signal the disconnection
+// to the server, then it exits.
 func HandleCtrlC(controlPlanClient *control.ControlPlanClient, cancel context.CancelFunc) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

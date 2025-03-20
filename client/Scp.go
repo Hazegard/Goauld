@@ -8,6 +8,7 @@ import (
 	"Goauld/client/types"
 )
 
+// Scp wraps the scp command to copy files between the host and the agent
 type Scp struct {
 	Target      string
 	Print       bool     `default:"${_scp_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
@@ -16,10 +17,12 @@ type Scp struct {
 	ScpArgs     []string `arg:"" passthrough:"" optional:""`
 }
 
+// Run execute the scp command
 func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
 	return s.Execute(api, cfg)
 }
 
+// GetTarget parses the input and fetch the target agent, whether it is in the source or destination of the scp command
 func (s *Scp) GetTarget() (string, error) {
 	split := strings.Split(s.Source, ":")
 	if len(split) == 2 {

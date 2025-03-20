@@ -12,6 +12,7 @@ type Socks struct {
 	SshArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
 }
 
+// Run execute the socks command
 func (s *Socks) Run(api *api.API, cfg ClientConfig) error {
 	ssh := &Ssh{
 		Target:         s.Target,

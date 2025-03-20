@@ -47,6 +47,7 @@ func (rpf *RemotePortForwarding) Info() string {
 	return fmt.Sprintf("%d:%s:%d#%s", rpf.ServerPort, rpf.AgentIP, rpf.AgentPort, rpf.Tag)
 }
 
+// UnmarshalJSON unmarshal the incoming json to the struct
 func (rpf *RemotePortForwarding) UnmarshalJSON(data []byte) error {
 	tmp := internalRemotePortForwarding{}
 	if string(data) == "/" {

@@ -21,12 +21,13 @@ type SocketIO struct {
 	Server     *gosio.Server
 }
 
-func (socketIO *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP serves the socket.IO HTTP server
+func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = common_net.Http10ToHttp11FakeUpgrader(r)
-	socketIO.Server.ServeHTTP(w, r)
+	sio.Server.ServeHTTP(w, r)
 }
 
-// InitSocketIOServer intialize the server socket.io used to manage the agents
+// InitSocketIOServer initialize the server socket.io used to manage the agents
 func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*SocketIO, error) {
 	io := gosio.NewServer(&gosio.ServerConfig{})
 	socketIO := &SocketIO{

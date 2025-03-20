@@ -15,21 +15,6 @@ type Sshd struct {
 	listener net.Listener
 }
 
-/*
-	func (sshd *Sshd) ListenAndServe() error {
-		sshdAddress := config.Get().LocalSShdAddress()
-		listener, err := net.Listen("tcp", sshdAddress)
-		if err != nil {
-			return err
-		}
-		if config.Get().IsLocalSshdRandomPort() {
-			config.Get().SetLocalSshdPort(listener.Addr().(*net.TCPAddr).Port)
-		}
-
-		log.Info().Msgf("Listening on port %s", config.Get().LocalSShdAddress())
-		return sshd.server.Serve(listener)
-	}
-*/
 func NewSshdServer(ctx context.Context) *Sshd {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{

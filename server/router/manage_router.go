@@ -52,6 +52,7 @@ func (ur *ManageRouter) GetRouter() *negroni.Negroni {
 	return n
 }
 
+// GetAgentByName return the agent information
 func (ur *ManageRouter) GetAgentByName(w http.ResponseWriter, r *http.Request) {
 	// Find the agent corresponding to the name
 	name := r.PathValue("name")
@@ -122,6 +123,7 @@ func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteAgentById kills the agent and delete the remaining connections
 func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	err := ur.store.KillAGent(id, true)
@@ -230,6 +232,7 @@ func (ur *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWrite
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// KillAgent kill the agent
 func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	body, err := io.ReadAll(r.Body)

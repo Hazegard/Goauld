@@ -14,7 +14,7 @@ import (
 
 const SSHD_BANNER = "SSH-2.0-"
 
-// CheckSSHService connects to the given address, verifies that the service is SSH,
+// CheckDirectSshAccess connects to the given address, verifies that the service is SSH,
 // and checks if the returned banner matches the expected one.
 func CheckDirectSshAccess(address string) error {
 	// Set a timeout for the connection

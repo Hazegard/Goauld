@@ -46,6 +46,7 @@ func (ur *AdminRouter) GetRouter() *negroni.Negroni {
 	return n
 }
 
+// Dump return all the information stored regarding the agent
 func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	id := r.PostFormValue("id")
 	dump := ur.store.GetState(id)
@@ -77,6 +78,7 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DumpAll return all the information stored regarding all the agents
 func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	dump := ur.store.GetAllStates()
 	outDump := []types.State{}

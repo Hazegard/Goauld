@@ -54,6 +54,7 @@ func (a *AgentStore) SioGetSocket(id string) sio.ServerSocket {
 	return socket
 }
 
+// DumpSocketIO return the socket.io information associated to the agent
 func (a *AgentStore) DumpSocketIO(id string) types.SocketIOState {
 	a.sioSocketMapMu.Lock()
 	socket := a.sioSocketMap[id]

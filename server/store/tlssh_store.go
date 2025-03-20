@@ -49,6 +49,7 @@ func (a *AgentStore) TlsshCloseAgent(id string) error {
 	return errors.New(strings.Join(errs, " / "))
 }
 
+// DumpTLSSH return the TLSSH information associated to the agent
 func (a *AgentStore) DumpTLSSH(id string) types.TLSSHState {
 	a.tlsshAgentMapMu.Lock()
 	agent := a.tlsshAgentMap[id]

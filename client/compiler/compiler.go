@@ -16,6 +16,7 @@ import (
 	"strings"
 )
 
+// Compiler holds the information used to compile the binaries
 type Compiler struct {
 	Id      string `default:"" help:"[client|server|agent]."`
 	Goos    string `default:"" help:"[darwin|linux|windows]."`
@@ -35,6 +36,7 @@ var requiredCommands = []string{
 	"goreleaser",
 }
 
+// Run execute the compiler command
 func (c *Compiler) Run() error {
 	if c.DropEnv {
 		err := HandleDropEnv(Sources.Sources)
@@ -64,6 +66,7 @@ func (c *Compiler) Run() error {
 	return nil
 }
 
+// HandleDropEnv get the .env file stored in the embed struct and drops print the file to the stdout
 func HandleDropEnv(source embed.FS) error {
 	fileContent, err := source.ReadFile(".env.build.tmpl")
 	if err != nil {
@@ -73,6 +76,8 @@ func HandleDropEnv(source embed.FS) error {
 	return nil
 }
 
+// InitCompilerConfig returns the compiler configuration using the command line arguments as well
+// as configuration files
 func InitCompilerConfig(appName string, defaultValues kong.Vars) (*kong.Context, *Compiler, error) {
 	cfg := &Compiler{}
 	dir, err := utils.GetCurrentDirectory()
@@ -108,6 +113,7 @@ func InitCompilerConfig(appName string, defaultValues kong.Vars) (*kong.Context,
 	return app, cfg, nil
 }
 
+// run execute the compiler
 func run(config Compiler) error {
 	log.Info().Msgf("compiling %s", config.Id)
 	missingCommands := CheckCommands(requiredCommands)
@@ -141,6 +147,8 @@ func run(config Compiler) error {
 	return nil
 }
 
+// drop write to the destination directory the source files
+// that will be used to compile the agent
 func drop(destDir string, source embed.FS) error {
 	// Walk through all files and directories in the embedded content
 	err := fs.WalkDir(source, ".", func(path string, d fs.DirEntry, err error) error {

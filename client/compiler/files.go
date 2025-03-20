@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// ReplaceInFile replace lines when a pattern is identified on the incoming content
 func ReplaceInFile(content string, pattern string, new string) string {
 	lines := strings.Split(content, "\n")
 	newLines := []string{}
@@ -19,6 +20,7 @@ func ReplaceInFile(content string, pattern string, new string) string {
 	return strings.Join(newLines, "\n")
 }
 
+// CopyFile copies the file
 func CopyFile(src, dst string) error {
 	// Open the source file for reading.
 	srcStat, err := os.Stat(src)
@@ -52,6 +54,7 @@ func CopyFile(src, dst string) error {
 	return destinationFile.Sync()
 }
 
+// MkdirAll create a directory
 func MkdirAll(path string) error {
 	return os.MkdirAll(path, 0o755)
 }

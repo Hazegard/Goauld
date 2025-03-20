@@ -193,6 +193,7 @@ func (cpc *ControlPlanClient) Start() error {
 	return nil
 }
 
+// SendPorts sends the remote ports used by the agent
 func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 	data, err := socketio.EncryptRemotePortForwardingMessage(rpf, config.Get().Cryptor)
 	if err != nil {
@@ -221,6 +222,7 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	}
 }
 
+// Close closes the socket.io connection
 func (cpc *ControlPlanClient) Close() {
 	cpc.socket.Disconnect()
 	cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})

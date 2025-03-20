@@ -104,6 +104,8 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 	return errors.Join(err1, err2, err3)
 }
 
+// KillAGent kills the agent, if doKill is true, the agent does not restart
+// If false, the agent resets and restarts
 func (a *AgentStore) KillAGent(id string, doKill bool) error {
 	socket := a.SioGetSocket(id)
 	if socket == nil {
@@ -118,6 +120,7 @@ func (a *AgentStore) KillAGent(id string, doKill bool) error {
 	return nil
 }
 
+// GetAllActivesId return the ID of all running agents
 func (a *AgentStore) GetAllActivesId() []string {
 	var ids []string
 	a.tlsshAgentMapMu.Lock()
@@ -147,6 +150,7 @@ func (a *AgentStore) GetAllActivesId() []string {
 	return utils.Unique(ids)
 }
 
+// GetAllStates returns the state of all agents
 func (a *AgentStore) GetAllStates() []types.State {
 	var states []types.State
 	for _, id := range a.GetAllActivesId() {
@@ -155,6 +159,7 @@ func (a *AgentStore) GetAllStates() []types.State {
 	return states
 }
 
+// GetState return the state of an agent
 func (a *AgentStore) GetState(id string) types.State {
 	state := types.State{
 		Id:       id,

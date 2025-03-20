@@ -28,17 +28,3 @@ type Agent struct {
 	IPs          string `gorm:"type:text" json:"ips"`
 	Path         string `gorm:"type:text" json:"path"`
 }
-
-// // ParseFPR parse the remote port forwarded ports stored in the RemotePortForwarding field
-// // And populate the Rpf field with the associated struct
-// func (a *Agent) ParseFPR() {
-// 	rpfs := strings.Split(a.RemotePortForwarding, ",")
-// 	for _, rpf := range rpfs {
-// 		_rpf := ssh.RemotePortForwarding{}
-// 		err := _rpf.UnmarshalText([]byte(rpf))
-// 		if err != nil {
-// 			continue
-// 		}
-// 		a.Rpf = append(a.Rpf, _rpf)
-// 	}
-// }

@@ -58,6 +58,7 @@ func (a *AgentStore) WsshGetAgent(id string) *WsshAgent {
 	return agent
 }
 
+// DumpWSSH return the WSSH information associated to the agent
 func (a *AgentStore) DumpWSSH(id string) types.WSHState {
 	a.wsshAgentMapMu.Lock()
 	agent := a.wsshAgentMap[id]

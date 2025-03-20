@@ -48,6 +48,7 @@ func (a *AgentStore) SshttpCloseAgent(id string) error {
 	return err
 }
 
+// DumpSSHTTP return the SSHTTP information associated to the agent
 func (a *AgentStore) DumpSSHTTP(id string) types.SSHTTState {
 	a.sshttpAgentMapMu.Lock()
 	agent := a.sshttpAgentMap[id]
