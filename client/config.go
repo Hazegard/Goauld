@@ -50,13 +50,12 @@ var (
 	_pass_agent = ""
 	_pass_type  = ""
 
-	_compile_id       = ""
+	_compile_id       = "agent"
 	_compile_goos     = ""
 	_compile_goarch   = ""
 	_compile_source   = ""
 	_compile_env_file = ""
 	_compile_output   = ""
-	_compile_verbose  = ""
 	_compile_drop_env = ""
 
 	defaultValues = kong.Vars{
@@ -96,7 +95,6 @@ var (
 		"_compile_source":   _compile_source,
 		"_compile_env_file": _compile_env_file,
 		"_compile_output":   _compile_output,
-		"_compile_verbose":  _compile_verbose,
 		"_compile_drop_env": _compile_drop_env,
 	}
 )

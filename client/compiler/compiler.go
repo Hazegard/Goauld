@@ -18,14 +18,14 @@ import (
 
 // Compiler holds the information used to compile the binaries
 type Compiler struct {
-	Id      string `default:"" help:"[client|server|agent]."`
-	Goos    string `default:"" help:"[darwin|linux|windows]."`
-	Goarch  string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
-	Source  string `default:"" help:"Source goa'uld directory."`
-	EnvFile string `default:"" help:"File containing environment variables."`
-	Output  string `default:"output" help:"File containing compiled compiled sources."`
-	Verbose int    `default:"0" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
-	DropEnv bool   `default:"false" name:"drop-env" help:"Show then environment files required to compile the agent."`
+	Id      string `default:"${_compile_id}" help:"[client|server|agent]."`
+	Goos    string `default:"${_compile_goos}" help:"[darwin|linux|windows]."`
+	Goarch  string `default:"${_compile_goarch}" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
+	Source  string `default:"${_compile_source}" help:"Source goa'uld directory."`
+	EnvFile string `default:"${_compile_env_file}" help:"File containing environment variables."`
+	Output  string `default:"${_compile_output}" help:"File containing compiled compiled sources."`
+	Verbose int    `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+	DropEnv bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
 }
 
 const (

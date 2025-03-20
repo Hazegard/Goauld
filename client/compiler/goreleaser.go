@@ -8,14 +8,18 @@ import (
 
 func Goreleaser(cfg Compiler) error {
 	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate"}
-	customBuild, err := DoSpecificBuild(cfg)
-	if err != nil {
-		return fmt.Errorf("error building: %s", err)
-	}
+	// customBuild, err := DoSpecificBuild(cfg)
+	// if err != nil {
+	// 	return fmt.Errorf("error building: %s", err)
+	// }
 	var env []string
-	if customBuild {
+	if cfg.Id == "" || cfg.Id == "all" {
 		c = append(c, "--id", cfg.Id, "--single-target")
+	}
+	if cfg.Goos == "" {
 		env = append(env, "GOOS="+cfg.Goos)
+	}
+	if cfg.Goarch == "" {
 		env = append(env, "GOARCH="+cfg.Goarch)
 	}
 	cmd := exec.Command(c[0], c[1:]...)
