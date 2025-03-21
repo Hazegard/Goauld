@@ -1,9 +1,11 @@
 package log
 
 import (
+	Sources "Goauld"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,9 +24,13 @@ var (
 )
 
 func initLoggers() {
+	root := Sources.GetRoot()
 	l := zerolog.New(
 		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
 	).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
+	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
+		return fmt.Sprintf("%s:%d", strings.TrimPrefix(file, root+"/"), line)
+	}
 	zerologger = &l
 
 	gormlogger = NewGormLogger().

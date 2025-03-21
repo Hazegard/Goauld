@@ -1,6 +1,18 @@
 package Sources
 
-import "embed"
+import (
+	"embed"
+	"path/filepath"
+	"runtime"
+)
 
 //go:embed agent client common server .goreleaser.yaml embed.go go.mod go.sum .env.build.tmpl
 var Sources embed.FS
+
+func GetRoot() string {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		return ""
+	}
+	return filepath.Dir(file)
+}
