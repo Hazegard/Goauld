@@ -11,6 +11,11 @@ import (
 )
 
 func main() {
+	if len(os.Args) < 2 {
+		// Hijack args if empty to show help if no argument is provided
+		//
+		os.Args = append(os.Args, "--help")
+	}
 	if len(os.Args) > 1 && os.Args[1] == "compile" {
 		os.Args = os.Args[1:]
 		kong, cfg, err := compiler.InitCompilerConfig(APP_NAME, defaultValues)
@@ -45,10 +50,11 @@ func main() {
 
 	err = kong.Run(httpclient, cfg)
 	if err != nil {
-		mode := ""
 		if len(os.Args) > 1 {
-			mode = os.Args[1]
+			mode := os.Args[1]
+			log.Error().Err(err).Str("Mode", mode).Msg("error running " + common.APP_NAME)
+			return
 		}
-		log.Error().Err(err).Str("Mode", mode).Msg("error running " + common.APP_NAME)
+		log.Error().Err(err).Msg("error running " + common.APP_NAME)
 	}
 }
