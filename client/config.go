@@ -2,6 +2,7 @@ package main
 
 import (
 	"Goauld/common/cli"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,10 +20,10 @@ import (
 const APP_NAME = "tealc"
 
 var (
-	_server     = "http://localhost"
-	_ssh_server = "localhost:2222"
+	_server     = ""
+	_ssh_server = ""
 
-	_access_token = "TODO_TOKEN"
+	_access_token = ""
 
 	_verbosity = "0"
 	_insecure  = "false"
@@ -119,6 +120,16 @@ type ClientConfig struct {
 	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
 }
 
+func (c *ClientConfig) Validate() error {
+	if c.AccessToken == "" {
+		return errors.New("an access token is required (configuration file, environment variable, or --access-token)")
+	}
+	if c.Server == "" {
+		return errors.New("a server URL is required (configuration file, environment variable, or --server)")
+	}
+	return nil
+}
+
 type Compiler struct{}
 
 // GetSshdHost returns the configured sshd host
@@ -211,7 +222,8 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
 		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
-			if ctx.Error == nil {
+
+			if ctx.Error == nil && ctx.Validate() == nil {
 				fmt.Println(common.GetBanner())
 				fmt.Println()
 			}
