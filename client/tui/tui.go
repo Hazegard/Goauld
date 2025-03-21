@@ -2,12 +2,14 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"time"
 
 	"Goauld/client/api"
 	"Goauld/client/types"
+	"Goauld/common/log"
 
 	teatable "github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -51,7 +53,8 @@ func NewTui(api *api.API) Model {
 
 	agents, err := api.GetAgents()
 	if err != nil {
-		fmt.Println(err)
+		log.Error().Err(err).Str("Mode", "TUI").Msg("unable to fetch agents")
+		os.Exit(1)
 		return Model{}
 	}
 	m := Model{

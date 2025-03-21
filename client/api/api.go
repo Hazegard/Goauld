@@ -86,12 +86,12 @@ func (api *API) post(p string, body io.Reader) (*http.Response, error) {
 func (api *API) GetAgents() ([]types.Agent, error) {
 	res, err := api.get("/manage/agent/")
 	if err != nil {
-		return nil, errors.New("Error while requesting agent list")
+		return nil, errors.New("Error while requesting agent list: " + err.Error())
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.New("Error while reading agent list")
+		return nil, errors.New("Error while reading agent list: " + err.Error())
 	}
 
 	var agents []types.Agent
@@ -110,12 +110,12 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 	id = url.PathEscape(id)
 	res, err := api.get("/manage/agent/" + id)
 	if err != nil {
-		return types.Agent{}, errors.New("Error while requesting agent by id")
+		return types.Agent{}, errors.New("Error while requesting agent by id: " + err.Error())
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return types.Agent{}, errors.New("Error while reading agent by id")
+		return types.Agent{}, errors.New("Error while reading agent by id: " + err.Error())
 	}
 
 	var agents types.Agent
