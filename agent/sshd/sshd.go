@@ -50,7 +50,7 @@ func NewSshdServer(ctx context.Context) *Sshd {
 		// Allows tcp traffic within the SSH connection
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			log.Debug().Msgf("Received connection from user: %s", ctx.User())
-			if password == config.Get().LocalSShdPassword() {
+			if config.Get().ValidatePassword(password) {
 				log.Debug().Msgf("Connnection using password succecced from user: %s", ctx.User())
 				return true
 			}

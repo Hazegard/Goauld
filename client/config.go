@@ -31,6 +31,9 @@ var (
 	_generate_config = "false"
 	_config_file     = ""
 
+	_static_ssh_agent_map = ""
+	_private_password     = ""
+
 	_ssh_socks            = "true"
 	_ssh_local_socks_port = "1080"
 	_ssh_ssh              = "true"
@@ -51,13 +54,14 @@ var (
 	_pass_agent = ""
 	_pass_type  = ""
 
-	_compile_id       = "agent"
-	_compile_goos     = ""
-	_compile_goarch   = ""
-	_compile_source   = ""
-	_compile_env_file = ""
-	_compile_output   = ""
-	_compile_drop_env = ""
+	_compile_id               = "agent"
+	_compile_goos             = ""
+	_compile_goarch           = ""
+	_compile_source           = ""
+	_compile_env_file         = ""
+	_compile_output           = ""
+	_compile_drop_env         = ""
+	_compile_private_password = ""
 
 	defaultValues = kong.Vars{
 		"_server":       _server,
@@ -69,6 +73,8 @@ var (
 
 		"_generate_config": _generate_config,
 		"_config_file":     _config_file,
+
+		"_static_ssh_agent_map": _static_ssh_agent_map,
 
 		"_ssh_socks":            _ssh_socks,
 		"_ssh_local_socks_port": _ssh_local_socks_port,
@@ -90,13 +96,14 @@ var (
 		"_pass_agent": _pass_agent,
 		"_pass_type":  _pass_type,
 
-		"_compile_id":       _compile_id,
-		"_compile_goos":     _compile_goos,
-		"_compile_goarch":   _compile_goarch,
-		"_compile_source":   _compile_source,
-		"_compile_env_file": _compile_env_file,
-		"_compile_output":   _compile_output,
-		"_compile_drop_env": _compile_drop_env,
+		"_compile_id":               _compile_id,
+		"_compile_goos":             _compile_goos,
+		"_compile_goarch":           _compile_goarch,
+		"_compile_source":           _compile_source,
+		"_compile_env_file":         _compile_env_file,
+		"_compile_output":           _compile_output,
+		"_compile_drop_env":         _compile_drop_env,
+		"_compile_private_password": _compile_private_password,
 	}
 )
 
@@ -111,6 +118,9 @@ type ClientConfig struct {
 
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `default:"${_config_file}" name:"config-file" optional:"" short:"c" help:"Configuration file to use."`
+
+	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" name:"agent-password" help:"Agent password."`
+	PrivatePassword string
 
 	Ssh     Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
 	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
@@ -174,35 +184,11 @@ func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 	return tt.Run()
 }
 
-type Password struct {
-	Agent string   `name:"agent" help:"Agent name to retrieve password."`
-	Type  string   `name:"type" help:"Password to retrieve (OTP/Agent)."`
-	Args  []string `arg:"" optional:""`
-}
-
-// Run executes the pass subcommand
-func (p *Password) Run(api *api.API, cfg ClientConfig) error {
-	if len(cfg.Pass.Args) > 0 && cfg.Pass.Agent == "" {
-		cfg.Pass.Agent = cfg.Pass.Args[0]
-	}
-	agent, err := api.GetAgentByName(cfg.Pass.Agent)
-	if err != nil {
-		return err
-	}
-	switch cfg.Pass.Type {
-	case "otp":
-		fmt.Println(agent.OneTimePassword)
-	case "agent":
-		fmt.Println(agent.SshPasswd)
-	default:
-		fmt.Printf("OTP:   %s\nAgent: %s\n", agent.OneTimePassword, agent.SshPasswd)
-	}
-	return nil
-}
-
 // InitConfig return the configuration depending on the command line arguments as well as the configuration files
 func InitConfig() (*kong.Context, *ClientConfig, error) {
-	cfgTmp := &ClientConfig{}
+	cfgTmp := &ClientConfig{
+		PrivatePassword: _private_password,
+	}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
 		return nil, cfgTmp, err

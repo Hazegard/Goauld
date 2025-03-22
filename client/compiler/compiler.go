@@ -18,14 +18,15 @@ import (
 
 // Compiler holds the information used to compile the binaries
 type Compiler struct {
-	Id      string `default:"${_compile_id}" help:"[client|server|agent]."`
-	Goos    string `default:"${_compile_goos}" help:"[darwin|linux|windows]."`
-	Goarch  string `default:"${_compile_goarch}" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
-	Source  string `default:"${_compile_source}" help:"Source goa'uld directory."`
-	EnvFile string `default:"${_compile_env_file}" help:"File containing environment variables."`
-	Output  string `default:"${_compile_output}" help:"File containing compiled compiled sources."`
-	Verbose int    `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
-	DropEnv bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
+	Id            string `default:"${_compile_id}" help:"[client|server|agent]."`
+	Goos          string `default:"${_compile_goos}" help:"[darwin|linux|windows]."`
+	Goarch        string `default:"${_compile_goarch}" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
+	Source        string `default:"${_compile_source}" help:"Source goa'uld directory."`
+	EnvFile       string `default:"${_compile_env_file}" help:"File containing environment variables."`
+	Output        string `default:"${_compile_output}" help:"Folder containing compiled compiled agents."`
+	Verbose       int    `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
+	AgentPassword string `default:"${_compile_agent_password}" help:"Static agent password."`
 }
 
 const (
@@ -57,6 +58,10 @@ func (c *Compiler) Run() error {
 		if err != nil {
 			return fmt.Errorf("could not write files to temp dir: %v", err)
 		}
+		c.EnvFile = filepath.Join(tempDir, EnvFile)
+	}
+	if c.AgentPassword != "" {
+		ReplaceInFile(c.AgentPassword, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
 	}
 	err := run(*c)
 	if err != nil {

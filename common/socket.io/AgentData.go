@@ -40,7 +40,7 @@ func EncryptAgentSshPasswordMessage(agent *AgentData, c *crypto.SymCryptor) ([]b
 
 func NewEncryptedAgentSshPasswordMessage(a *config.Agent, cryptor *crypto.SymCryptor) ([]byte, error) {
 	message := &AgentData{
-		AgentSshPassword: a.LocalSShdPassword(),
+		AgentSshPassword: a.LocalSSHDPassword(),
 		Platform:         a.Platform,
 		Architecture:     a.Architecture,
 		Username:         a.Username,

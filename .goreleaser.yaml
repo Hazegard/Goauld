@@ -44,7 +44,8 @@ env:
   - AGENT__SSH_SERVER={{ .Env.AGENT__SSH_SERVER }}
   - AGENT__TLS_SERVER={{ .Env.AGENT__TLS_SERVER }}
 
-  - AGENT__PASSWORD={{ .Env.AGENT__PASSWORD }}
+  - AGENT__PRIVATE_PASSWORD={{ .Env.AGENT__PRIVATE_PASSWORD }}
+  - AGENT__SHARED_PASSWORD={{ .Env.AGENT__SHARED_PASSWORD }}
   - AGENT__NAME={{ .Env.AGENT__NAME }}
 
   - AGENT__SSHD={{ .Env.AGENT__SSHD }}
@@ -208,7 +209,8 @@ builds:
       - '{{ if (index .Env "AGENT__SSH_SERVER") }} -X Goauld/agent/config._ssh_server={{ .Env.AGENT__SSH_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
 
-      - '{{ if (index .Env "AGENT__PASSWORD") }} -X Goauld/agent/config._localSshPassword={{ .Env.AGENT__PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__PRIVATE_PASSWORD") }} -X Goauld/agent/config._private_password={{ .Env.AGENT__PRIVATE_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__NAME") }} -X Goauld/agent/config._name={{ .Env.AGENT__NAME }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SSHD") }} -X Goauld/agent/config._sshd={{ .Env.AGENT__SSHD }}{{end}}'

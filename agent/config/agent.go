@@ -159,8 +159,16 @@ func (a *Agent) LocalSShdAddress() string {
 }
 */
 // LocalSShdPassword returns the current ssh password allowing to connect
-func (a *Agent) LocalSShdPassword() string {
+func (a *Agent) LocalSSHDPassword() string {
 	return a.cfg.LocalSshPassword
+}
+
+func (a *Agent) PrivateSshdPassword() string {
+	return _private_password
+}
+
+func (a *Agent) ValidatePassword(in string) bool {
+	return in == a.PrivateSshdPassword()+a.LocalSSHDPassword()
 }
 
 /*
