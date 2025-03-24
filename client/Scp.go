@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"Goauld/client/api"
@@ -24,15 +25,34 @@ func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
 
 // GetTarget parses the input and fetch the target agent, whether it is in the source or destination of the scp command
 func (s *Scp) GetTarget() (string, error) {
-	split := strings.Split(s.Source, ":")
-	if len(split) == 2 {
-		return split[0], nil
+
+	isRemote, target := ExtractRemote(s.Target)
+	if isRemote {
+		return target, nil
 	}
-	split = strings.Split(s.Destination, ":")
-	if len(split) == 2 {
-		return split[0], nil
+
+	isRemote, target = ExtractRemote(s.Destination)
+	if isRemote {
+		return target, nil
 	}
 	return "", fmt.Errorf("SCP target not found in %s or %s", s.Source, s.Destination)
+}
+
+func ExtractRemote(s string) (bool, string) {
+	parts := strings.Split(s, ":")
+	if len(parts) == 1 {
+		return false, ""
+	}
+	part := parts[0]
+	remaining := strings.Join(parts[1:], ":")
+	windriveRegex := regexp.MustCompile(`^[A-Za-z]:[\\/]`)
+	if windriveRegex.MatchString(s) {
+		return false, ""
+	}
+	if windriveRegex.MatchString(remaining) {
+		return true, part
+	}
+	return true, part
 }
 
 // Execute start the ssh
