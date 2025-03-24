@@ -26,7 +26,7 @@ func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
 // GetTarget parses the input and fetch the target agent, whether it is in the source or destination of the scp command
 func (s *Scp) GetTarget() (string, error) {
 
-	isRemote, target := ExtractRemote(s.Target)
+	isRemote, target := ExtractRemote(s.Source)
 	if isRemote {
 		return target, nil
 	}
