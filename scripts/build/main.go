@@ -54,6 +54,7 @@ func main() {
 		Goarch:  cfg.Goarch,
 		Source:  pwd,
 		EnvFile: envFile,
+		Output:  "output",
 	}
 
 	err = cpl.Run()

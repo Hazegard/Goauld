@@ -26,7 +26,7 @@ type Compiler struct {
 	Output        string `default:"${_compile_output}" help:"Folder containing compiled compiled agents."`
 	Verbose       int    `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
-	AgentPassword string `default:"${_compile_agent_password}" help:"Static agent password."`
+	AgentPassword string `default:"${_compile_private_password}" help:"Static agent password."`
 }
 
 const (
@@ -58,7 +58,7 @@ func (c *Compiler) Run() error {
 		if err != nil {
 			return fmt.Errorf("could not write files to temp dir: %v", err)
 		}
-		c.EnvFile = filepath.Join(tempDir, EnvFile)
+		c.EnvFile = filepath.Join(tempDir, EnvFile+".tmpl")
 	}
 	if c.AgentPassword != "" {
 		ReplaceInFile(c.AgentPassword, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)

@@ -13,13 +13,13 @@ func Goreleaser(cfg Compiler) error {
 	// 	return fmt.Errorf("error building: %s", err)
 	// }
 	var env []string
-	if cfg.Id == "" || cfg.Id == "all" {
+	if cfg.Id != "" && cfg.Id != "all" {
 		c = append(c, "--id", cfg.Id, "--single-target")
 	}
-	if cfg.Goos == "" {
+	if cfg.Goos != "" {
 		env = append(env, "GOOS="+cfg.Goos)
 	}
-	if cfg.Goarch == "" {
+	if cfg.Goarch != "" {
 		env = append(env, "GOARCH="+cfg.Goarch)
 	}
 	cmd := exec.Command(c[0], c[1:]...)

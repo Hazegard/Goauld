@@ -60,7 +60,7 @@ var (
 	_compile_source           = ""
 	_compile_env_file         = ""
 	_compile_output           = ""
-	_compile_drop_env         = ""
+	_compile_drop_env         = "false"
 	_compile_private_password = ""
 
 	defaultValues = kong.Vars{
