@@ -46,3 +46,13 @@ func (a *Agent) GetSocksPort() string {
 	}
 	return "/"
 }
+
+// GetHttpPort returns the socks forwarded port
+func (a *Agent) GetHttpPort() string {
+	for _, rpf := range a.RemotePortForwarding {
+		if strings.EqualFold(rpf.Tag, "http") {
+			return strconv.Itoa(rpf.ServerPort)
+		}
+	}
+	return "/"
+}

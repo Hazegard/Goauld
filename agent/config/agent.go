@@ -98,7 +98,6 @@ func InitAgent() (*kong.Context, error, []error) {
 		} else {
 			name = userName.Username
 		}
-		fmt.Println(userName.Name)
 
 		hostname, err := os.Hostname()
 		if err != nil {
@@ -212,6 +211,16 @@ func (a *Agent) RemoteForwardedSocksAddress() string {
 	return fmt.Sprintf("127.0.0.1:%d", a.cfg.SocksPort)
 }
 
+// RemoteForwardedHttpProxyAddress returns the remote forwarded Socks address
+func (a *Agent) RemoteForwardedHttpProxyAddress() string {
+	return fmt.Sprintf("127.0.0.1:%d", a.cfg.HttpProxyPort)
+}
+
+// RemoteForwardedSocksPort returns the remote forwarded Socks port
+func (a *Agent) RemoteForwardedHttpProxyPort() int {
+	return a.cfg.HttpProxyPort
+}
+
 // RemoteForwardedSocksPort returns the remote forwarded Socks port
 func (a *Agent) RemoteForwardedSocksPort() int {
 	return a.cfg.SocksPort
@@ -225,6 +234,11 @@ func (a *Agent) RemoteForwardedSshdPort() int {
 // UpdateSocksPort set the new socks port
 func (a *Agent) UpdateSocksPort(port int) {
 	a.cfg.SocksPort = port
+}
+
+// UpdateHttpProxyPort set the new socks port
+func (a *Agent) UpdateHttpProxyPort(port int) {
+	a.cfg.HttpProxyPort = port
 }
 
 // UpdateSshdPort set the new socks port
@@ -300,6 +314,11 @@ func (a *Agent) SshdEnabled() bool {
 	return a.cfg.Sshd
 }
 
+// HttpProxyEnabled returns whether the http proxy server is enabled
+func (a *Agent) HttpProxyEnabled() bool {
+	return a.cfg.Http
+}
+
 // SocksEnabled returns whether the socks server is enabled
 func (a *Agent) SocksEnabled() bool {
 	return a.cfg.Socks || a.cfg.SocksPort != 0
@@ -329,6 +348,85 @@ func (a *Agent) NoProxy() bool {
 // Proxy returns the proxy provided by the configuration
 func (a *Agent) Proxy() *url.URL {
 	return a.cfg.Proxy
+}
+
+// ProxyUsername returns the username used by the proxy
+func (a *Agent) ProxyUsername() string {
+	return a.cfg.ProxyUsername
+}
+
+// ProxyPassword returns the password used by the proxy
+func (a *Agent) ProxyPassword() string {
+	return a.cfg.ProxyPassword
+}
+
+// ProxyDomain returns the domain used by the proxy
+func (a *Agent) ProxyDomain() string {
+	return a.cfg.ProxyPassword
+}
+
+// SocksProxy returns the proxy provided by the configuration
+func (a *Agent) SocksProxy() *url.URL {
+	if a.cfg.SocksCustomProxy != nil {
+		return a.cfg.SocksCustomProxy
+	}
+	return a.cfg.Proxy
+}
+
+// SocksProxyUsername returns the username used by the upstream proxy of the socks proxy
+func (a *Agent) SocksProxyUsername() string {
+	if a.cfg.SocksProxyUsername != "" {
+		return a.cfg.SocksProxyUsername
+	}
+	return a.cfg.ProxyUsername
+}
+
+// SocksProxyPassword returns the username used by the upstream proxy of the socks proxy
+func (a *Agent) SocksProxyPassword() string {
+	if a.cfg.SocksProxyPassword != "" {
+		return a.cfg.SocksProxyPassword
+	}
+	return a.cfg.ProxyPassword
+}
+
+// SocksProxyDomain returns the username used by the upstream proxy of the socks proxy
+func (a *Agent) SocksProxyDomain() string {
+	if a.cfg.SocksProxyDomain != "" {
+		return a.cfg.SocksProxyDomain
+	}
+	return a.cfg.ProxyDomain
+}
+
+// HttpProxy returns the proxy provided by the configuration
+func (a *Agent) HttpProxy() *url.URL {
+	if a.cfg.SocksCustomProxy != nil {
+		return a.cfg.SocksCustomProxy
+	}
+	return a.cfg.Proxy
+}
+
+// HttpProxyUsername returns the username used by the upstream proxy of the socks proxy
+func (a *Agent) HttpProxyUsername() string {
+	if a.cfg.SocksProxyUsername != "" {
+		return a.cfg.SocksProxyUsername
+	}
+	return a.cfg.ProxyUsername
+}
+
+// HttpProxyPassword returns the username used by the upstream proxy of the socks proxy
+func (a *Agent) HttpProxyPassword() string {
+	if a.cfg.SocksProxyPassword != "" {
+		return a.cfg.SocksProxyPassword
+	}
+	return a.cfg.ProxyPassword
+}
+
+// HttpProxyDomain returns the username used by the upstream proxy of the socks proxy
+func (a *Agent) HttpProxyDomain() string {
+	if a.cfg.SocksProxyDomain != "" {
+		return a.cfg.SocksProxyDomain
+	}
+	return a.cfg.ProxyDomain
 }
 
 // AddSocksToRpf adds the SSHD conf to the Remote port forwarding list

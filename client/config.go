@@ -34,8 +34,10 @@ var (
 	_static_ssh_agent_map = ""
 	_private_password     = ""
 
+	_ssh_http             = "true"
 	_ssh_socks            = "true"
 	_ssh_local_socks_port = "1080"
+	_ssh_local_http_port  = "3129"
 	_ssh_ssh              = "true"
 	_ssh_print            = "false"
 	_ssh_proxy            = "false"
@@ -76,8 +78,10 @@ var (
 
 		"_static_ssh_agent_map": _static_ssh_agent_map,
 
+		"_ssh_http":             _ssh_http,
 		"_ssh_socks":            _ssh_socks,
 		"_ssh_local_socks_port": _ssh_local_socks_port,
+		"_ssh_local_http_port":  _ssh_local_http_port,
 		"_ssh_ssh":              _ssh_ssh,
 		"_ssh_print":            _ssh_print,
 		"_ssh_proxy":            _ssh_proxy,

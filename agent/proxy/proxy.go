@@ -11,13 +11,22 @@ import (
 )
 
 // NewProxyDialer return a proxified dialer
-func NewProxyDialer(proxyUrl *url.URL) proxyplease.DialContext {
+func NewProxyDialer(proxyUrl *url.URL, username string, password string, domain string) proxyplease.DialContext {
 	proxyplease.SetDebugf(log.ProxyPleaseLog())
 	proxy := proxyplease.Proxy{
 		TLSConfig: NewTlsConfig(),
 	}
 	if proxyUrl.String() != "" {
 		proxy.URL = proxyUrl
+	}
+	if username != "" {
+		proxy.Username = username
+	}
+	if password != "" {
+		proxy.Password = password
+	}
+	if domain != "" {
+		proxy.Domain = domain
 	}
 	return proxyplease.NewDialContext(proxy)
 }
@@ -35,7 +44,7 @@ func NewHttpClientProxy() *http.Client {
 		}
 	}
 
-	dialContext := NewProxyDialer(config.Get().Proxy())
+	dialContext := NewProxyDialer(config.Get().Proxy(), config.Get().ProxyUsername(), config.Get().ProxyPassword(), config.Get().ProxyDomain())
 	transport.DialContext = dialContext
 	return &http.Client{
 		Transport: &transport,
@@ -59,7 +68,7 @@ func ProxifyTransport(tr *http.Transport) *http.Transport {
 		return tr
 	}
 
-	dialContext := NewProxyDialer(config.Get().Proxy())
+	dialContext := NewProxyDialer(config.Get().Proxy(), config.Get().ProxyUsername(), config.Get().ProxyPassword(), config.Get().ProxyDomain())
 	tr.DialContext = dialContext
 	return tr
 }

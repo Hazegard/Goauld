@@ -50,13 +50,29 @@ env:
 
   - AGENT__SSHD={{ .Env.AGENT__SSHD }}
   - AGENT__SOCKS={{ .Env.AGENT__SOCKS }}
-  - AGENT__SOCKS_PROXY={{ .Env.AGENT__SOCKS_PROXY }}
+  - AGENT__HTTP={{ .Env.AGENT__HTTP }}
 
   - AGENT__PROXY={{ .Env.AGENT__PROXY }}
+  - AGENT__PROXY_USERNAME={{ .Env.AGENT__PROXY_USERNAME }}
+  - AGENT__PROXY_PASSWORD={{ .Env.AGENT__PROXY_PASSWORD }}
+  - AGENT__PROXY_DOMAIN={{ .Env.AGENT__PROXY_DOMAIN }}
+
+  - AGENT__SOCKS_PROXY={{ .Env.AGENT__SOCKS_PROXY }}
+  - AGENT__SOCKS_CUSTOM_PROXY={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}
+  - AGENT__SOCKS_PROXY_USERNAME={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}
+  - AGENT__SOCKS_PROXY_PASSWORD={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}
+  - AGENT__SOCKS_PROXY_DOMAIN={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}
+
+  - AGENT__HTTP_CUSTOM_PROXY={{ .Env.AGENT__HTTP_CUSTOM_PROXY }}
+  - AGENT__HTTP_PROXY_USERNAME={{ .Env.AGENT__HTTP_PROXY_USERNAME }}
+  - AGENT__HTTP_PROXY_PASSWORD={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}
+  - AGENT__HTTP_PROXY_DOMAIN={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}
+
   - AGENT__NO_PROXY={{ .Env.AGENT__NO_PROXY }}
 
   - AGENT__RSSH_PORT={{ .Env.AGENT__RSSH_PORT }}
   - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
+  - AGENT__HTTP_PORT={{ .Env.AGENT__HTTP_PORT }}
 
   - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
   - AGENT__VERBOSE={{ .Env.AGENT__VERBOSE }}
@@ -215,13 +231,31 @@ builds:
 
       - '{{ if (index .Env "AGENT__SSHD") }} -X Goauld/agent/config._sshd={{ .Env.AGENT__SSHD }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS") }} -X Goauld/agent/config._socks={{ .Env.AGENT__SOCKS }}{{end}}'
-      - '{{ if (index .Env "AGENT__SOCKS_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP") }} -X Goauld/agent/config._http_proxy={{ .Env.AGENT__HTTP }}{{end}}'
+
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__PROXY_PASSWORD") }} -X Goauld/agent/config._proxy_password={{ .Env.AGENT__PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__PROXY_DOMAIN") }} -X Goauld/agent/config._proxy_domain={{ .Env.AGENT__PROXY_DOMAIN }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY_PASSWORD") }} -X Goauld/agent/config._socks_proxy_password={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY_DOMAIN") }} -X Goauld/agent/config._socks_proxy_domain={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__HTTP_CUSTOM_PROXY") }} -X Goauld/agent/config._http_proxy={{ .Env.AGENT__HTTP_CUSTOM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._http_proxy_username={{ .Env.AGENT__HTTP_PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._http_proxy_password={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._http_proxy_domain={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}{{end}}'
+
+
       - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
       - '{{ if (index .Env "AGENT__VERBOSE") }} -X Goauld/agent/config._verbosity={{ .Env.AGENT__VERBOSE }}{{end}}'

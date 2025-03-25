@@ -1,9 +1,11 @@
 package main
 
 import (
+	"Goauld/agent/proxy"
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"strconv"
@@ -78,6 +80,7 @@ func run(context.Context, context.CancelFunc) {
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
 	socksErr := make(chan error)
+	httpProxyErr := make(chan error)
 
 	var forwardedPorts []commonssh.RemotePortForwarding
 
@@ -196,6 +199,63 @@ func run(context.Context, context.CancelFunc) {
 			})
 		}
 
+		// If the HTTP proxy server is enabled, start it
+		if config.Get().HttpProxyEnabled() {
+			httpProxy := proxy.InitHttpProxy()
+
+			listener, err := net.Listen("tcp4", "127.0.0.1:0")
+			port := listener.Addr().(*net.TCPAddr).Port
+			//rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedHttpProxyAddress())
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the HTTP proxy connection")
+			}
+			rpf := commonssh.RemotePortForwarding{
+				ServerPort: 0,
+				AgentPort:  port,
+				AgentIP:    "127.0.0.1",
+				Tag:        "HTTP",
+			}
+			rPort, err := sshAgent.RemoteForward(rpf, ctx)
+
+			config.Get().UpdateHttpProxyPort(rPort)
+
+			go func() {
+				select {
+				case httpProxyErr <- httpProxy.Server.Serve(listener):
+					if err != nil {
+						log.Error().Err(err).Msg("HTTP proxy server error")
+					}
+					err := httpProxy.Server.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("HTTP proxy close error")
+					}
+				case <-ctx.Done():
+					err := httpProxy.Server.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("HTTP proxy close error")
+					}
+				}
+			}()
+			// go func() {
+			// 	for {
+			// 		conn, _ := rListener.Accept()
+			// 		go func(c net.Conn) {
+			// 			defer c.Close()
+			// 			buf := make([]byte, 1024)
+			// 			n, _ := c.Read(buf)
+			// 			fmt.Println("Got:", string(buf[:n]))
+			// 		}(conn)
+			// 	}
+			// }()
+			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote HTTP proxy server started")
+			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
+				ServerPort: config.Get().RemoteForwardedHttpProxyPort(),
+				AgentPort:  -1,
+				AgentIP:    "0.0.0.0",
+				Tag:        "HTTP",
+			})
+		}
+
 		// For all porte forwards, launch the forwarding
 		rpf := config.Get().GetRemotePortForwarding()
 		for i := range rpf {
@@ -225,6 +285,8 @@ func run(context.Context, context.CancelFunc) {
 		log.Error().Err(err).Msg("error starting the ssh client")
 	case err := <-socksErr:
 		log.Error().Err(err).Msg("error starting the socks server")
+	case err := <-httpProxyErr:
+		log.Error().Err(err).Msg("error starting the http proxy")
 	case <-ctx.Done():
 		log.Error().Err(ctx.Err())
 	}

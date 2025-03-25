@@ -16,7 +16,9 @@ import (
 type Ssh struct {
 	Target         string   `arg:"" help:"The target agent."`
 	Socks          bool     `default:"${_ssh_socks}" name:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
+	Http           bool     `default:"${_ssh_http}" name:"http" negatable:""  optional:"" help:"Forward the HTTP proxy ports on the local host."`
 	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
+	LocalHttpPort  int      `default:"${_ssh_local_http_port}" name:"http-port" optional:"" help:"Local port to bind the SOCKS to."`
 	Ssh            bool     `default:"${_ssh_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_ssh_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
@@ -67,12 +69,14 @@ func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
 	if cfg.Socks.Target != "" {
 		// we are in socks mode, so apply the socks option to the ssh
 		cfg.Ssh.Socks = true
+		cfg.Ssh.Http = true
 		cfg.Ssh.Target = cfg.Socks.Target
 		cfg.Ssh.LocalSocksPort = e.LocalSocksPort
 		cfg.Ssh.Ssh = false
 		cfg.Ssh = Ssh{
 			Target:         cfg.Socks.Target,
 			Socks:          cfg.Socks.Socks,
+			Http:           cfg.Ssh.Http,
 			LocalSocksPort: cfg.Socks.LocalSocksPort,
 			Ssh:            false,
 			Print:          cfg.Ssh.Print,
@@ -82,6 +86,7 @@ func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
 	}
 	if e.Proxy {
 		e.Socks = false
+		e.Http = false
 	}
 	return e.Execute(api, cfg)
 }
@@ -186,6 +191,9 @@ func (e *Ssh) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath
 	}
 	if e.Socks {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Ssh.LocalSocksPort, agent.GetSocksPort()))
+	}
+	if e.Http {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Ssh.LocalHttpPort, agent.GetHttpPort()))
 	}
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
 	return cmd

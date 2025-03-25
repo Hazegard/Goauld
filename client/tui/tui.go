@@ -305,6 +305,7 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		{"Ssh Mode", agent.SshMode},
 		{"SSHD Port", agent.GetSSHPort()},
 		{"Socks Ports", agent.GetSocksPort()},
+		{"HTTP Ports", agent.GetHttpPort()},
 		{"Other Ports", agent.GetOtherPort()},
 	}
 
@@ -321,6 +322,7 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		agent.SshMode,
 		agent.GetSSHPort(),
 		agent.GetSocksPort(),
+		agent.GetHttpPort(),
 		agent.GetOtherPort(),
 		agent.SshPasswd,
 	}
@@ -361,6 +363,7 @@ func GenerateAgentTable() table.Model {
 		table.NewColumn("Last updates", "Last updates", 15),
 		table.NewColumn("Mode", "Mode", 10),
 		table.NewColumn("SSHD Port", "SSHD Port", 15),
+		table.NewColumn("HTTP Port", "HTTP Port", 15),
 		table.NewColumn("Socks Ports", "Socks Ports", 15),
 	}
 	t := table.New(columns).
@@ -407,6 +410,7 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 				"Mode":         agent.SshMode,
 				"SSHD Port":    " " + agent.GetSSHPort(),
 				"Socks Ports":  " " + agent.GetSocksPort(),
+				"HTTP Ports":   " " + agent.GetSocksPort(),
 				"Other Ports":  " " + agent.GetOtherPort(),
 			})
 
