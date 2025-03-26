@@ -189,10 +189,10 @@ func (e *Ssh) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath
 	if e.Ssh || e.Proxy {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("-W127.0.0.1:%s", agent.GetSSHPort()))
 	}
-	if e.Socks {
+	if e.Socks && agent.GetSocksPort() != "0" {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Ssh.LocalSocksPort, agent.GetSocksPort()))
 	}
-	if e.Http {
+	if e.Http && agent.GetHttpPort() != "0" {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Ssh.LocalHttpPort, agent.GetHttpPort()))
 	}
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
