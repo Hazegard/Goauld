@@ -97,8 +97,8 @@ var (
 type ServerConfig struct {
 	PrivKey string `default:"${_age_privKey}"  name:"age-privkey" optional:"" help:"Age private key to use."`
 
-	HttpDomain string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
-	TlsDomain  string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
+	HttpDomain []string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
+	TlsDomain  []string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
 
 	HttpAddr  string `default:"${_http_listen_addr}"  name:"http-listen-addr" optional:"" help:"HTTP address to bind to, port 0 => Random."`
 	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-listen-addr" optional:"" help:"HTTPS address to bind to, port 0 => Random."`
@@ -240,7 +240,7 @@ func (s *ServerConfig) IsCustomTLS() bool {
 
 // GetTlsDomains return the list of domains served under TLS
 func (s *ServerConfig) GetTlsDomains() []string {
-	return []string{s.TlsDomain, s.HttpDomain}
+	return append(s.TlsDomain, s.HttpDomain...)
 }
 
 // GetBinariesBasicAuth return the username and password used to restrict the hosted binaries

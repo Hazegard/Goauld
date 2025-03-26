@@ -1,6 +1,7 @@
 package router
 
 import (
+	"Goauld/common/utils"
 	"crypto/tls"
 	"net"
 
@@ -44,7 +45,7 @@ func (router *MainRouter) HandleTls(c net.Conn) {
 		}
 		state := tlsConn.ConnectionState()
 		// Extract the TLS SNI
-		if state.ServerName == config.Get().HttpDomain {
+		if utils.Contains(config.Get().HttpDomain, state.ServerName) {
 			// If the domain match, the HTTP domain configured, serve the
 			// request using the HTTP router
 
@@ -52,7 +53,7 @@ func (router *MainRouter) HandleTls(c net.Conn) {
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to start server")
 			}
-		} else if state.ServerName == config.Get().TlsDomain {
+		} else if utils.Contains(config.Get().TlsDomain, state.ServerName) {
 			// If the domain match the TLS domain configured
 			// Handle it as a raw TLS
 
