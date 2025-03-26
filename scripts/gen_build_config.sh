@@ -30,10 +30,11 @@ function GenConfig(){
     PREFIX="$(echo "$ID" | tr '[:lower:]' '[:upper:]')"
     ENV_VAR="${PREFIX}_$(echo "$var" | tr '[:lower:]' '[:upper:]')"
 
+    help="$(rg -o "default:\"\\$\{$var}\".*help:\"(.*)\"" -r '$1' "$source_file"  )"
+
+    echo "# $help" >> "$ENV_FILE"
     echo "$ENV_VAR=" >> "$ENV_FILE"
     echo "  - $ENV_VAR={{ .Env.$ENV_VAR }}" >> "$GORELEASER_ENV"
-
-    package="$(head -n 1 "$source_file" | awk '{print $2}')"
 
 
     echo "      - '{{ if (index .Env \"$ENV_VAR\") }} -X $module.$var={{ .Env.$ENV_VAR }}{{end}}'" >> "$GORELEASER_FLAGS"
