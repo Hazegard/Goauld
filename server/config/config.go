@@ -115,7 +115,7 @@ type ServerConfig struct {
 
 	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ips" help:"List of IP allowed to access the /manage/ endpoint."`
 	AccessToken string   `default:"${_access_token}" name:"access-token" help:"Access token required to access the /manage/ endpoint."`
-	AdminToken  string   `default:"${_access_token}" name:"admin-token" help:"Access token required to access the /manage/ endpoint."`
+	AdminToken  string   `default:"${_admin_token}" name:"admin-token" help:"Access token required to access the /manage/ endpoint."`
 
 	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
 	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`

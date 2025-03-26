@@ -21,30 +21,31 @@ var (
 	_shared_password  = ""
 	_name             = "user@hostname"
 
-	_sshd                   = "true"
-	_socks                  = "true"
-	_http                   = "true"
-	_socks_use_system_proxy = "true"
-	_proxy                  = ""
-	_proxy_username         = ""
-	_proxy_password         = ""
-	_proxy_domain           = ""
+	_server     = "www.example.com"
+	_ssh_server = "www.example.com:2222"
+	_tls_server = "app.example.com"
 
-	_socks_proxy          = ""
+	_sshd_enabled           = "true"
+	_socks_enabled          = "true"
+	_http_proxy_enabled     = "true"
+	_socks_use_system_proxy = "true"
+
+	_proxy          = ""
+	_proxy_username = ""
+	_proxy_password = ""
+	_proxy_domain   = ""
+
+	_socks_custom_proxy   = ""
 	_socks_proxy_username = ""
 	_socks_proxy_password = ""
 	_socks_proxy_domain   = ""
 
-	_http_proxy          = ""
+	_http_custom_proxy   = ""
 	_http_proxy_username = ""
 	_http_proxy_password = ""
 	_http_proxy_domain   = ""
 
 	_no_proxy = "false"
-
-	_server     = "www.example.com"
-	_ssh_server = "www.example.com:2222"
-	_tls_server = "app.example.com"
 
 	// _sshd_port  = "0"
 	_rssh_port  = "0"
@@ -71,9 +72,9 @@ var (
 		"_shared_password": _shared_password,
 		"_name":            _name,
 
-		"_sshd":                   _sshd,
-		"_socks":                  _socks,
-		"_http":                   _http,
+		"_sshd_enabled":           _sshd_enabled,
+		"_socks_enabled":          _socks_enabled,
+		"_http_proxy_enabled":     _http_proxy_enabled,
 		"_socks_use_system_proxy": _socks_use_system_proxy,
 
 		"_no_proxy":       _no_proxy,
@@ -82,12 +83,12 @@ var (
 		"_proxy_password": _proxy_password,
 		"_proxy_domain":   _proxy_domain,
 
-		"_socks_proxy":          _socks_proxy,
+		"_socks_custom_proxy":   _socks_custom_proxy,
 		"_socks_proxy_username": _socks_proxy_username,
 		"_socks_proxy_password": _socks_proxy_password,
 		"_socks_proxy_domain":   _socks_proxy_domain,
 
-		"_http_proxy":          _http_proxy,
+		"_http_custom_proxy":   _http_custom_proxy,
 		"_http_proxy_username": _http_proxy_username,
 		"_http_proxy_password": _http_proxy_password,
 		"_http_proxy_domain":   _http_proxy_domain,
@@ -125,36 +126,35 @@ var (
 type AgentConfig struct {
 	AgePubKey string `default:"${_agePubKey}" help:"Age public key associated to the server. The provided public key should match the server public key" name:"age-pubkey" short:"A"`
 
+	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server to connect to."`
+	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
+	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
+
 	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" optional:"" help:"SSH password to access the agent.\nIf no password is provided, a random password is automatically generated."`
 	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
-	Sshd  bool `default:"${_sshd}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
-	Socks bool `default:"${_socks}" name:"socks" optional:"" negatable:"" help:"Start the Socks proxy server."`
-	Http  bool `default:"${_http}" name:"http" optional:"" negatable:"" help:"Start the Http proxy server."`
+	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
+	Socks bool `default:"${_socks_enabled}" name:"socks" optional:"" negatable:"" help:"Start the Socks proxy server."`
+	Http  bool `default:"${_http_proxy_enabled}" name:"http" optional:"" negatable:"" help:"Start the Http proxy server."`
 
 	Proxy         *url.URL `default:"${_proxy}" name:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" optional:"" help:"Username to use with the proxy"`
 	ProxyPassword string   `default:"${_proxy_password}" name:"proxy-password" optional:"" help:"Password to use with the proxy"`
 	ProxyDomain   string   `default:"${_proxy_domain}" name:"proxy-domain" optional:"" help:"Domain to use with the proxy"`
 
+	SocksCustomProxy    *url.URL `default:"${_socks_custom_proxy}" name:"socks-custom-proxy" optional:"" help:"Use the provided proxy to use within the socks proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy of the underlying system if applicable for all requests going through the socks proxy."`
-	SocksCustomProxy    *url.URL `default:"${_socks_proxy}" name:"socks-custom-proxy" optional:"" help:"Use the provided proxy to use within the socks proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	SocksProxyUsername  string   `default:"${_socks_proxy_username}" name:"socks-proxy-username" optional:"" help:"Username to use with the socks http upstream proxy"`
 	SocksProxyPassword  string   `default:"${_socks_proxy_password}" name:"socks-proxy-password" optional:"" help:"Password to use with the socks http upstream proxy"`
 	SocksProxyDomain    string   `default:"${_socks_proxy_domain}" name:"socks-proxy-domain" optional:"" help:"Domain to use with the socks http upstream proxy"`
 
-	HttpCustomProxy   *url.URL `default:"${_http_proxy}" name:"http-custom-proxy" optional:"" help:"Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
+	HttpCustomProxy   *url.URL `default:"${_http_custom_proxy}" name:"http-custom-proxy" optional:"" help:"Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	HttpProxyUsername string   `default:"${_http_proxy_username}" name:"http-proxy-username" optional:"" help:"Username to use with the http upstream proxy"`
 	HttpProxyPassword string   `default:"${_http_proxy_password}" name:"http-proxy-password" optional:"" help:"Password to use with the http upstream proxy"`
 	HttpProxyDomain   string   `default:"${_http_proxy_domain}" name:"http-proxy-domain" optional:"" help:"Domain to use with the http upstream proxy"`
 
 	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy."`
 
-	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server to connect to."`
-	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
-	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
-
-	// SshdAddr  int `default:"${_sshd_port}"  name:"sshd-port" optional:"" help:"Local port to listen to, 0 => Random."`
 	RsshPort      int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.\n By default, the port is 0 meaning the port will be random on the server."`
 	SocksPort     int `default:"${_socks_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
 	HttpProxyPort int `default:"${_http_port}"  name:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
@@ -172,7 +172,7 @@ type AgentConfig struct {
 	ConfigFile     string `default:"${_config_file}" name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 
 	Background       bool `name:"background" short:"B" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
-	HiddenBackground bool `name:"hidden-background" hidden:"" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
+	HiddenBackground bool `name:"hidden-background" hidden:""  negatable:"" optional:"" help:"Start the agent in the background."`
 }
 
 // parse parses the command line arguments
