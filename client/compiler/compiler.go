@@ -30,7 +30,7 @@ type Compiler struct {
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
 	Seed          string `default:"${_compile_seed}" name:"seed" help:"Seed to use to obfuscate agent."`
 	AgentPassword string `default:"${_compile_private_password}" help:"Static agent password."`
-	OverrideEnv   bool   `hidden:"true"`
+	ClientBuild   bool   `default:"true" hidden:"true"`
 }
 
 const (
@@ -38,6 +38,7 @@ const (
 )
 
 var requiredCommands = []string{
+	"go",
 	"goreleaser",
 	"garble",
 }
@@ -91,7 +92,7 @@ func (c *Compiler) Run() error {
 	if err != nil {
 		return fmt.Errorf("could not write env file %s: %v", newEnvFile, err)
 	}
-	if c.OverrideEnv {
+	if !c.ClientBuild {
 		err = CopyFile(newEnvFile, c.EnvFile)
 		if err != nil {
 			return fmt.Errorf("could not override env file %s: %v", newEnvFile, err)

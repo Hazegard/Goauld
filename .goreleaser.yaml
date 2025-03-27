@@ -2,6 +2,9 @@ version: 2
 
 env:
   - APP_NAME=goa'uld
+  - VERSION={{ .Env.VERSION }}
+  - COMMIT={{ .Env.COMMIT }}
+  - DATE={{ .Env.DATE }}
   - COMMON__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
 
   - HTTP_DOMAIN={{ .Env.HTTP_DOMAIN }}
@@ -140,6 +143,15 @@ before:
     # you may remove this if you don't need go generate
     # - go generate ./...
 
+snapshot:
+  # Allows you to change the name of the generated snapshot
+  #
+  # Note that some pipes require this to be semantic version compliant (nfpm,
+  # for example).
+  #
+  # Default: `{{ .Version }}-SNAPSHOT-{{.ShortCommit}}`.
+  # Templates: allowed.
+  version_template: "{{ .Version }}"
 
 builds:
   - id: "server"
@@ -170,7 +182,9 @@ builds:
       - osusergo
     ldflags:
       - -s -w -buildid=
-      - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.CommitDate}}
+      - '-X Goauld/common.Version={{.Version}}'
+      - '-X Goauld/common.Commit={{.Commit}}'
+      - '-X Goauld/common.Date={{.CommitDate}}'
 
 
       - '{{ if (index .Env "SERVER__AGE_PRIVKEY") }} -X Goauld/server/config._age_privKey={{ .Env.SERVER__AGE_PRIVKEY }}{{end}}'
@@ -200,6 +214,7 @@ builds:
 
       - '{{ if (index .Env "SERVER__GENERATE_CONFIG") }} -X Goauld/server/config._generate_config={{ .Env.SERVER__GENERATE_CONFIG }}{{end}}'
       - '{{ if (index .Env "SERVER__CONFIG_FILE") }} -X Goauld/server/config._config_file={{ .Env.SERVER__CONFIG_FILE }}{{end}}'
+
   - id: "agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
     tool: '{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}'
@@ -225,7 +240,9 @@ builds:
     ldflags:
       - -s -w -buildid=
       - '{{ if (index .Env "AGENT__PRIVATE_PASSWORD") }} -X Goauld/agent/config._private_password={{ .Env.AGENT__PRIVATE_PASSWORD }}{{end}}'
-      - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.CommitDate}}
+      - '-X Goauld/common.Version={{ if (index .Env "VERSION") }}{{ .Env.VERSION }}::Tealc{{ else }}{{ .Version }}{{ end }}'
+      - '-X Goauld/common.Date={{ if (index .Env "DATE") }}{{ .Env.DATE }}{{ else }}{{ .CommitDate }}{{ end }}'
+      - '-X Goauld/common.Commit={{ if (index .Env "COMMIT") }}{{ .Env.COMMIT }}{{ else }}{{ .Commit }}{{ end }}'
 
 
       - '{{ if (index .Env "AGENT__AGEPUBKEY") }} -X Goauld/agent/config._agePubKey={{ .Env.AGENT__AGEPUBKEY }}{{end}}'
@@ -301,7 +318,10 @@ builds:
       - osusergo
     ldflags:
       - -s -w -buildid=
-      - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.CommitDate}}
+      - '-X Goauld/common.Version={{.Version}}'
+      - '-X Goauld/common.Commit={{.Commit}}'
+      - '-X Goauld/common.Date={{.CommitDate}}'
+
 
 
       - '{{ if (index .Env "CLIENT__SERVER") }} -X main._server={{ .Env.CLIENT__SERVER }}{{end}}'

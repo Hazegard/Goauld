@@ -56,7 +56,7 @@ func main() {
 		EnvFile:     envFile,
 		Output:      "output",
 		Seed:        "__generate",
-		OverrideEnv: true,
+		ClientBuild: false,
 	}
 
 	err = cpl.Run()

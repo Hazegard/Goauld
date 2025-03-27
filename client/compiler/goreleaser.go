@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"Goauld/common"
 	"fmt"
 	"os"
 	"os/exec"
@@ -21,6 +22,15 @@ func Goreleaser(cfg Compiler) error {
 	}
 	if cfg.Goarch != "" {
 		env = append(env, "GOARCH="+cfg.Goarch)
+	}
+	if cfg.ClientBuild {
+		env = append(env, fmt.Sprintf("COMMIT=%s", common.Commit))
+		env = append(env, fmt.Sprintf("VERSION=%s", common.Version))
+		env = append(env, fmt.Sprintf("DATE=%s", common.Date))
+	} else {
+		env = append(env, "COMMIT=")
+		env = append(env, "VERSION=")
+		env = append(env, "DATE=")
 	}
 	cmd := exec.Command(c[0], c[1:]...)
 

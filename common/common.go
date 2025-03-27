@@ -10,9 +10,9 @@ import (
 const App_Name = "Goa'uld"
 
 var (
-	commit  = "none"
-	date    = "2006-01-02T15:04:05Z"
-	version = "dev"
+	Commit  = "none"
+	Date    = "2006-01-02T15:04:05Z"
+	Version = "dev"
 )
 
 func AppName() string {
@@ -27,12 +27,12 @@ func AppName() string {
 
 func Title(_type string) string {
 	prettyDate := ""
-	d, err := time.Parse(`2006-01-02T15:04:05Z`, date)
+	d, err := time.Parse(`2006-01-02T15:04:05Z`, Date)
 	if err != nil {
 		fmt.Println(err)
-		prettyDate = date
+		prettyDate = Date
 	} else {
 		prettyDate = d.Format("2006-01-02 15:04:05")
 	}
-	return fmt.Sprintf("%s - %s (%s-%.8s %s)", App_Name, _type, version, commit, prettyDate)
+	return fmt.Sprintf("%s - %s (%s-%.8s %s)", App_Name, _type, Version, Commit, prettyDate)
 }
