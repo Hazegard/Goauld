@@ -192,7 +192,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	}
 	kongOptions := []kong.Option{
 		kong.Name(common.AppName()),
-		kong.Description(description),
+		kong.Description(common.Title(common.App_Name) + "\n" + description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(common.AppName())),

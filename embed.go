@@ -6,7 +6,7 @@ import (
 	"runtime"
 )
 
-//go:embed agent client common server .goreleaser.yaml embed.go go.mod go.sum .env.build.tmpl
+//go:embed agent client common server .goreleaser.yaml embed.go go.mod go.sum .env.build.tmpl scripts/garble.sh scripts/garble.bat
 var Sources embed.FS
 
 func GetRoot() string {

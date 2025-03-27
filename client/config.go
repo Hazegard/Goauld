@@ -1,6 +1,7 @@
 package main
 
 import (
+	common2 "Goauld/common"
 	"Goauld/common/cli"
 	"errors"
 	"fmt"
@@ -61,8 +62,9 @@ var (
 	_compile_goarch           = ""
 	_compile_source           = ""
 	_compile_env_file         = ""
-	_compile_output           = ""
+	_compile_output           = "output"
 	_compile_drop_env         = "false"
+	_compile_seed             = "__generate"
 	_compile_private_password = ""
 
 	defaultValues = kong.Vars{
@@ -107,6 +109,7 @@ var (
 		"_compile_env_file":         _compile_env_file,
 		"_compile_output":           _compile_output,
 		"_compile_drop_env":         _compile_drop_env,
+		"_compile_seed":             _compile_seed,
 		"_compile_private_password": _compile_private_password,
 	}
 )
@@ -207,7 +210,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	}
 	kongOptions := []kong.Option{
 		kong.Name(strings.ToLower(APP_NAME)),
-		kong.Description(common.Description),
+		kong.Description(common2.Title(APP_NAME) + "\n" + common.Description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),

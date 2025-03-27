@@ -7,7 +7,9 @@ import (
 	"Goauld/common/cli"
 	"Goauld/common/log"
 	"Goauld/common/utils"
+	"crypto/rand"
 	"embed"
+	"encoding/base64"
 	"fmt"
 	"github.com/alecthomas/kong"
 	"io/fs"
@@ -26,7 +28,9 @@ type Compiler struct {
 	Output        string `default:"${_compile_output}" help:"Folder containing compiled compiled agents."`
 	Verbose       int    `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
+	Seed          string `default:"${_compile_seed}" name:"seed" help:"Seed to use to obfuscate agent."`
 	AgentPassword string `default:"${_compile_private_password}" help:"Static agent password."`
+	OverrideEnv   bool   `hidden:"true"`
 }
 
 const (
@@ -35,6 +39,7 @@ const (
 
 var requiredCommands = []string{
 	"goreleaser",
+	"garble",
 }
 
 // Run execute the compiler command
@@ -60,15 +65,61 @@ func (c *Compiler) Run() error {
 		}
 		c.EnvFile = filepath.Join(tempDir, EnvFile+".tmpl")
 	}
-	if c.AgentPassword != "" {
-		ReplaceInFile(c.AgentPassword, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
+
+	byteContent, err := os.ReadFile(c.EnvFile)
+	if err != nil {
+		return fmt.Errorf("could not read env file %s: %v", c.EnvFile, err)
 	}
-	err := run(*c)
+	content := string(byteContent)
+	if c.AgentPassword != "" {
+		content = ReplaceInFile(content, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
+	}
+
+	if c.Seed == "__generate" {
+		seed, err := GenerateSecureRandomBase64(69)
+		if err != nil {
+			return fmt.Errorf("could not generate random seed: %v", err)
+		}
+		content = ReplaceInFile(content, "CLIENT__COMPILE_SEED=", "CLIENT__COMPILE_SEED="+seed)
+	}
+	err = MkdirAll(c.Output)
+	if err != nil {
+		return fmt.Errorf("could not create output directory %s: %v", c.Output, err)
+	}
+	newEnvFile := filepath.Join(c.Output, EnvFile)
+	err = os.WriteFile(newEnvFile, []byte(content), 0644)
+	if err != nil {
+		return fmt.Errorf("could not write env file %s: %v", newEnvFile, err)
+	}
+	if c.OverrideEnv {
+		err = CopyFile(newEnvFile, c.EnvFile)
+		if err != nil {
+			return fmt.Errorf("could not override env file %s: %v", newEnvFile, err)
+		}
+	}
+	c.EnvFile = newEnvFile
+	// err = CopyFile(c.EnvFile, filepath.Join(c.Output, EnvFile))
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("error copying env file")
+	// 	return fmt.Errorf("error copying env file: %v", err)
+	// }
+
+	err = run(*c)
 	if err != nil {
 		return fmt.Errorf("compilation failed: %v", err)
 	}
 
 	return nil
+}
+
+// GenerateSecureRandomBase64 generates a secure random Base64 string of the given byte length
+func GenerateSecureRandomBase64(byteLength int) (string, error) {
+	bytes := make([]byte, byteLength)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(bytes), nil
 }
 
 // HandleDropEnv get the .env file stored in the embed struct and drops print the file to the stdout
@@ -144,11 +195,6 @@ func run(config Compiler) error {
 		log.Error().Err(err).Msg("error updating artifacts")
 		return fmt.Errorf("error updating artifacts: %v", err)
 	}
-	err = CopyFile(config.EnvFile, filepath.Join(config.Output, EnvFile))
-	if err != nil {
-		log.Error().Err(err).Msg("error copying env file")
-		return fmt.Errorf("error copying env file: %v", err)
-	}
 	return nil
 }
 
@@ -188,6 +234,13 @@ func drop(destDir string, source embed.FS) error {
 		err = os.WriteFile(destPath, fileContent, 0644)
 		if err != nil {
 			return err
+		}
+
+		if strings.Contains(destPath, "scripts/garble") {
+			err = os.Chmod(destPath, 0755)
+			if err != nil {
+				return err
+			}
 		}
 
 		log.Trace().Msgf("%s -> %s", path, destPath)

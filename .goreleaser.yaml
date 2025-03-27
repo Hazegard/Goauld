@@ -11,6 +11,8 @@ env:
   - HTTPS_PORT={{ .Env.HTTPS_PORT }}
 
 
+  - SERVER__AGE_PRIVKEY={{ .Env.SERVER__AGE_PRIVKEY }}
+
   - SERVER__HTTP_DOMAIN={{ .Env.SERVER__HTTP_DOMAIN }}
   - SERVER__TLS_DOMAIN={{ .Env.SERVER__TLS_DOMAIN }}
 
@@ -18,27 +20,27 @@ env:
   - SERVER__HTTPS_LISTEN_ADDR={{ .Env.SERVER__HTTPS_LISTEN_ADDR }}
   - SERVER__SSHD_LISTEN_ADDR={{ .Env.SERVER__SSHD_LISTEN_ADDR }}
 
-  - SERVER__VERBOSE={{ .Env.SERVER__VERBOSE }}
+  - SERVER__VERBOSITY={{ .Env.SERVER__VERBOSITY }}
 
   - SERVER__TLS={{ .Env.SERVER__TLS }}
   - SERVER__TLS_KEY={{ .Env.SERVER__TLS_KEY }}
   - SERVER__TLS_CERT={{ .Env.SERVER__TLS_CERT }}
 
   - SERVER__NO_DB={{ .Env.SERVER__NO_DB }}
-  - SERVER__DB_FILE_NAME={{ .Env.SERVER__DB_FILE_NAME }}
+  - SERVER__DB_NAME={{ .Env.SERVER__DB_NAME }}
 
   - SERVER__ALLOWED_IPS={{ .Env.SERVER__ALLOWED_IPS }}
   - SERVER__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
   - SERVER__ADMIN_TOKEN={{ .Env.SERVER__ADMIN_TOKEN }}
 
-  - SERVER__BINARIES_BASIC_AUTH={{ .Env.SERVER__BINARIES_BASIC_AUTH }}
-  - SERVER__BINARIES_PATH_LOCATION={{ .Env.SERVER__BINARIES_PATH_LOCATION }}
+  - SERVER__BINARIES_BASICAUTH={{ .Env.SERVER__BINARIES_BASICAUTH }}
+  - SERVER__BINARIES_PATH={{ .Env.SERVER__BINARIES_PATH }}
 
   - SERVER__GENERATE_CONFIG={{ .Env.SERVER__GENERATE_CONFIG }}
   - SERVER__CONFIG_FILE={{ .Env.SERVER__CONFIG_FILE }}
 
 
-  - AGENT__AGE_PUBKEY={{ .Env.AGENT__AGE_PUBKEY }}
+  - AGENT__AGEPUBKEY={{ .Env.AGENT__AGEPUBKEY }}
 
   - AGENT__SERVER={{ .Env.AGENT__SERVER }}
   - AGENT__SSH_SERVER={{ .Env.AGENT__SSH_SERVER }}
@@ -48,17 +50,17 @@ env:
   - AGENT__SHARED_PASSWORD={{ .Env.AGENT__SHARED_PASSWORD }}
   - AGENT__NAME={{ .Env.AGENT__NAME }}
 
-  - AGENT__SSHD={{ .Env.AGENT__SSHD }}
-  - AGENT__SOCKS={{ .Env.AGENT__SOCKS }}
-  - AGENT__HTTP={{ .Env.AGENT__HTTP }}
+  - AGENT__SSHD_ENABLED={{ .Env.AGENT__SSHD_ENABLED }}
+  - AGENT__SOCKS_ENABLED={{ .Env.AGENT__SOCKS_ENABLED }}
+  - AGENT__HTTP_PROXY_ENABLED={{ .Env.AGENT__HTTP_PROXY_ENABLED }}
 
   - AGENT__PROXY={{ .Env.AGENT__PROXY }}
   - AGENT__PROXY_USERNAME={{ .Env.AGENT__PROXY_USERNAME }}
   - AGENT__PROXY_PASSWORD={{ .Env.AGENT__PROXY_PASSWORD }}
   - AGENT__PROXY_DOMAIN={{ .Env.AGENT__PROXY_DOMAIN }}
 
-  - AGENT__SOCKS_PROXY={{ .Env.AGENT__SOCKS_PROXY }}
   - AGENT__SOCKS_CUSTOM_PROXY={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}
+  - AGENT__SOCKS_USE_SYSTEM_PROXY={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}
   - AGENT__SOCKS_PROXY_USERNAME={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}
   - AGENT__SOCKS_PROXY_PASSWORD={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}
   - AGENT__SOCKS_PROXY_DOMAIN={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}
@@ -75,11 +77,11 @@ env:
   - AGENT__HTTP_PORT={{ .Env.AGENT__HTTP_PORT }}
 
   - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
-  - AGENT__VERBOSE={{ .Env.AGENT__VERBOSE }}
+  - AGENT__VERBOSITY={{ .Env.AGENT__VERBOSITY }}
 
   - AGENT__RSSH_ORDER={{ .Env.AGENT__RSSH_ORDER }}
 
-  - AGENT__RPF={{ .Env.AGENT__RPF }}
+  - AGENT__REMOTE_PORT_FORWARDING={{ .Env.AGENT__REMOTE_PORT_FORWARDING }}
 
   - AGENT__MAX_RETRIES={{ .Env.AGENT__MAX_RETRIES }}
 
@@ -95,42 +97,40 @@ env:
 
   - CLIENT__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
 
-  - CLIENT__VERBOSE={{ .Env.CLIENT__VERBOSE }}
+  - CLIENT__VERBOSITY={{ .Env.CLIENT__VERBOSITY }}
   - CLIENT__INSECURE={{ .Env.CLIENT__INSECURE }}
 
   - CLIENT__GENERATE_CONFIG={{ .Env.CLIENT__GENERATE_CONFIG }}
   - CLIENT__CONFIG_FILE={{ .Env.CLIENT__CONFIG_FILE }}
 
+  - CLIENT__STATIC_SSH_AGENT_MAP={{ .Env.CLIENT__STATIC_SSH_AGENT_MAP }}
   - CLIENT__SSH_SOCKS={{ .Env.CLIENT__SSH_SOCKS }}
-  - CLIENT__SSH_SOCKS_PORT={{ .Env.CLIENT__SSH_SOCKS_PORT }}
+  - CLIENT__SSH_HTTP={{ .Env.CLIENT__SSH_HTTP }}
+  - CLIENT__SSH_LOCAL_SOCKS_PORT={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}
+  - CLIENT__SSH_LOCAL_HTTP_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}
   - CLIENT__SSH_SSH={{ .Env.CLIENT__SSH_SSH }}
   - CLIENT__SSH_PRINT={{ .Env.CLIENT__SSH_PRINT }}
   - CLIENT__SSH_PROXY={{ .Env.CLIENT__SSH_PROXY }}
-  - CLIENT__SSH_ARGS={{ .Env.CLIENT__SSH_ARGS }}
-
   - CLIENT__SOCKS_SOCKS={{ .Env.CLIENT__SOCKS_SOCKS }}
-  - CLIENT__SOCKS_SOCKS_PORT={{ .Env.CLIENT__SOCKS_SOCKS_PORT }}
+  - CLIENT__SSH_HTTP={{ .Env.CLIENT__SSH_HTTP }}
+  - CLIENT__SOCKS_LOCAL_SOCKS_PORT={{ .Env.CLIENT__SOCKS_LOCAL_SOCKS_PORT }}
+  - CLIENT__SSH_LOCAL_HTTP_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}
   - CLIENT__SOCKS_SSH={{ .Env.CLIENT__SOCKS_SSH }}
   - CLIENT__SOCKS_PRINT={{ .Env.CLIENT__SOCKS_PRINT }}
   - CLIENT__SOCKS_PROXY={{ .Env.CLIENT__SOCKS_PROXY }}
-  - CLIENT__SOCKS_ARGS={{ .Env.CLIENT__SOCKS_ARGS }}
-
   - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
   - CLIENT__SCP_SOURCE={{ .Env.CLIENT__SCP_SOURCE }}
   - CLIENT__SCP_DESTINATION={{ .Env.CLIENT__SCP_DESTINATION }}
-  - CLIENT__SCP_ARGS={{ .Env.CLIENT__SCP_ARGS }}
-
-  - CLIENT__PASS_AGENT={{ .Env.CLIENT__PASS_AGENT }}
-  - CLIENT__PASS_TYPE={{ .Env.CLIENT__PASS_TYPE }}
-
   - CLIENT__COMPILE_ID={{ .Env.CLIENT__COMPILE_ID }}
   - CLIENT__COMPILE_GOOS={{ .Env.CLIENT__COMPILE_GOOS }}
   - CLIENT__COMPILE_GOARCH={{ .Env.CLIENT__COMPILE_GOARCH }}
   - CLIENT__COMPILE_SOURCE={{ .Env.CLIENT__COMPILE_SOURCE }}
   - CLIENT__COMPILE_ENV_FILE={{ .Env.CLIENT__COMPILE_ENV_FILE }}
   - CLIENT__COMPILE_OUTPUT={{ .Env.CLIENT__COMPILE_OUTPUT }}
-  - CLIENT__COMPILE_VERBOSE={{ .Env.CLIENT__COMPILE_VERBOSE }}
+  - CLIENT__VERBOSITY={{ .Env.CLIENT__VERBOSITY }}
   - CLIENT__COMPILE_DROP_ENV={{ .Env.CLIENT__COMPILE_DROP_ENV }}
+  - CLIENT__COMPILE_SEED={{ .Env.CLIENT__COMPILE_SEED }}
+  - CLIENT__COMPILE_PRIVATE_PASSWORD={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}
 
 
 before:
@@ -165,7 +165,11 @@ builds:
       - arm64
     flags:
       - -trimpath
+    tags:
+      - netgo
+      - osusergo
     ldflags:
+      - -s -w -buildid=
       - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.CommitDate}}
 
 
@@ -196,16 +200,13 @@ builds:
 
       - '{{ if (index .Env "SERVER__GENERATE_CONFIG") }} -X Goauld/server/config._generate_config={{ .Env.SERVER__GENERATE_CONFIG }}{{end}}'
       - '{{ if (index .Env "SERVER__CONFIG_FILE") }} -X Goauld/server/config._config_file={{ .Env.SERVER__CONFIG_FILE }}{{end}}'
-      - "-s -w -buildid="
   - id: "agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
+    tool: '{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}'
     binary: goauld
     main: ./agent
     env:
       - CGO_ENABLED=0
-      - AGENT__SERVER={{ if (index .Env "HTTPS_PORT") }}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTPS_PORT}}{{else}}https://{{ .Env.HTTP_DOMAIN }}:{{ .Env.HTTP_PORT}}{{end}}
-      - AGENT__SSH_SERVER={{.Env.HTTP_DOMAIN}}:{{.Env.SSHD_PORT}}
-      - AGENT__TLS_SERVER={{ if (and (index .Env "HTTPS_PORT") (index .Env "HTTPS_PORT")) }}{{.Env.TLS_DOMAIN}}:{{.Env.HTTPS_PORT}}{{end}}
 
     goos:
       - linux
@@ -218,6 +219,9 @@ builds:
       - arm64
     flags:
       - -trimpath
+    tags:
+      - netgo
+      - osusergo
     ldflags:
       - -s -w -buildid=
       - '{{ if (index .Env "AGENT__PRIVATE_PASSWORD") }} -X Goauld/agent/config._private_password={{ .Env.AGENT__PRIVATE_PASSWORD }}{{end}}'
@@ -292,6 +296,9 @@ builds:
       - arm64
     flags:
       - -trimpath
+    tags:
+      - netgo
+      - osusergo
     ldflags:
       - -s -w -buildid=
       - -X Goauld/common.version={{.Version}} -X Goauld/common.commit={{.Commit}} -X Goauld/common.date={{.CommitDate}}
@@ -341,23 +348,6 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_DROP_ENV") }} -X main._compile_drop_env={{ .Env.CLIENT__COMPILE_DROP_ENV }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_PRIVATE_PASSWORD") }} -X main._compile_private_password={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}{{end}}'
 
-
-
-# archives:
-#   - formats: tar.gz
-#     allow_different_binary_count: true
-#     # this name template makes the OS and Arch compatible with the results of `uname`.
-#     name_template: >-
-#       {{ .ProjectName }}_
-#       {{- title .Os }}_
-#       {{- if eq .Arch "amd64" }}x86_64
-#       {{- else if eq .Arch "386" }}i386
-#       {{- else }}{{ .Arch }}{{ end }}
-#       {{- if .Arm }}v{{ .Arm }}{{ end }}
-#     # use zip for windows archives
-#     format_overrides:
-#       - goos: windows
-#         formats: zip
 
 changelog:
   sort: asc

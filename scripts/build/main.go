@@ -49,12 +49,14 @@ func main() {
 	}
 
 	cpl := compiler.Compiler{
-		Id:      cfg.Id,
-		Goos:    cfg.Goos,
-		Goarch:  cfg.Goarch,
-		Source:  pwd,
-		EnvFile: envFile,
-		Output:  "output",
+		Id:          cfg.Id,
+		Goos:        cfg.Goos,
+		Goarch:      cfg.Goarch,
+		Source:      pwd,
+		EnvFile:     envFile,
+		Output:      "output",
+		Seed:        "__generate",
+		OverrideEnv: true,
 	}
 
 	err = cpl.Run()
@@ -94,7 +96,7 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 		content = compiler.ReplaceInFile(content, "SERVER__ACCESS_TOKEN", fmt.Sprintf("SERVER__ACCESS_TOKEN=%s", newtoken))
 	}
 
-	return envFile, os.WriteFile(newEnv, []byte(content), 0o700)
+	return newEnv, os.WriteFile(newEnv, []byte(content), 0o700)
 }
 
 // parse parses the command line arguments

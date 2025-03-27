@@ -14,7 +14,7 @@ func Goreleaser(cfg Compiler) error {
 	// }
 	var env []string
 	if cfg.Id != "" && cfg.Id != "all" {
-		c = append(c, "--id", cfg.Id, "--single-target")
+		c = append(c, "--id", cfg.Id) //, "--single-target")
 	}
 	if cfg.Goos != "" {
 		env = append(env, "GOOS="+cfg.Goos)
