@@ -151,6 +151,7 @@ func (cpc *ControlPlanClient) Init() error {
 		log.Trace().Msg("OnEvent: SendRemotePortForwardingDataSuccess")
 		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
 		log.Trace().Msg("OnEvent: SendRemotePortForwardingDataSuccess done")
+		log.OK().Msg("Agent successfully started.")
 	})
 
 	cpc.socket = socket

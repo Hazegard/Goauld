@@ -14,6 +14,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
+const CustomLevelType zerolog.Level = zerolog.Level(10) // Pick an unused int > 6
+const Custom = "OK "
+
 var (
 	zerologger    *zerolog.Logger
 	once          sync.Once
@@ -25,9 +28,45 @@ var (
 
 func initLoggers() {
 	root := Sources.GetRoot()
-	l := zerolog.New(
-		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
-	).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
+	writer := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}
+	zerolog.LevelFieldMarshalFunc = func(l zerolog.Level) string {
+		if l == CustomLevelType {
+			return Custom
+		}
+		return l.String()
+	}
+	writer.FormatLevel = func(i interface{}) string {
+		if level, ok := i.(string); ok {
+			if level == Custom {
+				return fmt.Sprintf("\x1b[35m%s\x1b[0m", Custom) // Purple (or whatever ANSI color you want)
+			}
+			// Optionally color built-in levels too
+			switch strings.ToUpper(level) {
+			case "TRACE":
+				return "\x1b[1;34mTRC\x1b[0m"
+			case "DEBUG":
+				return "\x1b[1;37mDBG\x1b[0m"
+			case "INFO":
+				return "\x1b[1;32mINF\x1b[0m"
+			case "WARN":
+				return "\x1b[1;33mWRN\x1b[0m"
+			case "ERROR":
+				return "\x1b[1;31mERR\x1b[0m"
+			case "FATAL":
+				return "\x1b[31;1mFAT\x1b[0m"
+			case "PANIC":
+				return "\x1b[1;41mPNC\x1b[0m"
+			default:
+				return level // unstyled
+			}
+		}
+		return "\x1b[1;37m???\x1b[0m"
+	}
+	writer.FormatMessage = func(i interface{}) string {
+
+		return fmt.Sprintf("%v", i)
+	}
+	l := zerolog.New(writer).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		return fmt.Sprintf("%s:%d", strings.TrimPrefix(file, root+"/"), line)
 	}
@@ -148,6 +187,11 @@ func Debug() *zerolog.Event {
 
 func Info() *zerolog.Event {
 	return Get().Info()
+}
+
+func OK() *zerolog.Event {
+	// Log using the custom level
+	return Get().WithLevel(CustomLevelType)
 }
 
 func Warn() *zerolog.Event {
