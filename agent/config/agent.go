@@ -36,6 +36,7 @@ type Agent struct {
 	Hostname                 string
 	IPs                      []string
 	Path                     string
+	WorkingDay               WorkingDay
 }
 
 var agent *Agent
@@ -137,6 +138,10 @@ func InitAgent() (*kong.Context, error, []error) {
 		Hostname:                 host,
 		IPs:                      ips,
 		Path:                     currDir,
+		WorkingDay: WorkingDay{
+			Start: cfg.WorkingDayStart,
+			End:   cfg.WorkingDayEnd,
+		},
 	}
 	return ctx, nil, warnings
 }
@@ -296,6 +301,14 @@ func (a *Agent) Name() string {
 // GetKeepalive returns the duration between two keepalive ping
 func (a *Agent) GetKeepalive() time.Duration {
 	return time.Duration(a.cfg.KeepAlive)
+}
+
+func (a *Agent) OnlyWorkingDays() bool {
+	return a.cfg.OnlyWorkingDays
+}
+
+func (a *Agent) IsOutOfWorkingDay() bool {
+	return a.cfg.OnlyWorkingDays && !a.WorkingDay.IsWorkingPeriod()
 }
 
 // GetRsshOrder returns the order thtat the agent should follow to attempt to connect

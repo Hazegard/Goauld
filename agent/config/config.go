@@ -55,6 +55,11 @@ var (
 	_keepalive = "20"
 	_verbosity = "0"
 
+	_only_working_days    = "true"
+	_working_day_start    = "8:00"
+	_working_day_end      = "19:30"
+	_working_day_timezone = "Europe/Paris"
+
 	_rssh_order = "SSH,TLS,WS,HTTP"
 
 	_remote_port_forwarding = ""
@@ -103,6 +108,11 @@ var (
 
 		"_keepalive": _keepalive,
 		"_verbosity": _verbosity,
+
+		"_only_working_days":    _only_working_days,
+		"_working_day_start":    _working_day_start,
+		"_working_day_end":      _working_day_end,
+		"_working_day_timezone": _working_day_timezone,
 
 		"_rssh_order": _rssh_order,
 
@@ -161,6 +171,11 @@ type AgentConfig struct {
 
 	KeepAlive int `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
 	Verbose   int `default:"${_verbosity}" help:"Verbosity of the logs. Repeat -v to increase" name:"verbose" short:"v" type:"counter"`
+
+	OnlyWorkingDays    bool   `default:"${_only_working_days}" name:"only-working-days" optional:"" help:"Only working days."`
+	WorkingDayStart    string `default:"${_working_day_start}" name:"working-day-start" help:"Start time of working day in days."`
+	WorkingDayEnd      string `default:"${_working_day_end}" name:"working-day-end" help:"End time of working day in days."`
+	WorkingDayTimeZone string `default:"${_working_day_timezone}" name:"working-day-timezone" help:"Timezone of working day."`
 
 	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
 

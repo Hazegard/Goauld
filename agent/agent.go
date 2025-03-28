@@ -57,12 +57,17 @@ func main() {
 	exp := &backoff.ExponentialBackOff{
 		InitialInterval:     time.Second,
 		RandomizationFactor: 2,
-		Multiplier:          0.5,
-		MaxInterval:         5 * time.Minute,
+		Multiplier:          1.5,
+		MaxInterval:         time.Minute,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	operation := func() (any, error) {
+		log.Info().Msg("Starting agent")
+		if config.Get().IsOutOfWorkingDay() {
+			log.Warn().Msg("Agent running out of working day")
+			return nil, errors.New("agent started out of working day")
+		}
 		run(ctx, cancel)
 		return nil, errors.New("")
 	}

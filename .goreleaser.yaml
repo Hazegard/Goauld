@@ -7,6 +7,8 @@ env:
   - DATE={{ .Env.DATE }}
   - COMMON__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
 
+  - AGENT__PRIVATE_PASSWORD={{ .Env.AGENT__PRIVATE_PASSWORD }}
+
   - HTTP_DOMAIN={{ .Env.HTTP_DOMAIN }}
   - TLS_DOMAIN={{ .Env.TLS_DOMAIN }}
   - SSHD_PORT={{ .Env.SSHD_PORT }}
@@ -49,7 +51,6 @@ env:
   - AGENT__SSH_SERVER={{ .Env.AGENT__SSH_SERVER }}
   - AGENT__TLS_SERVER={{ .Env.AGENT__TLS_SERVER }}
 
-  - AGENT__PRIVATE_PASSWORD={{ .Env.AGENT__PRIVATE_PASSWORD }}
   - AGENT__SHARED_PASSWORD={{ .Env.AGENT__SHARED_PASSWORD }}
   - AGENT__NAME={{ .Env.AGENT__NAME }}
 
@@ -81,6 +82,11 @@ env:
 
   - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
   - AGENT__VERBOSITY={{ .Env.AGENT__VERBOSITY }}
+
+  - AGENT__ONLY_WORKING_DAYS={{ .Env.AGENT__ONLY_WORKING_DAYS }}
+  - AGENT__WORKING_DAY_START={{ .Env.AGENT__WORKING_DAY_START }}
+  - AGENT__WORKING_DAY_END={{ .Env.AGENT__WORKING_DAY_END }}
+  - AGENT__WORKING_DAY_TIMEZONE={{ .Env.AGENT__WORKING_DAY_TIMEZONE }}
 
   - AGENT__RSSH_ORDER={{ .Env.AGENT__RSSH_ORDER }}
 
@@ -207,7 +213,7 @@ builds:
 
       - '{{ if (index .Env "SERVER__ALLOWED_IPS") }} -X Goauld/server/config._allowed_ips={{ .Env.SERVER__ALLOWED_IPS }}{{end}}'
       - '{{ if (index .Env "SERVER__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.SERVER__ACCESS_TOKEN }}{{end}}'
-      - '{{ if (index .Env "SERVER__ACCESS_TOKEN") }} -X Goauld/server/config._access_token={{ .Env.SERVER__ACCESS_TOKEN }}{{end}}'
+      - '{{ if (index .Env "SERVER__ADMIN_TOKEN") }} -X Goauld/server/config._admin_token={{ .Env.SERVER__ADMIN_TOKEN }}{{end}}'
 
       - '{{ if (index .Env "SERVER__BINARIES_BASICAUTH") }} -X Goauld/server/config._binaries_basicauth={{ .Env.SERVER__BINARIES_BASICAUTH }}{{end}}'
       - '{{ if (index .Env "SERVER__BINARIES_PATH") }} -X Goauld/server/config._binaries_path={{ .Env.SERVER__BINARIES_PATH }}{{end}}'
@@ -283,6 +289,11 @@ builds:
 
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
       - '{{ if (index .Env "AGENT__VERBOSITY") }} -X Goauld/agent/config._verbosity={{ .Env.AGENT__VERBOSITY }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__ONLY_WORKING_DAYS") }} -X Goauld/agent/config._only_working_days={{ .Env.AGENT__ONLY_WORKING_DAYS }}{{end}}'
+      - '{{ if (index .Env "AGENT__WORKING_DAY_START") }} -X Goauld/agent/config._working_day_start={{ .Env.AGENT__WORKING_DAY_START }}{{end}}'
+      - '{{ if (index .Env "AGENT__WORKING_DAY_END") }} -X Goauld/agent/config._working_day_end={{ .Env.AGENT__WORKING_DAY_END }}{{end}}'
+      - '{{ if (index .Env "AGENT__WORKING_DAY_TIMEZONE") }} -X Goauld/agent/config._working_day_timezone={{ .Env.AGENT__WORKING_DAY_TIMEZONE }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_ORDER") }} -X Goauld/agent/config._rssh_order={{ .Env.AGENT__RSSH_ORDER }}{{end}}'
 
@@ -366,6 +377,7 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_OUTPUT") }} -X main._compile_output={{ .Env.CLIENT__COMPILE_OUTPUT }}{{end}}'
       - '{{ if (index .Env "CLIENT__VERBOSITY") }} -X main._verbosity={{ .Env.CLIENT__VERBOSITY }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_DROP_ENV") }} -X main._compile_drop_env={{ .Env.CLIENT__COMPILE_DROP_ENV }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_SEED") }} -X main._compile_seed={{ .Env.CLIENT__COMPILE_SEED }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_PRIVATE_PASSWORD") }} -X main._compile_private_password={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}{{end}}'
 
 

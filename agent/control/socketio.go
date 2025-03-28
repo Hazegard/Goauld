@@ -22,12 +22,13 @@ import (
 
 // ControlPlanClient Handle the socket.io interaction regarding the management of the agent
 type ControlPlanClient struct {
-	manager    *sio.Manager
-	socket     sio.ClientSocket
-	configDone chan<- struct{}
-	ctx        context.Context
-	url        string
-	cancel     context.CancelFunc
+	manager      *sio.Manager
+	socket       sio.ClientSocket
+	configDone   chan<- struct{}
+	ctx          context.Context
+	url          string
+	cancel       context.CancelFunc
+	errorCounter int
 }
 
 // NewControlPlanClient returns a new ControlPlanClient
@@ -58,6 +59,7 @@ func (cpc *ControlPlanClient) Init() error {
 	manager.OnError(func(err error) {
 		log.Trace().Msg("OnError")
 		log.Error().Err(err).Msgf("Error occured  %s", cpc.url)
+		cpc.ErrorPlusPlus()
 	})
 	manager.OnReconnect(func(attempt uint32) {
 		log.Trace().Msg("OnReconnect")
@@ -209,6 +211,11 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	cpc.socket.OnEvent(socketio.PongEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
+		if config.Get().IsOutOfWorkingDay() {
+			log.Warn().Msg("Agent running out of working day")
+			cpc.cancel()
+			cpc.Close()
+		}
 	})
 	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
@@ -220,6 +227,15 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		}
+	}
+}
+
+func (cpc *ControlPlanClient) ErrorPlusPlus() {
+	cpc.errorCounter++
+	if cpc.errorCounter > 5 {
+		log.Warn().Msgf("Error occured %d times, restarting...", cpc.errorCounter)
+		cpc.cancel()
+		cpc.Close()
 	}
 }
 
