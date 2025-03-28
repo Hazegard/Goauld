@@ -64,7 +64,9 @@ func (c *Compiler) Run() error {
 		if err != nil {
 			return fmt.Errorf("could not write files to temp dir: %v", err)
 		}
-		c.EnvFile = filepath.Join(tempDir, EnvFile+".tmpl")
+		if c.EnvFile == "" {
+			c.EnvFile = filepath.Join(tempDir, EnvFile+".tmpl")
+		}
 	}
 
 	byteContent, err := os.ReadFile(c.EnvFile)

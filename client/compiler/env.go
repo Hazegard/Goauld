@@ -2,38 +2,102 @@ package compiler
 
 import (
 	"bufio"
+	"fmt"
 	"os"
+	"regexp"
 	"strings"
 )
 
 // ParseEnvFile reads an .env file and returns a slice of strings in "KEY=VALUE" format.
 func ParseEnvFile(filepath string) ([]string, error) {
-	file, err := os.Open(filepath)
+	envMap, err := parseAndResolveEnvFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+	// Convert map to slice of "key=value"
+	var envs []string
+	for k, v := range envMap {
+		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	for _, env := range envs {
+		fmt.Println(env)
+	}
+	os.Exit(1)
+
+	return envs, nil
+}
+
+func parseAndResolveEnvFile(filePath string) (map[string]string, error) {
+	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var envs []string
+	envMap := make(map[string]string)
 	scanner := bufio.NewScanner(file)
+	re := regexp.MustCompile(`^\s*([A-Za-z0-9_]+)\s*=\s*(.*)\s*$`)
+
+	// First pass: Load all variables
 	for scanner.Scan() {
 		line := scanner.Text()
-		line = strings.TrimSpace(line)
 
-		// Ignore comments and empty lines
-		if len(line) == 0 || strings.HasPrefix(line, "#") {
+		// Skip comments and blank lines
+		if strings.HasPrefix(line, "#") || strings.TrimSpace(line) == "" {
 			continue
 		}
 
-		// Ensure the line is in KEY=VALUE format
-		if strings.Contains(line, "=") {
-			envs = append(envs, line)
+		matches := re.FindStringSubmatch(line)
+		if len(matches) == 3 {
+			key := matches[1]
+			value := strings.Trim(matches[2], `"`)
+			envMap[key] = value
 		}
 	}
-
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 
-	return envs, nil
+	// Second pass: recursively resolve variable references
+	resolved := make(map[string]string)
+	for key := range envMap {
+		resolved[key] = resolveValue(key, envMap, resolved, map[string]bool{})
+	}
+
+	return resolved, nil
+}
+
+var varRegex = regexp.MustCompile(`\$(\w+)`)
+
+func resolveValue(key string, env map[string]string, resolved map[string]string, seen map[string]bool) string {
+	// Prevent circular references
+	if seen[key] {
+		return ""
+	}
+	seen[key] = true
+
+	val, exists := env[key]
+	if !exists {
+		fmt.Println((key))
+		fmt.Println((key))
+		fmt.Println(os.Getenv(key))
+		fmt.Println(os.Getenv(key))
+		// Fall back to actual environment
+		return os.Getenv(key)
+	}
+
+	// Replace $VAR with its resolved value
+	resolvedVal := varRegex.ReplaceAllStringFunc(val, func(match string) string {
+		refKey := match[1:]
+		// Try from already resolved map
+		if v, ok := resolved[refKey]; ok {
+			return v
+		}
+		// Try resolving now
+		return resolveValue(refKey, env, resolved, seen)
+	})
+
+	resolved[key] = resolvedVal
+	return resolvedVal
 }
