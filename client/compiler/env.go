@@ -20,11 +20,6 @@ func ParseEnvFile(filepath string) ([]string, error) {
 		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	for _, env := range envs {
-		fmt.Println(env)
-	}
-	os.Exit(1)
-
 	return envs, nil
 }
 
@@ -79,10 +74,6 @@ func resolveValue(key string, env map[string]string, resolved map[string]string,
 
 	val, exists := env[key]
 	if !exists {
-		fmt.Println((key))
-		fmt.Println((key))
-		fmt.Println(os.Getenv(key))
-		fmt.Println(os.Getenv(key))
 		// Fall back to actual environment
 		return os.Getenv(key)
 	}

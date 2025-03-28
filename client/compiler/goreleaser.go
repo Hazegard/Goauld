@@ -23,6 +23,9 @@ func Goreleaser(cfg Compiler) error {
 	if cfg.Goarch != "" {
 		env = append(env, "GOARCH="+cfg.Goarch)
 	}
+	if cfg.Goos != "" && cfg.Goarch != "" {
+		c = append(c, "--single-target")
+	}
 	if cfg.ClientBuild {
 		env = append(env, fmt.Sprintf("COMMIT=%s", common.Commit))
 		env = append(env, fmt.Sprintf("VERSION=%s", common.Version))
