@@ -304,9 +304,9 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		{"Path", agent.Path},
 		{"Ssh Mode", agent.SshMode},
 		{"SSHD Port", agent.GetSSHPort()},
-		{"Socks Ports", agent.GetSocksPort()},
-		{"HTTP Ports", agent.GetHttpPort()},
-		{"Other Ports", agent.GetOtherPort()},
+		{"Socks Port", agent.GetSocksPort()},
+		{"HTTP Port", agent.GetHttpPort()},
+		{"Other Port", agent.GetOtherPort()},
 	}
 
 	// Compute the longest field that will be shown on the table
@@ -364,7 +364,7 @@ func GenerateAgentTable() table.Model {
 		table.NewColumn("Mode", "Mode", 10),
 		table.NewColumn("SSHD Port", "SSHD Port", 15),
 		table.NewColumn("HTTP Port", "HTTP Port", 15),
-		table.NewColumn("Socks Ports", "Socks Ports", 15),
+		table.NewColumn("Socks Port", "Socks Port", 15),
 	}
 	t := table.New(columns).
 		Focused(true).
@@ -409,9 +409,9 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 				"Last updates": timeAgo(agent.LastUpdated),
 				"Mode":         agent.SshMode,
 				"SSHD Port":    " " + agent.GetSSHPort(),
-				"Socks Ports":  " " + agent.GetSocksPort(),
-				"HTTP Ports":   " " + agent.GetSocksPort(),
-				"Other Ports":  " " + agent.GetOtherPort(),
+				"Socks Port":   " " + agent.GetSocksPort(),
+				"HTTP Port":    " " + agent.GetHttpPort(),
+				"Other Port":   " " + agent.GetOtherPort(),
 			})
 
 		rows = append(rows, row)
