@@ -94,9 +94,15 @@ func initLoggers() {
 }
 
 func UpdateLogLevel(level zerolog.Level) {
-	newLogger := zerologger.Level(level)
-	zerologger = &newLogger
-	gormlogger = gormlogger.LogMode(zerologLevelToGormLogLevel(level))
+	zerolog.SetGlobalLevel(level)
+	//if level.String() > 3 {
+	//	gormLogLevel = verbosityToGormLogLevel(verbosity)
+	//} else {
+	//	gormLogLevel = -1
+	//}
+	//newLogger := zerologger.Level(level)
+	//zerologger = &newLogger
+	//gormlogger = gormlogger.LogMode(zerologLevelToGormLogLevel(level))
 }
 
 func SetLogLevel(verbosity int) {

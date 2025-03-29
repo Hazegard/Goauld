@@ -48,7 +48,7 @@ func (ur *AdminRouter) GetRouter() *negroni.Negroni {
 
 // Dump return all the information stored regarding the agent
 func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
-	id := r.PostFormValue("id")
+	id := r.PathValue("id")
 	dump := ur.store.GetState(id)
 	agent, err := ur.db.FindAgentById(dump.Id)
 	if err != nil {
@@ -113,7 +113,7 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ur *AdminRouter) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
-	l := r.PostFormValue("level")
+	l := r.PathValue("level")
 	level, err := zerolog.ParseLevel(l)
 	res := types.HttpResponse{}
 	if err != nil {
