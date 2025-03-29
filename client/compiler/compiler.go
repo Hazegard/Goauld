@@ -78,7 +78,7 @@ func (c *Compiler) Run() error {
 		content = ReplaceInFile(content, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
 	}
 
-	if c.Seed == "__generate" {
+	if c.Seed == "__generate" && c.ClientBuild {
 		seed, err := GenerateSecureRandomBase64(69)
 		if err != nil {
 			return fmt.Errorf("could not generate random seed: %v", err)

@@ -1,10 +1,10 @@
 package control
 
 import (
+	"Goauld/common/utils"
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/quic-go/webtransport-go"
@@ -27,17 +27,17 @@ type ControlPlanClient struct {
 	configDone   chan<- struct{}
 	ctx          context.Context
 	url          string
-	cancel       context.CancelFunc
+	canceler     utils.GlobalCanceler
 	errorCounter int
 }
 
 // NewControlPlanClient returns a new ControlPlanClient
-func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, cancel context.CancelFunc) *ControlPlanClient {
+func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, canceler utils.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
 		url:        config.Get().SocketIoUrl(),
 		configDone: configDone,
-		cancel:     cancel,
+		canceler:   canceler,
 	}
 }
 
@@ -128,7 +128,9 @@ func (cpc *ControlPlanClient) Init() error {
 		log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
 		log.Info().Msgf("Quitting...")
 		socket.Disconnect()
-		os.Exit(2)
+
+		cpc.canceler.Exit()
+		cpc.Close()
 	})
 
 	socket.OnEvent(socketio.ExitEvent, func(doExit bool) {
@@ -136,9 +138,9 @@ func (cpc *ControlPlanClient) Init() error {
 		socket.Emit(socketio.ExitSuccess)
 		socket.Disconnect()
 		if doExit {
-			os.Exit(0)
+			cpc.canceler.Exit()
 		}
-		cpc.cancel()
+		cpc.canceler.Restart()
 		cpc.Close()
 	})
 
@@ -146,7 +148,7 @@ func (cpc *ControlPlanClient) Init() error {
 		log.Info().Msg("AlreadyConnectedEvent: Exit requested because agent is already running")
 		socket.Emit(socketio.ExitSuccess)
 		socket.Disconnect()
-		os.Exit(0)
+		cpc.canceler.Exit()
 	})
 
 	socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
@@ -213,7 +215,7 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 		log.Trace().Msg("OnEvent: PongEvent")
 		if config.Get().IsOutOfWorkingDay() {
 			log.Warn().Msg("Agent running out of working day")
-			cpc.cancel()
+			cpc.canceler.Exit()
 			cpc.Close()
 		}
 	})
@@ -234,7 +236,7 @@ func (cpc *ControlPlanClient) ErrorPlusPlus() {
 	cpc.errorCounter++
 	if cpc.errorCounter > 5 {
 		log.Warn().Msgf("Error occured %d times, restarting...", cpc.errorCounter)
-		cpc.cancel()
+		cpc.canceler.Restart()
 		cpc.Close()
 	}
 }

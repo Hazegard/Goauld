@@ -298,6 +298,11 @@ func (a *Agent) Name() string {
 	return a.cfg.Name
 }
 
+// KeepAwake returns whether the agent should try to keep the underlying system awake
+func (a *Agent) KeepAwake() bool {
+	return a.cfg.KeepAwake
+}
+
 // GetKeepalive returns the duration between two keepalive ping
 func (a *Agent) GetKeepalive() time.Duration {
 	return time.Duration(a.cfg.KeepAlive)
@@ -308,6 +313,9 @@ func (a *Agent) OnlyWorkingDays() bool {
 }
 
 func (a *Agent) IsOutOfWorkingDay() bool {
+	if !a.cfg.OnlyWorkingDays {
+		return false
+	}
 	return a.cfg.OnlyWorkingDays && !a.WorkingDay.IsWorkingPeriod()
 }
 

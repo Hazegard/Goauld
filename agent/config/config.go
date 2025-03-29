@@ -52,10 +52,11 @@ var (
 	_socks_port = "0"
 	_http_port  = "0"
 
+	_keepawake = "false"
 	_keepalive = "20"
 	_verbosity = "0"
 
-	_only_working_days    = "true"
+	_only_working_days    = "false"
 	_working_day_start    = "8:00"
 	_working_day_end      = "19:30"
 	_working_day_timezone = "Europe/Paris"
@@ -106,6 +107,7 @@ var (
 		"_socks_port": _socks_port,
 		"_http_port":  _http_port,
 
+		"_keepawake": _keepawake,
 		"_keepalive": _keepalive,
 		"_verbosity": _verbosity,
 
@@ -169,8 +171,9 @@ type AgentConfig struct {
 	SocksPort     int `default:"${_socks_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
 	HttpProxyPort int `default:"${_http_port}"  name:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
 
-	KeepAlive int `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
-	Verbose   int `default:"${_verbosity}" help:"Verbosity of the logs. Repeat -v to increase" name:"verbose" short:"v" type:"counter"`
+	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
+	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
+	Verbose   int  `default:"${_verbosity}" help:"Verbosity of the logs. Repeat -v to increase" name:"verbose" short:"v" type:"counter"`
 
 	OnlyWorkingDays    bool   `default:"${_only_working_days}" name:"only-working-days" optional:"" help:"Only working days."`
 	WorkingDayStart    string `default:"${_working_day_start}" name:"working-day-start" help:"Start time of working day in days."`

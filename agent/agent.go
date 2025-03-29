@@ -1,7 +1,9 @@
 package main
 
 import (
+	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
+	"Goauld/common/utils"
 	"context"
 	"errors"
 	"fmt"
@@ -68,7 +70,14 @@ func main() {
 			log.Warn().Msg("Agent running out of working day")
 			return nil, errors.New("agent started out of working day")
 		}
-		run(ctx, cancel)
+		cancelReason := run()
+		if cancelReason == utils.Exit {
+			log.Info().Msg("Agent stopped")
+			cancel()
+			time.Sleep(time.Second)
+			return nil, nil
+		}
+		log.Info().Msg("Agent restarting")
 		return nil, errors.New("")
 	}
 
@@ -77,10 +86,14 @@ func main() {
 		log.Info().Err(err).Msg("Agent shut down")
 		return
 	}
-	fmt.Println(result)
+	if result != nil {
+		fmt.Println(result)
+	}
 }
 
-func run(context.Context, context.CancelFunc) {
+func run() utils.CancelReason {
+
+	cancelReason := make(chan utils.CancelReason)
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
@@ -94,16 +107,20 @@ func run(context.Context, context.CancelFunc) {
 	log.Info().Msg("Agent init done")
 
 	ctx, cancel := context.WithCancel(context.Background())
+	globalCanceler := utils.GlobalCanceler{
+		Cancel:       cancel,
+		CancelReason: cancelReason,
+	}
 	defer cancel()
 
 	// Initialize the control socket.io
-	controlPlanClient := control.NewControlPlanClient(ctx, configDone, cancel)
+	controlPlanClient := control.NewControlPlanClient(ctx, configDone, globalCanceler)
 	err := controlPlanClient.Init()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the control plan")
-		return
+		return utils.Exit
 	}
-	HandleCtrlC(controlPlanClient, cancel)
+	HandleCtrlC(controlPlanClient, globalCanceler)
 
 	// Create the client SSH
 	sshAgent := ssh.NewSSHAgent()
@@ -152,6 +169,7 @@ func run(context.Context, context.CancelFunc) {
 					}
 				case <-ctx.Done():
 
+					log.Info().Msg("Closing SSHD connection")
 					err := sshdServer.Close()
 					if err != nil {
 						log.Warn().Err(err).Msg("sshd close error")
@@ -280,6 +298,22 @@ func run(context.Context, context.CancelFunc) {
 		}
 	}()
 
+	if config.Get().KeepAwake() {
+		keepAwaker := keepawake.Keeper{}
+		err := keepAwaker.StartIndefinite()
+		if err != nil {
+			log.Warn().Err(err).Msg("error starting the keep awake")
+		}
+		go func() {
+			select {
+			case <-ctx.Done():
+				err = keepAwaker.Stop()
+				if err != nil {
+					log.Warn().Err(err).Msg("keep awake close error")
+				}
+			}
+		}()
+	}
 	// Wait for errors to occur and print them
 	select {
 	case err := <-controlErr:
@@ -295,22 +329,21 @@ func run(context.Context, context.CancelFunc) {
 	case <-ctx.Done():
 		log.Error().Err(ctx.Err())
 	}
+	return <-cancelReason
 }
 
 // HandleCtrlC intercepts the ctrl-c events.
 // It signals to close all running goroutine, and wait one second to allow the agent to signal the disconnection
 // to the server, then it exits.
-func HandleCtrlC(controlPlanClient *control.ControlPlanClient, cancel context.CancelFunc) {
+func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler utils.GlobalCanceler) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for sig := range c {
-			cancel()
 			log.Info().Str("signal", sig.String()).Msg("received signal")
 			log.Info().Msg("Shutting down control plan")
+			canceler.Exit()
 			controlPlanClient.Close()
-			time.Sleep(1 * time.Second)
-			os.Exit(0)
 		}
 	}()
 }
