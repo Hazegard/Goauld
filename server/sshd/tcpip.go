@@ -11,6 +11,7 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
+// Taken from https://github.com/gliderlabs/ssh/blob/master/tcpip.go but adapted to have control over listeners
 const (
 	forwardedTCPChannelType = "forwarded-tcpip"
 )

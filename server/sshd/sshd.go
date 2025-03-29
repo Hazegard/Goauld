@@ -74,7 +74,6 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				log.Error().Err(err).Str("User", ctx.User()).Msg("Failed to add port to agent")
 				return false
 			}
-			log.Trace().Str("User", ctx.User()).Str("Port", strconv.Itoa(int(port))).Msgf("Reverse port forward to %s", host)
 			return true
 		},
 		RequestHandlers: map[string]ssh.RequestHandler{
