@@ -142,7 +142,7 @@ type AgentConfig struct {
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
 	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
 
-	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" optional:"" help:"SSH password to access the agent.\nIf no password is provided, a random password is automatically generated."`
+	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" optional:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
 	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
@@ -167,9 +167,9 @@ type AgentConfig struct {
 
 	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy."`
 
-	RsshPort      int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.\n By default, the port is 0 meaning the port will be random on the server."`
-	SocksPort     int `default:"${_socks_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
-	HttpProxyPort int `default:"${_http_port}"  name:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,\n By default, the port is 0 meaning the port will be random on the server."`
+	RsshPort      int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
+	SocksPort     int `default:"${_socks_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
+	HttpProxyPort int `default:"${_http_port}"  name:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
 
 	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
 	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
@@ -182,7 +182,7 @@ type AgentConfig struct {
 
 	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
 
-	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT).\nIf REMOTE_PORT is 0, the port will be randomly chosen on the server"`
+	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server"`
 
 	MaxRetries int `default:"${_max_retries}" help:"Max retries connection attempts before giving up" name:"max-retries" short:"M"`
 

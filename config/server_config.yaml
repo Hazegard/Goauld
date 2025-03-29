@@ -2,10 +2,12 @@
 age-privkey: 
 
 # Domain used to serve HTTP content (HTTP/Websockets).
-http-domain: www.example.com
+http-domain:
+    - www.example.com
 
 # Domain used to serve raw TLS content (SSH over TLS).
-tls-domain: app.example.com
+tls-domain:
+    - app.example.com
 
 # HTTP address to bind to, port 0 => Random.
 http-listen-addr: :80

@@ -80,6 +80,7 @@ env:
   - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
   - AGENT__HTTP_PORT={{ .Env.AGENT__HTTP_PORT }}
 
+  - AGENT__KEEPAWAKE={{ .Env.AGENT__KEEPAWAKE }}
   - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
   - AGENT__VERBOSITY={{ .Env.AGENT__VERBOSITY }}
 
@@ -287,6 +288,7 @@ builds:
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
 
+      - '{{ if (index .Env "AGENT__KEEPAWAKE") }} -X Goauld/agent/config._keepawake={{ .Env.AGENT__KEEPAWAKE }}{{end}}'
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
       - '{{ if (index .Env "AGENT__VERBOSITY") }} -X Goauld/agent/config._verbosity={{ .Env.AGENT__VERBOSITY }}{{end}}'
 

@@ -1,29 +1,6 @@
 # Age public key associated to the server. The provided public key should match the server public key
 age-pubkey: ""
 
-# SSH password to access the agent.
-
-# If no password is provided, a random password is automatically generated.
-password: ""
-
-# Nice name to identify the agent. Defaults to 'user@hostname'
-name: user@hostname
-
-# Start the SSHD server.
-sshd: true
-
-# Start the Socks server.
-socks: true
-
-# Use the proxy of the underlying system if applicable for all requests going through the socks proxy.
-socks-proxy: true
-
-# Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
-proxy:
-
-# Don't use the system proxy.
-no-proxy: false
-
 # The control HTTP server to connect to.
 server: www.example.com
 
@@ -33,21 +10,92 @@ ssh-server: www.example.com:2222
 # The TLS server to connect to when using SSH over TLS connections.
 tls-server: app.example.com
 
-# The remote SSH port to bind to on the server.
+# SSH password to access the agent. If no password is provided, a random password is automatically generated.
+password: ""
 
-#  By default, the port is 0 meaning the port will be random on the server.
+# Nice name to identify the agent. Defaults to 'user@hostname'
+name: user@hostname
+
+# Start the SSHD server.
+sshd: true
+
+# Start the Socks proxy server.
+socks: true
+
+# Start the Http proxy server.
+http: true
+
+# Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
+proxy:
+
+# Username to use with the proxy
+proxy-username: ""
+
+# Password to use with the proxy
+proxy-password: ""
+
+# Domain to use with the proxy
+proxy-domain: ""
+
+# Use the provided proxy to use within the socks proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
+socks-custom-proxy:
+
+# Use the proxy of the underlying system if applicable for all requests going through the socks proxy.
+socks-proxy: true
+
+# Username to use with the socks http upstream proxy
+socks-proxy-username: ""
+
+# Password to use with the socks http upstream proxy
+socks-proxy-password: ""
+
+# Domain to use with the socks http upstream proxy
+socks-proxy-domain: ""
+
+# Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
+http-custom-proxy:
+
+# Username to use with the http upstream proxy
+http-proxy-username: ""
+
+# Password to use with the http upstream proxy
+http-proxy-password: ""
+
+# Domain to use with the http upstream proxy
+http-proxy-domain: ""
+
+# Don't use the system proxy.
+no-proxy: false
+
+# The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server.
 rssh-port: 0
 
-# The remote SOCKS port to bind to on the server,
-
-#  By default, the port is 0 meaning the port will be random on the server.
+# The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server.
 socks-port: 0
+
+# The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server.
+http-port: 0
+
+# Keep the system awake (try to prevent from sleep and lock screen).
+keep-awake: false
 
 # Seconds between two keepalive messages in seconds, reduce this value if the connection drops.
 keepalive: 20
 
 # Verbosity of the logs. Repeat -v to increase
 verbose: 0
+
+# Only working days.
+only-working-days: false
+
+# Start time of working day in days.
+working-day-start: 8:00
+
+# End time of working day in days.
+working-day-end: 19:30
+
+# Timezone of working day.
+working-day-timezone: Europe/Paris
 
 # Order the SSH tunnels connection attempts.
 rssh-order:
@@ -56,9 +104,7 @@ rssh-order:
     - ws
     - http
 
-# Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT).
-
-# If REMOTE_PORT is 0, the port will be randomly chosen on the server
+# Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server
 rpf: []
 
 # Max retries connection attempts before giving up

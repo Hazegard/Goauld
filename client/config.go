@@ -38,7 +38,7 @@ var (
 	_ssh_http             = "true"
 	_ssh_socks            = "true"
 	_ssh_local_socks_port = "1080"
-	_ssh_local_http_port  = "3129"
+	_ssh_local_http_port  = "3128"
 	_ssh_ssh              = "true"
 	_ssh_print            = "false"
 	_ssh_proxy            = "false"
