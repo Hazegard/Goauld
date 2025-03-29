@@ -55,11 +55,18 @@ func (a *AgentStore) DumpTLSSH(id string) types.TLSSHState {
 	agent := a.tlsshAgentMap[id]
 	defer a.tlsshAgentMapMu.Unlock()
 	state := types.TLSSHState{
-		AgentId:       id,
-		SSHLocaleAddr: agent.SSHConn.LocalAddr().String(),
-		SSHRemoteAddr: agent.SSHConn.RemoteAddr().String(),
-		TLSLocaleAddr: agent.TLSConn.LocalAddr().String(),
-		TLSRemoteAddr: agent.TLSConn.RemoteAddr().String(),
+		AgentId: id,
+	}
+	if agent == nil {
+		return state
+	}
+	if agent.TLSConn != nil {
+		state.TLSLocaleAddr = agent.TLSConn.LocalAddr().String()
+		state.TLSRemoteAddr = agent.TLSConn.RemoteAddr().String()
+	}
+	if agent.SSHConn != nil {
+		state.SSHLocaleAddr = agent.SSHConn.LocalAddr().String()
+		state.SSHRemoteAddr = agent.SSHConn.RemoteAddr().String()
 	}
 
 	return state

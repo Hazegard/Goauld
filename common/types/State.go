@@ -10,6 +10,21 @@ type WSHState struct {
 	WSRemoteAddr  string `json:"WSRemoteAddr,omitempty"`
 }
 
+type SSHConnection struct {
+	AgentId       string `json:"agentId,omitempty"`
+	SSHLocaleAddr string `json:"SSHLocaleAddr,omitempty"`
+	SSHRemoteAddr string `json:"SSHRemoteAddr,omitempty"`
+	ClientVersion string `json:"clientVersion,omitempty"`
+	SessionID     string `json:"sessionID,omitempty"`
+	ServerVersion string `json:"serverVersion,omitempty"`
+}
+
+type SSHState struct {
+	AgentId       string          `json:"agentId,omitempty"`
+	SSHConnection []SSHConnection `json:"SSHConnection,omitempty"`
+	SSHListeners  []string        `json:"SSHListeners,omitempty"`
+}
+
 type TLSSHState struct {
 	AgentId       string `json:"agentId,omitempty"`
 	SSHLocaleAddr string `json:"SSHLocaleAddr,omitempty"`
@@ -48,4 +63,5 @@ type State struct {
 	WSSH     WSHState      `json:"WSSH"`
 	SSHTTP   SSHTTState    `json:"SSHTTP"`
 	SocketIO SocketIOState `json:"socketIO"`
+	SSH      SSHState      `json:"ssh"`
 }

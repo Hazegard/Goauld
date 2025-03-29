@@ -98,7 +98,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			errChan <- err
 		}
 	}()
-	// Updates the database to add the Websocke tover SSH as the connection mode
+	// Updates the database to add the Websocket over SSH as the connection mode
 	err = wssh.db.SetAgentSshMode(id, "WS")
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("error setting agent mode to WS")

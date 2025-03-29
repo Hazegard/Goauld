@@ -60,7 +60,7 @@ func main() {
 	}
 
 	// Initialize and start the SSHD server
-	go sshd.StartSshd(ctx, db)
+	go sshd.StartSshd(ctx, db, agentStore)
 	go func() {
 		// Start the HTTP server
 		err := r.Serve()

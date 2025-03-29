@@ -1,6 +1,12 @@
 package sshd
 
 import (
+	"Goauld/common/log"
+	_net "Goauld/common/net"
+	_ssh "Goauld/common/ssh"
+	"Goauld/server/config"
+	"Goauld/server/persistence"
+	"Goauld/server/store"
 	"context"
 	"errors"
 	"fmt"
@@ -8,19 +14,13 @@ import (
 	"strconv"
 	"strings"
 
-	"Goauld/common/log"
-	_net "Goauld/common/net"
-	_ssh "Goauld/common/ssh"
-	"Goauld/server/config"
-	"Goauld/server/persistence"
-
 	"github.com/gliderlabs/ssh"
 
 	gossh "golang.org/x/crypto/ssh"
 )
 
 // StartSshd init and start the sshd server
-func StartSshd(context context.Context, db *persistence.DB) {
+func StartSshd(context context.Context, db *persistence.DB, store *store.AgentStore) {
 	listener, err := net.Listen("tcp", config.Get().LocalSShAddr())
 	if err != nil {
 		panic(err)
@@ -28,7 +28,7 @@ func StartSshd(context context.Context, db *persistence.DB) {
 	// Update if listening on 0 to get the real port
 	config.Get().UpdateSSHAddr(listener.Addr().(*net.TCPAddr).Port)
 	log.Info().Str("Address", config.Get().LocalSShAddr()).Msgf("SSH server listening")
-	forwardHandler := &ssh.ForwardedTCPHandler{}
+	forwardHandler := &ForwardedTCPHandler{}
 
 	// The SSHD server
 	s := &ssh.Server{
@@ -74,16 +74,32 @@ func StartSshd(context context.Context, db *persistence.DB) {
 				log.Error().Err(err).Str("User", ctx.User()).Msg("Failed to add port to agent")
 				return false
 			}
+			log.Trace().Str("User", ctx.User()).Str("Port", strconv.Itoa(int(port))).Msgf("Reverse port forward to %s", host)
 			return true
 		},
 		RequestHandlers: map[string]ssh.RequestHandler{
-			"tcpip-forward":        forwardHandler.HandleSSHRequest,
-			"cancel-tcpip-forward": forwardHandler.HandleSSHRequest,
-			"ping":                 handlePing,
+			"tcpip-forward": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
+
+				log.Trace().Str("User", ctx.User()).Str("Type", req.Type).Str("Payload", string(req.Payload)).Msg("SSH Request received")
+
+				ok, payload, ln := forwardHandler.HandleSSHRequest(ctx, srv, req)
+				if ln != nil {
+					store.AdSSHSession(ctx.User(), ctx, ln)
+				}
+				return ok, payload
+			},
+			"cancel-tcpip-forward": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
+				ok, payload, _ = forwardHandler.HandleSSHRequest(ctx, srv, req)
+				return ok, payload
+			},
+			"ping": handlePing,
 		},
 		ChannelHandlers: map[string]ssh.ChannelHandler{
 			"direct-tcpip": ssh.DirectTCPIPHandler,
-			"session":      ssh.DefaultSessionHandler,
+			"session": func(srv *ssh.Server, conn *gossh.ServerConn, newChan gossh.NewChannel, ctx ssh.Context) {
+				log.Debug().Str("User", ctx.User()).Msg("New session")
+				ssh.DefaultSessionHandler(srv, conn, newChan, ctx)
+			},
 		},
 		// PublicKeyHandler handles the public key authentication
 		// the username connecting is the id of the agent

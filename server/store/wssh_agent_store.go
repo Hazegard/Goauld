@@ -63,6 +63,11 @@ func (a *AgentStore) DumpWSSH(id string) types.WSHState {
 	a.wsshAgentMapMu.Lock()
 	agent := a.wsshAgentMap[id]
 	defer a.wsshAgentMapMu.Unlock()
+	if agent == nil {
+		return types.WSHState{
+			AgentId: id,
+		}
+	}
 	state := types.WSHState{
 		AgentId:       id,
 		SSHLocaleAddr: agent.dstConn.LocalAddr().String(),

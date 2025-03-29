@@ -53,6 +53,11 @@ func (a *AgentStore) DumpSSHTTP(id string) types.SSHTTState {
 	a.sshttpAgentMapMu.Lock()
 	agent := a.sshttpAgentMap[id]
 	defer a.sshttpAgentMapMu.Unlock()
+	if agent == nil {
+		return types.SSHTTState{
+			AgentId: id,
+		}
+	}
 	state := types.SSHTTState{
 		AgentId:       id,
 		SSHRemoteAddr: agent.SshConn.RemoteAddr().String(),

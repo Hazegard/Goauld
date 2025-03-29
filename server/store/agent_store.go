@@ -38,6 +38,9 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 
 			tlsshAgentMap:   make(map[string]*TLSSHAgent),
 			tlsshAgentMapMu: sync.Mutex{},
+
+			sshAgentMap:   make(map[string]*SSHSession),
+			sshAgentMapMu: sync.Mutex{},
 		}
 	})
 	return store
@@ -58,6 +61,9 @@ type AgentStore struct {
 
 	tlsshAgentMap   map[string]*TLSSHAgent
 	tlsshAgentMapMu sync.Mutex
+
+	sshAgentMap   map[string]*SSHSession
+	sshAgentMapMu sync.Mutex
 }
 
 // ClearByPort Clears all agent connections related to a given port
@@ -93,6 +99,10 @@ func (a *AgentStore) ClearById(id string) error {
 	if err != nil {
 		errs = append(errs, err)
 	}
+	err = a.SSHCloseAgent(id)
+	if err != nil {
+		errs = append(errs, err)
+	}
 	return errors.Join(errs...)
 }
 
@@ -101,7 +111,8 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 	err1 := a.WsshCloseAgent(id)
 	err2 := a.SshttpCloseAgent(id)
 	err3 := a.TlsshCloseAgent(id)
-	return errors.Join(err1, err2, err3)
+	err4 := a.SSHCloseAgent(id)
+	return errors.Join(err1, err2, err3, err4)
 }
 
 // KillAGent kills the agent, if doKill is true, the agent does not restart
@@ -167,6 +178,7 @@ func (a *AgentStore) GetState(id string) types.State {
 		WSSH:     a.DumpWSSH(id),
 		SSHTTP:   a.DumpSSHTTP(id),
 		SocketIO: a.DumpSocketIO(id),
+		SSH:      a.DumpSSH(id),
 	}
 	return state
 }
