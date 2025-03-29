@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"Goauld/common"
 	"context"
 	"errors"
 	"fmt"
@@ -44,7 +45,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context) error {
 		User:            config.Get().Id,
 		Auth:            []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		ClientVersion:   "SSH-2.0-Client",
+		ClientVersion:   "SSH-2.0-Goauld-" + common.Version,
 	}
 
 	// defer cancel()
