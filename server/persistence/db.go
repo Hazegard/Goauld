@@ -65,3 +65,18 @@ func (db *DB) Migrate() error {
 	}
 	return nil
 }
+
+func (db *DB) ResetAgents() error {
+	agents, err := db.GetAllAgents()
+	if err != nil {
+		return err
+	}
+	for _, agent := range agents {
+		agent.SshMode = "/"
+		agent.UsedPorts = ""
+		agent.RemotePortForwarding = nil
+		agent.Connected = false
+		db.db.Save(agent)
+	}
+	return nil
+}

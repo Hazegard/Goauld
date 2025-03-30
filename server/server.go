@@ -38,6 +38,11 @@ func main() {
 		log.Error().Err(err).Msgf("error initializing database")
 		return
 	}
+	// Reset the connected status of all agent when restarting
+	err = db.ResetAgents()
+	if err != nil {
+		log.Error().Err(err).Msgf("error reseting agents")
+	}
 	// Initialize all the required components
 	agentStore := store.NewAgentStore(db)
 	sioServer, err := control.InitSocketIOServer(agentStore, db)
