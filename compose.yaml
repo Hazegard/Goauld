@@ -8,8 +8,10 @@ services:
     ports:
       - "X.X.X.X:80:80"
       - "X.X.X.X:443:443"
-      - "X.X.X.X:2222:2222"
+      - "X.X.X.X:22222:22222"
+    command: cp -u /app/build_binaries/* /app/binaries/ ; /app/server -c /app/server_config.yaml -vvv
     volumes:
+      - ./certmagic:/root/.local/share/certmagic
       - ./Goauld.db:/app/Goauld.db
-      - ./goauld_server.yaml:/app/goauld_server.yaml
+      - ./server_config.yaml:/app/server_config.yaml
       - ./binaries:/app/binaries

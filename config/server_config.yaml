@@ -16,10 +16,10 @@ http-listen-addr: :80
 https-listen-addr: :443
 
 # Remote address to bind to, port 0 => Random.
-ssh-listen-addr: :2222
+ssh-listen-addr: :22222
 
 # Verbosity. Repeat to increase
-verbose: 0
+verbose: 2
 
 # Enable TLS.
 tls: true
@@ -38,8 +38,15 @@ db-file-name: Goauld.db
 
 # List of IP allowed to access the /manage/ endpoint.
 allowed-ips:
-    - 127.0.0.1
-    - 0.0.0.0/32
+    - [IP]
+    
+    
+    
+    
+    
+    
+    - 51.255.137.130
+    - 192.168.32.1
 
 # Access token required to access the /manage/ endpoint.
 access-token: TODO_TOKEN
