@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"gopkg.in/yaml.v3"
 	"net/http"
 
 	"Goauld/common/log"
@@ -29,6 +30,7 @@ func NewAdminRouter(_db *persistence.DB, store *store.AgentStore) *AdminRouter {
 		userRouter: http.NewServeMux(),
 		store:      store,
 	}
+	r.userRouter.HandleFunc("GET /config/", r.GetConfig)
 	r.userRouter.HandleFunc("GET /dump/", r.DumpAll)
 	r.userRouter.HandleFunc("GET /dump/{id}", r.Dump)
 	r.userRouter.HandleFunc("POST /loglevel/{level}", r.UpdateLogLevel)
@@ -81,11 +83,11 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 // DumpAll return all the information stored regarding all the agents
 func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	dump := ur.store.GetAllStates()
-	outDump := []types.State{}
+	var outDump []types.State
 	for _, d := range dump {
 		agent, err := ur.db.FindAgentById(d.Id)
 		if err != nil {
-			outDump = append(outDump, d)
+			// outDump = append(outDump, d)
 			continue
 		}
 		d.Path = agent.Path
@@ -101,7 +103,7 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 		d.IPs = agent.IPs
 		outDump = append(outDump, d)
 	}
-	res, err := json.Marshal(outDump)
+	res, err := yaml.Marshal(outDump)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -130,6 +132,29 @@ func (ur *AdminRouter) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Info().Str("Path", r.URL.Path).Str("Level", level.String()).Msg("update log level")
 	}
+	_, err = w.Write(res.Bytes())
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("write response failed")
+	}
+}
+
+func (ur *AdminRouter) GetConfig(w http.ResponseWriter, r *http.Request) {
+	c, err := config.Get().GenerateSafeYAMLConfig()
+
+	res := types.HttpResponse{}
+	if err != nil {
+		res = types.HttpResponse{
+			Message: err.Error(),
+			Success: true,
+		}
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating yaml config")
+	} else {
+		res = types.HttpResponse{
+			Success: true,
+			Message: c,
+		}
+	}
+
 	_, err = w.Write(res.Bytes())
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("write response failed")

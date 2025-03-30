@@ -259,3 +259,14 @@ func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
 	s.GenerateConfig = false
 	return cli.GenerateYAMLWithComments(*s)
 }
+
+// GenerateYAMLConfig return the yaml configuration using the current configuration
+// (command line argument and parsed configuration files)
+func (s *ServerConfig) GenerateSafeYAMLConfig() (string, error) {
+	ss := *s
+	ss.GenerateConfig = false
+	ss.AdminToken = ""
+	ss.AccessToken = ""
+	ss.PrivKey = ""
+	return cli.GenerateYAMLWithComments(ss)
+}

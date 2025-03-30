@@ -19,10 +19,10 @@ require (
 	github.com/evertras/bubble-table v0.17.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gliderlabs/ssh v0.3.8
+	github.com/goccy/go-yaml v1.16.0
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/karagenc/socket.io-go v0.1.0
 	github.com/maruel/natural v1.1.1
-	github.com/neilotoole/jsoncolor v0.7.1
 	github.com/pkg/sftp v1.13.9
 	github.com/quic-go/webtransport-go v0.8.0
 	github.com/rs/zerolog v1.34.0
@@ -33,8 +33,6 @@ require (
 	gorm.io/gorm v1.25.12
 	nhooyr.io/websocket v1.8.11
 )
-
-require golang.org/x/term v0.30.0 // indirect
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
@@ -50,7 +48,7 @@ require (
 	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
-	github.com/fatih/color v1.18.0 // indirect
+	github.com/fatih/color v1.18.0
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
@@ -64,7 +62,7 @@ require (
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/libdns/libdns v0.2.3 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect

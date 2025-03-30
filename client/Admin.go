@@ -2,15 +2,24 @@ package main
 
 import (
 	"Goauld/client/api"
-	"fmt"
-	"github.com/mattn/go-colorable"
-	json "github.com/neilotoole/jsoncolor"
-	"os"
+	colorYaml "Goauld/common/yaml"
+	"gopkg.in/yaml.v3"
 )
 
-type Admin struct{}
+type Admin struct {
+	Dump     Dump     `cmd:""`
+	Loglevel Loglevel `cmd:""`
+	Config   Config   `cmd:""`
+}
 
-func (a *Admin) Run(_ *api.API, cfg ClientConfig) error {
+type Dump struct{}
+type Config struct{}
+
+type Loglevel struct {
+	Level string `arg:"" help:"Log level"`
+}
+
+func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
 
@@ -19,11 +28,42 @@ func (a *Admin) Run(_ *api.API, cfg ClientConfig) error {
 		return err
 	}
 
-	JsonColor(res)
+	y, err := yaml.Marshal(res)
+	if err != nil {
+		return err
+	}
+	colorYaml.PrintColorizedYAML(string(y))
 	return nil
 }
 
-func JsonColor(data any) {
+func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
+	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
+	err, res := adminApi.UpdateLogLevel(cfg.Admin.Loglevel.Level)
+	if err != nil {
+		return err
+	}
+	y, err := yaml.Marshal(res)
+	if err != nil {
+		return err
+	}
+	colorYaml.PrintColorizedYAML(string(y))
+	return nil
+}
+
+func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
+
+	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
+
+	err, res := adminApi.GetConfig()
+	if err != nil {
+		return err
+	}
+
+	colorYaml.PrintColorizedYAML(res)
+	return nil
+}
+
+/*func JsonColor(data any) {
 
 	var enc *json.Encoder
 	// Note: this check will fail if running inside Goland (and
@@ -50,4 +90,4 @@ func JsonColor(data any) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-}
+}*/

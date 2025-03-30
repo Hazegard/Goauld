@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
 	"net/url"
@@ -14,6 +15,7 @@ import (
 
 	"Goauld/client/types"
 	common_types "Goauld/common/types"
+	httpTypes "Goauld/common/types"
 )
 
 type API struct {
@@ -197,7 +199,7 @@ func (api *API) DumpAll() (error, []common_types.State) {
 		return err, nil
 	}
 	var result []common_types.State
-	err = json.Unmarshal(body, &result)
+	err = yaml.Unmarshal(body, &result)
 	if err != nil {
 		return err, nil
 	}
@@ -218,4 +220,24 @@ func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
 		return err, nil
 	}
 	return nil, result
+}
+
+func (api *API) GetConfig() (error, string) {
+	res, err := api.get("/admin/config/")
+	if err != nil {
+		return err, ""
+	}
+	defer res.Body.Close()
+	result := httpTypes.HttpResponse{}
+
+	body, err := io.ReadAll(res.Body)
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return err, ""
+	}
+	if !result.Success {
+		return errors.New(result.Message), ""
+	}
+	cfg := result.Message
+	return nil, cfg
 }

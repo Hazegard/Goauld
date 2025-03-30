@@ -3,65 +3,65 @@ package types
 import "time"
 
 type WSHState struct {
-	AgentId       string `json:"agentId,omitempty"`
-	SSHLocaleAddr string `json:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `json:"SSHRemoteAddr,omitempty"`
-	WSLocaleAddr  string `json:"WSLocaleAddr,omitempty"`
-	WSRemoteAddr  string `json:"WSRemoteAddr,omitempty"`
+	AgentId       string `yaml:"agentId,omitempty"`
+	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
+	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
+	WSLocaleAddr  string `yaml:"WSLocaleAddr,omitempty"`
+	WSRemoteAddr  string `yaml:"WSRemoteAddr,omitempty"`
 }
 
 type SSHConnection struct {
-	AgentId       string `json:"agentId,omitempty"`
-	SSHLocaleAddr string `json:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `json:"SSHRemoteAddr,omitempty"`
-	ClientVersion string `json:"clientVersion,omitempty"`
-	SessionID     string `json:"sessionID,omitempty"`
-	ServerVersion string `json:"serverVersion,omitempty"`
+	AgentId       string `yaml:"agentId,omitempty"`
+	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
+	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
+	ClientVersion string `yaml:"clientVersion,omitempty"`
+	SessionID     string `yaml:"sessionID,omitempty"`
+	ServerVersion string `yaml:"serverVersion,omitempty"`
 }
 
 type SSHState struct {
-	AgentId       string          `json:"agentId,omitempty"`
-	SSHConnection []SSHConnection `json:"SSHConnection,omitempty"`
-	SSHListeners  []string        `json:"SSHListeners,omitempty"`
+	AgentId       string          `yaml:"agentId,omitempty"`
+	SSHConnection []SSHConnection `yaml:"SSHConnection,omitempty"`
+	SSHListeners  []string        `yaml:"SSHListeners,omitempty"`
 }
 
 type TLSSHState struct {
-	AgentId       string `json:"agentId,omitempty"`
-	SSHLocaleAddr string `json:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `json:"SSHRemoteAddr,omitempty"`
-	TLSLocaleAddr string `json:"TLSLocaleAddr,omitempty"`
-	TLSRemoteAddr string `json:"TLSRemoteAddr,omitempty"`
+	AgentId       string `yaml:"agentId,omitempty"`
+	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
+	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
+	TLSLocaleAddr string `yaml:"TLSLocaleAddr,omitempty"`
+	TLSRemoteAddr string `yaml:"TLSRemoteAddr,omitempty"`
 }
 
 type SSHTTState struct {
-	AgentId       string `json:"agentId,omitempty"`
-	SSHLocaleAddr string `json:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `json:"SSHRemoteAddr,omitempty"`
+	AgentId       string `yaml:"agentId,omitempty"`
+	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
+	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
 }
 
 type SocketIOState struct {
-	AgentId   string `json:"agentId,omitempty"`
-	SocketId  string `json:"socketId,omitempty"`
-	Connected bool   `json:"connected,omitempty"`
-	Recovered bool   `json:"recovered,omitempty"`
+	AgentId   string `yaml:"agentId,omitempty"`
+	SocketId  string `yaml:"socketId,omitempty"`
+	Connected bool   `yaml:"connected,omitempty"`
+	Recovered bool   `yaml:"recovered,omitempty"`
 }
 
 type State struct {
-	Id           string    `json:"id,omitempty"`
-	Name         string    `json:"name,omitempty"`
-	SSHMode      string    `json:"SSHMode,omitempty"`
-	UsedPorts    string    `json:"usedPorts,omitempty"`
-	LastUpdated  time.Time `json:"lastUpdated"`
-	Platform     string    `json:"platform,omitempty"`
-	Architecture string    `json:"architecture,omitempty"`
-	Username     string    `json:"username,omitempty"`
-	Hostname     string    `json:"hostname,omitempty"`
-	IPs          string    `json:"IPs,omitempty"`
-	Path         string    `json:"path,omitempty"`
+	Id           string    `yaml:"id,omitempty"`
+	Name         string    `yaml:"name,omitempty"`
+	SSHMode      string    `yaml:"SSHMode,omitempty"`
+	UsedPorts    string    `yaml:"usedPorts,omitempty"`
+	LastUpdated  time.Time `yaml:"lastUpdated"`
+	Platform     string    `yaml:"platform,omitempty"`
+	Architecture string    `yaml:"architecture,omitempty"`
+	Username     string    `yaml:"username,omitempty"`
+	Hostname     string    `yaml:"hostname,omitempty"`
+	IPs          string    `yaml:"IPs,omitempty"`
+	Path         string    `yaml:"path,omitempty"`
 
-	TLSSH    TLSSHState    `json:"TLSSH"`
-	WSSH     WSHState      `json:"WSSH"`
-	SSHTTP   SSHTTState    `json:"SSHTTP"`
-	SocketIO SocketIOState `json:"socketIO"`
-	SSH      SSHState      `json:"ssh"`
+	TLSSH    TLSSHState    `yaml:"TLSSH"`
+	WSSH     WSHState      `yaml:"WSSH"`
+	SSHTTP   SSHTTState    `yaml:"SSHTTP"`
+	SocketIO SocketIOState `yaml:"socketIO"`
+	SSH      SSHState      `yaml:"ssh"`
 }
