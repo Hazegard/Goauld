@@ -54,6 +54,7 @@ func (cpc *ControlPlanClient) Init() error {
 	socket.OnConnectError(func(err any) {
 		log.Trace().Msg("OnConnectError")
 		log.Error().Msgf("Error occured connecting to %s (%v)", cpc.url, err)
+		cpc.canceler.Restart()
 	})
 
 	manager.OnError(func(err error) {

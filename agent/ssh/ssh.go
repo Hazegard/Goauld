@@ -112,60 +112,71 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 		}()
 
 		defer remoteListener.Close()
+		errCounter := 0
 		for {
-			if ctx.Err() != nil {
-				remoteListener.Close()
+			select {
+			case <-ctx.Done():
 				return
-			}
-
-			// Waits for a connection
-			remoteConn, err := remoteListener.Accept()
-			if err != nil {
-				// TODO faire du throttle si on garde l'erreur, voir pour couper proprement après un temp ?
-				log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to accept remote connection")
-				// Pseudo throttle en attendant
-				time.Sleep(1 * time.Second)
-				continue
-			}
-
-			// Handle the connection in a dedicated goroutine
-			go func() {
-				// Initialize a connection to the local SSHD server
-				localConn, err := net.Dial("tcp", rpf.GetLocal())
-				if err != nil {
-					log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to connect to local service")
+			default:
+				if ctx.Err() != nil {
+					remoteListener.Close()
 					return
 				}
-				defer localConn.Close()
 
-				errChan := make(chan error, 1)
-
-				// Initialize the Websocket -> SSH connection
-				go func() {
-					_, err := io.Copy(localConn, remoteConn)
-					if err != nil && !errors.Is(err, io.EOF) {
-						log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Local -> Remote connection failed")
-						errChan <- err
-					}
-				}()
-
-				// Initialize the SSH -> Websocket connection
-				go func() {
-					_, err := io.Copy(remoteConn, localConn)
-					if err != nil && !errors.Is(err, io.EOF) {
-						log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Remote -> Local connection failed")
-						errChan <- err
-					}
-				}()
-
-				// Waits for an error to occur
-				err = <-errChan
-				remoteConn.Close()
-				localConn.Close()
+				// Waits for a connection
+				remoteConn, err := remoteListener.Accept()
 				if err != nil {
-					log.Error().Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Err(err).Msg("Remote forwarding: end of forwarding")
+					if errCounter > 5 {
+						log.Warn().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg(fmt.Sprintf("%d attempts failed to accept remote connection", errCounter))
+						return
+					}
+					errCounter++
+					// TODO faire du throttle si on garde l'erreur, voir pour couper proprement après un temp ?
+					log.Warn().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to accept remote connection")
+					// Pseudo throttle en attendant
+					time.Sleep(1 * time.Second)
+					continue
 				}
-			}()
+
+				// Handle the connection in a dedicated goroutine
+				go func() {
+					// Initialize a connection to the local SSHD server
+					localConn, err := net.Dial("tcp", rpf.GetLocal())
+					if err != nil {
+						log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to connect to local service")
+						return
+					}
+					defer localConn.Close()
+
+					errChan := make(chan error, 1)
+
+					// Initialize the Websocket -> SSH connection
+					go func() {
+						_, err := io.Copy(localConn, remoteConn)
+						if err != nil && !errors.Is(err, io.EOF) {
+							log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Local -> Remote connection failed")
+							errChan <- err
+						}
+					}()
+
+					// Initialize the SSH -> Websocket connection
+					go func() {
+						_, err := io.Copy(remoteConn, localConn)
+						if err != nil && !errors.Is(err, io.EOF) {
+							log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Remote -> Local connection failed")
+							errChan <- err
+						}
+					}()
+
+					// Waits for an error to occur
+					err = <-errChan
+					remoteConn.Close()
+					localConn.Close()
+					if err != nil {
+						log.Error().Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Err(err).Msg("Remote forwarding: end of forwarding")
+					}
+				}()
+			}
 		}
 	}()
 	return remotePort, nil
