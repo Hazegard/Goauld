@@ -1,7 +1,7 @@
 FROM alpine:3.21 AS build
 
 RUN apk add go alpine-sdk
-RUN go install github.com/goreleaser/goreleaser/v2@latest
+RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
 
 COPY . /app
 
@@ -12,7 +12,7 @@ RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false
 FROM alpine:3.21 AS run
 
 COPY --from=build --chmod=755 /app/output/server/*_linux-amd64 /app/server
-COPY --from=build /app/output/agent/* /app/binaries/
+COPY --from=build /app/output/agent/* /app/build_binaries/
 
 WORKDIR /app
-CMD /app/server
+CMD cp -u /app/build_binaries/* /app/binaries/ ; /app/server

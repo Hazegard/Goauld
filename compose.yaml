@@ -12,3 +12,4 @@ services:
     volumes:
       - ./Goauld.db:/app/Goauld.db
       - ./goauld_server.yaml:/app/goauld_server.yaml
+      - ./binaries:/app/binaries

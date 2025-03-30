@@ -1,6 +1,6 @@
 module Goauld
 
-go 1.24
+go 1.23.0
 
 toolchain go1.24.1
 
@@ -63,7 +63,7 @@ require (
 	github.com/libdns/libdns v0.2.3 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.20
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mholt/acmez/v3 v3.1.1 // indirect
