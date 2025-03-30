@@ -13,6 +13,7 @@ import (
 	socket_io "Goauld/common/socket.io"
 
 	"Goauld/client/types"
+	common_types "Goauld/common/types"
 )
 
 type API struct {
@@ -183,4 +184,38 @@ func (api *API) DeleteAgent(id string) error {
 		return fmt.Errorf("%d", res.StatusCode)
 	}
 	return nil
+}
+
+func (api *API) DumpAll() (error, []common_types.State) {
+	res, err := api.get("/admin/dump/")
+	if err != nil {
+		return err, nil
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err, nil
+	}
+	var result []common_types.State
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return err, nil
+	}
+
+	return nil, result
+}
+
+func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
+	res, err := api.post(fmt.Sprintf("/admin/loglevel/%s", url.PathEscape(level)), nil)
+	if err != nil {
+		return err, nil
+	}
+	defer res.Body.Close()
+	result := map[string]interface{}{}
+	body, err := io.ReadAll(res.Body)
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return err, nil
+	}
+	return nil, result
 }

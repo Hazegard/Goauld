@@ -25,6 +25,7 @@ var (
 	_ssh_server = ""
 
 	_access_token = ""
+	_admin_token  = ""
 
 	_verbosity = "0"
 	_insecure  = "false"
@@ -71,6 +72,7 @@ var (
 		"_server":       _server,
 		"_ssh_server":   _ssh_server,
 		"_access_token": _access_token,
+		"_admin_token":  _admin_token,
 
 		"_verbosity": _verbosity,
 		"_insecure":  _insecure,
@@ -119,6 +121,7 @@ type ClientConfig struct {
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
 
 	AccessToken string `default:"${_access_token}" name:"access-token" help:"Access token required to access the /manage/ endpoint."`
+	AdminToken  string `default:"${_admin_token}" name:"admin-token" help:"Admin token required to access the /admin/ endpoint."`
 
 	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
@@ -135,6 +138,7 @@ type ClientConfig struct {
 	Tui     Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
 	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
 	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
+	Admin   Admin    `cmd:"" name:"admin" help:"Admin command."`
 }
 
 func (c *ClientConfig) Validate() error {

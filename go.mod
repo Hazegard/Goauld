@@ -22,6 +22,7 @@ require (
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/karagenc/socket.io-go v0.1.0
 	github.com/maruel/natural v1.1.1
+	github.com/neilotoole/jsoncolor v0.7.1
 	github.com/pkg/sftp v1.13.9
 	github.com/quic-go/webtransport-go v0.8.0
 	github.com/rs/zerolog v1.34.0
@@ -32,6 +33,8 @@ require (
 	gorm.io/gorm v1.25.12
 	nhooyr.io/websocket v1.8.11
 )
+
+require golang.org/x/term v0.30.0 // indirect
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
@@ -93,7 +96,7 @@ require (
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sync v0.12.0
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.31.0
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
