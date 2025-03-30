@@ -72,7 +72,7 @@ func (db *DB) ResetAgents() error {
 		return err
 	}
 	for _, agent := range agents {
-		agent.SshMode = "/"
+		agent.SshMode = "OFF"
 		agent.UsedPorts = ""
 		agent.RemotePortForwarding = nil
 		agent.Connected = false
