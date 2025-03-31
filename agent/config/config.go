@@ -165,7 +165,7 @@ type AgentConfig struct {
 	HttpProxyPassword string   `default:"${_http_proxy_password}" name:"http-proxy-password" optional:"" help:"Password to use with the http upstream proxy"`
 	HttpProxyDomain   string   `default:"${_http_proxy_domain}" name:"http-proxy-domain" optional:"" help:"Domain to use with the http upstream proxy"`
 
-	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Don't use the system proxy."`
+	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Do not use the system proxy."`
 
 	RsshPort      int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
 	SocksPort     int `default:"${_socks_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
