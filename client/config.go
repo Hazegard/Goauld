@@ -138,7 +138,7 @@ type ClientConfig struct {
 	Tui     Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
 	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
 	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
-	Admin   Admin    `cmd:"" name:"admin" help:"Admin command."`
+	Admin   Admin    `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
 }
 
 func (c *ClientConfig) Validate() error {
@@ -220,7 +220,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
 		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
 
-			if ctx.Error == nil && ctx.Validate() == nil {
+			if ctx.Error == nil {
 				fmt.Println(common.GetBanner())
 				fmt.Println()
 			}

@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	socket_io "Goauld/common/socket.io"
 
@@ -144,6 +145,9 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	if err != nil {
 		return types.Agent{}, fmt.Errorf("Error while reading agent by id: %v", err)
 	}
+	if res.StatusCode != http.StatusOK {
+		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %s", strings.TrimSpace(string(body)))
+	}
 
 	var agents types.Agent
 	err = json.Unmarshal(body, &agents)
@@ -198,6 +202,10 @@ func (api *API) DumpAll() (error, []common_types.State) {
 	if err != nil {
 		return err, nil
 	}
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("error while dumping active agents : %s", strings.TrimSpace(string(body))), nil
+	}
+
 	var result []common_types.State
 	err = yaml.Unmarshal(body, &result)
 	if err != nil {

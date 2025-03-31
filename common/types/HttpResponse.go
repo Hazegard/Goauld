@@ -22,3 +22,10 @@ func (h *HttpResponse) Bytes() []byte {
 	}
 	return b
 }
+
+func NewErrHttpResponse(err error) *HttpResponse {
+	return &HttpResponse{
+		Message: err.Error(),
+		Success: false,
+	}
+}

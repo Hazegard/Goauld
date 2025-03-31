@@ -60,10 +60,12 @@ func (a *AgentStore) DumpSocketIO(id string) types.SocketIOState {
 	socket := a.sioSocketMap[id]
 	defer a.sioSocketMapMu.Unlock()
 	state := types.SocketIOState{
-		AgentId:   id,
-		SocketId:  string(socket.ID()),
-		Connected: socket.Connected(),
-		Recovered: socket.Recovered(),
+		AgentId: id,
+	}
+	if socket != nil {
+		state.SocketId = string(socket.ID())
+		state.Connected = socket.Connected()
+		state.Recovered = socket.Recovered()
 	}
 
 	return state
