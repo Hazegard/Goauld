@@ -54,6 +54,7 @@ var (
 	_binaries_basicauth = "username:password"
 	_binaries_path      = "./binaries"
 
+	_version         = "false"
 	_generate_config = "false"
 	_config_file     = ""
 
@@ -83,6 +84,7 @@ var (
 		"_binaries_basicauth": _binaries_basicauth,
 		"_binaries_path":      _binaries_path,
 
+		"_version":         _version,
 		"_generate_config": _generate_config,
 		"_config_file":     _config_file,
 	}
@@ -120,6 +122,7 @@ type ServerConfig struct {
 	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
 	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
 
+	Version        bool   `default:"${_version}" name:"version" short:"V" help:"Show version information"`
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `default:"${_config_file}" name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 }

@@ -30,6 +30,7 @@ var (
 	_verbosity = "0"
 	_insecure  = "false"
 
+	_version         = "false"
 	_generate_config = "false"
 	_config_file     = ""
 
@@ -77,6 +78,7 @@ var (
 		"_verbosity": _verbosity,
 		"_insecure":  _insecure,
 
+		"_version":         _version,
 		"_generate_config": _generate_config,
 		"_config_file":     _config_file,
 
@@ -126,6 +128,7 @@ type ClientConfig struct {
 	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
+	Version        bool   `default:"${_version}" name:"version" short:"V" help:"Show version information"`
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `default:"${_config_file}" name:"config-file" optional:"" short:"c" help:"Configuration file to use."`
 

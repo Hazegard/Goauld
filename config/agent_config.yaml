@@ -110,6 +110,9 @@ rpf: []
 # Max retries connection attempts before giving up
 max-retries: 0
 
+# Show version information
+version: false
+
 # Generate configuration file based on the current options.
 generate-config: false
 

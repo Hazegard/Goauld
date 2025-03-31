@@ -44,6 +44,7 @@ env:
   - SERVER__BINARIES_BASICAUTH={{ .Env.SERVER__BINARIES_BASICAUTH }}
   - SERVER__BINARIES_PATH={{ .Env.SERVER__BINARIES_PATH }}
 
+  - SERVER__VERSION={{ .Env.SERVER__VERSION }}
   - SERVER__GENERATE_CONFIG={{ .Env.SERVER__GENERATE_CONFIG }}
   - SERVER__CONFIG_FILE={{ .Env.SERVER__CONFIG_FILE }}
 
@@ -98,6 +99,7 @@ env:
 
   - AGENT__MAX_RETRIES={{ .Env.AGENT__MAX_RETRIES }}
 
+  - AGENT__VERSION={{ .Env.AGENT__VERSION }}
   - AGENT__GENERATE_CONFIG={{ .Env.AGENT__GENERATE_CONFIG }}
   - AGENT__CONFIG_FILE={{ .Env.AGENT__CONFIG_FILE }}
 
@@ -111,6 +113,7 @@ env:
   - CLIENT__VERBOSITY={{ .Env.CLIENT__VERBOSITY }}
   - CLIENT__INSECURE={{ .Env.CLIENT__INSECURE }}
 
+  - CLIENT__VERSION={{ .Env.CLIENT__VERSION }}
   - CLIENT__GENERATE_CONFIG={{ .Env.CLIENT__GENERATE_CONFIG }}
   - CLIENT__CONFIG_FILE={{ .Env.CLIENT__CONFIG_FILE }}
 
@@ -221,6 +224,7 @@ builds:
       - '{{ if (index .Env "SERVER__BINARIES_BASICAUTH") }} -X Goauld/server/config._binaries_basicauth={{ .Env.SERVER__BINARIES_BASICAUTH }}{{end}}'
       - '{{ if (index .Env "SERVER__BINARIES_PATH") }} -X Goauld/server/config._binaries_path={{ .Env.SERVER__BINARIES_PATH }}{{end}}'
 
+      - '{{ if (index .Env "SERVER__VERSION") }} -X Goauld/server/config._version={{ .Env.SERVER__VERSION }}{{end}}'
       - '{{ if (index .Env "SERVER__GENERATE_CONFIG") }} -X Goauld/server/config._generate_config={{ .Env.SERVER__GENERATE_CONFIG }}{{end}}'
       - '{{ if (index .Env "SERVER__CONFIG_FILE") }} -X Goauld/server/config._config_file={{ .Env.SERVER__CONFIG_FILE }}{{end}}'
 
@@ -306,6 +310,7 @@ builds:
 
       - '{{ if (index .Env "AGENT__MAX_RETRIES") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__MAX_RETRIES }}{{end}}'
 
+      - '{{ if (index .Env "AGENT__VERSION") }} -X Goauld/agent/config._version={{ .Env.AGENT__VERSION }}{{end}}'
       - '{{ if (index .Env "AGENT__GENERATE_CONFIG") }} -X Goauld/agent/config._generate_config={{ .Env.AGENT__GENERATE_CONFIG }}{{end}}'
       - '{{ if (index .Env "AGENT__CONFIG_FILE") }} -X Goauld/agent/config._config_file={{ .Env.AGENT__CONFIG_FILE }}{{end}}'
 
@@ -350,6 +355,7 @@ builds:
       - '{{ if (index .Env "CLIENT__VERBOSITY") }} -X main._verbosity={{ .Env.CLIENT__VERBOSITY }}{{end}}'
       - '{{ if (index .Env "CLIENT__INSECURE") }} -X main._insecure={{ .Env.CLIENT__INSECURE }}{{end}}'
 
+      - '{{ if (index .Env "CLIENT__VERSION") }} -X main._version={{ .Env.CLIENT__VERSION }}{{end}}'
       - '{{ if (index .Env "CLIENT__GENERATE_CONFIG") }} -X main._generate_config={{ .Env.CLIENT__GENERATE_CONFIG }}{{end}}'
       - '{{ if (index .Env "CLIENT__CONFIG_FILE") }} -X main._config_file={{ .Env.CLIENT__CONFIG_FILE }}{{end}}'
 

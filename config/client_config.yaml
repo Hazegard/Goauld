@@ -16,6 +16,9 @@ verbose: 0
 # Allow insecure connection (do not validate TLS certificate).
 insecure: false
 
+# Show version information
+version: false
+
 # Generate configuration file based on the current options.
 generate-config: false
 

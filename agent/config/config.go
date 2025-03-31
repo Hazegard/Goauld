@@ -67,6 +67,7 @@ var (
 
 	_max_retries = "0"
 
+	_version         = "false"
 	_generate_config = "false"
 	_config_file     = ""
 
@@ -122,6 +123,7 @@ var (
 
 		"_max_retries": _max_retries,
 
+		"_version":         _version,
 		"_generate_config": _generate_config,
 		"_config_file":     _config_file,
 
@@ -186,6 +188,7 @@ type AgentConfig struct {
 
 	MaxRetries int `default:"${_max_retries}" help:"Max retries connection attempts before giving up" name:"max-retries" short:"M"`
 
+	Version        bool   `default:"${_version}" name:"version" short:"V" help:"Show version information"`
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `default:"${_config_file}" name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 

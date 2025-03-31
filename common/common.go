@@ -25,6 +25,10 @@ func AppName() string {
 	return string(out)
 }
 
+func GetVersion() string {
+	return fmt.Sprintf("%s - %s (%s)", Version, Commit, Date)
+}
+
 func Title(_type string) string {
 	prettyDate := ""
 	d, err := time.Parse(`2006-01-02T15:04:05Z`, Date)

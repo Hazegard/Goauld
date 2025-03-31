@@ -3,6 +3,7 @@ package main
 import (
 	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
+	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
 	"errors"
@@ -29,6 +30,10 @@ func main() {
 	_, err, warnings := config.InitAgent()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the agent")
+		return
+	}
+	if config.Get().DoPrintVersion() {
+		fmt.Println(common.GetVersion())
 		return
 	}
 	if len(warnings) > 0 {

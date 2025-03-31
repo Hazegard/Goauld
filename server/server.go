@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Goauld/common"
 	"context"
 	"fmt"
 
@@ -20,6 +21,10 @@ func main() {
 	_, _, err := config.InitServer()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the server")
+		return
+	}
+	if config.Get().Version {
+		fmt.Println(common.GetVersion())
 		return
 	}
 

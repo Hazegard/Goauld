@@ -502,6 +502,10 @@ func (a *Agent) GetMexRetries() uint {
 	return uint(a.cfg.MaxRetries)
 }
 
+func (a *Agent) DoPrintVersion() bool {
+	return a.cfg.Version
+}
+
 // DoGenerateConfig return whether the configuration generation should is enabled
 func (a *Agent) DoGenerateConfig() bool {
 	return a.cfg.GenerateConfig

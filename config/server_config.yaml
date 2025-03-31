@@ -60,6 +60,9 @@ binaries-basic-auth: username:password
 # Path where are stored binaries on the filesystem.
 binaries-path-location: ./binaries
 
+# Show version information
+version: false
+
 # Generate configuration file based on the current options.
 generate-config: false
 

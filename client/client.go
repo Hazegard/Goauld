@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"Goauld/client/api"
+	_common "Goauld/common"
 	"Goauld/common/log"
 )
 
@@ -33,6 +34,10 @@ func main() {
 	kong, cfg, err := InitConfig()
 	if err != nil {
 		fmt.Println(err)
+		return
+	}
+	if cfg.Version {
+		fmt.Println(_common.GetVersion())
 		return
 	}
 	if cfg.GenerateConfig {
