@@ -129,8 +129,8 @@ type ClientConfig struct {
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
 	ConfigFile     string `default:"${_config_file}" name:"config-file" optional:"" short:"c" help:"Configuration file to use."`
 
-	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" name:"agent-password" help:"Agent password."`
-	PrivatePassword string
+	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" hidden:"true" name:"agent-password" help:"Agent password map."`
+	PrivatePassword string            `default:"" name:"password" short:"P" help:"Agent password."`
 
 	Ssh     Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
 	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
@@ -185,6 +185,15 @@ func (c *ClientConfig) ServerUrl() string {
 // GenerateYAMLConfig generate a yaml configuration associated to the currently running configuration
 func (c *ClientConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*c)
+}
+
+func (c *ClientConfig) IsPrivatePasswordInCommandLine() bool {
+	for _, field := range os.Args {
+		if field == "--private-password" || field == "-P" {
+			return true
+		}
+	}
+	return false
 }
 
 type Tui struct{}

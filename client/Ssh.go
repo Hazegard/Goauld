@@ -201,7 +201,7 @@ func (e *Ssh) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath
 
 // buildEnvironments returns the environment variables required to access the agents
 func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target string) []string {
-	return []string{
+	envs := []string{
 		"SSH_ASKPASS_REQUIRE=force",
 		"SSH_ASKPASS=" + exePath,
 		prefixEnv("SERVER", cfg.Server),
@@ -209,6 +209,10 @@ func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target
 		prefixEnv("TYPE", typePass),
 		prefixEnv("CONFIG_FILE", cfg.ConfigFile),
 	}
+	if cfg.IsPrivatePasswordInCommandLine() {
+		envs = append(envs, prefixEnv("PASSWORD", cfg.PrivatePassword))
+	}
+	return envs
 }
 
 // buildAllSshOptions returns the ssh option that are in common to the inner and the outer ssh
