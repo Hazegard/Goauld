@@ -1,6 +1,6 @@
 #!/bin/bash
 set -ueo pipefail
-ENV_FILE="env.test"
+ENV_FILE="$(mktemp)"
 GORELEASER_ENV="$(mktemp)"
 GORELEASER_FLAGS=""
 GORELEASER_FLAGS_SERVER="$(mktemp)"
@@ -160,3 +160,11 @@ UpdateContent "CLIENT" ./.goreleaser.yaml "$GORELEASER_FLAGS_CLIENT"
 UpdateContent "AGENT" ./.goreleaser.yaml "$GORELEASER_FLAGS_AGENT"
 
 UpdateContent "ENV" ./.env.build.tmpl "$ENV_FILE"
+
+
+
+rm -rf "$ENV_FILE"
+rm -rf "$GORELEASER_ENV"
+rm -rf "$GORELEASER_FLAGS_SERVER"
+rm -rf "$GORELEASER_FLAGS_AGENT"
+rm -rf "$GORELEASER_FLAGS_CLIENT"
