@@ -26,7 +26,7 @@ func AppName() string {
 }
 
 func GetVersion() string {
-	return fmt.Sprintf("%s - %s (%s)", Version, Commit, Date)
+	return fmt.Sprintf("%s-%.8s (%s)", Version, Commit, Date)
 }
 
 func Title(_type string) string {
