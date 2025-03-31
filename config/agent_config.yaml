@@ -64,7 +64,7 @@ http-proxy-password: ""
 # Domain to use with the http upstream proxy
 http-proxy-domain: ""
 
-# Don't use the system proxy.
+# Do not use the system proxy.
 no-proxy: false
 
 # The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server.

@@ -16,6 +16,9 @@ env:
   - HTTPS_PORT={{ .Env.HTTPS_PORT }}
 
 
+# BEGIN Dynamic ENV
+
+
   - SERVER__AGE_PRIVKEY={{ .Env.SERVER__AGE_PRIVKEY }}
 
   - SERVER__HTTP_DOMAIN={{ .Env.SERVER__HTTP_DOMAIN }}
@@ -99,13 +102,11 @@ env:
   - AGENT__CONFIG_FILE={{ .Env.AGENT__CONFIG_FILE }}
 
   - AGENT__BACKGROUND={{ .Env.AGENT__BACKGROUND }}
-
-
-
   - CLIENT__SERVER={{ .Env.CLIENT__SERVER }}
   - CLIENT__SSH_SERVER={{ .Env.CLIENT__SSH_SERVER }}
 
   - CLIENT__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
+  - CLIENT__ADMIN_TOKEN={{ .Env.CLIENT__ADMIN_TOKEN }}
 
   - CLIENT__VERBOSITY={{ .Env.CLIENT__VERBOSITY }}
   - CLIENT__INSECURE={{ .Env.CLIENT__INSECURE }}
@@ -142,6 +143,7 @@ env:
   - CLIENT__COMPILE_SEED={{ .Env.CLIENT__COMPILE_SEED }}
   - CLIENT__COMPILE_PRIVATE_PASSWORD={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}
 
+# END Dynamic ENV
 
 before:
   hooks:
@@ -193,7 +195,7 @@ builds:
       - '-X Goauld/common.Commit={{.Commit}}'
       - '-X Goauld/common.Date={{.CommitDate}}'
 
-
+# BEGIN Dynamic SERVER
       - '{{ if (index .Env "SERVER__AGE_PRIVKEY") }} -X Goauld/server/config._age_privKey={{ .Env.SERVER__AGE_PRIVKEY }}{{end}}'
 
       - '{{ if (index .Env "SERVER__HTTP_DOMAIN") }} -X Goauld/server/config._http_domain={{ .Env.SERVER__HTTP_DOMAIN }}{{end}}'
@@ -222,6 +224,7 @@ builds:
       - '{{ if (index .Env "SERVER__GENERATE_CONFIG") }} -X Goauld/server/config._generate_config={{ .Env.SERVER__GENERATE_CONFIG }}{{end}}'
       - '{{ if (index .Env "SERVER__CONFIG_FILE") }} -X Goauld/server/config._config_file={{ .Env.SERVER__CONFIG_FILE }}{{end}}'
 
+# END Dynamic SERVER
   - id: "agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
     tool: '{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}'
@@ -252,6 +255,7 @@ builds:
       - '-X Goauld/common.Commit={{ if (index .Env "COMMIT") }}{{ .Env.COMMIT }}{{ else }}{{ .Commit }}{{ end }}'
 
 
+# BEGIN Dynamic AGENT
       - '{{ if (index .Env "AGENT__AGEPUBKEY") }} -X Goauld/agent/config._agePubKey={{ .Env.AGENT__AGEPUBKEY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SERVER") }} -X Goauld/agent/config._server={{ .Env.AGENT__SERVER }}{{end}}'
@@ -281,7 +285,6 @@ builds:
       - '{{ if (index .Env "AGENT__HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._http_proxy_password={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._http_proxy_domain={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}{{end}}'
 
-
       - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
@@ -308,6 +311,7 @@ builds:
 
       - '{{ if (index .Env "AGENT__BACKGROUND") }} -X Goauld/agent/config._background={{ .Env.AGENT__BACKGROUND }}{{end}}'
 
+# END Dynamic AGENT
   - id: "client"
     mod_timestamp: "{{ .CommitTimestamp }}"
     binary: tealc
@@ -336,11 +340,12 @@ builds:
       - '-X Goauld/common.Date={{.CommitDate}}'
 
 
-
+# BEGIN Dynamic CLIENT
       - '{{ if (index .Env "CLIENT__SERVER") }} -X main._server={{ .Env.CLIENT__SERVER }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_SERVER") }} -X main._ssh_server={{ .Env.CLIENT__SSH_SERVER }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__ACCESS_TOKEN") }} -X main._access_token={{ .Env.CLIENT__ACCESS_TOKEN }}{{end}}'
+      - '{{ if (index .Env "CLIENT__ADMIN_TOKEN") }} -X main._admin_token={{ .Env.CLIENT__ADMIN_TOKEN }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__VERBOSITY") }} -X main._verbosity={{ .Env.CLIENT__VERBOSITY }}{{end}}'
       - '{{ if (index .Env "CLIENT__INSECURE") }} -X main._insecure={{ .Env.CLIENT__INSECURE }}{{end}}'
@@ -382,6 +387,7 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_SEED") }} -X main._compile_seed={{ .Env.CLIENT__COMPILE_SEED }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_PRIVATE_PASSWORD") }} -X main._compile_private_password={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}{{end}}'
 
+# END Dynamic CLIENT
 
 changelog:
   sort: asc

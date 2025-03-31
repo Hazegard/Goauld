@@ -5,7 +5,10 @@ server: https://www.example.com
 ssh-server: www.example.com:22222
 
 # Access token required to access the /manage/ endpoint.
-access-token: 
+access-token:
+
+# Admin token required to access the /admin/ endpoint.
+admin-token:
 
 # Verbosity. Repeat to increase
 verbose: 0
@@ -19,10 +22,11 @@ generate-config: false
 # Configuration file to use.
 config-file: ""
 
+# Agent password map.
+agent-password: {}
+
 # Agent password.
-agent-password:
-  {}
-privatepassword: ""
+password: ""
 
 # Connect to the agent through SSH.
 ssh:
@@ -90,4 +94,12 @@ pass:
 
 # Compile the agent.
 compile: {}
+
+# Admin command.
+admin:
+    dump: {}
+    loglevel:
+        # Log level
+        level: ""
+    config: {}
 

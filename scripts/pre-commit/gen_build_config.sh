@@ -1,8 +1,11 @@
 #!/bin/bash
-
+set -ueo pipefail
 ENV_FILE="env.test"
-GORELEASER_ENV="goreleaser.env"
+GORELEASER_ENV="$(mktemp)"
 GORELEASER_FLAGS=""
+GORELEASER_FLAGS_SERVER="$(mktemp)"
+GORELEASER_FLAGS_AGENT="$(mktemp)"
+GORELEASER_FLAGS_CLIENT="$(mktemp)"
 
 function GenConfig(){
   source_file="$1"
@@ -50,7 +53,7 @@ echo "################################" >> "$ENV_FILE"
 echo "##### SERVER CONFIGURATION #####" >> "$ENV_FILE"
 echo "################################" >> "$ENV_FILE"
 
-GORELEASER_FLAGS="goreleaser_flag_server.yaml"
+GORELEASER_FLAGS="$GORELEASER_FLAGS_SERVER"
 : > "$GORELEASER_FLAGS"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_ENV"
@@ -66,7 +69,7 @@ echo "##### AGENT CONFIGURATION  #####" >> "$ENV_FILE"
 echo "################################" >> "$ENV_FILE"
 
 
-GORELEASER_FLAGS="goreleaser_flag_agent.yaml"
+GORELEASER_FLAGS="$GORELEASER_FLAGS_AGENT"
 : > "$GORELEASER_FLAGS"
 echo >> "$GORELEASER_ENV"
 echo >> "$GORELEASER_ENV"
@@ -79,7 +82,7 @@ echo "################################" >> "$ENV_FILE"
 echo "##### CLIENT CONFIGURATION #####" >> "$ENV_FILE"
 echo "################################" >> "$ENV_FILE"
 
-GORELEASER_FLAGS="goreleaser_flag_client.yaml"
+GORELEASER_FLAGS="$GORELEASER_FLAGS_CLIENT"
 : > "$GORELEASER_FLAGS"
 GenConfig "client/config.go" "client/config.go" "main"
 echo >> "$ENV_FILE"
@@ -104,3 +107,56 @@ echo >> "$GORELEASER_FLAGS"
 GenConfig "client/compiler/compiler.go" "client/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
+
+
+function UpdateContent(){
+  # Check if correct number of arguments are provided
+  if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <marker> <file> <new_content>"
+    exit 1
+  fi
+
+  # Parameters passed to the script
+  MARKER="$1"
+  FILE="$2"
+  NEW_CONTENT="$(cat "$3")"
+  NEW_CONTENT="$(echo "$NEW_CONTENT" | sed 's/$/\\n/g' | tr -d '\n')"
+
+  # Temporary file
+  TEMP_FILE=$(mktemp)
+
+  # Replace content between markers
+  awk -v marker="$MARKER" -v new_content="$NEW_CONTENT" '
+  BEGIN {
+      in_block = 0
+      print_content = 1
+  }
+  {
+      if ($0 ~ "# BEGIN Dynamic " marker) {
+          print
+          print new_content
+          in_block = 1
+          print_content = 0
+          next
+      }
+
+      if ($0 ~ "# END Dynamic " marker) {
+          in_block = 0
+          print_content = 1
+      }
+
+      if (!in_block && print_content) {
+          print
+      }
+  }
+  ' "$FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$FILE"
+
+  echo "Content replaced successfully in $FILE"
+}
+
+UpdateContent "ENV" ./.goreleaser.yaml "$GORELEASER_ENV"
+UpdateContent "SERVER" ./.goreleaser.yaml "$GORELEASER_FLAGS_SERVER"
+UpdateContent "CLIENT" ./.goreleaser.yaml "$GORELEASER_FLAGS_CLIENT"
+UpdateContent "AGENT" ./.goreleaser.yaml "$GORELEASER_FLAGS_AGENT"
+
+UpdateContent "ENV" ./.env.build.tmpl "$ENV_FILE"

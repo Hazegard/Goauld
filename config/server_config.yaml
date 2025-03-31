@@ -16,10 +16,10 @@ http-listen-addr: :80
 https-listen-addr: :443
 
 # Remote address to bind to, port 0 => Random.
-ssh-listen-addr: :22222
+ssh-listen-addr: :2222
 
 # Verbosity. Repeat to increase
-verbose: 2
+verbose: 0
 
 # Enable TLS.
 tls: true
