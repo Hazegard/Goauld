@@ -23,7 +23,7 @@ type Compiler struct {
 	Id            string `default:"${_compile_id}" help:"[client|server|agent]."`
 	Goos          string `default:"${_compile_goos}" short:"O" help:"[darwin|linux|windows]."`
 	Goarch        string `default:"${_compile_goarch}" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
-	Source        string `default:"${_compile_source}" short:"s" help:"Source goa'uld directory."`
+	Source        string `default:"${_compile_source}" short:"s" help:"Source goauld directory."`
 	EnvFile       string `default:"${_compile_env_file}" name:"env" help:"File containing environment variables."`
 	Output        string `default:"${_compile_output}" short:"o" help:"Folder containing compiled compiled agents."`
 	Verbose       int    `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
