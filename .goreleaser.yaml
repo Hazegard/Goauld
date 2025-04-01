@@ -231,7 +231,7 @@ builds:
 # END Dynamic SERVER
   - id: "agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
-    tool: '{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}'
+    tool: '{{ if (index .Env "CLIENT__COMPILE_SEED") }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
     binary: goauld
     main: ./agent
     env:

@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/quic-go/webtransport-go"
-
 	"Goauld/agent/config"
 	"Goauld/agent/proxy"
 	"Goauld/common/crypto"
@@ -260,9 +258,8 @@ func getEioConfig() *sio.ManagerConfig {
 			WebSocketDialOptions: &websocket.DialOptions{
 				HTTPClient: proxy.NewHttpClientProxy(),
 			},
-			WebTransportDialer: &webtransport.Dialer{
-				TLSClientConfig: proxy.NewTlsConfig(),
-			},
+			Transports: []string{"polling", "websocket"},
+			// Debugger:   sio.NewPrintDebugger(),
 		},
 	}
 }
