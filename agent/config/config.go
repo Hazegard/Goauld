@@ -24,6 +24,7 @@ var (
 	_server     = "www.example.com"
 	_ssh_server = "www.example.com:2222"
 	_tls_server = "app.example.com"
+	_dns_server = "www.example.com"
 
 	_sshd_enabled           = "true"
 	_socks_enabled          = "true"
@@ -103,6 +104,7 @@ var (
 		"_server":     _server,
 		"_ssh_server": _ssh_server,
 		"_tls_server": _tls_server,
+		"_dns_server": _dns_server,
 
 		"_rssh_port":  _rssh_port,
 		"_socks_port": _socks_port,
@@ -143,6 +145,7 @@ type AgentConfig struct {
 	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server to connect to."`
 	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
 	TlsServer string `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
+	DnsServer string `default:"${_dns_server}" short:"d" name:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections."`
 
 	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" optional:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
 	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`

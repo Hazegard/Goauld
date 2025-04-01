@@ -1,6 +1,7 @@
 package config
 
 import (
+	"Goauld/common/log"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -75,13 +76,6 @@ func InitAgent() (*kong.Context, error, []error) {
 		return nil, fmt.Errorf("initializing cryptor: %v", err), nil
 	}
 
-	// compute the agent ID used to identify it
-	mid, err := machineid.ID()
-	if err != nil {
-		return nil, fmt.Errorf("error generating machine id: %v", err), nil
-	}
-	id := fmt.Sprintf("%x", md5.Sum([]byte(mid)))
-
 	// Generate the agent name if not provided
 	if cfg.Name == _name {
 		name := ""
@@ -106,6 +100,14 @@ func InitAgent() (*kong.Context, error, []error) {
 		}
 		cfg.Name = fmt.Sprintf("%s@%s", name, hostname)
 	}
+	// compute the agent ID used to identify it
+	mid, err := machineid.ID()
+	if err != nil {
+		log.Warn().Err(err).Msg("error generating machineid, using ramdom")
+		log.Warn().Err(err).Msg("Multiple agents might run in parallel on the same host")
+		mid = cfg.Name
+	}
+	id := fmt.Sprintf("%x", md5.Sum([]byte(mid)))
 
 	host, err := os.Hostname()
 	if err != nil {
@@ -191,6 +193,11 @@ func (a *Agent) IsLocalSshdRandomPort() bool {
 	return a.cfg.SshdPort == 0
 }
 */
+
+func (a *Agent) DNSServer() string {
+	return a.cfg.DnsServer
+}
+
 // ControlSshServer returns the SSHD server
 func (a *Agent) ControlSshServer() string {
 	return a.cfg.SshServer

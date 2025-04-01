@@ -9,6 +9,9 @@ http-domain:
 tls-domain:
     - app.example.com
 
+# Domain used to serve DNS (SSH over DNS).
+dns-domain: www.example.com
+
 # HTTP address to bind to, port 0 => Random.
 http-listen-addr: :80
 
@@ -17,6 +20,9 @@ https-listen-addr: :443
 
 # Remote address to bind to, port 0 => Random.
 ssh-listen-addr: :2222
+
+# Remote address to bind to, port 0 => Random.
+dns-listen-addr: :53
 
 # Verbosity. Repeat to increase
 verbose: 0

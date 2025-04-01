@@ -64,6 +64,9 @@ type AgentStore struct {
 
 	sshAgentMap   map[string]*SSHSession
 	sshAgentMapMu sync.Mutex
+
+	dnsshAgentMap   map[string]*DNSSHAgent
+	dnsshAgentMapMu sync.Mutex
 }
 
 // ClearByPort Clears all agent connections related to a given port
@@ -179,6 +182,7 @@ func (a *AgentStore) GetState(id string) types.State {
 		SSHTTP:   a.DumpSSHTTP(id),
 		SocketIO: a.DumpSocketIO(id),
 		SSH:      a.DumpSSH(id),
+		DNS:      a.DumpDNSSH(id),
 	}
 	return state
 }

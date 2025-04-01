@@ -32,11 +32,13 @@ var (
 
 	_http_domain = "www.example.com"
 	_tls_domain  = "app.example.com"
+	_dns_domain  = "www.example.com"
 
 	// TODO: voir pour listen sur ine IP spécifique
 	_http_listen_addr  = ":80"
 	_https_listen_addr = ":443"
 	_sshd_listen_addr  = ":2222"
+	_dns_listen_addr   = ":53"
 
 	_verbosity = "0"
 
@@ -63,10 +65,12 @@ var (
 
 		"_http_domain": _http_domain,
 		"_tls_domain":  _tls_domain,
+		"_dns_domain":  _dns_domain,
 
 		"_http_listen_addr":  _http_listen_addr,
 		"_https_listen_addr": _https_listen_addr,
 		"_sshd_listen_addr":  _sshd_listen_addr,
+		"_dns_listen_addr":   _dns_listen_addr,
 
 		"_verbosity": _verbosity,
 
@@ -101,10 +105,12 @@ type ServerConfig struct {
 
 	HttpDomain []string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
 	TlsDomain  []string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
+	DnsDomain  string   `default:"${_dns_domain}"  name:"dns-domain" optional:"" help:"Domain used to serve DNS (SSH over DNS)."`
 
 	HttpAddr  string `default:"${_http_listen_addr}"  name:"http-listen-addr" optional:"" help:"HTTP address to bind to, port 0 => Random."`
 	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-listen-addr" optional:"" help:"HTTPS address to bind to, port 0 => Random."`
 	SshdAddr  string `default:"${_sshd_listen_addr}"  name:"ssh-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
+	DnsAddr   string `default:"${_dns_listen_addr}"  name:"dns-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
@@ -263,8 +269,9 @@ func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*s)
 }
 
-// GenerateYAMLConfig return the yaml configuration using the current configuration
+// GenerateSafeYAMLConfig return the yaml configuration using the current configuration
 // (command line argument and parsed configuration files)
+// Without sensitive information
 func (s *ServerConfig) GenerateSafeYAMLConfig() (string, error) {
 	ss := *s
 	ss.GenerateConfig = false

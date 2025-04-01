@@ -39,6 +39,15 @@ type SSHTTState struct {
 	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
 }
 
+type DNSSHState struct {
+	AgentId              string `yaml:"agentId,omitempty"`
+	SSHLocaleAddr        string `yaml:"SSHLocaleAddr,omitempty"`
+	SSHRemoteAddr        string `yaml:"SSHRemoteAddr,omitempty"`
+	KCPAddr              string `yaml:"KCPAddr,omitempty"`
+	MuxSessionLocaleAddr string `yaml:"MuxSessionLocaleAddr,omitempty"`
+	MuxSessionRemoteAddr string `yaml:"MuxSessionRemoteAddr,omitempty"`
+}
+
 type SocketIOState struct {
 	AgentId   string `yaml:"agentId,omitempty"`
 	SocketId  string `yaml:"socketId,omitempty"`
@@ -64,4 +73,5 @@ type State struct {
 	SSHTTP   SSHTTState    `yaml:"SSHTTP"`
 	SocketIO SocketIOState `yaml:"socketIO"`
 	SSH      SSHState      `yaml:"ssh"`
+	DNS      DNSSHState    `yaml:"dns"`
 }

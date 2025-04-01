@@ -10,6 +10,9 @@ ssh-server: www.example.com:2222
 # The TLS server to connect to when using SSH over TLS connections.
 tls-server: app.example.com
 
+# The DNS server to connect to when using SSH over DNS connections.
+dns-server: www.example.com
+
 # SSH password to access the agent. If no password is provided, a random password is automatically generated.
 password: ""
 

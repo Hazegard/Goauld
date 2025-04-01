@@ -79,6 +79,17 @@ func main() {
 		}
 	}()
 
+	go func() {
+		dnsServer, err := transport.NewDNSSHServer(agentStore, db)
+		if err != nil {
+			log.Error().Err(err).Msgf("error initializing dns server")
+		}
+		err = dnsServer.Run()
+		if err != nil {
+			log.Error().Err(err).Msg("error starting the DNS server")
+		}
+	}()
+
 	// waits for the end
 	select {
 	case <-ctx.Done():

@@ -44,6 +44,11 @@ func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.
 			if client != nil {
 				return client, conn, nil
 			}
+		case strings.HasPrefix(proto, "dns"):
+			client, conn = proxifyDns(sshConfig)
+			if client != nil {
+				return client, conn, nil
+			}
 		}
 	}
 
@@ -116,6 +121,24 @@ func proxifyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, net.Conn) {
 	}
 	log.Info().Msg("Proxify using HTTP succeeded")
 	return client, httpConn
+}
+
+// proxifyDns proxifies the SSH traffic using a HTTP connection to the server
+func proxifyDns(sshConfig *ssh.ClientConfig) (*ssh.Client, net.Conn) {
+	log.Info().Msg("Trying to proxify SSH using DNS")
+	dnsConn, err := transport.NewDNSSH()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to proxify SSH using DNS")
+	}
+	log.Debug().Msg("Connection succedded, trying to mount SSH over the DNS connection")
+	// httpConn.Start()
+	client, err := tryProxifySsh(sshConfig, dnsConn)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
+		return nil, nil
+	}
+	log.Info().Msg("Proxify using HTTP succeeded")
+	return client, dnsConn
 }
 
 // tryProxifySsh attempts to proxifies the SSH connection using the provided net.Conn
