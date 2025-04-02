@@ -11,7 +11,13 @@ ssh-server: www.example.com:2222
 tls-server: app.example.com
 
 # The DNS server to connect to when using SSH over DNS connections.
-dns-server: www.example.com
+dns-server:
+    - 8.8.8.8
+    - 1.1.1.1
+    - 9.9.9.9
+
+# The DNS domain used to tunnel the traffic.
+dns-domain: www.example.com
 
 # SSH password to access the agent. If no password is provided, a random password is automatically generated.
 password: ""

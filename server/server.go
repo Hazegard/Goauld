@@ -79,16 +79,21 @@ func main() {
 		}
 	}()
 
-	go func() {
-		dnsServer, err := transport.NewDNSSHServer(agentStore, db)
-		if err != nil {
-			log.Error().Err(err).Msgf("error initializing dns server")
-		}
-		err = dnsServer.Run()
-		if err != nil {
-			log.Error().Err(err).Msg("error starting the DNS server")
-		}
-	}()
+	if config.Get().DNS {
+		log.Info().Msg("starting DNS server")
+		go func() {
+			dnsServer, err := transport.NewDNSSHServer(agentStore, db)
+			if err != nil {
+				log.Error().Err(err).Msgf("error initializing dns server")
+				return
+			}
+			err = dnsServer.Run()
+			if err != nil {
+				log.Error().Err(err).Msg("error starting the DNS server")
+			}
+		}()
+
+	}
 
 	// waits for the end
 	select {

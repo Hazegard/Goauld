@@ -36,6 +36,7 @@ env:
   - SERVER__TLS_KEY={{ .Env.SERVER__TLS_KEY }}
   - SERVER__TLS_CERT={{ .Env.SERVER__TLS_CERT }}
 
+  - SERVER__DNS={{ .Env.SERVER__DNS }}
   - SERVER__NO_DB={{ .Env.SERVER__NO_DB }}
   - SERVER__DB_NAME={{ .Env.SERVER__DB_NAME }}
 
@@ -57,6 +58,7 @@ env:
   - AGENT__SSH_SERVER={{ .Env.AGENT__SSH_SERVER }}
   - AGENT__TLS_SERVER={{ .Env.AGENT__TLS_SERVER }}
   - AGENT__DNS_SERVER={{ .Env.AGENT__DNS_SERVER }}
+  - AGENT__DNS_DOMAIN={{ .Env.AGENT__DNS_DOMAIN }}
 
   - AGENT__SHARED_PASSWORD={{ .Env.AGENT__SHARED_PASSWORD }}
   - AGENT__NAME={{ .Env.AGENT__NAME }}
@@ -219,6 +221,7 @@ builds:
       - '{{ if (index .Env "SERVER__TLS_KEY") }} -X Goauld/server/config._tls_key={{ .Env.SERVER__TLS_KEY }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_CERT") }} -X Goauld/server/config._tls_cert={{ .Env.SERVER__TLS_CERT }}{{end}}'
 
+      - '{{ if (index .Env "SERVER__DNS") }} -X Goauld/server/config._dns={{ .Env.SERVER__DNS }}{{end}}'
       - '{{ if (index .Env "SERVER__NO_DB") }} -X Goauld/server/config._no_db={{ .Env.SERVER__NO_DB }}{{end}}'
       - '{{ if (index .Env "SERVER__DB_NAME") }} -X Goauld/server/config._db_name={{ .Env.SERVER__DB_NAME }}{{end}}'
 
@@ -271,6 +274,7 @@ builds:
       - '{{ if (index .Env "AGENT__SSH_SERVER") }} -X Goauld/agent/config._ssh_server={{ .Env.AGENT__SSH_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_SERVER") }} -X Goauld/agent/config._dns_server={{ .Env.AGENT__DNS_SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__NAME") }} -X Goauld/agent/config._name={{ .Env.AGENT__NAME }}{{end}}'

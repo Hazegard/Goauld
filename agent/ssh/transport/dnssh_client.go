@@ -3,11 +3,13 @@ package transport
 import (
 	"Goauld/agent/config"
 	"Goauld/common/log"
+	common_net "Goauld/common/net"
 	"errors"
-	"flag"
 	"fmt"
+	"github.com/qdm12/dns/v2/pkg/nameserver"
 	"net"
-	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/xtaci/kcp-go/v5"
@@ -17,11 +19,12 @@ import (
 )
 
 type DNSSH struct {
-	udpConn net.PacketConn
-	pconn   net.PacketConn
-	session *smux.Session
-	Stream  *smux.Stream
-	kcpConn *kcp.UDPSession
+	udpConn       net.PacketConn
+	pconn         net.PacketConn
+	session       *smux.Session
+	SshStream     *smux.Stream
+	ControlStream *smux.Stream
+	kcpConn       *kcp.UDPSession
 }
 
 // smux streams will be closed after this much time without receiving data.
@@ -47,24 +50,24 @@ func dnsNameCapacity(domain dns.Name) int {
 	return capacity
 }
 
-func run( /*pubkey []byte,*/ domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*kcp.UDPSession, *smux.Session, *smux.Stream, error) {
+func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, error) {
 
 	mtu := dnsNameCapacity(domain) - 8 - 1 - numPadding - 1 // clientid + padding length prefix + padding + data length prefix
 	if mtu < 80 {
-		return nil, nil, nil, fmt.Errorf("domain %s leaves only %d bytes for payload", domain, mtu)
+		return nil, fmt.Errorf("domain %s leaves only %d bytes for payload", domain, mtu)
 	}
 
-	log.Get().Trace().Str("Mode", "DNSSH").Msgf("effective MTU %d", mtu)
+	log.Get().Trace().Str("Mode", "DNSSH").Msgf("effective MTU %d (%s)", mtu, domain)
 
 	// Open a KCP conn on the PacketConn.
 	conn, err := kcp.NewConn2(remoteAddr, nil, 0, 0, pconn)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("opening KCP conn: %v", err)
+		return nil, fmt.Errorf("opening KCP conn: %v", err)
 	}
-	defer func() {
-		log.Printf("end session %08x", conn.GetConv())
-		conn.Close()
-	}()
+	// defer func() {
+	// 	log.Get().Debug().Msgf("end session %08x", conn.GetConv())
+	// 	conn.Close()
+	// }()
 	log.Trace().Str("Mode", "DNSSH").Msgf("opening session %08x", conn.GetConv())
 	// Permit coalescing the payloads of consecutive sends.
 	conn.SetStreamMode(true)
@@ -78,7 +81,7 @@ func run( /*pubkey []byte,*/ domain dns.Name, remoteAddr net.Addr, pconn net.Pac
 	)
 	conn.SetWindowSize(turbotunnel.QueueSize/2, turbotunnel.QueueSize/2)
 	if rc := conn.SetMtu(mtu); !rc {
-		return nil, nil, nil, fmt.Errorf("setting mtu failed")
+		return nil, fmt.Errorf("setting mtu failed")
 	}
 
 	// Put a Noise channel on top of the KCP conn.
@@ -94,14 +97,28 @@ func run( /*pubkey []byte,*/ domain dns.Name, remoteAddr net.Addr, pconn net.Pac
 	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65536
 	sess, err := smux.Client( /*rw*/ conn, smuxConfig)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error opening smux session: %v", err)
+		return nil, fmt.Errorf("error opening smux session: %v", err)
 	}
 
-	stream, err := sess.OpenStream()
+	sshStream, err := sess.OpenStream()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error opening stream: %v", err)
+		return nil, fmt.Errorf("error opening stream: %v", err)
 	}
-	return conn, sess, stream, nil
+
+	controlStream, err := sess.OpenStream()
+	if err != nil {
+		return nil, fmt.Errorf("error opening stream: %v", err)
+	}
+
+	a := &DNSSH{
+		udpConn:       pconn,
+		pconn:         pconn,
+		session:       sess,
+		SshStream:     sshStream,
+		ControlStream: controlStream,
+		kcpConn:       conn,
+	}
+	return a, nil
 }
 
 func NewDNSSH() (*DNSSH, error) {
@@ -111,10 +128,38 @@ func NewDNSSH() (*DNSSH, error) {
 	// 	fmt.Fprintf(os.Stderr, "pubkey format error: %v\n", err)
 	// 	os.Exit(1)
 	// }
-	domain, err := dns.ParseName(config.Get().DNSServer())
+	d := ""
+	port := 53
+	dnsServers := config.Get().DNSServer()
+	for _, _dns := range nameserver.GetDNSServers() {
+		dnsServers = append(dnsServers, _dns.String())
+	}
+	for _, domain := range config.Get().DNSServer() {
+		p := 53
+		ip := ""
+		split := strings.Split(domain, ":")
+		if len(split) == 2 {
+			ip = split[0]
+			var err error
+			p, err = strconv.Atoi(split[1])
+			if err != nil {
+				log.Debug().Err(err).Str("Domain", domain).Str("Port", split[1]).Msg("error parsing port, using 53 as default...")
+				p = 53
+			}
+		} else {
+			ip = domain
+		}
+		if common_net.CheckHostPortAvailability(ip, p) {
+			d = domain
+			port = p
+			break
+		}
+	}
+	log.Debug().Str("DNS", d).Int("port", port).Msg("dns server")
+	domain, err := dns.ParseName(config.Get().DNSDomain())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "invalid domain %+q: %v\n", flag.Arg(0), err)
-		os.Exit(1)
+		log.Error().Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
+		return nil, err
 	}
 
 	// Iterate over the remote resolver address options and select one and
@@ -122,51 +167,31 @@ func NewDNSSH() (*DNSSH, error) {
 	var remoteAddr net.Addr
 	var udpConn net.PacketConn
 
-	remoteAddr, err = net.ResolveUDPAddr("udp", config.Get().DNSServer())
+	remoteAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", d, port))
+	if err != nil {
+		return nil, fmt.Errorf("error resolving remote address: %v", err)
+	}
 	udpConn, err = net.ListenUDP("udp", nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating UDP connection: %v", err)
+	}
 
 	pconn := NewDNSPacketConn(udpConn, remoteAddr, domain)
-	kcpConn, sess, stream, err := run( /*pubkey,*/ domain, remoteAddr, pconn)
+	dnsConn, err := Init( /*pubkey,*/ domain, remoteAddr, pconn)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing DNS tunnel: %s", err)
 	}
-	return &DNSSH{
-		udpConn: udpConn,
-		pconn:   pconn,
-		session: sess,
-		Stream:  stream,
-		kcpConn: kcpConn,
-	}, nil
+	dnsConn.pconn = pconn
+	return dnsConn, nil
 }
 
-func (d *DNSSH) Read(b []byte) (n int, err error) {
-	return d.Stream.Read(b)
-}
-func (d *DNSSH) Write(b []byte) (n int, err error) {
-	return d.Stream.Write(b)
-}
-
-func (d *DNSSH) LocalAddr() net.Addr {
-	return d.Stream.LocalAddr()
-}
-func (d *DNSSH) RemoteAddr() net.Addr {
-	return d.Stream.RemoteAddr()
-}
-func (d *DNSSH) SetDeadline(t time.Time) error {
-	return d.Stream.SetDeadline(t)
-}
-
-func (d *DNSSH) SetReadDeadline(t time.Time) error {
-	return d.Stream.SetReadDeadline(t)
-}
-func (d *DNSSH) SetWriteDeadline(t time.Time) error {
-	return d.Stream.SetWriteDeadline(t)
-}
 func (d *DNSSH) Close() error {
 	var errs []error
 	errs = append(errs, d.kcpConn.Close())
 	errs = append(errs, d.session.Close())
 	errs = append(errs, d.udpConn.Close())
 	errs = append(errs, d.pconn.Close())
+	errs = append(errs, d.SshStream.Close())
+	errs = append(errs, d.ControlStream.Close())
 	return errors.Join(errs...)
 }

@@ -36,6 +36,9 @@ tls-key: ""
 # Path to TLS certificate.
 tls-cert: ""
 
+# Enable DNS.
+dns: true
+
 # Disable database usage.
 db: false
 

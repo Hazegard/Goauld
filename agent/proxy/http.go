@@ -65,7 +65,6 @@ func InitHttpProxy() *HttpProxy {
 	// Connect Handler
 	//
 	var ConnectHandler goproxy.FuncHttpsHandler = func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-		fmt.Println("sgohgosngsonsono")
 		// HTTPSConnect := &goproxy.ConnectAction{
 		// 	// ConnectMitm enables SSL Interception, required for request filtering over HTTPS.
 		// 	// Action:    goproxy.ConnectMitm,

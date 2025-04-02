@@ -69,11 +69,15 @@ func (a *AgentStore) DumpWSSH(id string) types.WSHState {
 		}
 	}
 	state := types.WSHState{
-		AgentId:       id,
-		SSHLocaleAddr: agent.dstConn.LocalAddr().String(),
-		SSHRemoteAddr: agent.dstConn.RemoteAddr().String(),
-		WSLocaleAddr:  agent.srcConn.LocalAddr().String(),
-		WSRemoteAddr:  agent.srcConn.RemoteAddr().String(),
+		AgentId: id,
+		SshConn: types.Conn{
+			LocaleAddr: agent.dstConn.LocalAddr().String(),
+			RemoteAddr: agent.dstConn.RemoteAddr().String(),
+		},
+		WsConn: types.Conn{
+			LocaleAddr: agent.srcConn.LocalAddr().String(),
+			RemoteAddr: agent.srcConn.RemoteAddr().String(),
+		},
 	}
 	return state
 }

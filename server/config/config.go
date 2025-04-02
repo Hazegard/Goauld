@@ -46,6 +46,8 @@ var (
 	_tls_cert = ""
 	_tls_key  = ""
 
+	_dns = "true"
+
 	_no_db   = "false"
 	_db_name = common.AppName() + ".db"
 
@@ -77,6 +79,8 @@ var (
 		"_tls":      _tls,
 		"_tls_cert": _tls_cert,
 		"_tls_key":  _tls_key,
+
+		"_dns": _dns,
 
 		"_no_db":   _no_db,
 		"_db_name": _db_name,
@@ -118,6 +122,7 @@ type ServerConfig struct {
 	TlsKey  string `default:"${_tls_key}" help:"Path to TLS certificate key." name:"tls-key"`
 	TlsCert string `default:"${_tls_cert}" help:"Path to TLS certificate." name:"tls-cert"`
 
+	DNS        bool   `default:"${_dns}" negatable:"" name:"dns" help:"Enable DNS."`
 	NoDB       bool   `default:"${_no_db}" negatable:"" name:"db" help:"Disable database usage."`
 	DbFileName string `default:"${_db_name}" name:"db-file-name" help:"Database filename to use."`
 

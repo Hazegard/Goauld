@@ -18,7 +18,7 @@ import (
 // This client may be proxyfies (TLS, Websocket, HTTP), or not, depending
 // on the egress restrictions
 // The order of the connection attempt is defined in the agent configuration
-func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, net.Conn, error) {
+func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn, error) {
 	var client *ssh.Client
 	var conn net.Conn
 	for _, proto := range config.Get().GetRsshOrder() {
@@ -45,9 +45,11 @@ func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.
 				return client, conn, nil
 			}
 		case strings.HasPrefix(proto, "dns"):
-			client, conn = proxifyDns(sshConfig)
-			if client != nil {
-				return client, conn, nil
+			if dnsTransport != nil {
+				client, conn = proxifyDns(sshConfig, dnsTransport)
+				if client != nil {
+					return client, conn, nil
+				}
 			}
 		}
 	}
@@ -113,7 +115,6 @@ func proxifyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, net.Conn) {
 		return nil, nil
 	}
 	log.Debug().Msg("Connection succedded, trying to mount SSH over the HTTP connection")
-	// httpConn.Start()
 	client, err := tryProxifySsh(sshConfig, httpConn)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
@@ -124,21 +125,29 @@ func proxifyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, net.Conn) {
 }
 
 // proxifyDns proxifies the SSH traffic using a HTTP connection to the server
-func proxifyDns(sshConfig *ssh.ClientConfig) (*ssh.Client, net.Conn) {
-	log.Info().Msg("Trying to proxify SSH using DNS")
-	dnsConn, err := transport.NewDNSSH()
+func proxifyDns(sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn) {
+
+	log.Debug().Msg("Trying send agent ID over the DNS connection")
+	// Write S tag to inform the incoming SSH traffic
+	_, err := dnsTransport.SshStream.Write([]byte(config.Get().Id))
 	if err != nil {
-		log.Error().Err(err).Msg("failed to proxify SSH using DNS")
+		log.Error().Err(err).Msg("Failed to init SSH stream over DNS")
+		return nil, nil
 	}
-	log.Debug().Msg("Connection succedded, trying to mount SSH over the DNS connection")
-	// httpConn.Start()
-	client, err := tryProxifySsh(sshConfig, dnsConn)
+	log.Debug().Msg("Trying to mount SSH over the DNS connection")
+	// Write S tag to inform the incoming SSH traffic
+	_, err = dnsTransport.SshStream.Write([]byte{'S'})
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to init SSH stream over DNS")
+		return nil, nil
+	}
+	client, err := tryProxifySsh(sshConfig, dnsTransport.SshStream)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
 		return nil, nil
 	}
 	log.Info().Msg("Proxify using HTTP succeeded")
-	return client, dnsConn
+	return client, dnsTransport.SshStream
 }
 
 // tryProxifySsh attempts to proxifies the SSH connection using the provided net.Conn

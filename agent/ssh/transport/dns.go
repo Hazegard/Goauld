@@ -399,7 +399,7 @@ func (c *DNSPacketConn) sendLoop(transport net.PacketConn, addr net.Addr) error 
 		// trying to send more than one packet per query.
 		err := c.send(transport, p, addr)
 		if err != nil {
-			log.Debug().Str("Mode", "DNSSH").Msgf("send error: %v", err)
+			log.Debug().Str("Mode", "DNSSH").Str("Addr", addr.String()).Msgf("send error: %v", err)
 			continue
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/xtaci/smux"
 	"time"
 
 	"Goauld/agent/config"
@@ -25,12 +26,12 @@ type ControlPlanClient struct {
 	configDone   chan<- struct{}
 	ctx          context.Context
 	url          string
-	canceler     utils.GlobalCanceler
+	canceler     *utils.GlobalCanceler
 	errorCounter int
 }
 
 // NewControlPlanClient returns a new ControlPlanClient
-func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, canceler utils.GlobalCanceler) *ControlPlanClient {
+func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, canceler *utils.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
 		url:        config.Get().SocketIoUrl(),
@@ -39,9 +40,26 @@ func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, cance
 	}
 }
 
-// Init initialize the socket.io handlers
 func (cpc *ControlPlanClient) Init() error {
 	cfg := getEioConfig()
+	return cpc.init(cfg)
+}
+
+func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream) error {
+	_, err := session.Write([]byte(config.Get().Id))
+	if err != nil {
+		return fmt.Errorf("error writing id to DNS tunnelled session: %v", err)
+	}
+	_, err = session.Write([]byte{'C'})
+	if err != nil {
+		return fmt.Errorf("error writing id to DNS tunnelled session: %v", err)
+	}
+	cfg := getDnsEioConfig(session)
+	return cpc.init(cfg)
+}
+
+// Init initialize the socket.io handlers
+func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig) error {
 	manager := sio.NewManager(cpc.url, cfg)
 	socket := manager.Socket("/", nil)
 
@@ -259,6 +277,24 @@ func getEioConfig() *sio.ManagerConfig {
 				HTTPClient: proxy.NewHttpClientProxy(),
 			},
 			Transports: []string{"polling", "websocket"},
+			// Debugger:   sio.NewPrintDebugger(),
+		},
+	}
+}
+
+// getEioConfig return the socket.io underlying configuration
+func getDnsEioConfig(session *smux.Stream) *sio.ManagerConfig {
+
+	return &sio.ManagerConfig{
+		EIO: eio.ClientConfig{
+			UpgradeDone: func(transportName string) {
+				log.Trace().Msg("Client transport upgrade done")
+			},
+			HTTPTransport: NewSmuxTransport(session),
+			WebSocketDialOptions: &websocket.DialOptions{
+				HTTPClient: newSmuxHTTPandHTTPSClient(session),
+			},
+			Transports: []string{"websocket"}, //, "websocket"},
 			// Debugger:   sio.NewPrintDebugger(),
 		},
 	}

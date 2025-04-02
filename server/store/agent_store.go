@@ -41,6 +41,9 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 
 			sshAgentMap:   make(map[string]*SSHSession),
 			sshAgentMapMu: sync.Mutex{},
+
+			dnsshAgentMap:   make(map[string]*DNSSHAgent),
+			dnsshAgentMapMu: sync.Mutex{},
 		}
 	})
 	return store
@@ -115,7 +118,8 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 	err2 := a.SshttpCloseAgent(id)
 	err3 := a.TlsshCloseAgent(id)
 	err4 := a.SSHCloseAgent(id)
-	return errors.Join(err1, err2, err3, err4)
+	err5 := a.DnsshCloseAgent(id)
+	return errors.Join(err1, err2, err3, err4, err5)
 }
 
 // KillAGent kills the agent, if doKill is true, the agent does not restart

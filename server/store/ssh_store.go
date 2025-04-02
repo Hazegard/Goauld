@@ -79,9 +79,11 @@ func (a *AgentStore) DumpSSH(id string) types.SSHState {
 	for _, conn := range agent.Conns {
 		c := types.SSHConnection{
 
-			AgentId:       conn.User(),
-			SSHLocaleAddr: conn.LocalAddr().String(),
-			SSHRemoteAddr: conn.RemoteAddr().String(),
+			AgentId: conn.User(),
+			SshConn: types.Conn{
+				RemoteAddr: conn.RemoteAddr().String(),
+				LocaleAddr: conn.LocalAddr().String(),
+			},
 			ClientVersion: string(conn.ClientVersion()),
 			SessionID:     hex.EncodeToString(conn.SessionID()),
 			ServerVersion: string(conn.ServerVersion()),

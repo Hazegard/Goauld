@@ -194,8 +194,12 @@ func (a *Agent) IsLocalSshdRandomPort() bool {
 }
 */
 
-func (a *Agent) DNSServer() string {
+func (a *Agent) DNSServer() []string {
 	return a.cfg.DnsServer
+}
+
+func (a *Agent) DNSDomain() string {
+	return a.cfg.DnsServerDomain
 }
 
 // ControlSshServer returns the SSHD server

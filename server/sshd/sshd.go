@@ -9,7 +9,6 @@ import (
 	"Goauld/server/store"
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -162,7 +161,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				log.Warn().Err(err).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to update agent password")
 				return false
 			}
-			fmt.Println("PASSWORD ACCEPTED")
+			log.Trace().Str("Agent.Name", agentName).Msg("Password accepted")
 			return true
 		},
 		// SessionRequestCallback logs information when a user requests a session

@@ -8,7 +8,7 @@ import (
 )
 
 func Goreleaser(cfg Compiler) error {
-	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate"}
+	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate", "--verbose"}
 	// customBuild, err := DoSpecificBuild(cfg)
 	// if err != nil {
 	// 	return fmt.Errorf("error building: %s", err)

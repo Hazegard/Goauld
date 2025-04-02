@@ -23,12 +23,13 @@ import (
 
 // DNSSHServer is the server allowing to perform SSH over HTTP
 type DNSSHServer struct {
-	store    *store.AgentStore
-	db       *persistence.DB
-	dnsConn  net.PacketConn
-	upstream string
-	domain   dns.Name
-	kcpAddr  string
+	store        *store.AgentStore
+	db           *persistence.DB
+	dnsConn      net.PacketConn
+	sshUpstream  string
+	httpUpstream string
+	domain       dns.Name
+	kcpAddr      string
 }
 
 const (
@@ -74,42 +75,50 @@ var base32Encoding = base32.StdEncoding.WithPadding(base32.NoPadding)
 
 // handleStream bidirectionally connects a client stream with a TCP socket
 // addressed by upstream.
-func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conv uint32, id string) error {
+func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *kcp.UDPSession, id string) error {
 	dialer := net.Dialer{
 		Timeout: upstreamDialTimeout,
 	}
+	defer stream.Close()
+	defer conn.Close()
 	upstreamConn, err := dialer.Dial("tcp", upstream)
 	if err != nil {
-		return fmt.Errorf("agent %s: stream %08x:%d connect upstream: %v", id, conv, stream.ID(), err)
+		return fmt.Errorf("agent %s: stream %08x:%d connect upstream: %v", id, conn.GetConv(), stream.ID(), err)
 	}
 	defer upstreamConn.Close()
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
+	err = d.db.SetAgentSshMode(id, "DNS")
+	if err != nil {
+		log.Warn().Err(err).Str("ID", id).Msg("failed to set agent SSH mode")
+	}
 
 	d.store.DnsshAddAgent(upstreamConn, stream, d.kcpAddr, id)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
+		log.Trace().Msgf("COPY STREAM UPSTREAM")
 		_, err := io.Copy(stream, upstreamTCPConn)
 		if err == io.EOF {
 			// smux Stream.Write may return io.EOF.
 			err = nil
 		}
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
-			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("agent %s: stream %08x copy stream←upstream", conv)
+			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("agent %s: stream %08x copy stream←upstream", conn.GetConv())
 		}
 		upstreamTCPConn.CloseRead()
 		stream.Close()
 	}()
 	go func() {
 		defer wg.Done()
+		log.Trace().Msgf("COPY UPSTREAM STREAM")
 		_, err := io.Copy(upstreamTCPConn, stream)
 		if err == io.EOF {
 			// smux Stream.WriteTo may return io.EOF.
 			err = nil
 		}
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
-			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("stream %08x copy upstream←stream", conv)
+			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("stream %08x copy upstream←stream", conn.GetConv())
 		}
 		upstreamTCPConn.CloseWrite()
 	}()
@@ -120,7 +129,7 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conv ui
 
 // acceptStreams wraps a KCP session in a Noise channel and an smux.Session,
 // then awaits smux streams. It passes each stream to handleStream.
-func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession, upstream string) error {
+func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 
 	// Put an smux session on top of the encrypted Noise channel.
 	smuxConfig := smux.DefaultConfig()
@@ -143,10 +152,11 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession, upstream string) error
 		}
 		log.Trace().Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("begin stream")
 		go func() {
-			defer func() {
-				log.Trace().Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("end stream")
-				stream.Close()
-			}()
+			// defer func() {
+			// 	log.Trace().Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("end stream")
+			// 	stream.Close()
+			// }()
+
 			// The client first send its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
 			rawId := make([]byte, 128)
@@ -157,17 +167,50 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession, upstream string) error
 				return
 			}
 			id := string(rawId[:n])
-			err = d.handleStream(stream, upstream, conn.GetConv(), id)
+
+			log.Info().Str("Mode", "DNSSH").Uint32("StreamID", stream.ID()).Str("ID", id).Msg("start DNS tunneling")
+			tag := make([]byte, 1)
+			_, err = stream.Read(tag)
 			if err != nil {
-				log.Warn().Err(err).Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("handleStream")
+				log.Error().Err(err).Bytes("ID", tag).Msg("error reading traffic tag")
+				conn.Close()
+				stream.Close()
+				return
 			}
+			switch tag[0] {
+			// SSH mode
+			case 'S':
+				log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling ssh connection")
+				d.handleSSHStream(stream, conn, id)
+			// Control mode
+			case 'C':
+				log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling control plan connection")
+				d.handleHTTPStream(stream, conn, id)
+			}
+
 		}()
+	}
+}
+
+func (d *DNSSHServer) handleSSHStream(stream *smux.Stream, conn *kcp.UDPSession, id string) {
+
+	err := d.handleStream(stream, d.sshUpstream, conn, id)
+	if err != nil {
+		log.Warn().Err(err).Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("handleStream")
+	}
+}
+
+func (d *DNSSHServer) handleHTTPStream(stream *smux.Stream, conn *kcp.UDPSession, id string) {
+
+	err := d.handleStream(stream, d.httpUpstream, conn, id)
+	if err != nil {
+		log.Warn().Err(err).Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("handleStream")
 	}
 }
 
 // acceptSessions listens for incoming KCP connections and passes them to
 // acceptStreams.
-func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int, upstream string) error {
+func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 	for {
 		conn, err := ln.AcceptKCP()
 		if err != nil {
@@ -197,7 +240,7 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int, upstream string)
 				log.Warn().Str("Mode", "DNSSH").Uint32("ID", conn.GetConv()).Msg("end session")
 				conn.Close()
 			}()
-			err := d.acceptStreams(conn, upstream)
+			err := d.acceptStreams(conn)
 			if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 				log.Trace().Str("Mode", "DNSSH").Uint32("ID", conn.GetConv()).Msg("acceptStreams")
 			}
@@ -683,7 +726,7 @@ func (d *DNSSHServer) Run() error {
 		}
 		return fmt.Errorf("maximum UDP payload size of %d leaves only %d bytes for payload", maxUDPPayload, mtu)
 	}
-	log.Debug().Str("Mode", "DNSSH").Int("mtu", mtu).Str("upstream", d.upstream).Msg("DNS")
+	log.Debug().Str("Mode", "DNSSH").Int("mtu", mtu).Msg("DNS")
 
 	// Start up the virtual PacketConn for turbotunnel.
 	ttConn := turbotunnel.NewQueuePacketConn(turbotunnel.DummyAddr{}, idleTimeout*2)
@@ -694,7 +737,7 @@ func (d *DNSSHServer) Run() error {
 	d.kcpAddr = ln.Addr().String()
 	defer ln.Close()
 	go func() {
-		err := d.acceptSessions(ln, mtu, d.upstream)
+		err := d.acceptSessions(ln, mtu)
 		if err != nil {
 			log.Debug().Str("Mode", "DNSSH").Int("mtu", mtu).Err(err).Msg("acceptSessions error")
 		}
@@ -726,47 +769,24 @@ func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, 
 	if err != nil {
 		return nil, fmt.Errorf("invalid domain %s: %v", config.Get().DnsDomain, err)
 	}
-	upstream := config.Get().LocalSShAddr()
 	// We keep upstream as a string in order to eventually pass it
 	// to net.Dial in handleStream. But for the sake of displaying
 	// an error or warning at startup, rather than only when the
 	// first stream occurs, we apply some parsing and name
 	// resolution checks here.
 
-	upstreamHost, _, err := net.SplitHostPort(upstream)
-	if err != nil {
-		// host:port format is required in all cases, so
-		// this is a fatal error.
-		return nil, fmt.Errorf("cannot parse upstream addres %s: %v", upstream, err)
-	}
-	upstreamIPAddr, err := net.ResolveIPAddr("ip", upstreamHost)
-	if err != nil {
-		// Failure to resolve the host portion is only a
-		// warning. The name will be re-resolved on each
-		// net.Dial in handleStream.
-		log.Warn().Err(err).Str("Upstream", upstream).Msgf("warning: cannot resolve upstream host %+q: %v", upstreamHost, err)
-	} else if upstreamIPAddr.IP == nil {
-		// Handle the special case of an empty string
-		// for the host portion, which resolves to a nil
-		// IP. This is a fatal error as we will not be
-		// able to dial this address.
-		return nil, fmt.Errorf("cannot parse upstream address %+q: missing host in address", upstream)
-	}
-
-	if config.Get().DnsAddr == "" {
-		return nil, fmt.Errorf("cannot parse upstream address %+q: missing host in address", upstream)
-	}
 	dnsConn, err := net.ListenPacket("udp", config.Get().DnsAddr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen for DNS packets: %v", err)
 	}
 
 	return &DNSSHServer{
-		store:    store,
-		db:       db,
-		domain:   domain,
-		upstream: upstream,
-		dnsConn:  dnsConn,
+		store:        store,
+		db:           db,
+		domain:       domain,
+		sshUpstream:  config.Get().LocalSShAddr(),
+		httpUpstream: config.Get().LocalHttpAddr(),
+		dnsConn:      dnsConn,
 	}, nil
 
 }

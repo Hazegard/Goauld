@@ -3,17 +3,14 @@ package types
 import "time"
 
 type WSHState struct {
-	AgentId       string `yaml:"agentId,omitempty"`
-	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
-	WSLocaleAddr  string `yaml:"WSLocaleAddr,omitempty"`
-	WSRemoteAddr  string `yaml:"WSRemoteAddr,omitempty"`
+	AgentId string `yaml:"agentId,omitempty"`
+	SshConn Conn   `yaml:"sshConn,omitempty"`
+	WsConn  Conn   `yaml:"wsConn,omitempty"`
 }
 
 type SSHConnection struct {
 	AgentId       string `yaml:"agentId,omitempty"`
-	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
+	SshConn       Conn   `yaml:"sshConn,omitempty"`
 	ClientVersion string `yaml:"clientVersion,omitempty"`
 	SessionID     string `yaml:"sessionID,omitempty"`
 	ServerVersion string `yaml:"serverVersion,omitempty"`
@@ -26,11 +23,9 @@ type SSHState struct {
 }
 
 type TLSSHState struct {
-	AgentId       string `yaml:"agentId,omitempty"`
-	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
-	TLSLocaleAddr string `yaml:"TLSLocaleAddr,omitempty"`
-	TLSRemoteAddr string `yaml:"TLSRemoteAddr,omitempty"`
+	AgentId string `yaml:"agentId,omitempty"`
+	SshConn Conn   `yaml:"sshConn,omitempty"`
+	TlsConn Conn   `yaml:"tlsConn,omitempty"`
 }
 
 type SSHTTState struct {
@@ -40,12 +35,15 @@ type SSHTTState struct {
 }
 
 type DNSSHState struct {
-	AgentId              string `yaml:"agentId,omitempty"`
-	SSHLocaleAddr        string `yaml:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr        string `yaml:"SSHRemoteAddr,omitempty"`
-	KCPAddr              string `yaml:"KCPAddr,omitempty"`
-	MuxSessionLocaleAddr string `yaml:"MuxSessionLocaleAddr,omitempty"`
-	MuxSessionRemoteAddr string `yaml:"MuxSessionRemoteAddr,omitempty"`
+	AgentId      string `yaml:"agentId,omitempty"`
+	UpstreamConn []Conn `yaml:"upstreamConn,omitempty"`
+	KCPAddr      string `yaml:"KCPAddr,omitempty"`
+	MuxSession   Conn   `yaml:"muxSession,omitempty"`
+}
+
+type Conn struct {
+	LocaleAddr string `yaml:"localAddr,omitempty"`
+	RemoteAddr string `yaml:"remoteAddr,omitempty"`
 }
 
 type SocketIOState struct {

@@ -61,13 +61,16 @@ func (a *AgentStore) DumpTLSSH(id string) types.TLSSHState {
 		return state
 	}
 	if agent.TLSConn != nil {
-		state.TLSLocaleAddr = agent.TLSConn.LocalAddr().String()
-		state.TLSRemoteAddr = agent.TLSConn.RemoteAddr().String()
+		state.TlsConn = types.Conn{
+			LocaleAddr: agent.TLSConn.LocalAddr().String(),
+			RemoteAddr: agent.TLSConn.RemoteAddr().String(),
+		}
 	}
 	if agent.SSHConn != nil {
-		state.SSHLocaleAddr = agent.SSHConn.LocalAddr().String()
-		state.SSHRemoteAddr = agent.SSHConn.RemoteAddr().String()
+		state.SshConn = types.Conn{
+			LocaleAddr: agent.SSHConn.LocalAddr().String(),
+			RemoteAddr: agent.SSHConn.RemoteAddr().String(),
+		}
 	}
-
 	return state
 }

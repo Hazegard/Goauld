@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"Goauld/agent/ssh/transport"
 	"Goauld/common"
 	"context"
 	"errors"
@@ -34,7 +35,7 @@ func NewSSHAgent() *SSHAgent {
 }
 
 // Init initialize the ssh client using the configuration
-func (sshAgent *SSHAgent) Init(ctx context.Context) error {
+func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSSH) error {
 	log.Info().Msg("Connecting to the ssh server...")
 	// Get the private key used to authenticate to the server
 	privateKey, err := ssh.ParsePrivateKey([]byte(config.Get().SShPrivateKey))
@@ -50,7 +51,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context) error {
 
 	// defer cancel()
 	// Get the ssh client, which may be proxified to bypass proxies
-	client, conn, err := getProxifiedClient(sshConfig, ctx)
+	client, conn, err := getProxifiedClient(sshConfig, ctx, dnsTransport)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
 		return err
