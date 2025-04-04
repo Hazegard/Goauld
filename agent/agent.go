@@ -120,15 +120,22 @@ func run() utils.CancelReason {
 	}
 	defer cancel()
 
-	// Initialize the control socket.io
-	// controlPlanClient := control.NewControlPlanClient(ctx, configDone, globalCanceler)
-	// err := controlPlanClient.Init()
-	err := fmt.Errorf("")
 	var controlPlanClient *control.ControlPlanClient
-	if err != nil {
-		log.Error().Err(err).Msg("error initializing the control plan")
-		log.Info().Err(err).Msg("trying to start the control plan in DNS mode")
+	var err error
+	// Initialize the control socket.io
 
+	// Every mode except DNS only mode
+	if len(config.Get().GetRsshOrder()) != 1 || config.Get().GetRsshOrder()[0] != "DNS" {
+		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
+		err = controlPlanClient.Init()
+		if err != nil {
+			log.Error().Err(err).Msg("error initializing the control plan")
+			log.Info().Err(err).Msg("trying to start the control plan in DNS mode")
+		}
+	}
+	// If the standard init failed, or if we are in a DNS only mode
+	if err != nil || len(config.Get().GetRsshOrder()) == 1 && config.Get().GetRsshOrder()[0] == "DNS" {
+		log.Info().Msg("Initializing agent in DNS tunnel mode only")
 		dnsTransport, err = transport.NewDNSSH()
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the DNS transport")
@@ -142,6 +149,7 @@ func run() utils.CancelReason {
 			return utils.Exit
 		}
 	}
+
 	cancelCtrlC := HandleCtrlC(controlPlanClient, globalCanceler)
 	defer cancelCtrlC()
 
@@ -282,17 +290,7 @@ func run() utils.CancelReason {
 					}
 				}
 			}()
-			// go func() {
-			// 	for {
-			// 		conn, _ := rListener.Accept()
-			// 		go func(c net.Conn) {
-			// 			defer c.Close()
-			// 			buf := make([]byte, 1024)
-			// 			n, _ := c.Read(buf)
-			// 			fmt.Println("Got:", string(buf[:n]))
-			// 		}(conn)
-			// 	}
-			// }()
+
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote HTTP proxy server started")
 			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
 				ServerPort: config.Get().RemoteForwardedHttpProxyPort(),
@@ -353,10 +351,6 @@ func run() utils.CancelReason {
 		log.Error().Err(ctx.Err())
 	}
 	reason := <-cancelReason
-	fmt.Println(reason)
-	fmt.Println(reason)
-	fmt.Println(reason)
-	fmt.Println(reason)
 	return reason
 }
 
