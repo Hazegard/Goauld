@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"time"
 
 	"Goauld/agent/config"
@@ -125,7 +126,7 @@ func run() utils.CancelReason {
 	// Initialize the control socket.io
 
 	// Every mode except DNS only mode
-	if len(config.Get().GetRsshOrder()) != 1 || config.Get().GetRsshOrder()[0] != "DNS" {
+	if len(config.Get().GetRsshOrder()) != 1 || !strings.EqualFold(config.Get().GetRsshOrder()[0], "DNS") {
 		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
 		err = controlPlanClient.Init()
 		if err != nil {
@@ -134,7 +135,7 @@ func run() utils.CancelReason {
 		}
 	}
 	// If the standard init failed, or if we are in a DNS only mode
-	if err != nil || len(config.Get().GetRsshOrder()) == 1 && config.Get().GetRsshOrder()[0] == "DNS" {
+	if err != nil || len(config.Get().GetRsshOrder()) == 1 && strings.EqualFold(config.Get().GetRsshOrder()[0], "DNS") {
 		log.Info().Msg("Initializing agent in DNS tunnel mode only")
 		dnsTransport, err = transport.NewDNSSH()
 		if err != nil {

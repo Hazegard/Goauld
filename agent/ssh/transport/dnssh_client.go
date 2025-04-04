@@ -134,7 +134,10 @@ func NewDNSSH() (*DNSSH, error) {
 	for _, _dns := range nameserver.GetDNSServers() {
 		dnsServers = append(dnsServers, _dns.String())
 	}
-	for _, domain := range config.Get().DNSServer() {
+
+	log.Info().Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")
+
+	for _, domain := range dnsServers {
 		p := 53
 		ip := ""
 		split := strings.Split(domain, ":")
@@ -149,8 +152,9 @@ func NewDNSSH() (*DNSSH, error) {
 		} else {
 			ip = domain
 		}
+		log.Debug().Str("IP", ip).Int("Port", p).Msgf("Testing DNS server availability")
 		if common_net.CheckHostPortAvailability(ip, p) {
-			d = domain
+			d = ip
 			port = p
 			break
 		}
@@ -161,6 +165,7 @@ func NewDNSSH() (*DNSSH, error) {
 		log.Error().Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
 		return nil, err
 	}
+	log.Info().Str("Domain", config.Get().DNSDomain()).Msg("DNS tunneling")
 
 	// Iterate over the remote resolver address options and select one and
 	// only one.

@@ -76,6 +76,7 @@ func (db *DB) ResetAgents() error {
 		agent.UsedPorts = ""
 		agent.RemotePortForwarding = nil
 		agent.Connected = false
+		agent.SocketId = ""
 		db.db.Save(agent)
 	}
 	return nil
