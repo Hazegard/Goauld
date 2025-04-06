@@ -34,10 +34,14 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.12
 	nhooyr.io/websocket v1.8.11
+	www.bamsoftware.com/git/champa.git v0.20220703.0
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
 
-require github.com/qdm12/gosettings v0.4.3 // indirect
+require (
+	github.com/flynn/noise v1.0.1-0.20220214164934-d803f5c4b0f4 // indirect
+	github.com/qdm12/gosettings v0.4.3 // indirect
+)
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect

@@ -1,138 +1,312 @@
 package transport
 
 import (
-	"io"
-	"net"
-	"net/http"
-
 	"Goauld/common/log"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
 	"Goauld/server/store"
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"sync"
+	"time"
+	"www.bamsoftware.com/git/dnstt.git/turbotunnel"
+
+	"github.com/xtaci/kcp-go/v5"
+	"github.com/xtaci/smux"
+	"www.bamsoftware.com/git/champa.git/encapsulation"
 )
 
-// SSHttpServer is the server allowing to perform SSH over HTTP
-type SSHttpServer struct {
-	store *store.AgentStore
-	db    *persistence.DB
+const maxPayloadLength = 64 * 1024
+
+type SSHHttpServer struct {
+	pconn   *turbotunnel.QueuePacketConn
+	kcpConn *kcp.Listener
+	db      *persistence.DB
+	store   *store.AgentStore
 }
 
-// NewSSHHttpServer returns a new server
-func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) *SSHttpServer {
-	return &SSHttpServer{
-		store: store,
-		db:    db,
+// handleStream bidirectionally connects a client stream with a TCP socket
+// addressed by upstream.
+func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv uint32) error {
+	dialer := net.Dialer{
+		Timeout: upstreamDialTimeout,
 	}
-}
-
-// ServeHTTP handles all the connections performed to the SSHTTP router
-func (s *SSHttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("agentId")
-	// log.Trace()().Msgf("[SSHTTP] Received %s from %s", r.Method, id)
-	switch r.Method {
-	case http.MethodHead:
-		s.StartSSH(id, w, r)
-	case http.MethodGet:
-		s.Get(id, w, r)
-	case http.MethodPost:
-		s.Post(id, w, r)
-	case http.MethodDelete:
-		s.StopSSH(id, w, r)
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}
-
-// StartSSH handle the HEAD requests performed to router
-// It initializes the connection to the SSH server
-// And responds 200 OK of the connection succeeds
-func (s *SSHttpServer) StartSSH(id string, w http.ResponseWriter, r *http.Request) {
-	// Initialize the connection to the SSH server
-	conn, err := net.Dial("tcp", config.Get().LocalSShAddr())
-	// log.Trace()()().Msgf("[SSHTTP] Connect to %s", config.Get().LocalSShAddr())
+	upstreamConn, err := dialer.Dial("tcp", upstream)
 	if err != nil {
-		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Start SSH Server error")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return fmt.Errorf("stream %08x:%d connect upstream: %v", conv, stream.ID(), err)
+	}
+	defer upstreamConn.Close()
+	upstreamTCPConn := upstreamConn.(*net.TCPConn)
+
+	// The client first send its ID before transferring the conn to the SSH client
+	// The ID is a MD5 hash
+	rawId := make([]byte, 128)
+	n, err := stream.Read(rawId)
+	if err != nil {
+		return fmt.Errorf("stream %08x:%d read ID fail", conv, stream.ID())
+	}
+	id := string(rawId[:n])
+
+	s.store.SshttpAddAgent(upstreamConn, stream, id)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_, err := io.Copy(stream, upstreamTCPConn)
+		if err == io.EOF {
+			// smux Stream.Write may return io.EOF.
+			err = nil
+		}
+		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			log.Get().Debug().Msgf("stream %08x:%d copy stream←upstream: %v", conv, stream.ID(), err)
+		}
+		upstreamTCPConn.CloseRead()
+		stream.Close()
+	}()
+	go func() {
+		defer wg.Done()
+		_, err := io.Copy(upstreamTCPConn, stream)
+		if err == io.EOF {
+			// smux Stream.WriteTo may return io.EOF.
+			err = nil
+		}
+		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			log.Get().Debug().Msgf("stream %08x:%d copy upstream←stream: %v", conv, stream.ID(), err)
+		}
+		upstreamTCPConn.CloseWrite()
+	}()
+	wg.Wait()
+
+	return nil
+}
+
+// acceptStreams wraps a KCP session in a smux.Session,
+// then awaits smux streams. It passes each stream to handleStream.
+func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) error {
+	// Put an smux session on top of the KCP connection.
+	smuxConfig := smux.DefaultConfig()
+	smuxConfig.Version = 2
+	smuxConfig.KeepAliveTimeout = idleTimeout
+	smuxConfig.MaxReceiveBuffer = 16 * 1024 * 1024 // default is 4 * 1024 * 1024
+	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024   // default is 65536
+	sess, err := smux.Server(conn, smuxConfig)
+	if err != nil {
+		return err
+	}
+	defer sess.Close()
+
+	for {
+		stream, err := sess.AcceptStream()
+		if err != nil {
+			if err, ok := err.(net.Error); ok && err.Temporary() {
+				continue
+			}
+			if err == io.ErrClosedPipe {
+				// We don't want to report this error.
+				err = nil
+			}
+			return err
+		}
+		log.Get().Debug().Msgf("begin stream %08x:%d", conn.GetConv(), stream.ID())
+		go func() {
+			defer func() {
+				log.Get().Debug().Msgf("end stream %08x:%d", conn.GetConv(), stream.ID())
+				stream.Close()
+			}()
+			err := s.handleStream(stream, upstream, conn.GetConv())
+			if err != nil {
+				log.Get().Debug().Msgf("stream %08x:%d handleStream: %v", conn.GetConv(), stream.ID(), err)
+			}
+		}()
+	}
+}
+
+// acceptSessions listens for incoming KCP connections and passes them to
+// acceptStreams.
+func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error {
+	for {
+		conn, err := ln.AcceptKCP()
+		if err != nil {
+			if err, ok := err.(net.Error); ok && err.Temporary() {
+				continue
+			}
+			return err
+		}
+		log.Get().Debug().Msgf("begin session %08x", conn.GetConv())
+		// Permit coalescing the payloads of consecutive sends.
+		conn.SetStreamMode(true)
+		// Disable the dynamic congestion window (limit only by the
+		// maximum of local and remote static windows).
+		conn.SetNoDelay(
+			0, // default nodelay
+			0, // default interval
+			0, // default resend
+			1, // nc=1 => congestion window off
+		)
+		conn.SetWindowSize(1024, 1024) // Default is 32, 32.
+		go func() {
+			defer func() {
+				log.Get().Debug().Msgf("end session %08x", conn.GetConv())
+				conn.Close()
+			}()
+			err := s.acceptStreams(conn, upstream)
+			if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+				log.Get().Debug().Msgf("session %08x acceptStreams: %v", conn.GetConv(), err)
+			}
+		}()
+	}
+}
+
+// decodeRequest extracts a ClientID and a payload from an incoming HTTP
+// request. In case of a decoding failure, the returned payload slice will be
+// nil. The payload is always non-nil after a successful decoding, even if the
+// payload is empty.
+func decodeRequest(req *http.Request) (turbotunnel.ClientID, []byte) {
+	// Check the version indicator of the incoming client–server protocol.
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return turbotunnel.ClientID{}, nil
+	}
+	defer req.Body.Close()
+
+	var clientID turbotunnel.ClientID
+	n := copy(clientID[:], body)
+	if n != len(clientID) {
+		return turbotunnel.ClientID{}, nil
+	}
+	payload := body[n:]
+	return clientID, payload
+}
+
+func (s *SSHHttpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+
+	if req.Method != "POST" {
+		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
-	// Adds the connections to the SSH HTTP store
-	s.store.SshttpAddAgent(conn, id)
-	// Adds the connection mode to the agent in the database
-	err = s.db.SetAgentSshMode(id, "HTTP")
-	if err != nil {
-		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Unable to set agent SSH connection mode")
-	}
-	w.WriteHeader(http.StatusOK)
-	// log.Trace()()().Msgf("[SSHTTP] DONE HEAD Server %s", id)
-}
+	rw.WriteHeader(http.StatusOK)
 
-// Get reads from the SSH connections and returns its content as a response
-func (s *SSHttpServer) Get(id string, w http.ResponseWriter, r *http.Request) {
-	// log.Trace()()().Msgf("[SSHTTP] GET Server %s", id)
-
-	// Get the agent connections from the store
-	agent := s.store.SshttpGetAgent(id)
-	if agent == nil {
-		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Msg("Get Agent Not Found")
-		http.Error(w, "agent not fount", http.StatusNotFound)
+	clientID, payload := decodeRequest(req)
+	if payload == nil {
+		// Could not decode the client request. We do not even have a
+		// meaningful clientID or nonce. This may be a result of the
+		// client deliberately sending a short request for traffic
+		// shaping purposes. Send back a dummy, though still
+		// AMP-compatible, response.
+		// TODO: random padding.
 		return
 	}
-	// Reads from the SSH connection
-	buffer := make([]byte, 10*1024*1024)
-	n, err := agent.SshConn.Read(buffer)
-	if err != nil {
-		log.Error().Str("ID", id).Str("SSH Mode", "HTTP").Msg("SSH connection read error")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	// Read incoming packets from the payload.
+	r := bytes.NewReader(payload)
+	for {
+		p, err := encapsulation.ReadData(r)
+		if err != nil {
+			break
+		}
+		s.pconn.QueueIncoming(p, clientID)
 	}
-	// Returns the read data to the caller
-	_, err = w.Write(buffer[:n])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	limit := maxPayloadLength
+	// We loop and bundle as many outgoing packets as will fit, up to
+	// maxPayloadLength. We wait up to maxResponseDelay for the first
+	// available packet; after that we only include whatever packets are
+	// immediately available.
+	timer := time.NewTimer(maxResponseDelay)
+	defer timer.Stop()
+	first := true
+	for {
+		var p []byte
+		unstash := s.pconn.Unstash(clientID)
+		outgoing := s.pconn.OutgoingQueue(clientID)
+		// Prioritize taking a packet first from the stash, then from
+		// the outgoing queue, then finally check for expiration of the
+		// timer. (We continue to bundle packets even after the timer
+		// expires, as long as the packets are immediately available.)
+		select {
+		case p = <-unstash:
+		default:
+			select {
+			case p = <-unstash:
+			case p = <-outgoing:
+			default:
+				select {
+				case p = <-unstash:
+				case p = <-outgoing:
+				case <-timer.C:
+				}
+			}
+		}
+		// We wait for the first packet only. Later packets must be
+		// immediately available.
+		timer.Reset(0)
+
+		if len(p) == 0 {
+			// Timer expired, we are done bundling packets into this
+			// response.
+			break
+		}
+
+		limit -= len(p)
+		if !first && limit < 0 {
+			// This packet doesn't fit in the payload size limit.
+			// Stash it so that it will be first in line for the
+			// next response.
+			s.pconn.Stash(p, clientID)
+			break
+		}
+		first = false
+
+		// Write the packet to the AMP response.
+		_, err := encapsulation.WriteData(rw, p)
+		if err != nil {
+			log.Get().Debug().Msgf("encapsulation.WriteData: %v", err)
+			break
+		}
+		if rw, ok := rw.(http.Flusher); ok {
+			rw.Flush()
+		}
 	}
 }
 
-// Post gets the data from the body of the request and sends it
-// to the SSH connection
-func (s *SSHttpServer) Post(id string, w http.ResponseWriter, r *http.Request) {
-	// retrieve the SSH connection from the store
-	agent := s.store.SshttpGetAgent(id)
-	if agent == nil {
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Msgf("Agent Not Found")
-		http.Error(w, "agent not fount", http.StatusNotFound)
-		return
-	}
-	// read the body data of the request
-	body, err := io.ReadAll(r.Body)
+func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) (*SSHHttpServer, error) {
+
+	// noiseConn is the packet interface that communicates with the AMP/HTTP
+	// Handler; it deals in encrypted Noise messages. plainConn is the
+	// packet interface that communicates with KCP. noiseLoop sits in the
+	// middle, handling Noise handshakes and sessions, and
+	// encrypting/decrypting between the two net.PacketConns.
+	plainConn := turbotunnel.NewQueuePacketConn(turbotunnel.DummyAddr{}, idleTimeout*2)
+
+	ln, err := kcp.ServeConn(nil, 0, 0, plainConn)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Post Agent Read Body error")
-		return
+		return nil, fmt.Errorf("opening KCP listener: %v", err)
 	}
-	err = r.Body.Close()
-	if err != nil {
-		log.Warn().Err(err).Str("ID", id).Str("SSH Mode", "error closing HTTP body")
+
+	server := &SSHHttpServer{
+		pconn:   plainConn,
+		kcpConn: ln,
+		db:      db,
+		store:   store,
 	}
-	// Write the received data to the SSH connection
-	_, err = agent.SshConn.Write(body)
-	if err != nil {
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Msgf("[SSHTTP] Post Agent Write Error")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	w.WriteHeader(http.StatusOK)
+
+	go func() {
+		err := server.acceptSessions(ln, config.Get().LocalSShAddr())
+		log.Get().Err(err).Msg("ssh http server accept sessions")
+	}()
+
+	return server, nil
 }
 
-// StopSSH stops the SSH connection
-func (s *SSHttpServer) StopSSH(id string, w http.ResponseWriter, r *http.Request) {
-	// Closes the SSH connection
-	err := s.store.SshttpCloseAgent(id)
-	if err != nil {
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("[SSHTTP] Stop SSH Server error")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-	// Updates the agent in the database to remove the SSH connection mode
-	err = s.db.SetAgentSshMode(id, "OFF")
-	if err != nil {
-		log.Warn().Str("ID", id).Str("SSH Mode", "HTTP").Err(err).Msgf("Unable to update SSH agent mode to [OFF]")
-	}
+func (s *SSHHttpServer) Close() error {
+	return errors.Join(
+		s.pconn.Close(),
+		s.kcpConn.Close(),
+	)
 }

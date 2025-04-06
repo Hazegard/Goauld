@@ -51,7 +51,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 
 	// defer cancel()
 	// Get the ssh client, which may be proxified to bypass proxies
-	client, conn, err := getProxifiedClient(sshConfig, ctx, dnsTransport)
+	client, conn, closer, err := getProxifiedClient(sshConfig, ctx, dnsTransport)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
 		return err
@@ -70,7 +70,10 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 			err := sshAgent.Close()
 			if err != nil {
 				log.Error().Err(err).Msg("ssh client close failed")
-				return
+			}
+			err = closer.Close()
+			if err != nil {
+				log.Error().Err(err).Msg("ssh transport close failed")
 			}
 		}
 	}()

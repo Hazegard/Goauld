@@ -309,6 +309,8 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 	if agent.SshMode == "OFF" && mode == "SSH" {
 		// We consider that the agent connecting using a tunnel is already updated in the database
 		agent.SshMode = mode
+	} else if mode != "SSH" {
+		agent.SshMode = mode
 	}
 	// If disconnected, no ports are used
 	if mode == "OFF" {

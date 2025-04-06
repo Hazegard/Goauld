@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"Goauld/common/log"
@@ -29,7 +30,7 @@ type MainRouter struct {
 
 func NewHttpRouter(controlServer *control.SocketIO,
 	wssh *transport.WSshHandler,
-	sshttp *transport.SSHttpServer,
+	sshttp *transport.SSHHttpServer,
 	tlssh *transport.TLSSHServer,
 	manageRouter *ManageRouter,
 	adminRouter *AdminRouter,
@@ -48,7 +49,16 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	n := negroni.New()
 	logger := negroni.NewLogger()
 	logger.ALogger = log.GetNegroniLogger()
-	n.Use(logger)
+	// Custom middleware
+	n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		if strings.HasPrefix(r.URL.Path, "/sshttp") {
+			next(w, r)
+			return
+		}
+
+		logger.ServeHTTP(w, r, next)
+	})
+	// n.Use(logger)
 	n.Use(negroni.NewRecovery())
 	n.UseHandler(router)
 	server := &http.Server{

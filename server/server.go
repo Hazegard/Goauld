@@ -56,7 +56,10 @@ func main() {
 		return
 	}
 	wssh := transport.NewWSshHandler(agentStore, db)
-	sshttp := transport.NewSSHHttpServer(agentStore, db)
+	sshttp, err := transport.NewSSHHttpServer(agentStore, db)
+	if err != nil {
+		log.Error().Err(err).Msgf("error initializing ssh http server")
+	}
 	tlssh := transport.NewTLSSHServer(agentStore, db)
 	manageRouter := router.NewManageRouter(db, agentStore)
 	adminRouter := router.NewAdminRouter(db, agentStore)

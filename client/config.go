@@ -190,9 +190,9 @@ func (c *ClientConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*c)
 }
 
-func (c *ClientConfig) IsPrivatePasswordInCommandLine() bool {
+func (c *ClientConfig) IsFlagInCommandLine(long string, short string) bool {
 	for _, field := range os.Args {
-		if field == "--private-password" || field == "-P" {
+		if (long != "" && field == long) || (short != "" && field == short) {
 			return true
 		}
 	}

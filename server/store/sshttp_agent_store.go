@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+	"github.com/xtaci/smux"
 	"net"
 
 	"Goauld/common/types"
@@ -8,13 +10,15 @@ import (
 
 type SSHTTPAgent struct {
 	SshConn net.Conn
+	Stream  *smux.Stream
 }
 
 // SshttpAddAgent adds the ssh connection of agent id to the agent store
-func (a *AgentStore) SshttpAddAgent(ssh net.Conn, id string) {
+func (a *AgentStore) SshttpAddAgent(ssh net.Conn, stream *smux.Stream, id string) {
 	a.sshttpAgentMapMu.Lock()
 	a.sshttpAgentMap[id] = &SSHTTPAgent{
 		SshConn: ssh,
+		Stream:  stream,
 	}
 	a.sshttpAgentMapMu.Unlock()
 }
@@ -42,7 +46,7 @@ func (a *AgentStore) SshttpCloseAgent(id string) error {
 	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
 	if agent != nil && agent.SshConn != nil {
-		err = agent.SshConn.Close()
+		errors.Join(agent.SshConn.Close(), agent.Stream.Close())
 	}
 	a.SshttpRemoveAgent(id)
 	return err
@@ -59,9 +63,16 @@ func (a *AgentStore) DumpSSHTTP(id string) types.SSHTTState {
 		}
 	}
 	state := types.SSHTTState{
-		AgentId:       id,
-		SSHRemoteAddr: agent.SshConn.RemoteAddr().String(),
-		SSHLocaleAddr: agent.SshConn.LocalAddr().String(),
+		AgentId: id,
+		SshConn: types.Conn{
+			LocaleAddr: agent.SshConn.LocalAddr().String(),
+			RemoteAddr: agent.SshConn.RemoteAddr().String(),
+		},
+		StreamConn: types.Conn{
+			LocaleAddr: agent.Stream.LocalAddr().String(),
+			RemoteAddr: agent.Stream.RemoteAddr().String(),
+		},
+		StreamId: agent.Stream.ID(),
 	}
 	return state
 }

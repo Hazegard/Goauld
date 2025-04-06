@@ -209,8 +209,11 @@ func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target
 		prefixEnv("TYPE", typePass),
 		prefixEnv("CONFIG_FILE", cfg.ConfigFile),
 	}
-	if cfg.IsPrivatePasswordInCommandLine() {
+	if cfg.IsFlagInCommandLine("--private-password", "-P") {
 		envs = append(envs, prefixEnv("PASSWORD", cfg.PrivatePassword))
+	}
+	if cfg.IsFlagInCommandLine("--access-token", "") {
+		envs = append(envs, prefixEnv("ACCESS_TOKEN", cfg.AccessToken))
 	}
 	return envs
 }

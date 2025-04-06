@@ -11,7 +11,7 @@ services:
       - "X.X.X.X:80:80"
       - "X.X.X.X:443:443"
       - "X.X.X.X:22222:22222"
-    command: cp -u /app/build_binaries/* /app/binaries/ ; /app/server -c /app/server_config.yaml -vvv
+    command: "[ -d /app/build_binaries ] && cp -u /app/build_binaries/* /app/binaries/ ; /app/server -c /app/server_config.yaml -vvv"
     volumes:
       - ./certmagic:/root/.local/share/certmagic
       - ./Goauld.db:/app/Goauld.db
