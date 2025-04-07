@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/elazarl/goproxy"
@@ -18,6 +17,10 @@ type HttpProxy struct {
 	Server *http.Server
 }
 
+// InitHttpProxy initializes and returns a configured HttpProxy instance. The function sets up a proxy server
+// using the goproxy library with custom dialers for HTTP and HTTPS connections. It configures various proxy
+// settings such as connection limits, verbose logging, and headers to be kept across requests. The function
+// also handles CONNECT requests for HTTPS connections, allowing the proxy to route the traffic properly.
 func InitHttpProxy() *HttpProxy {
 
 	proxy := &HttpProxy{
@@ -48,55 +51,16 @@ func InitHttpProxy() *HttpProxy {
 		return conn, err
 	}
 
-	//
-	// HTTP Handler
-	//
-	//	var HttpConnect goproxy.FuncHttpsHandler = func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-	//		HTTPConnect := &goproxy.ConnectAction{
-	//			Action:    goproxy.ConnectAccept,
-	//			TLSConfig: goproxy.TLSConfigFromCA(&goproxy.GoproxyCa),
-	//		}
-	//
-	//		return HTTPConnect, host
-	//	}
-	//	proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile(".*:80$|.*:8080$"))).HandleConnect(HttpConnect)
-
-	//
-	// Connect Handler
-	//
 	var ConnectHandler goproxy.FuncHttpsHandler = func(host string, ctx *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-		// HTTPSConnect := &goproxy.ConnectAction{
-		// 	// ConnectMitm enables SSL Interception, required for request filtering over HTTPS.
-		// 	// Action:    goproxy.ConnectMitm,
-		// 	// ConnectAccept preserves upstream SSL Certificates, etc. TCP tunneling basically.
-		// 	Action:    goproxy.ConnectAccept,
-		// 	TLSConfig: goproxy.TLSConfigFromCA(&goproxy.GoproxyCa),
-		// }
 
-		// return HTTPSConnect, host
 		return goproxy.OkConnect, host
 	}
 	proxy.Proxy.OnRequest().HandleConnect(ConnectHandler)
-	// proxy.Proxy.OnRequest().HandleConnectFunc(ConnectHandler)
-
-	//
-	// Request Handling
-	//
-	// MITM Action is required for HTTPS Requests (e.g. goproxy.ConnectMitm instead of goproxy.ConnectAccept)
-	//
-	// proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	// 	log.Fatal(req.URL.String())
-	// 	return req, nil
-	// })
 
 	srv := &http.Server{
 		Handler: proxy.Proxy,
 		IdleTimeout: func() time.Duration {
-			if timeout, err := time.ParseDuration(os.Getenv("GONTLM_PROXY_IDLE_TIMEOUT")); err == nil {
-				return timeout
-			} else {
-				return 5 * time.Second
-			}
+			return 5 * time.Second
 		}(),
 	}
 

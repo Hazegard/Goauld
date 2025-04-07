@@ -25,39 +25,10 @@ type dummyAddr string
 func (d dummyAddr) Network() string { return string(d) }
 func (d dummyAddr) String() string  { return string(d) }
 
-func smuxTLSDialContext(stream *smux.Stream) func(ctx context.Context, network, addr string) (net.Conn, error) {
-	return func(ctx context.Context, network, addr string) (net.Conn, error) {
-		tlsConn := tls.Client(&streamConn{stream}, &tls.Config{
-			ServerName:         addr[:len(addr)-5], // strip ":443" from "example.com:443"
-			InsecureSkipVerify: true,               // for testing — in prod, validate properly
-		})
-
-		// Perform handshake manually
-		if err := tlsConn.Handshake(); err != nil {
-			return nil, err
-		}
-
-		return tlsConn, nil
-	}
-}
-
-// stream is your *smux.Stream created over the TCP conn
-func smuxDialFunc(stream *smux.Stream) func(network, addr string) (net.Conn, error) {
-	return func(network, addr string) (net.Conn, error) {
-		return &streamConn{stream}, nil
-	}
-}
-
-func newSmuxHTTPSClient(stream *smux.Stream) *http.Client {
-	transport := &http.Transport{
-		DialTLSContext: smuxTLSDialContext(stream),
-	}
-
-	return &http.Client{
-		Transport: transport,
-	}
-}
-
+// newSmuxHTTPandHTTPSClient creates and returns an HTTP client that supports both HTTP and HTTPS protocols
+// over an existing smux stream. It uses custom dial functions for HTTP and TLS connections over the stream.
+// The function returns a configured *http.Client with a custom Transport that handles non-TLS and TLS connections.
+// This client is used in DNS only mode as the HTTP traffic must go within a DNS tunnel
 func newSmuxHTTPandHTTPSClient(stream *smux.Stream) *http.Client {
 	dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
 		return &streamConn{stream}, nil
@@ -89,6 +60,10 @@ func newSmuxHTTPandHTTPSClient(stream *smux.Stream) *http.Client {
 	return &http.Client{Transport: transport}
 }
 
+// NewSmuxTransport creates and returns an *http.Transport that uses a provided smux stream
+// for both non-TLS (HTTP) and TLS (HTTPS) connections. The function defines custom dialers for each protocol:
+// one for HTTP that directly uses the smux stream, and one for HTTPS that establishes a TLS connection
+// with the stream.
 func NewSmuxTransport(stream *smux.Stream) *http.Transport {
 	return &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -105,7 +80,7 @@ func NewSmuxTransport(stream *smux.Stream) *http.Transport {
 
 			tlsConn := tls.Client(&streamConn{stream}, &tls.Config{
 				ServerName:         host,
-				InsecureSkipVerify: true, // ❗ for dev/testing only
+				InsecureSkipVerify: true,
 			})
 
 			if err := tlsConn.Handshake(); err != nil {

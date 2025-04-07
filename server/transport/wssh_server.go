@@ -44,27 +44,27 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		OriginPatterns:     []string{"*"},
 	})
 	if err != nil {
-		log.Error().Err(err).Str("ID", id).Str("SSH Mode", "WSSH").Msg("error initiating websocket connection")
+		log.Error().Err(err).Str("ID", id).Str("Mode", "WSSH").Msg("error initiating websocket connection")
 		return
 	}
 
 	defer func(wsConn *websocket.Conn) {
 		err := wsConn.CloseNow()
 		if err != nil {
-			log.Warn().Err(err).Str("ID", id).Str("SSH Mode", "WSSH").Msg("error closing connection")
+			log.Warn().Err(err).Str("ID", id).Str("Mode", "WSSH").Msg("error closing connection")
 		}
 	}(wsConn)
-	log.Info().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msgf("connecting to agent SSH server %s", config.Get().LocalSShAddr())
+	log.Info().Str("ID", id).Err(err).Str("Mode", "WS").Msgf("connecting to agent SSH server %s", config.Get().LocalSShAddr())
 	// Initializes the connection to the SSH server
 	targetConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
 	if err != nil {
-		log.Error().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msgf("failed to connect to %s", config.Get().LocalSShAddr())
+		log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msgf("failed to connect to %s", config.Get().LocalSShAddr())
 		return
 	}
 	defer func(targetConn net.Conn) {
 		err := targetConn.Close()
 		if err != nil {
-			log.Warn().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("failed to close SSH connection")
+			log.Warn().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("failed to close SSH connection")
 		}
 	}(targetConn)
 
@@ -73,7 +73,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func(conn net.Conn) {
 		err := conn.Close()
 		if err != nil {
-			log.Warn().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("failed to close websocket connection")
+			log.Warn().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("failed to close websocket connection")
 		}
 	}(conn)
 
@@ -85,7 +85,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		_, err := io.Copy(conn, targetConn)
 		if err != nil && !errors.Is(err, io.EOF) {
-			log.Error().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("ws -> ssh connection failed (%s)")
+			log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("ws -> ssh connection failed (%s)")
 			errChan <- err
 		}
 	}()
@@ -94,32 +94,32 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		_, err := io.Copy(targetConn, conn)
 		if err != nil && !errors.Is(err, io.EOF) {
-			log.Error().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("ssh -> ws connection failed")
+			log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("ssh -> ws connection failed")
 			errChan <- err
 		}
 	}()
 	// Updates the database to add the Websocket over SSH as the connection mode
 	err = wssh.db.SetAgentSshMode(id, "WS")
 	if err != nil {
-		log.Warn().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("error setting agent mode to WS")
+		log.Warn().Str("ID", id).Err(err).Str("Mode", "WS").Msg("error setting agent mode to WS")
 	}
 
 	// Waits for an error to occur, either in the
 	// SSH -> Websocket connection or in the Websocket -> SSH connection
 	err = <-errChan
 	if err != nil {
-		log.Error().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("error during copy")
+		log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("error during copy")
 	}
 
 	// Closes all remaining connections of the agent
 	err = wssh.agentStore.WsshCloseAgent(id)
 	if err != nil {
-		log.Error().Err(err).Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("error while closing websocket streams")
+		log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("error while closing websocket streams")
 	}
 
 	// Updates the database to set the agent mode as disconnected
 	err = wssh.db.SetAgentSshMode(id, "OFF")
 	if err != nil {
-		log.Warn().Str("ID", id).Err(err).Str("SSH Mode", "WS").Msg("error setting agent mode to [OFF]")
+		log.Warn().Str("ID", id).Err(err).Str("Mode", "WS").Msg("error setting agent mode to [OFF]")
 	}
 }

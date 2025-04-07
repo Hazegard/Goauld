@@ -17,7 +17,10 @@ type SocksServer struct {
 	listener    net.Listener
 }
 
-// NewSocks returns a new SocksServer
+// NewSocks creates and returns a new SocksServer. It configures the server with a logger and optional proxy dialer.
+// If the system proxy is enabled through the configuration, it adds a proxy dialer to the Socks5 server using the
+// provided SOCKS proxy settings (proxy address, username, password, and domain). The function initializes a new
+// SocksServer instance and returns it along with any potential errors.
 func NewSocks() (*SocksServer, error) {
 	defaultLogger := socks5.NewLogger(stdlog.Default())
 	options := []socks5.Option{

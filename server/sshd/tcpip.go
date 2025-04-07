@@ -1,9 +1,9 @@
 package sshd
 
 import (
+	"Goauld/common/log"
 	"github.com/gliderlabs/ssh"
 	"io"
-	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -101,7 +101,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 					ch, reqs, err := conn.OpenChannel(forwardedTCPChannelType, payload)
 					if err != nil {
 						// TODO: log failure to open channel
-						log.Println(err)
+						log.Trace().Err(err).Msg("Failed to open forwarded channel")
 						c.Close()
 						return
 					}

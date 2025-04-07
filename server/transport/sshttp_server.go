@@ -63,7 +63,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 			err = nil
 		}
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
-			log.Get().Debug().Msgf("stream %08x:%d copy stream←upstream: %v", conv, stream.ID(), err)
+			log.Debug().Str("Mode", "SSHTTP").Msgf("stream %08x:%d copy stream←upstream: %v", conv, stream.ID(), err)
 		}
 		upstreamTCPConn.CloseRead()
 		stream.Close()
@@ -76,7 +76,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 			err = nil
 		}
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
-			log.Get().Debug().Msgf("stream %08x:%d copy upstream←stream: %v", conv, stream.ID(), err)
+			log.Debug().Str("Mode", "SSHTTP").Msgf("stream %08x:%d copy upstream←stream: %v", conv, stream.ID(), err)
 		}
 		upstreamTCPConn.CloseWrite()
 	}()
@@ -112,15 +112,15 @@ func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) err
 			}
 			return err
 		}
-		log.Get().Debug().Msgf("begin stream %08x:%d", conn.GetConv(), stream.ID())
+		log.Debug().Str("Mode", "SSHTTP").Msgf("begin stream %08x:%d", conn.GetConv(), stream.ID())
 		go func() {
 			defer func() {
-				log.Get().Debug().Msgf("end stream %08x:%d", conn.GetConv(), stream.ID())
+				log.Debug().Str("Mode", "SSHTTP").Msgf("end stream %08x:%d", conn.GetConv(), stream.ID())
 				stream.Close()
 			}()
 			err := s.handleStream(stream, upstream, conn.GetConv())
 			if err != nil {
-				log.Get().Debug().Msgf("stream %08x:%d handleStream: %v", conn.GetConv(), stream.ID(), err)
+				log.Debug().Str("Mode", "SSHTTP").Msgf("stream %08x:%d handleStream: %v", conn.GetConv(), stream.ID(), err)
 			}
 		}()
 	}
@@ -137,7 +137,7 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 			}
 			return err
 		}
-		log.Get().Debug().Msgf("begin session %08x", conn.GetConv())
+		log.Debug().Str("Mode", "SSHTTP").Msgf("begin session %08x", conn.GetConv())
 		// Permit coalescing the payloads of consecutive sends.
 		conn.SetStreamMode(true)
 		// Disable the dynamic congestion window (limit only by the
@@ -151,12 +151,12 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 		conn.SetWindowSize(1024, 1024) // Default is 32, 32.
 		go func() {
 			defer func() {
-				log.Get().Debug().Msgf("end session %08x", conn.GetConv())
+				log.Debug().Str("Mode", "SSHTTP").Msgf("end session %08x", conn.GetConv())
 				conn.Close()
 			}()
 			err := s.acceptStreams(conn, upstream)
 			if err != nil && !errors.Is(err, io.ErrClosedPipe) {
-				log.Get().Debug().Msgf("session %08x acceptStreams: %v", conn.GetConv(), err)
+				log.Debug().Str("Mode", "SSHTTP").Msgf("session %08x acceptStreams: %v", conn.GetConv(), err)
 			}
 		}()
 	}
@@ -298,7 +298,7 @@ func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) (*SSHHttpServ
 
 	go func() {
 		err := server.acceptSessions(ln, config.Get().LocalSShAddr())
-		log.Get().Err(err).Msg("ssh http server accept sessions")
+		log.Info().Str("Mode", "SSHTTP").Err(err).Msg("ssh http server accept sessions")
 	}()
 
 	return server, nil

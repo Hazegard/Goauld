@@ -1,11 +1,11 @@
 package http
 
 import (
+	"Goauld/common/log"
 	"bytes"
 	"context"
 	"errors"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -68,7 +68,7 @@ func NewPollingPacketConn(remoteAddr net.Addr, poll PollFunc, client *http.Clien
 	go func() {
 		err := c.pollLoop(poll)
 		if err != nil {
-			log.Printf("pollLoop: %v", err)
+			log.Trace().Err(err).Str("Mode", "SSHTTP").Msg("pollLoop() failed")
 		}
 	}()
 	return c
@@ -165,14 +165,14 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 			defer cancel()
 			body, err := poll(ctx, c.client, payload.Bytes())
 			if err != nil {
-				log.Printf("poll: %v", err)
+				log.Trace().Err(err).Str("Mode", "SSHTTP").Msg("Poll error")
 				// TODO: perhaps self-throttle when this happens.
 				return
 			}
 			defer body.Close()
 			err = c.processIncoming(body)
 			if err != nil {
-				log.Printf("processIncoming: %v", err)
+				log.Trace().Err(err).Str("Mode", "SSHTTP").Msg("processIncoming error")
 			}
 		}()
 	}

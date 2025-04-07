@@ -64,10 +64,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	if err != nil {
 		return nil, fmt.Errorf("opening KCP conn: %v", err)
 	}
-	// defer func() {
-	// 	log.Get().Debug().Msgf("end session %08x", conn.GetConv())
-	// 	conn.Close()
-	// }()
+
 	log.Trace().Str("Mode", "DNSSH").Msgf("opening session %08x", conn.GetConv())
 	// Permit coalescing the payloads of consecutive sends.
 	conn.SetStreamMode(true)
@@ -135,7 +132,7 @@ func NewDNSSH() (*DNSSH, error) {
 		dnsServers = append(dnsServers, _dns.String())
 	}
 
-	log.Info().Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")
+	log.Info().Str("Mode", "DNSSH").Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")
 
 	for _, domain := range dnsServers {
 		p := 53
@@ -146,26 +143,26 @@ func NewDNSSH() (*DNSSH, error) {
 			var err error
 			p, err = strconv.Atoi(split[1])
 			if err != nil {
-				log.Debug().Err(err).Str("Domain", domain).Str("Port", split[1]).Msg("error parsing port, using 53 as default...")
+				log.Debug().Err(err).Str("Mode", "DNSSH").Str("Domain", domain).Str("Port", split[1]).Msg("error parsing port, using 53 as default...")
 				p = 53
 			}
 		} else {
 			ip = domain
 		}
-		log.Debug().Str("IP", ip).Int("Port", p).Msgf("Testing DNS server availability")
+		log.Debug().Str("IP", ip).Str("Mode", "DNSSH").Int("Port", p).Msgf("Testing DNS server availability")
 		if common_net.CheckHostPortAvailability(ip, p) {
 			d = ip
 			port = p
 			break
 		}
 	}
-	log.Debug().Str("DNS", d).Int("port", port).Msg("dns server")
+	log.Debug().Str("DNS", d).Str("Mode", "DNSSH").Int("port", port).Msg("dns server")
 	domain, err := dns.ParseName(config.Get().DNSDomain())
 	if err != nil {
-		log.Error().Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
+		log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
 		return nil, err
 	}
-	log.Info().Str("Domain", config.Get().DNSDomain()).Msg("DNS tunneling")
+	log.Info().Str("Mode", "DNSSH").Str("Domain", config.Get().DNSDomain()).Msg("DNS tunneling")
 
 	// Iterate over the remote resolver address options and select one and
 	// only one.

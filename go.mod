@@ -38,10 +38,7 @@ require (
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
 
-require (
-	github.com/flynn/noise v1.0.1-0.20220214164934-d803f5c4b0f4 // indirect
-	github.com/qdm12/gosettings v0.4.3 // indirect
-)
+require github.com/u-root/u-root v0.11.0 // indirect
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
@@ -86,6 +83,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.0 // indirect
 	github.com/petermattis/goid v0.0.0-20250303134427-723919f7f203 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/qdm12/gosettings v0.4.3 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	// Cannot upgrade quic-go as it breaks socket.io
 	github.com/quic-go/quic-go v0.47.0 // indirect
@@ -97,7 +95,6 @@ require (
 	github.com/templexxx/cpu v0.1.1 // indirect
 	github.com/templexxx/xorsimd v0.4.3 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	github.com/u-root/u-root v0.14.0 // indirect
 	github.com/xiegeo/coloredgoroutine v0.1.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect

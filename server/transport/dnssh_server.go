@@ -89,7 +89,7 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
 	err = d.db.SetAgentSshMode(id, "DNS")
 	if err != nil {
-		log.Warn().Err(err).Str("ID", id).Msg("failed to set agent SSH mode")
+		log.Warn().Str("Mode", "DNSSH").Err(err).Str("ID", id).Msg("failed to set agent SSH mode")
 	}
 
 	d.store.DnsshAddAgent(upstreamConn, stream, d.kcpAddr, id)
@@ -97,7 +97,6 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		log.Trace().Msgf("COPY STREAM UPSTREAM")
 		_, err := io.Copy(stream, upstreamTCPConn)
 		if err == io.EOF {
 			// smux Stream.Write may return io.EOF.
@@ -219,7 +218,7 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 			}
 			return err
 		}
-		log.Trace().Uint32("Conv", conn.GetConv()).Msg("accepted connection")
+		log.Trace().Str("Mode", "DNSSH").Uint32("Conv", conn.GetConv()).Msg("accepted connection")
 		// Permit coalescing the payloads of consecutive sends.
 		conn.SetStreamMode(true)
 		// Disable the dynamic congestion window (limit only by the
@@ -369,7 +368,6 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 		// Not a name we are authoritative for.
 		resp.Flags |= dns.RcodeNameError
 		log.Trace().Str("Mode", "DNSSH").Msgf("NXDOMAIN: not authoritative for %q", question.Name)
-		log.Printf("NXDOMAIN: not authoritative for %s", question.Name)
 		return resp, nil
 	}
 	resp.Flags |= 0x0400 // AA = 1

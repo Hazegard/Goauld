@@ -83,13 +83,13 @@ func NewDNSPacketConn(transport net.PacketConn, addr net.Addr, domain dns.Name) 
 	go func() {
 		err := c.recvLoop(transport)
 		if err != nil {
-			log.Printf("recvLoop: %v", err)
+			log.Trace().Err(err).Str("Mode", "DNSSH").Msg("recvLoop error")
 		}
 	}()
 	go func() {
 		err := c.sendLoop(transport, addr)
 		if err != nil {
-			log.Printf("sendLoop: %v", err)
+			log.Trace().Err(err).Str("Mode", "DNSSH").Msg("sendLoop error")
 		}
 	}()
 	return c

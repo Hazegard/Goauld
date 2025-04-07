@@ -71,9 +71,11 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 			if err != nil {
 				log.Error().Err(err).Msg("ssh client close failed")
 			}
-			err = closer.Close()
-			if err != nil {
-				log.Error().Err(err).Msg("ssh transport close failed")
+			if closer != nil {
+				err = closer.Close()
+				if err != nil {
+					log.Error().Err(err).Msg("ssh transport close failed")
+				}
 			}
 		}
 	}()

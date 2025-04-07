@@ -2,6 +2,7 @@ package http
 
 import (
 	"Goauld/agent/proxy"
+	"Goauld/common/log"
 	"bytes"
 	"context"
 	"errors"
@@ -9,7 +10,6 @@ import (
 	"github.com/xtaci/kcp-go/v5"
 	"github.com/xtaci/smux"
 	"io"
-	"log"
 	"net/http"
 	"time"
 	"www.bamsoftware.com/git/champa.git/turbotunnel"
@@ -36,6 +36,7 @@ const (
 	idleTimeout = 2 * time.Minute
 )
 
+// NewSSHTTP sets up an SSHTTP instance with HTTP, KCP, and smux, returning an error if any step fails.
 func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 
 	// http.DefaultTransport.(*http.Transport).MaxConnsPerHost = 20
@@ -54,7 +55,7 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 		return nil, fmt.Errorf("opening KCP conn: %v", err)
 	}
 
-	log.Printf("begin session %08x", conn.GetConv())
+	log.Trace().Str("Mode", "SSHTTP").Str("ID", fmt.Sprintf("%08x", conn.GetConv())).Msg("begin session")
 	// Permit coalescing the payloads of consecutive sends.
 	conn.SetStreamMode(true)
 	// Disable the dynamic congestion window (limit only by the maximum of
@@ -100,6 +101,7 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	}, nil
 }
 
+// poll sends a POST request with the provided data to the serverURL and returns the response body or an error.
 func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []byte) (io.ReadCloser, error) {
 	// Append a cache buster and the encoded p to the path of serverURL.
 

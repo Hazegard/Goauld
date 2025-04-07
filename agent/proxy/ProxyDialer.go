@@ -41,6 +41,12 @@ func NewHttpProxyDialer() *ProxyDialer {
 	}
 }
 
+// ProxyDialer returns a proxyplease.DialContext that manages proxy connections, either using a direct connection
+// or a proxy specified by the ProxyOverrides map. The function checks if the address has a cached dial context,
+// and if not, it constructs one based on the provided scheme and address. It supports exact and suffix matching
+// for proxy overrides and also handles tunneling for secure connections. The context is cached for future use
+// to improve performance by reusing previously established connections. The method also handles the connection
+// through proxy authentication (username, password, domain) and sends the CONNECT request for tunneling when necessary.
 func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyplease.DialContext {
 	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 	cacheKey := addr
