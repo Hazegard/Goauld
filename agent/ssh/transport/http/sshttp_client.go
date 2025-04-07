@@ -116,14 +116,13 @@ func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []by
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
 		return nil, fmt.Errorf("server returned status %v", resp.Status)
 	}
 
 	a, err := io.ReadAll(resp.Body)
 	if err != nil {
-		resp.Body.Close()
 		fmt.Println(err)
 	}
 

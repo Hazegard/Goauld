@@ -106,7 +106,7 @@ func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) err
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				continue
 			}
-			if err == io.ErrClosedPipe {
+			if errors.Is(err, io.ErrClosedPipe) {
 				// We don't want to report this error.
 				err = nil
 			}
