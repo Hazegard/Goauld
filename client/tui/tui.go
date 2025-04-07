@@ -31,6 +31,8 @@ var (
 	textHelp    = lipgloss.NewStyle().Foreground(lipgloss.Color("242"))
 )
 
+type TickMessage time.Time
+
 type CmdResponse struct {
 	Success bool
 	Message string
@@ -88,7 +90,7 @@ type Model struct {
 	confirmAction  string
 }
 
-func (m Model) Init() tea.Cmd { return m.doTick(m.agents) }
+func (m Model) Init() tea.Cmd { return m.doTick() }
 
 // Update follow bubble tea mechanism
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -199,7 +201,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// r: shortcut to update the agent list
 		case "r":
-			return m, m.UpdateAgents(m.agents)
+			batch = append(batch, m.doUpdate(m.agents))
+			// return m, m.UpdateAgents(m.agents)
 		default:
 			m.confirmAction = ""
 			m.statusText.SetValue("")
@@ -232,25 +235,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		// Return your Tick command again to loop.
 		if msg.tick {
-			batch = append(batch, m.doTick(m.agents))
+			batch = append(batch, m.doTick())
 		}
+	case TickMessage:
+		batch = append(batch, m.doUpdate(m.agents), m.doTick())
 	}
 
 	// Finalize the update mechanism
 
 	if doUpdateStatus {
 		m.statusText, statusTextCmd = m.statusText.Update(msg)
+		batch = append(batch, m.doUpdate(m.agents))
 		batch = append(batch, statusTextCmd)
+	}
+	m.agentInfoTable, agentInfoCmd = m.agentInfoTable.Update(msg)
+	if agentInfoCmd != nil {
+		batch = append(batch, agentInfoCmd)
+	}
+	m.agentsTable, agentsTableCmd = m.agentsTable.Update(msg)
+	if agentsTableCmd != nil {
+		batch = append(batch, agentsTableCmd)
 	}
 
 	if selectedAgent.Id != "" {
 		m.agentInfoTable = m.GenerateInfoTable(selectedAgent)
 	}
-	m.agentInfoTable, agentInfoCmd = m.agentInfoTable.Update(msg)
-	m.agentsTable, agentsTableCmd = m.agentsTable.Update(msg)
-	batch = append(batch, agentsTableCmd)
-	batch = append(batch, agentInfoCmd)
-	return m, tea.Sequence(batch...)
+	//fmt.Printf("Goroutines: %d\n", runtime.NumGoroutine())
+	var seq tea.Cmd
+	if batch != nil {
+		seq = tea.Sequence(batch...)
+	}
+	return m, seq
 }
 
 // UpdateAgents return a tea.Cmd used to update the agent list
@@ -263,19 +278,21 @@ func (m Model) UpdateAgents(prevAgents []types.Agent) tea.Cmd {
 }
 
 // doUpdate performs the update mechanism
-func (m Model) doUpdate(prevAgents []types.Agent) UpdateMessage {
-	agents, err := m.api.GetAgents()
-	if err != nil {
-		return UpdateMessage{
-			agents:       prevAgents,
-			tick:         true,
-			ErrorMessage: err.Error(),
+func (m Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
+	return func() tea.Msg {
+		agents, err := m.api.GetAgents()
+		if err != nil {
+			return UpdateMessage{
+				agents:       prevAgents,
+				tick:         true,
+				ErrorMessage: err.Error(),
+			}
 		}
-	}
-	return UpdateMessage{
-		agents:       agents,
-		tick:         false,
-		ErrorMessage: "",
+		return UpdateMessage{
+			agents:       agents,
+			tick:         false,
+			ErrorMessage: "",
+		}
 	}
 }
 
@@ -284,11 +301,9 @@ func (m Model) Help() string {
 }
 
 // doTick handle the periodic update
-func (m Model) doTick(prevAgents []types.Agent) tea.Cmd {
+func (m Model) doTick() tea.Cmd {
 	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
-		msg := m.doUpdate(prevAgents)
-		msg.tick = true
-		return msg
+		return TickMessage(t)
 	})
 }
 
