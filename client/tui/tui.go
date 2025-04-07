@@ -375,7 +375,7 @@ func GenerateAgentTable() table.Model {
 		// {Title: "ID", Width: 32},
 		table.NewColumn("N", "N", 3),
 		table.NewColumn("Name", "Name", 30),
-		table.NewColumn("Last updates", "Last updates", 15),
+		table.NewColumn("Last seen", "Last seen", 15),
 		table.NewColumn("Mode", "Mode", 10),
 		table.NewColumn("SSHD Port", "SSHD Port", 15),
 		table.NewColumn("HTTP Port", "HTTP Port", 15),
@@ -418,15 +418,15 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 	for i, agent := range agents {
 		row := table.NewRow(
 			table.RowData{
-				"Id":           agent.Id,
-				"N":            strconv.Itoa(i + 1),
-				"Name":         " " + agent.Name,
-				"Last updates": timeAgo(agent.LastUpdated),
-				"Mode":         agent.SshMode,
-				"SSHD Port":    " " + agent.GetSSHPort(),
-				"Socks Port":   " " + agent.GetSocksPort(),
-				"HTTP Port":    " " + agent.GetHttpPort(),
-				"Other Port":   " " + agent.GetOtherPort(),
+				"Id":         agent.Id,
+				"N":          strconv.Itoa(i + 1),
+				"Name":       " " + agent.Name,
+				"Last seen":  timeAgo(agent.LastUpdated),
+				"Mode":       agent.SshMode,
+				"SSHD Port":  " " + agent.GetSSHPort(),
+				"Socks Port": " " + agent.GetSocksPort(),
+				"HTTP Port":  " " + agent.GetHttpPort(),
+				"Other Port": " " + agent.GetOtherPort(),
 			})
 
 		rows = append(rows, row)

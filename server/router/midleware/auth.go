@@ -15,7 +15,7 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 		// Validate the Authorization header
 		if authHeader != expectedAuthToken {
 			// If the token is not correct, return 403 Forbidden
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			log.Get().Trace().Str("Header", authHeader).Msg("Header not allowed")
 			return
 		}
@@ -42,7 +42,7 @@ func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 			return
 		}
 		if u != username || p != password {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 

@@ -3,6 +3,7 @@ package control
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	common_net "Goauld/common/net"
 
@@ -223,6 +224,8 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent := sio.agentStore.SioGetAgent(socket)
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Received socketio.PingEvent")
 			socket.Emit(socketio.PongEvent)
+			agent.LastUpdated = time.Now()
+			_ = sio.db.UpdateAgentField(agent, "LastUpdated")
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Sent socketio.PongEvent")
 		})
 
