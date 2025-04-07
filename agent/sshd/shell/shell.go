@@ -1,14 +1,13 @@
 package shell
 
 import (
+	"Goauld/common/log"
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
-	"runtime"
 	"strings"
-
-	"Goauld/common/log"
 
 	"github.com/aymanbagabas/go-pty"
 	"github.com/gliderlabs/ssh"
@@ -21,11 +20,7 @@ import (
 func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 	// Extract PTY request and check if the session requested a PTY.
 	if len(c) == 0 {
-		if runtime.GOOS == "windows" {
-			c = getShellCmd([]string{"powershell", "cmd"})
-		} else {
-			c = getShellCmd([]string{"bash", "zsh", "sh"})
-		}
+		c = getShell()
 	}
 	log.Debug().Msgf("Receving shell command [%s] (User: %s, RemoteAddr: %s)", strings.Join(c, " "), s.User(), s.RemoteAddr())
 
@@ -54,6 +49,7 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 
 		// Exec the command within the pty
 		cmd := pseudo.Command(c[0], c[1:]...)
+		cmd.Env = append(os.Environ(), cmd.Env...)
 		cmd.Env = append(cmd.Env, "TERM="+ptyReq.Term, "SSH_TTY="+pseudo.Name())
 		if err := cmd.Start(); err != nil {
 			return fmt.Errorf("error while starting command (%s): %s", c, err)
