@@ -40,7 +40,6 @@ type CmdResponse struct {
 }
 
 type UpdateMessage struct {
-	tick         bool
 	agents       []types.Agent
 	ErrorMessage string
 }
@@ -233,10 +232,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statusText.TextStyle = textWarning
 			doUpdateStatus = true
 		}
-		// Return your Tick command again to loop.
-		if msg.tick {
-			batch = append(batch, m.doTick())
-		}
 	case TickMessage:
 		batch = append(batch, m.doUpdate(m.agents), m.doTick())
 	}
@@ -284,13 +279,11 @@ func (m Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
 		if err != nil {
 			return UpdateMessage{
 				agents:       prevAgents,
-				tick:         true,
 				ErrorMessage: err.Error(),
 			}
 		}
 		return UpdateMessage{
 			agents:       agents,
-			tick:         false,
 			ErrorMessage: "",
 		}
 	}
