@@ -294,8 +294,9 @@ func (m *Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
 }
 
 func (m *Model) Help() string {
-	return textHelp.SetString("    [ctrl+r]:Reset agent      [ctrl+d]:Delete agent      [↑]:Up        [←]:Previous      [r]:Refresh view\n    [ctrl+k]:Kill agent       [Enter]: SSH agent         [↓]:Down      [→]:Next          [q]/[ctrl+c]:Quit").String()
-	//								                                                                               //
+	return textHelp.SetString(
+		"    [ctrl+r]:Reset agent      [ctrl+d]:Delete agent      [↑]:Up        [←]:Previous      [r]:Refresh view" +
+			"\n    [ctrl+k]:Kill agent       [Enter]: SSH agent         [↓]:Down      [→]:Next          [q]/[ctrl+c]:Quit").String()
 
 }
 

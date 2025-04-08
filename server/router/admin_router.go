@@ -138,6 +138,8 @@ func (ur *AdminRouter) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetConfig return the currently running configuration
+// It returns a sanitized configuration to remove sensitive information (secret keys, etc.)
 func (ur *AdminRouter) GetConfig(w http.ResponseWriter, r *http.Request) {
 	c, err := config.Get().GenerateSafeYAMLConfig()
 

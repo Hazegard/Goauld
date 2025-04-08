@@ -131,7 +131,7 @@ func run() utils.CancelReason {
 		err = controlPlanClient.Init()
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the control plan")
-			log.Info().Err(err).Msg("trying to start the control plan in DNS mode")
+			log.Info().Msg("trying to start the control plan in DNS mode")
 		}
 	}
 	// If the standard init failed, or if we are in a DNS only mode
@@ -336,6 +336,10 @@ func run() utils.CancelReason {
 			}
 		}()
 	}
+
+	if config.Get().OnlyWorkingDays() {
+		go OnlyWorkingDayLoop(globalCanceler, ctx)
+	}
 	// Wait for errors to occur and print them
 	select {
 	case err := <-controlErr:
@@ -372,4 +376,21 @@ func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.G
 	return func() {
 		signal.Stop(c)
 	}
+}
+
+func OnlyWorkingDayLoop(canceler *utils.GlobalCanceler, ctx context.Context) {
+	t := time.NewTicker(1 * time.Minute)
+	defer t.Stop()
+	for {
+		select {
+		case <-t.C:
+			if config.Get().IsOutOfWorkingDay() {
+				log.Warn().Msg("Agent is now running out of working day")
+				canceler.Restart()
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+
 }

@@ -83,43 +83,25 @@ func (a *AgentStore) ClearByPort(port int) error {
 
 	for _, agent := range agents {
 		err := a.ClearById(agent.Id)
-		if err != nil {
-			errs = append(errs, err)
-		}
+		errs = append(errs, err)
 	}
 	return errors.Join(errs...)
 }
 
 // ClearById Clears all agent connections related to a given agent id
 func (a *AgentStore) ClearById(id string) error {
-	errs := make([]error, 0)
-	err := a.TlsshCloseAgent(id)
-	if err != nil {
-		errs = append(errs, err)
-	}
-	err = a.SshttpCloseAgent(id)
-	if err != nil {
-		errs = append(errs, err)
-	}
-	err = a.SshttpCloseAgent(id)
-	if err != nil {
-		errs = append(errs, err)
-	}
-	err = a.SSHCloseAgent(id)
-	if err != nil {
-		errs = append(errs, err)
-	}
-	return errors.Join(errs...)
+	return a.CloseAgentConnections(id)
 }
 
 // CloseAgentConnections closes all the connections of the agent
 func (a *AgentStore) CloseAgentConnections(id string) error {
-	err1 := a.WsshCloseAgent(id)
-	err2 := a.SshttpCloseAgent(id)
-	err3 := a.TlsshCloseAgent(id)
-	err4 := a.SSHCloseAgent(id)
-	err5 := a.DnsshCloseAgent(id)
-	return errors.Join(err1, err2, err3, err4, err5)
+	return errors.Join(
+		a.SSHCloseAgent(id),
+		a.TlsshCloseAgent(id),
+		a.WsshCloseAgent(id),
+		a.SshttpCloseAgent(id),
+		a.DnsshCloseAgent(id),
+	)
 }
 
 // KillAGent kills the agent, if doKill is true, the agent does not restart

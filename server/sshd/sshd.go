@@ -12,6 +12,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gliderlabs/ssh"
 
@@ -90,7 +91,21 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				ok, payload, _ = forwardHandler.HandleSSHRequest(ctx, srv, req)
 				return ok, payload
 			},
-			"ping": handlePing,
+			// handlePing returns pong when an agent send a ping
+			// This ping pong mechanism is used to perform a keepalive of the connections
+			"ping": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
+				log.Trace().Str("User", ctx.User()).Msg("PING received")
+
+				id := ctx.User()
+				agent, err := db.FindAgentByName(id)
+				if err != nil {
+					log.Error().Err(err).Str("User", ctx.User()).Msg("Failed to find agent")
+					return true, []byte("pong")
+				}
+				agent.LastUpdated = time.Now()
+				_ = db.UpdateAgentField(agent, "LastUpdated")
+				return true, []byte("pong")
+			},
 		},
 		ChannelHandlers: map[string]ssh.ChannelHandler{
 			"direct-tcpip": ssh.DirectTCPIPHandler,
@@ -179,13 +194,4 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 	}
 	log.Info().Msg("SSH server stopped")
 	context.Done()
-}
-
-// handlePing returns pong when an agent send a ping
-// This ping pong mechanism is used to perform a keepalive of the connections
-func handlePing(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte) {
-	// log.Trace().Msgf("SSH ping from %s", ctx.User())
-	// log.Trace().Msgf("Returning pong to %s", ctx.User())
-	log.Trace().Str("User", ctx.User()).Msg("PING received")
-	return true, []byte("pong")
 }

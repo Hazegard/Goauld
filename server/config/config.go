@@ -34,7 +34,6 @@ var (
 	_tls_domain  = "app.example.com"
 	_dns_domain  = "www.example.com"
 
-	// TODO: voir pour listen sur ine IP spécifique
 	_http_listen_addr  = ":80"
 	_https_listen_addr = ":443"
 	_sshd_listen_addr  = ":2222"

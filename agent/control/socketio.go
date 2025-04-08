@@ -230,11 +230,6 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	cpc.socket.OnEvent(socketio.PongEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
-		if config.Get().IsOutOfWorkingDay() {
-			log.Warn().Msg("Agent running out of working day")
-			cpc.canceler.Exit()
-			cpc.Close()
-		}
 	})
 	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
@@ -294,6 +289,10 @@ func getDnsEioConfig(session *smux.Stream) *sio.ManagerConfig {
 			WebSocketDialOptions: &websocket.DialOptions{
 				HTTPClient: newSmuxHTTPandHTTPSClient(session),
 			},
+			// When tunnelling over DNS, if we use polling only or polling then websocket upgrade
+			// The tunnel fails to establish properly as the server responds unwanted content to the HTTP sockets open
+			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
+			// On the client side
 			Transports: []string{"websocket"}, //, "websocket"},
 			// Debugger:   sio.NewPrintDebugger(),
 		},

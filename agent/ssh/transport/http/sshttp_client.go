@@ -112,8 +112,6 @@ func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []by
 	req = req.WithContext(ctx)
 	req.Header.Set("User-Agent", "") // Disable default "Go-http-client/1.1".
 
-	// TODO: use proxy here
-
 	resp, err := httpClient.Transport.RoundTrip(req) //http.DefaultTransport.RoundTrip(req)
 	if err != nil {
 		return nil, err

@@ -50,16 +50,12 @@ func (a *AgentStore) SSHCloseAgent(id string) error {
 	if agent != nil {
 		for _, conn := range agent.Conns {
 			err := conn.Close()
-			if err != nil {
-				errs = append(errs, err)
-			}
+			errs = append(errs, err)
 		}
 
 		for _, ln := range agent.Listeners {
 			err := ln.Close()
-			if err != nil {
-				errs = append(errs, err)
-			}
+			errs = append(errs, err)
 		}
 	}
 	return errors.Join(errs...)

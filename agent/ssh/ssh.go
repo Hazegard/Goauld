@@ -137,7 +137,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 						return
 					}
 					errCounter++
-					// TODO faire du throttle si on garde l'erreur, voir pour couper proprement après un temp ?
+					// TODO faire du throttle si on garde l'erreur, voir pour couper proprement après un temps ?
 					log.Warn().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to accept remote connection")
 					// Pseudo throttle en attendant
 					time.Sleep(1 * time.Second)
@@ -156,7 +156,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 
 					errChan := make(chan error, 1)
 
-					// Initialize the Websocket -> SSH connection
+					// Initialize the Remote -> Local copy
 					go func() {
 						_, err := io.Copy(localConn, remoteConn)
 						if err != nil && !errors.Is(err, io.EOF) {
@@ -165,7 +165,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 						}
 					}()
 
-					// Initialize the SSH -> Websocket connection
+					// Initialize the Local -> Remote copy
 					go func() {
 						_, err := io.Copy(remoteConn, localConn)
 						if err != nil && !errors.Is(err, io.EOF) {

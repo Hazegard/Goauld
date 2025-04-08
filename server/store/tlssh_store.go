@@ -1,11 +1,9 @@
 package store
 
 import (
+	"Goauld/common/types"
 	"errors"
 	"net"
-	"strings"
-
-	"Goauld/common/types"
 )
 
 type TLSSHAgent struct {
@@ -33,20 +31,16 @@ func (a *AgentStore) TlsshCloseAgent(id string) error {
 	agent := a.tlsshAgentMap[id]
 	a.tlsshAgentMapMu.Unlock()
 	a.TlsshRemoveAgent(id)
-	var errs []string
+	var errs []error
 	if agent != nil && agent.TLSConn != nil {
-		err1 := agent.SSHConn.Close()
-		if err1 != nil {
-			errs = append(errs, err1.Error())
-		}
+		err := agent.SSHConn.Close()
+		errs = append(errs, err)
 	}
 	if agent != nil && agent.TLSConn != nil {
-		err2 := agent.SSHConn.Close()
-		if err2 != nil {
-			errs = append(errs, err2.Error())
-		}
+		err := agent.SSHConn.Close()
+		errs = append(errs, err)
 	}
-	return errors.New(strings.Join(errs, " / "))
+	return errors.Join(errs...)
 }
 
 // DumpTLSSH return the TLSSH information associated to the agent

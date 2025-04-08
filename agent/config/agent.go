@@ -2,6 +2,7 @@ package config
 
 import (
 	"Goauld/common/log"
+	"Goauld/common/utils"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -140,10 +141,7 @@ func InitAgent() (*kong.Context, error, []error) {
 		Hostname:                 host,
 		IPs:                      ips,
 		Path:                     currDir,
-		WorkingDay: WorkingDay{
-			Start: cfg.WorkingDayStart,
-			End:   cfg.WorkingDayEnd,
-		},
+		WorkingDay:               *NewWorkingDay(cfg.WorkingDayStart, cfg.WorkingDayEnd, cfg.WorkingDayTimeZone),
 	}
 	return ctx, nil, warnings
 }
@@ -319,10 +317,13 @@ func (a *Agent) GetKeepalive() time.Duration {
 	return time.Duration(a.cfg.KeepAlive)
 }
 
+// OnlyWorkingDays return whether the OnlyWorkingDay option is enabled
 func (a *Agent) OnlyWorkingDays() bool {
 	return a.cfg.OnlyWorkingDays
 }
 
+// IsOutOfWorkingDay returns whether the agent is configured to run only on working days
+// AND if the current time is out of working day
 func (a *Agent) IsOutOfWorkingDay() bool {
 	if !a.cfg.OnlyWorkingDays {
 		return false
@@ -333,7 +334,7 @@ func (a *Agent) IsOutOfWorkingDay() bool {
 // GetRsshOrder returns the order thtat the agent should follow to attempt to connect
 // to the SSHD server
 func (a *Agent) GetRsshOrder() []string {
-	return a.cfg.RsshOrder
+	return utils.ToLower(utils.Unique(a.cfg.RsshOrder))
 }
 
 // AgePubKey returns the age public key used to encrypt asymetrically data

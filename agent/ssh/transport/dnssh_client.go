@@ -188,12 +188,12 @@ func NewDNSSH() (*DNSSH, error) {
 }
 
 func (d *DNSSH) Close() error {
-	var errs []error
-	errs = append(errs, d.kcpConn.Close())
-	errs = append(errs, d.session.Close())
-	errs = append(errs, d.udpConn.Close())
-	errs = append(errs, d.pconn.Close())
-	errs = append(errs, d.SshStream.Close())
-	errs = append(errs, d.ControlStream.Close())
-	return errors.Join(errs...)
+	return errors.Join(
+		d.kcpConn.Close(),
+		d.session.Close(),
+		d.udpConn.Close(),
+		d.pconn.Close(),
+		d.SshStream.Close(),
+		d.ControlStream.Close(),
+	)
 }

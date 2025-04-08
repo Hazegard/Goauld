@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+// The DNSTransport is used to dunnel the control socket when running in DNS only mode.
+// Indeed, when we have to tunnel the SSH traffic using DNS, it means that the control socket that relies
+// On socket.io cannot reach the control server over HTTP/Websocket.
+
 type streamConn struct {
 	*smux.Stream
 }

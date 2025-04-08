@@ -31,11 +31,18 @@ func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTra
 				return client, nil, client, nil
 			}
 
+		case strings.HasPrefix(proto, "tls"):
+			client, conn = proxifyTls(sshConfig, ctx)
+			if client != nil {
+				return client, conn, nil, nil
+			}
+
 		case strings.HasPrefix(proto, "ws"):
 			client, conn = proxifyWS(sshConfig, ctx)
 			if client != nil {
 				return client, conn, conn, nil
 			}
+
 		case strings.HasPrefix(proto, "http"):
 			c, ssHTTP := proxifyHttp(sshConfig)
 			client = c
@@ -43,11 +50,7 @@ func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTra
 			if client != nil {
 				return client, conn, ssHTTP, nil
 			}
-		case strings.HasPrefix(proto, "tls"):
-			client, conn = proxifyTls(sshConfig, ctx)
-			if client != nil {
-				return client, conn, nil, nil
-			}
+
 		case strings.HasPrefix(proto, "dns"):
 			if dnsTransport != nil {
 				client, conn = proxifyDns(sshConfig, dnsTransport)
@@ -133,7 +136,7 @@ func proxifyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, *http.SSHTTP) {
 	return client, httpConn
 }
 
-// proxifyDns proxifies the SSH traffic using a HTTP connection to the server
+// proxifyDns proxifies the SSH traffic using a DNS connection to the server
 func proxifyDns(sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn) {
 
 	log.Debug().Str("Mode", "DNSSH").Msg("Trying send agent ID over the DNS connection")

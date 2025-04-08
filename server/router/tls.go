@@ -71,6 +71,6 @@ func (router *MainRouter) HandleTls(c net.Conn) {
 			router.tlsshHandler.HandleTLSSH(c, id)
 		}
 	} else {
-		log.Info().Msg("Non-TLS connection received")
+		log.Info().Msg("Invalid subdomain TLS connection received")
 	}
 }

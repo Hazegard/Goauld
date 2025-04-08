@@ -63,7 +63,7 @@ var (
 	_working_day_end      = "19:30"
 	_working_day_timezone = "Europe/Paris"
 
-	_rssh_order = "SSH,TLS,WS,HTTP"
+	_rssh_order = "SSH,TLS,WS,HTTP,DNS"
 
 	_remote_port_forwarding = ""
 
@@ -202,6 +202,11 @@ type AgentConfig struct {
 	HiddenBackground bool `name:"hidden-background" hidden:""  negatable:"" optional:"" help:"Start the agent in the background."`
 }
 
+func (c *AgentConfig) Validate() error {
+	wd := NewWorkingDay(c.WorkingDayStart, c.WorkingDayEnd, c.WorkingDayTimeZone)
+	return wd.Validate()
+}
+
 // parse parses the command line arguments
 func parse() (*kong.Context, *AgentConfig, error) {
 	cfgTmp := &AgentConfig{}
@@ -234,6 +239,5 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	app := kong.Parse(cfg, kongOptions...)
 
 	log.SetLogLevel(cfg.Verbose)
-	cfg.RsshOrder = utils.ToLower(utils.Unique(cfg.RsshOrder))
 	return app, cfg, nil
 }
