@@ -20,7 +20,8 @@ import (
 func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 	// Extract PTY request and check if the session requested a PTY.
 	if len(c) == 0 {
-		c = getShell()
+		cmd := getShell()
+		c = cmd.Cli()
 	}
 	log.Debug().Msgf("Receving shell command [%s] (User: %s, RemoteAddr: %s)", strings.Join(c, " "), s.User(), s.RemoteAddr())
 
@@ -148,12 +149,21 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 	return nil
 }
 
+type Command struct {
+	Executable string
+	Args       []string
+}
+
+func (c *Command) Cli() []string {
+	return append([]string{c.Executable}, c.Args...)
+}
+
 // getShellCmd return the first command found in the system path
-func getShellCmd(cmds []string) []string {
+func getShellCmd(cmds []Command) Command {
 	for _, cmd := range cmds {
-		if absPath, err := exec.LookPath(cmd); err == nil {
-			return []string{absPath}
+		if absPath, err := exec.LookPath(cmd.Executable); err == nil {
+			return Command{Executable: absPath, Args: cmd.Args}
 		}
 	}
-	return []string{}
+	return Command{}
 }

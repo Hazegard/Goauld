@@ -204,7 +204,15 @@ type Tui struct{}
 // Run executes the tui subcommand
 func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 	tt := tui.NewTui(api)
-	return tt.Run()
+	err, sshAgent := tt.Run()
+	if err != nil {
+		return err
+	}
+	if sshAgent != "" {
+		cfg.Ssh.Target = sshAgent
+		return cfg.Ssh.Run(api, cfg)
+	}
+	return nil
 }
 
 // InitConfig return the configuration depending on the command line arguments as well as the configuration files

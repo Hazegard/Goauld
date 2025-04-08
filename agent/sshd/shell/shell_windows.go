@@ -2,6 +2,15 @@
 
 package shell
 
-func getShell() []string {
-	return getShellCmd([]string{"powershell", "cmd"})
+func getShell() Command {
+	commands := []Command{
+		{
+			Executable: "powershell",
+			Args:       []string{"-Nologo"},
+		},
+		{
+			Executable: "cmd",
+		},
+	}
+	return getShellCmd(commands)
 }

@@ -2,6 +2,17 @@
 
 package shell
 
-func getShell() []string {
-	return getShellCmd([]string{"bash", "zsh", "sh"})
+func getShell() Command {
+	commands := []Command{
+		{
+			Executable: "bash",
+		},
+		{
+			Executable: "zsh",
+		},
+		{
+			Executable: "sh",
+		},
+	}
+	return getShellCmd(commands)
 }

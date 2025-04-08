@@ -22,6 +22,7 @@ const (
 	action_delete = "ctrl+d"
 	action_kill   = "ctrl+k"
 	action_reset  = "ctrl+r"
+	action_ssh    = "enter"
 )
 
 var (
@@ -73,11 +74,11 @@ func NewTui(api *api.API) Model {
 	return m
 }
 
-func (m Model) Run() error {
+func (m *Model) Run() (error, string) {
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		return err
+		return err, ""
 	}
-	return nil
+	return nil, m.agent
 }
 
 type Model struct {
@@ -87,12 +88,13 @@ type Model struct {
 	agentInfoTable teatable.Model
 	statusText     textinput.Model
 	confirmAction  string
+	agent          string
 }
 
-func (m Model) Init() tea.Cmd { return m.doTick() }
+func (m *Model) Init() tea.Cmd { return m.doTick() }
 
 // Update follow bubble tea mechanism
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var agentsTableCmd tea.Cmd
 	var agentInfoCmd tea.Cmd
 	var statusTextCmd tea.Cmd
@@ -197,6 +199,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.SetValue("")
 			}
 			doUpdateStatus = true
+		case action_ssh:
+			m.agent = selectedAgent.Name
+			return m, tea.Quit
 
 		// r: shortcut to update the agent list
 		case "r":
@@ -255,7 +260,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if selectedAgent.Id != "" {
 		m.agentInfoTable = m.GenerateInfoTable(selectedAgent)
 	}
-	//fmt.Printf("Goroutines: %d\n", runtime.NumGoroutine())
 	var seq tea.Cmd
 	if batch != nil {
 		seq = tea.Sequence(batch...)
@@ -266,14 +270,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // UpdateAgents return a tea.Cmd used to update the agent list
 // If the update fails, it returns the previous list to keep
 // the table populated
-func (m Model) UpdateAgents(prevAgents []types.Agent) tea.Cmd {
+func (m *Model) UpdateAgents(prevAgents []types.Agent) tea.Cmd {
 	return func() tea.Msg {
 		return m.doUpdate(prevAgents)
 	}
 }
 
 // doUpdate performs the update mechanism
-func (m Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
+func (m *Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
 	return func() tea.Msg {
 		agents, err := m.api.GetAgents()
 		if err != nil {
@@ -289,19 +293,21 @@ func (m Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
 	}
 }
 
-func (m Model) Help() string {
-	return textHelp.SetString("  [ctrl+r]:Reset agent [ctrl+k]:Kill agent  [ctrl+d]:Delete agent    [r]:Refresh view\n  [↑]:Up [↓]:Down  [←]:Previous  [→]:Next  [q]/[ctrl+c]:Quit").String()
+func (m *Model) Help() string {
+	return textHelp.SetString("    [ctrl+r]:Reset agent      [ctrl+d]:Delete agent      [↑]:Up        [←]:Previous      [r]:Refresh view\n    [ctrl+k]:Kill agent       [Enter]: SSH agent         [↓]:Down      [→]:Next          [q]/[ctrl+c]:Quit").String()
+	//								                                                                               //
+
 }
 
 // doTick handle the periodic update
-func (m Model) doTick() tea.Cmd {
+func (m *Model) doTick() tea.Cmd {
 	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
 		return TickMessage(t)
 	})
 }
 
 // GenerateInfoTable populate the info table to show the details of the currently selected agent
-func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
+func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 	rows := []teatable.Row{
 		{"Id", agent.Id},
 		{"OS", agent.Platform},
@@ -358,7 +364,7 @@ func (m Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 	return t
 }
 
-func (m Model) View() string {
+func (m *Model) View() string {
 	return baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.Help() + "\n"
 }
 
@@ -394,7 +400,7 @@ func GenerateAgentTable() table.Model {
 }
 
 // GetAgents call the API and returns the slice of the agents
-func (m Model) GetAgents() []table.Row {
+func (m *Model) GetAgents() []table.Row {
 	agents, err := m.api.GetAgents()
 	if err != nil {
 		panic(err)
@@ -429,7 +435,7 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 }
 
 // Kill performs a call to the API to kill the selected agent
-func (m Model) Kill(agent types.Agent, doExit bool) tea.Cmd {
+func (m *Model) Kill(agent types.Agent, doExit bool) tea.Cmd {
 	killing := "resetting"
 	reset := "Reset"
 	if doExit {
@@ -454,7 +460,7 @@ func (m Model) Kill(agent types.Agent, doExit bool) tea.Cmd {
 }
 
 // Delete performs a call to the API to delete the selected agent
-func (m Model) Delete(agent types.Agent) tea.Cmd {
+func (m *Model) Delete(agent types.Agent) tea.Cmd {
 	return func() tea.Msg {
 		err := m.api.DeleteAgent(agent.Id)
 		if err != nil {
