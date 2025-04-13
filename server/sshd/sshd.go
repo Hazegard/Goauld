@@ -97,9 +97,9 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				log.Trace().Str("User", ctx.User()).Msg("PING received")
 
 				id := ctx.User()
-				agent, err := db.FindAgentByName(id)
+				agent, err := db.FindAgentById(id)
 				if err != nil {
-					log.Error().Err(err).Str("User", ctx.User()).Msg("Failed to find agent")
+					log.Error().Err(err).Str("User", id).Msg("Failed to find agent")
 					return true, []byte("pong")
 				}
 				agent.LastUpdated = time.Now()
