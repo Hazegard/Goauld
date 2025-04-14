@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	_ "time/tzdata"
 )
 
 type WorkingDay struct {

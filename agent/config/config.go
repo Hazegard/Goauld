@@ -203,8 +203,11 @@ type AgentConfig struct {
 }
 
 func (c *AgentConfig) Validate() error {
-	wd := NewWorkingDay(c.WorkingDayStart, c.WorkingDayEnd, c.WorkingDayTimeZone)
-	return wd.Validate()
+	if c.OnlyWorkingDays {
+		wd := NewWorkingDay(c.WorkingDayStart, c.WorkingDayEnd, c.WorkingDayTimeZone)
+		return wd.Validate()
+	}
+	return nil
 }
 
 // parse parses the command line arguments
