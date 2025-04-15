@@ -22,7 +22,7 @@ var (
 	_name             = "user@hostname"
 
 	_server     = "www.example.com"
-	_ssh_server = "www.example.com:2222"
+	_ssh_server = "www.example.com:22222"
 	_tls_server = "app.example.com"
 	_dns_server = "8.8.8.8,1.1.1.1,9.9.9.9"
 	_dns_domain = "www.example.com"

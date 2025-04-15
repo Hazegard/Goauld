@@ -5,7 +5,7 @@ age-pubkey: ""
 server: www.example.com
 
 # The SSH server to connect to when using direct SSH connections.
-ssh-server: www.example.com:2222
+ssh-server: www.example.com:22222
 
 # The TLS server to connect to when using SSH over TLS connections.
 tls-server: app.example.com
@@ -108,10 +108,11 @@ working-day-timezone: Europe/Paris
 
 # Order the SSH tunnels connection attempts.
 rssh-order:
-    - ssh
-    - tls
-    - ws
-    - http
+    - SSH
+    - TLS
+    - WS
+    - HTTP
+    - DNS
 
 # Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server
 rpf: []
