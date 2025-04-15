@@ -91,21 +91,10 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				ok, payload, _ = forwardHandler.HandleSSHRequest(ctx, srv, req)
 				return ok, payload
 			},
-			// handlePing returns pong when an agent send a ping
+			// HandleKeepAlive returns pong when an agent send a ping
 			// This ping pong mechanism is used to perform a keepalive of the connections
-			"ping": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
-				log.Trace().Str("User", ctx.User()).Msg("PING received")
-
-				id := ctx.User()
-				agent, err := db.FindAgentById(id)
-				if err != nil {
-					log.Error().Err(err).Str("User", id).Msg("Failed to find agent")
-					return true, []byte("pong")
-				}
-				agent.LastUpdated = time.Now()
-				_ = db.UpdateAgentField(agent, "LastUpdated")
-				return true, []byte("pong")
-			},
+			"ping":                  HandleKeepAlive(db),
+			"keepalive@openssh.com": HandleKeepAlive(db),
 		},
 		ChannelHandlers: map[string]ssh.ChannelHandler{
 			"direct-tcpip": ssh.DirectTCPIPHandler,
@@ -194,4 +183,20 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 	}
 	log.Info().Msg("SSH server stopped")
 	context.Done()
+}
+
+func HandleKeepAlive(db *persistence.DB) func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
+	return func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
+		log.Trace().Str("User", ctx.User()).Msg("PING received")
+
+		id := ctx.User()
+		agent, err := db.FindAgentById(id)
+		if err != nil {
+			log.Error().Err(err).Str("User", id).Msg("Failed to find agent")
+			return true, []byte("pong")
+		}
+		agent.LastUpdated = time.Now()
+		_ = db.UpdateAgentField(agent, "LastUpdated")
+		return true, []byte("pong")
+	}
 }
