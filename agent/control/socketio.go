@@ -16,6 +16,7 @@ import (
 	"Goauld/common/ssh"
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
+	"github.com/quic-go/webtransport-go"
 	"nhooyr.io/websocket"
 )
 
@@ -271,7 +272,10 @@ func getEioConfig() *sio.ManagerConfig {
 			WebSocketDialOptions: &websocket.DialOptions{
 				HTTPClient: proxy.NewHttpClientProxy(),
 			},
-			Transports: []string{"polling", "websocket"},
+			WebTransportDialer: &webtransport.Dialer{
+				TLSClientConfig: proxy.NewTlsConfig(),
+			},
+			Transports: []string{"polling", "websocket", "webtransport"},
 			// Debugger:   sio.NewPrintDebugger(),
 		},
 	}

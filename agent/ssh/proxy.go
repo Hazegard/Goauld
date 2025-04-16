@@ -31,6 +31,11 @@ func getProxifiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTra
 				return client, nil, client, nil
 			}
 
+		case strings.HasPrefix(proto, "quic"):
+			client, stream := proxifyQuick(sshConfig, ctx)
+			if client != nil {
+				return client, stream, stream, nil
+			}
 		case strings.HasPrefix(proto, "tls"):
 			client, conn = proxifyTls(sshConfig, ctx)
 			if client != nil {
@@ -92,6 +97,24 @@ func proxifyTls(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, 
 	}
 	log.Info().Str("Mode", "TLSSH").Msg("Proxify using TLS succeeded")
 	return client, tlsConn
+}
+
+// proxifyQuick proxifies the SSH traffic using a Quick connection to the server
+func proxifyQuick(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, net.Conn) {
+	log.Info().Str("Mode", "QUICK").Msgf("Trying to proxify SSH using Quick")
+	stream, err := transport.GetQuickConn(ctx)
+	if err != nil {
+		log.Error().Str("Mode", "QUICK").Err(err).Msg("Failed to create Quick connection")
+		return nil, nil
+	}
+	log.Debug().Str("Mode", "QUICK").Msg("Connection succedded, trying to mount SSH over the Quick connection")
+	client, err := tryProxifySsh(sshConfig, stream)
+	if err != nil {
+		log.Error().Str("Mode", "QUICK").Err(err).Msg("Failed to proxify SSH over the Quick connection")
+		return nil, nil
+	}
+	log.Info().Str("Mode", "QUICK").Msg("Proxify using Quick succeeded")
+	return client, stream
 }
 
 // proxifyTls proxifies the SSH traffic using a websocket connection to the server

@@ -36,6 +36,9 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 			sshttpAgentMap:   make(map[string]*SSHTTPAgent),
 			sshttpAgentMapMu: sync.Mutex{},
 
+			quicAgentMap:   make(map[string]*QUICAgent),
+			quicAgentMapMu: sync.Mutex{},
+
 			tlsshAgentMap:   make(map[string]*TLSSHAgent),
 			tlsshAgentMapMu: sync.Mutex{},
 
@@ -61,6 +64,9 @@ type AgentStore struct {
 
 	sshttpAgentMap   map[string]*SSHTTPAgent
 	sshttpAgentMapMu sync.Mutex
+
+	quicAgentMap   map[string]*QUICAgent
+	quicAgentMapMu sync.Mutex
 
 	tlsshAgentMap   map[string]*TLSSHAgent
 	tlsshAgentMapMu sync.Mutex
@@ -129,6 +135,12 @@ func (a *AgentStore) GetAllActivesId() []string {
 	}
 	a.tlsshAgentMapMu.Unlock()
 
+	a.quicAgentMapMu.Lock()
+	for id := range a.quicAgentMap {
+		ids = append(ids, id)
+	}
+	a.quicAgentMapMu.Unlock()
+
 	a.wsshAgentMapMu.Lock()
 	for id := range a.wsshAgentMap {
 		ids = append(ids, id)
@@ -164,6 +176,7 @@ func (a *AgentStore) GetState(id string) types.State {
 	state := types.State{
 		Id:       id,
 		TLSSH:    a.DumpTLSSH(id),
+		QUIC:     a.DumpQUIC(id),
 		WSSH:     a.DumpWSSH(id),
 		SSHTTP:   a.DumpSSHTTP(id),
 		SocketIO: a.DumpSocketIO(id),

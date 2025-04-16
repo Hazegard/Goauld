@@ -3,6 +3,7 @@ package router
 import (
 	"crypto/tls"
 	"errors"
+	"github.com/quic-go/quic-go/http3"
 	"net"
 	"net/http"
 	"strings"
@@ -23,9 +24,11 @@ type MainRouter struct {
 	controlServer *sio.Server
 	wsshHandler   *transport.WSshHandler
 	server        *http.Server
+	server3       *http3.Server
 	router        *http.ServeMux
 	tlsshHandler  *transport.TLSSHServer
 	tlsConfig     *tls.Config
+	quickSSH      *transport.QUICKServer
 }
 
 func NewHttpRouter(controlServer *control.SocketIO,
@@ -75,11 +78,16 @@ func NewHttpRouter(controlServer *control.SocketIO,
 		WriteTimeout: controlServer.Server.HTTPWriteTimeout(),
 	}
 
+	server3 := &http3.Server{
+		Handler: n,
+	}
+
 	httprouter := &MainRouter{
 		controlServer: controlServer.Server,
 		wsshHandler:   wssh,
 		tlsshHandler:  tlssh,
 		server:        server,
+		server3:       server3,
 		router:        router,
 	}
 
@@ -95,6 +103,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 				Certificates: []tls.Certificate{cert},
 			}
 			httprouter.tlsConfig = tlsC
+			httprouter.server3.TLSConfig = tlsC
 		} else {
 			// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 			certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
@@ -108,7 +117,9 @@ func NewHttpRouter(controlServer *control.SocketIO,
 			tlsConfig.NextProtos = []string{"http/1.1"}
 			tlsConfig.MinVersion = tls.VersionSSL30
 			httprouter.tlsConfig = tlsConfig
+			httprouter.server3.TLSConfig = tlsConfig
 		}
+
 	}
 
 	return httprouter, nil

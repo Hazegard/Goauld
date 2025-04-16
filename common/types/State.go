@@ -28,6 +28,12 @@ type TLSSHState struct {
 	TlsConn Conn   `yaml:"tlsConn,omitempty"`
 }
 
+type QUICState struct {
+	AgentId  string `yaml:"agentId,omitempty"`
+	SshConn  Conn   `yaml:"sshConn,omitempty"`
+	QuicConn Conn   `yaml:"tlsConn,omitempty"`
+}
+
 type SSHTTState struct {
 	AgentId    string `yaml:"agentId,omitempty"`
 	SshConn    Conn   `yaml:"sshConn,omitempty"`
@@ -68,6 +74,7 @@ type State struct {
 	Path         string    `yaml:"path,omitempty"`
 
 	TLSSH    TLSSHState    `yaml:"TLSSH"`
+	QUIC     QUICState     `yaml:"QUIC"`
 	WSSH     WSHState      `yaml:"WSSH"`
 	SSHTTP   SSHTTState    `yaml:"SSHTTP"`
 	SocketIO SocketIOState `yaml:"socketIO"`
