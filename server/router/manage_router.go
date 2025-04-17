@@ -128,7 +128,7 @@ func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) 
 	id := r.PathValue("id")
 	err := ur.store.KillAGent(id, true)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}
 	err = ur.db.DeleteAgentById(id)
