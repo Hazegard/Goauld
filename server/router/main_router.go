@@ -94,13 +94,14 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	// If the TLS is enabled, configure the server to used TLS
 	if config.Get().Tls {
 		if config.Get().IsCustomTLS() {
-			cert, err := tls.LoadX509KeyPair("./tls_cert.pem", "./key.pem")
+			cert, err := tls.LoadX509KeyPair(config.Get().TlsCert, config.Get().TlsKey)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to load key pair")
 			}
 			tlsC := &tls.Config{
 				NextProtos:   []string{"http/1.1"},
 				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionSSL30,
 			}
 			httprouter.tlsConfig = tlsC
 			httprouter.server3.TLSConfig = tlsC
