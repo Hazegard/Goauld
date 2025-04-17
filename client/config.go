@@ -145,6 +145,10 @@ type ClientConfig struct {
 }
 
 func (c *ClientConfig) Validate() error {
+	if c.GenerateConfig {
+		// we do not validate the current config as we might want to have access token or server empty
+		return nil
+	}
 	if c.AccessToken == "" {
 		return errors.New("an access token is required (configuration file, environment variable, or --access-token)")
 	}

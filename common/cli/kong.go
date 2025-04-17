@@ -48,7 +48,7 @@ func YAML(r io.Reader, overwriteEnvVar bool) (kong.Resolver, error) {
 			path = append([]string{n.Name}, path...)
 		}
 		path = append(path, flag.Name)
-		path = strings.Split(strings.Join(path, "-"), "-")
+		//path = strings.Split(strings.Join(path, "-"), "-")
 		return find(config, path), nil
 	}), nil
 }
