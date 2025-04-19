@@ -266,14 +266,14 @@ func (s *ServerConfig) GetBinariesBasicAuth() (string, string) {
 	return split[0], strings.Join(split[1:], ":")
 }
 
-// GenerateYAMLConfig return the yaml configuration using the current configuration
+// GenerateYAMLConfig return the YAML configuration using the current configuration
 // (command line argument and parsed configuration files)
 func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
 	s.GenerateConfig = false
 	return cli.GenerateYAMLWithComments(*s)
 }
 
-// GenerateSafeYAMLConfig return the yaml configuration using the current configuration
+// GenerateSafeYAMLConfig return the YAML configuration using the current configuration
 // (command line argument and parsed configuration files)
 // Without sensitive information
 func (s *ServerConfig) GenerateSafeYAMLConfig() (string, error) {

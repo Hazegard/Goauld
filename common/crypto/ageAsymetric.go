@@ -8,7 +8,7 @@ import (
 	"filippo.io/age"
 )
 
-// ageAsymetric handle the asymetric cryptography using the age library
+// ageAsymmetric handle the asymmetric cryptography using the age library
 
 // AsymEncrypt encrypt the plaintext using the provided age public key
 func AsymEncrypt(publicKey string, plainText string) ([]byte, error) {

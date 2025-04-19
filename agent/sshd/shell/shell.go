@@ -15,10 +15,10 @@ import (
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.
 // It enables interaction with a shell (e.g., bash) through the session.
-// If the session is not interactive, it executes directly the command, without
+// If the session is not interactive, it directly executes the command, without
 // wrapping it in a pty.
 func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
-	// Extract PTY request and check if the session requested a PTY.
+	// Extract the PTY request and check if the session requested a PTY.
 	if len(c) == 0 {
 		cmd := getShell()
 		c = cmd.Cli()
@@ -142,7 +142,7 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 		// Wait until the session context is canceled.
 		err = cmd.Wait()
 		if err != nil {
-			log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing sesion")
+			log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing session")
 		}
 		log.Debug().Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("session closed")
 	}

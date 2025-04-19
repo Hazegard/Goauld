@@ -14,7 +14,7 @@ func ParseEnvFile(filepath string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Convert map to slice of "key=value"
+	// Convert the map to slice of "key=value"
 	var envs []string
 	for k, v := range envMap {
 		envs = append(envs, fmt.Sprintf("%s=%s", k, v))

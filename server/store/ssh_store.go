@@ -61,7 +61,7 @@ func (a *AgentStore) SSHCloseAgent(id string) error {
 	return errors.Join(errs...)
 }
 
-// DumpSSH return the SSH information associated to the agent
+// DumpSSH return the SSH information associated with the agent
 func (a *AgentStore) DumpSSH(id string) types.SSHState {
 	a.sshAgentMapMu.Lock()
 	agent := a.sshAgentMap[id]

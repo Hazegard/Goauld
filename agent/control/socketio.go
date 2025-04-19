@@ -181,7 +181,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig) error {
 	return nil
 }
 
-// Start starts the socket and initiates the configuration exchages with the server
+// Start starts the socket and initiates the configuration exchange with the server
 func (cpc *ControlPlanClient) Start() error {
 	encryptedKey, err := crypto.AsymEncrypt(config.Get().AgePubKey(), config.Get().SharedSecret)
 	if err != nil {
@@ -227,7 +227,8 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 }
 
 // KeepAliveLoop starts a keepalive loop that will periodically send ping
-// in order to keep alive the connection
+//
+// to keep alive the connection
 func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	cpc.socket.OnEvent(socketio.PongEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
@@ -293,8 +294,8 @@ func getDnsEioConfig(session *smux.Stream) *sio.ManagerConfig {
 			WebSocketDialOptions: &websocket.DialOptions{
 				HTTPClient: newSmuxHTTPandHTTPSClient(session),
 			},
-			// When tunnelling over DNS, if we use polling only or polling then websocket upgrade
-			// The tunnel fails to establish properly as the server responds unwanted content to the HTTP sockets open
+			// When tunneling over DNS, if we use polling only or polling then websocket upgrade,
+			// The tunnel fails to establish properly as the server responds to unwanted content to the open HTTP socket.
 			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
 			// On the client side
 			Transports: []string{"websocket"}, //, "websocket"},

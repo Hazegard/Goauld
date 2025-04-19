@@ -189,7 +189,7 @@ func (c *ClientConfig) ServerUrl() string {
 	return url
 }
 
-// GenerateYAMLConfig generate a yaml configuration associated to the currently running configuration
+// GenerateYAMLConfig generate a YAML configuration associated with the currently running configuration
 func (c *ClientConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*c)
 }

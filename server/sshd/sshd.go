@@ -31,7 +31,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 	forwardHandler := &ForwardedTCPHandler{}
 
 	// The SSHD server
-	s := &ssh.Server{
+	var s = &ssh.Server{
 		/*KeyboardInteractiveHandler: func(ctx ssh.Context, challenger gossh.KeyboardInteractiveChallenge) bool {
 			answers, err := challenger()
 		},*/
@@ -157,7 +157,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			agent.Source = sourceIp
 			err = agent.ValidatePasswordAndRotateIfTrue(password)
 			if err != nil {
-				log.Warn().Err(err).Str("Incomming", password).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
+				log.Warn().Err(err).Str("Incoming", password).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
 				return false
 			}
 			err = db.UpdateAgentField(agent, "OneTimePassword")

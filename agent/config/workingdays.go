@@ -24,7 +24,7 @@ func NewWorkingDay(start, end, tz string) *WorkingDay {
 	}
 }
 
-// Date parser layout, don't change
+// Date parser layout
 const hourLayout = "15:04" // hh:mm
 
 func (wd *WorkingDay) Validate() error {
@@ -47,7 +47,7 @@ func (wd *WorkingDay) getCurrentTime() time.Time {
 	return time.Now().In(loc)
 }
 
-// Trims days year etc
+// Trims days year etc.
 func (wd *WorkingDay) getCurrentTimeTrimed() time.Time {
 	t := wd.getCurrentTime()
 	n, err := time.Parse(hourLayout, fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute()))
@@ -68,7 +68,7 @@ func (wd *WorkingDay) isWorkingDay() bool {
 	}
 }
 
-// isWorkingHour return whether the  current time is between start and end of working hours
+// isWorkingHour return whether the current time is between start and end of working hours
 // Without checking the current day
 func (wd *WorkingDay) isWorkingHour() bool {
 	cur := wd.getCurrentTimeTrimed()

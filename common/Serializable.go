@@ -17,7 +17,7 @@ type Decryptor[U any] struct{}
 
 // Decrypt decrypts the data and returns it as the provided struct
 func (f Decryptor[U]) Decrypt(data []byte, c *crypto.SymCryptor, init func() *U) (*U, error) {
-	// declare var of non-pointer type. this is not nil!
+	// declare var of a non-pointer type. this is not nil!
 	a := init()
 
 	d, err := c.Decrypt(data)

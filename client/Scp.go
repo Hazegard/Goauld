@@ -23,7 +23,7 @@ func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
 	return s.Execute(api, cfg)
 }
 
-// GetTarget parses the input and fetch the target agent, whether it is in the source or destination of the scp command
+// GetTarget parses the input and fetches the target agent, whether it is in the source or destination of the scp command
 func (s *Scp) GetTarget() (string, error) {
 
 	isRemote, target := ExtractRemote(s.Source)
@@ -100,7 +100,7 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 			cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
 		}
 	}
-	// We display the proxycommand inside single quotes in order to allow users to copy and paste the command
+	// We display the proxycommand inside single quotes to allow users to copy and paste the command
 	sep := ""
 	if s.Print {
 		sep = "'"
@@ -116,7 +116,7 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 
 // buildTunnelSshCommand create the ssh command used in the SSH proxycommand
 // this SSH command is the tunnel one in the ssh command, but is actually the outer one
-// when being executed (ie: it will be executed first)
+// when being executed (i.e.: it will be executed first)
 func (s *Scp) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	cmd := Command{
 		Executable: "ssh",

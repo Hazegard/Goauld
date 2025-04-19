@@ -201,7 +201,7 @@ func run(config Compiler) error {
 	return nil
 }
 
-// drop write to the destination directory the source files
+// drop writes to the destination directory the source files
 // that will be used to compile the agent
 func drop(destDir string, source embed.FS) error {
 	// Walk through all files and directories in the embedded content

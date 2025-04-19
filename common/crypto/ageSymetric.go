@@ -8,7 +8,7 @@ import (
 	"filippo.io/age"
 )
 
-// SymCryptor handle the symetrical encryption
+// SymCryptor handle the symmetrical encryption
 type SymCryptor struct {
 	key       string
 	identity  *age.ScryptIdentity

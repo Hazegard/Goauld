@@ -6,7 +6,7 @@ import (
 
 // NewTlsConfig returns a new tls configuration
 // this insecure configuration is required as the agent may need
-// to be proxified on internal HTTP proxy that performs TLS decryption
+// to be proxied on an internal HTTP proxy that performs TLS decryption
 func NewTlsConfig() *tls.Config {
 	return &tls.Config{
 		InsecureSkipVerify: true,

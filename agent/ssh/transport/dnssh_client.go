@@ -66,7 +66,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	}
 
 	log.Trace().Str("Mode", "DNSSH").Msgf("opening session %08x", conn.GetConv())
-	// Permit coalescing the payloads of consecutive sends.
+	// Permit coalescing the payloads of consecutive sending.
 	conn.SetStreamMode(true)
 	// Disable the dynamic congestion window (limit only by the maximum of
 	// local and remote static windows).
@@ -91,7 +91,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	smuxConfig := smux.DefaultConfig()
 	smuxConfig.Version = 2
 	smuxConfig.KeepAliveTimeout = idleTimeout
-	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65536
+	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65 536
 	sess, err := smux.Client( /*rw*/ conn, smuxConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error opening smux session: %v", err)

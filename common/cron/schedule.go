@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Schedule calls function `f` with a period `p` offsetted by `o`.
+// Schedule calls function `f` with a period `p` offset by `o`.
 func Schedule(ctx context.Context, p time.Duration, o time.Duration, f func(time.Time)) {
 	// Position the first execution
 	first := time.Now().Truncate(p).Add(o)

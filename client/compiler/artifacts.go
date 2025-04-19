@@ -34,7 +34,7 @@ type Artifact struct {
 	Goarm64 string `json:"goarm64,omitempty"`
 }
 
-// ParseArtifacts parses the artifact file and return the corresponding struct
+// ParseArtifacts parses the artifact file and returns the corresponding struct
 func ParseArtifacts(filePath string) ([]Artifact, error) {
 	// Open the JSON file
 	file, err := os.Open(filePath)

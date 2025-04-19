@@ -81,7 +81,7 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	smuxConfig.Version = 2
 	smuxConfig.KeepAliveTimeout = idleTimeout
 	smuxConfig.MaxReceiveBuffer = 4 * 1024 * 1024 // default is 4 * 1024 * 1024
-	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024  // default is 65536
+	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024  // default is 65 536
 	sess, err := smux.Client(conn, smuxConfig)
 	if err != nil {
 		return nil, fmt.Errorf("opening smux session: %v", err)

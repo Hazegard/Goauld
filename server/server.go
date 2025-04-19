@@ -43,7 +43,7 @@ func main() {
 		log.Error().Err(err).Msgf("error initializing database")
 		return
 	}
-	// Reset the connected status of all agent when restarting
+	// Reset the connected status of all agents when restarting
 	err = db.ResetAgents()
 	if err != nil {
 		log.Error().Err(err).Msgf("error reseting agents")

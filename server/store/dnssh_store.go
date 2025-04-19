@@ -14,7 +14,7 @@ type DNSSHAgent struct {
 }
 
 // TODO: ajouter les conn pour le serveur SSH et pour le serveur Websocket
-// idée: faire une map des upstreamm conn address pour garder l'implémentation simple et flexible ?
+// idée: faire une map des upstream conn address pour garder l'implémentation simple et flexible ?
 
 // DnsshAddAgent adds the ssh connection of agent id to the agent store
 func (a *AgentStore) DnsshAddAgent(upstreamConn net.Conn, session *smux.Stream, kcpAddr string, id string) {

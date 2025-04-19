@@ -103,7 +103,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var batch []tea.Cmd
 
-	// If the selected agent is not empty, set it to be uased below
+	// If the selected agent is not empty, set it to be used below
 	var selectedAgent types.Agent
 	selRow := m.agentsTable.HighlightedRow()
 	data := selRow.Data["N"]
@@ -166,10 +166,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					text = fmt.Sprintf("Resetting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
 					m.statusText.TextStyle = textError
 					batch = append(batch, m.Kill(selectedAgent, false))
-					// } else {
-					// 	text = fmt.Sprintf("Already reseted %s (%s)", selectedAgent.Name, selectedAgent.Id)
-					// 	m.statusText.TextStyle = textWarning
-					// }
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
@@ -226,7 +222,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.statusText.SetValue(text)
 		}
-	// Handle update agent list
+	// Handle updates agent list
 	case UpdateMessage:
 		rows := AgentsToRow(msg.agents)
 		m.agents = msg.agents
@@ -400,7 +396,7 @@ func GenerateAgentTable() table.Model {
 	return t
 }
 
-// GetAgents call the API and returns the slice of the agents
+// GetAgents calls the API and returns the slice of the agents
 func (m *Model) GetAgents() []table.Row {
 	agents, err := m.api.GetAgents()
 	if err != nil {

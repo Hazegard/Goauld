@@ -49,7 +49,7 @@ func (router *MainRouter) HandleQuick(c quic.Connection) {
 			log.Error().Err(err).Msg("Failed to accept stream")
 			return
 		}
-		// The client first send its ID before transferring the conn to the SSH client
+		// The client first sends its ID before transferring the conn to the SSH client
 		// The ID is a MD5 hash
 		rawId := make([]byte, 128)
 		n, err := stream.Read(rawId)
@@ -58,7 +58,7 @@ func (router *MainRouter) HandleQuick(c quic.Connection) {
 			return
 		}
 		id := string(rawId[:n])
-		log.Info().Str("ID", id).Msg("Receiving incomming SSH connection over TLS")
+		log.Info().Str("ID", id).Msg("Receiving incoming SSH connection over TLS")
 
 		router.quickSSH.HandleQuick(stream, id)
 	}

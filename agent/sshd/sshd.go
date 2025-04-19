@@ -57,7 +57,7 @@ func NewSshdServer(ctx context.Context) *Sshd {
 			log.Debug().Msgf("Connnection using password failed from user: %s", ctx.User())
 			return false
 		},
-		// Allows to open a shell
+		// Allows opening a shell
 		PtyCallback: func(ctx ssh.Context, pty ssh.Pty) bool {
 			log.Trace().Msgf("Received pty request from user: %s", ctx.User())
 			return true

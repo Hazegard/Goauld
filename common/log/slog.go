@@ -133,7 +133,7 @@ func (l *GormLogger) Info(ctx context.Context, msg string, data ...any) {
 	l.log(logger.Info, msg, data...)
 }
 
-// Warn starts a new message with warn level.
+// Warn starts a new message with WARN level.
 func (l *GormLogger) Warn(ctx context.Context, msg string, data ...any) {
 	l.log(logger.Warn, msg, data...)
 }

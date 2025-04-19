@@ -31,7 +31,7 @@ type Command struct {
 	Env        []string
 }
 
-// InlineEnv modify the command in order to use the env binary to load the environment variables
+// InlineEnv modify the command to use the env binary to load the environment variables
 func (c *Command) InlineEnv() *Command {
 	args := c.Env
 	args = append(args, c.Executable)
@@ -42,7 +42,7 @@ func (c *Command) InlineEnv() *Command {
 	return c
 }
 
-// String return the command as a string
+// String returns the command as a string
 func (c *Command) String() string {
 	cmd := ""
 	if len(c.Env) > 0 {
@@ -51,7 +51,7 @@ func (c *Command) String() string {
 	return fmt.Sprintf("%s%s %s", cmd, c.Executable, strings.Join(c.Args, " "))
 }
 
-// Execute executes the command, and add the environment variables if needed
+// Execute executes the command and adds the environment variables if needed
 func (c *Command) Execute() error {
 	cmd := exec.Command(c.Executable, c.Args...)
 	if len(c.Env) > 0 {
@@ -161,7 +161,7 @@ func (e *Ssh) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath 
 			cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
 		}
 	}
-	// We display the proxycommand inside single quotes in order to allow users to copy and paste the command
+	// We display the proxycommand inside single quotes to allow users to copy and paste the command
 	sep := ""
 	if e.Print {
 		sep = "'"
@@ -175,7 +175,7 @@ func (e *Ssh) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath 
 
 // buildTunnelSshCommand create the ssh command used in the SSH proxycommand
 // this SSH command is the tunnel one in the ssh command, but is actually the outer one
-// when being executed (ie: it will be executed first)
+// when being executed (i.e.: it will be executed first)
 func (e *Ssh) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	cmd := Command{
 		Executable: "ssh",
@@ -218,7 +218,7 @@ func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target
 	return envs
 }
 
-// buildAllSshOptions returns the ssh option that are in common to the inner and the outer ssh
+// buildAllSshOptions returns the ssh options that are in common to the inner and the outer ssh
 func buildAllSshOptions(cfg ClientConfig) []string {
 	options := []string{
 		"-oStrictHostKeyChecking=no",

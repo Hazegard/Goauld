@@ -41,9 +41,9 @@ func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter
 	return r
 }
 
-// GetRouter returns the router, with the middleware configures
+// GetRouter returns the router, with the configured middleware
 // - Authentication middleware
-// - IP whitelisting middleware
+// - IP allowlisting middleware
 func (ur *ManageRouter) GetRouter() *negroni.Negroni {
 	n := negroni.New()
 	n.Use(midleware.AuthMiddleware(config.Get().AccessToken))
@@ -77,7 +77,7 @@ func (ur *ManageRouter) GetAgentByName(w http.ResponseWriter, r *http.Request) {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Name", name).Msg("error generating json response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	// return the json agent to the caller
+	// return the JSON agent to the caller
 	_, err = w.Write(jsonAgent)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", name).Msg("error returning response")
@@ -114,7 +114,7 @@ func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error generating json response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	// return the json agent to the caller
+	// return the JSON agent to the caller
 	_, err = w.Write(jsonAgent)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error returning response")
@@ -123,7 +123,7 @@ func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DeleteAgentById kills the agent and delete the remaining connections
+// DeleteAgentById kills the agent and deletes the remaining connections
 func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	err := ur.store.KillAGent(id, true)
@@ -241,14 +241,14 @@ func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	jbody := socket_io.ExitData{}
-	err = json.Unmarshal(body, &jbody)
+	jsonBody := socket_io.ExitData{}
+	err = json.Unmarshal(body, &jsonBody)
 	if err != nil {
-		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error unmarshaling json")
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error unmarshalling json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = ur.store.KillAGent(id, jbody.Kill)
+	err = ur.store.KillAGent(id, jsonBody.Kill)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}

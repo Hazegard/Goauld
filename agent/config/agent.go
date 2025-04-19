@@ -104,7 +104,7 @@ func InitAgent() (*kong.Context, error, []error) {
 	// compute the agent ID used to identify it
 	mid, err := machineid.ID()
 	if err != nil {
-		log.Warn().Err(err).Msg("error generating machineid, using ramdom")
+		log.Warn().Err(err).Msg("error generating machineId, using random")
 		log.Warn().Err(err).Msg("Multiple agents might run in parallel on the same host")
 		mid = cfg.Name
 	}
@@ -293,7 +293,7 @@ func (a *Agent) SSHTTPUrl() string {
 func (a *Agent) TlsUrl() string {
 	u, err := url.Parse(a.cfg.TlsServer)
 	if err != nil {
-		// An error occured while parsing the TLS sever, so we pass it as is to see if the TLS connection can succeed
+		// An error occurred while parsing the TLS sever, so we pass it as is to see if the TLS connection can succeed
 		return a.cfg.TlsServer
 	}
 	if u.Port() == "" {
@@ -312,7 +312,7 @@ func (a *Agent) KeepAwake() bool {
 	return a.cfg.KeepAwake
 }
 
-// GetKeepalive returns the duration between two keepalive ping
+// GetKeepalive returns the duration between two keepalive pings
 func (a *Agent) GetKeepalive() time.Duration {
 	return time.Duration(a.cfg.KeepAlive)
 }
@@ -331,13 +331,13 @@ func (a *Agent) IsOutOfWorkingDay() bool {
 	return a.cfg.OnlyWorkingDays && !a.WorkingDay.IsWorkingPeriod()
 }
 
-// GetRsshOrder returns the order thtat the agent should follow to attempt to connect
+// GetRsshOrder returns the order that the agent should follow to attempt to connect
 // to the SSHD server
 func (a *Agent) GetRsshOrder() []string {
 	return utils.ToLower(utils.Unique(a.cfg.RsshOrder))
 }
 
-// AgePubKey returns the age public key used to encrypt asymetrically data
+// AgePubKey returns the age public key used to encrypt asymmetrically data
 func (a *Agent) AgePubKey() string {
 	return a.cfg.AgePubKey
 }
@@ -478,10 +478,6 @@ func (a *Agent) GetRemotePortForwarding() []ssh.RemotePortForwarding {
 	return a.cfg.RemotePortForwarding
 }
 
-// func getID() string {
-// 	id, err != machin
-// }
-
 // getIps returns the IP on the hosts, excluding local network addresses
 func getIps() ([]string, []error) {
 	IPS := make([]string, 0)
@@ -518,18 +514,19 @@ func (a *Agent) DoPrintVersion() bool {
 	return a.cfg.Version
 }
 
-// DoGenerateConfig return whether the configuration generation should is enabled
+// DoGenerateConfig return whether the configuration generation should be enabled
 func (a *Agent) DoGenerateConfig() bool {
 	return a.cfg.GenerateConfig
 }
 
-// ShouldRunInBackground returns whether the agent should be run in background
+// ShouldRunInBackground returns whether the agent should be run in the background
 func (a *Agent) ShouldRunInBackground() bool {
 	return a.cfg.Background && !a.cfg.HiddenBackground
 }
 
-// StartInBackground re-execute the agent in background. A hidden flag is appended to the command line
-// In order to notify the child process that is already running in background
+// StartInBackground re-execute the agent in the background.
+// A hidden flag is appended to the command line
+// to notify the child process that is already running in the background
 func (a *Agent) StartInBackground() error {
 	args := append(os.Args, "--hidden-background")
 	c := exec.Command(args[0], args[1:]...)
@@ -540,7 +537,7 @@ func (a *Agent) StartInBackground() error {
 	return nil
 }
 
-// GenerateYAMLConfig returns the yaml configuration file corresponding to the currently running configuration
+// GenerateYAMLConfig returns the YAML configuration file corresponding to the currently running configuration
 func (a *Agent) GenerateYAMLConfig() (string, error) {
 	c := a.cfg
 	c.LocalSshPassword = ""

@@ -89,11 +89,11 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 	}
 
 	if cfg.GenAccessToken {
-		newtoken, err := crypto.GeneratePassword(42)
+		newToken, err := crypto.GeneratePassword(42)
 		if err != nil {
 			return "", err
 		}
-		content = compiler.ReplaceInFile(content, "SERVER__ACCESS_TOKEN", fmt.Sprintf("SERVER__ACCESS_TOKEN=%s", newtoken))
+		content = compiler.ReplaceInFile(content, "SERVER__ACCESS_TOKEN", fmt.Sprintf("SERVER__ACCESS_TOKEN=%s", newToken))
 	}
 
 	return newEnv, os.WriteFile(newEnv, []byte(content), 0o700)

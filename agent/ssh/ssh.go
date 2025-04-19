@@ -34,7 +34,7 @@ func NewSSHAgent() *SSHAgent {
 	}
 }
 
-// Init initialize the ssh client using the configuration
+// Init initializes the ssh client using the configuration
 func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSSH) error {
 	log.Info().Msg("Connecting to the ssh server...")
 	// Get the private key used to authenticate to the server
@@ -50,8 +50,8 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 	}
 
 	// defer cancel()
-	// Get the ssh client, which may be proxified to bypass proxies
-	client, conn, closer, err := getProxifiedClient(sshConfig, ctx, dnsTransport)
+	// Get the ssh client, which may be proxied to bypass proxies
+	client, conn, closer, err := getProxiedClient(sshConfig, ctx, dnsTransport)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
 		return err
@@ -93,7 +93,7 @@ func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error
 	return l, port, err
 }
 
-// RemoteForward starts the remote port forwarded in background. It returns the remote listening port
+// RemoteForward starts the remote port forwarded in the background. It returns the remote listening port
 func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx context.Context) (int, error) {
 	// start the remote forwarding to remotely expose the local sshd server
 	remoteListener, err := sshAgent.client.Listen("tcp", rpf.GetRemote())
@@ -108,7 +108,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 	sshAgent.remotePortMap[rpf.String()] = rpf
 	sshAgent.remotePortMapMu.Unlock()
 
-	// Loop that perform forwarding from the remote connection
+	// Loop that performs forwarding from the remote connection
 	// to the local sshd server
 	go func() {
 		defer func() {
@@ -189,7 +189,9 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 }
 
 // sshKeepAliveLoop starts a loop that will periodically send ping messages to the server
-// in order to perform a keepalive to ensure that the connection is kept active even if no traffic
+//
+// to perform a keepalive to ensure that the connection is kept active even if no traffic
+//
 // is transmitted within the connection
 func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)

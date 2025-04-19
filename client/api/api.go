@@ -58,7 +58,7 @@ func (api *API) delete(p string) (*http.Response, error) {
 	return api.client.Do(req)
 }
 
-// Get generic method to perform GET request with the appropriate authentication header
+// get generic method to perform GET request with the appropriate authentication header
 func (api *API) get(p string) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
@@ -133,7 +133,7 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 	return agents, nil
 }
 
-// GetAgentByName fetch the agent associated to the name
+// GetAgentByName fetch the agent associated with the name
 func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	name = url.PathEscape(name)
 	res, err := api.get("/manage/agent/by_name/" + name)

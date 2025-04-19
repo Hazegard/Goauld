@@ -13,9 +13,9 @@ import (
 
 // Taken from https://github.com/alecthomas/kong-yaml
 
-// YAML parse the file as yaml, but ignore the value found in the YAML file
+// YAML parse the file as YAML, but ignore the value found in the YAML file
 // if the corresponding value is found in the environment variables.
-// This is done in order to have environment variable precedence over
+// This is done to have environment variable precedence over
 // the configuration files
 
 func YAMLKeepEnvVar(r io.Reader) (kong.Resolver, error) {

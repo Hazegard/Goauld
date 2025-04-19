@@ -37,9 +37,9 @@ func NewAdminRouter(_db *persistence.DB, store *store.AgentStore) *AdminRouter {
 	return r
 }
 
-// GetRouter returns the router, with the middleware configures
+// GetRouter returns the router, with the middleware configured
 // - Authentication middleware
-// - IP whitelisting middleware
+// - IP allowlisting middleware
 func (ur *AdminRouter) GetRouter() *negroni.Negroni {
 	n := negroni.New()
 	n.Use(midleware.AuthMiddleware(config.Get().AdminToken))

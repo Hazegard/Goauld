@@ -16,7 +16,7 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Write the agent ID as header to allows the server to identify which agent
+	// Write the agent ID as header to allow the server to identify which agent
 	// is currently connecting
 	_, err = conn.Write([]byte(config.Get().Id))
 	if err != nil {

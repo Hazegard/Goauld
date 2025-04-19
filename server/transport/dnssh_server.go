@@ -134,7 +134,7 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 	smuxConfig := smux.DefaultConfig()
 	smuxConfig.Version = 2
 	smuxConfig.KeepAliveTimeout = idleTimeout
-	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65536
+	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65 536
 	sess, err := smux.Server(conn, smuxConfig)
 	if err != nil {
 		return err

@@ -15,7 +15,7 @@ func WhitelistMiddleware(allowedIPs []string) negroni.HandlerFunc {
 		// Get the IP address from the request
 		clientIP := getClientIP(r)
 
-		// Check if the IP is in the whitelist
+		// Check if the IP is in the allowlist
 		if !net.IsIPAllowed(clientIP, allowedIPs) {
 			// If not allowed, return 403 Forbidden
 			log.Get().Trace().Str("ClientIP", clientIP).Msg("ClientIP not allowed")

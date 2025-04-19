@@ -19,7 +19,7 @@ import (
 	"github.com/urfave/negroni"
 )
 
-// MainRouter is the primary router that listen on
+// MainRouter is the primary router that listens on
 type MainRouter struct {
 	controlServer *sio.Server
 	wsshHandler   *transport.WSshHandler
@@ -48,7 +48,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	router.Handle("/admin/", http.StripPrefix("/admin", adminRouter.GetRouter()))
 	router.Handle("/binaries/", http.StripPrefix("/binaries", staticRouter.GetRouter()))
 
-	// Negroni allow to used middleware, such as logger and recovery mecanism
+	// Negroni allow using middleware, such as logger and recovery mechanism
 	n := negroni.New()
 	logger := negroni.NewLogger()
 	logger.ALogger = log.GetNegroniLogger()
@@ -74,7 +74,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 
 		// HTTPWriteTimeout returns io.PollTimeout + 10 seconds (extra 10 seconds to write the response).
 		// You should either set this timeout to 0 (infinite) or some value greater than the io.PollTimeout.
-		// Otherwise poll requests may fail.
+		// Otherwise, poll requests may fail.
 		WriteTimeout: controlServer.Server.HTTPWriteTimeout(),
 	}
 
@@ -91,7 +91,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 		router:        router,
 	}
 
-	// If the TLS is enabled, configure the server to used TLS
+	// If the TLS is enabled, configure the server to use TLS
 	if config.Get().Tls {
 		if config.Get().IsCustomTLS() {
 			cert, err := tls.LoadX509KeyPair(config.Get().TlsCert, config.Get().TlsKey)

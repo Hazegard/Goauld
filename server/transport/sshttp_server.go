@@ -93,7 +93,7 @@ func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) err
 	smuxConfig.Version = 2
 	smuxConfig.KeepAliveTimeout = idleTimeout
 	smuxConfig.MaxReceiveBuffer = 16 * 1024 * 1024 // default is 4 * 1024 * 1024
-	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024   // default is 65536
+	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024   // default is 65 536
 	sess, err := smux.Server(conn, smuxConfig)
 	if err != nil {
 		return err

@@ -31,7 +31,7 @@ func (a *Agent) JSON() ([]byte, error) {
 	return json.Marshal(a)
 }
 
-// GetCryptor returns the encryption class that allows to encryot or decrypt data using the
+// GetCryptor returns the encryption class that allows to encrypt or decrypt data using the
 // shared encryption key
 func (a *Agent) GetCryptor() (*crypto.SymCryptor, error) {
 	if a.cryptor == nil {
@@ -67,7 +67,7 @@ func (a *Agent) InitKeys() error {
 	return nil
 }
 
-// AddPort adds the port to the array of used ports of the agent
+// AddPort adds the port to the array of ports used by the agent
 func (a *Agent) AddPort(port int) {
 	ports := portStringToInt(a.UsedPorts)
 	if len(ports) == 1 && ports[0] == 0 {
@@ -80,7 +80,7 @@ func (a *Agent) AddPort(port int) {
 	a.UsedPorts = portIntToString(ports)
 }
 
-// DeletePort remove the port from the array of used ports of the agent
+// DeletePort remove the port from the array of ports used by the agent
 func (a *Agent) DeletePort(port int) {
 	usedPorts := portStringToInt(a.UsedPorts)
 	for i, p := range usedPorts {
@@ -103,13 +103,13 @@ func (a *Agent) SetRemotePortForwarding(rpf []ssh.RemotePortForwarding) {
 	// a.RemotePortForwarding = strings.Join(rpfString, ",")
 }
 
-// SetConnect sets the agent state to connected
+// SetConnect sets the agent state to connected state
 func (a *Agent) SetConnect() {
 	a.Connected = true
 	a.LastUpdated = time.Now()
 }
 
-// SetDisconnect sets the agent state to disconnected
+// SetDisconnect sets the agent state to disconnected state
 func (a *Agent) SetDisconnect() {
 	a.Connected = false
 	a.LastUpdated = time.Now()
@@ -131,7 +131,7 @@ func (a *Agent) SetSshPassword(pwd string) {
 	a.SshPasswd = pwd
 }
 
-// GetForwardedPorts return the list of forwarded ports of the agent
+// GetForwardedPorts return the list of ports forwarded by the agent
 func (a *Agent) GetForwardedPorts() []int {
 	usedPorts := portStringToInt(a.UsedPorts)
 	for _, rpf := range a.RemotePortForwarding {
@@ -140,7 +140,7 @@ func (a *Agent) GetForwardedPorts() []int {
 	return utils.Unique(usedPorts)
 }
 
-// ValidatePasswordAndRotateIfTrue check if the incoming password match the current password.
+// ValidatePasswordAndRotateIfTrue check if the incoming password matches the current password.
 // If the password matches, we rotate it
 func (a *Agent) ValidatePasswordAndRotateIfTrue(password string) error {
 	isValid := password == a.OneTimePassword
@@ -155,7 +155,7 @@ func (a *Agent) ValidatePasswordAndRotateIfTrue(password string) error {
 	return nil
 }
 
-// IsPortForwarded checks if the port is forwarded by the agent
+// IsPortForwarded checks if the agent forwards the port
 func (a *Agent) IsPortForwarded(port int) bool {
 	return utils.Contains(a.GetForwardedPorts(), port)
 }
@@ -233,7 +233,7 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 }
 
 // FindOrCreate retrieves the agent from the database
-// If no agent corresponding to this ID exists
+// If no agent corresponding to this ID exists,
 // an empty one that will be populated later is returned
 func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
 	agent, _ := db.FindAgentById(id)
@@ -344,7 +344,7 @@ func portStringToInt(port string) []int {
 	return ports
 }
 
-// portStringToInt converts  a slice of the ports
+// portStringToInt converts a slice of the ports
 // to a string of port separated by a comma
 func portIntToString(port []int) string {
 	portsString := []string{}
