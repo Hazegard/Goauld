@@ -90,7 +90,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig) error {
 	// Once received, the agent sends its SSHD password to the server using the SendAgentDataEvent event
 	socket.OnEvent(socketio.SendSshPrivateKeyEvent, func(data []byte) {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
-		log.Trace().Msgf("SshPrivateKeyEvent: data reveived")
+		log.Trace().Msgf("SshPrivateKeyEvent: data received")
 		// Decrypt the SSH private key
 		privateKey, err := socketio.DecryptSshPrivateKeyMessage(data, config.Get().Cryptor)
 		if err != nil {

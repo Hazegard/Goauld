@@ -38,12 +38,14 @@ var (
 	_https_listen_addr = ":443"
 	_sshd_listen_addr  = ":2222"
 	_dns_listen_addr   = ":53"
+	_quic_listen_addr  = ":443"
 
 	_verbosity = "0"
 
 	_tls      = "true"
 	_tls_cert = ""
 	_tls_key  = ""
+	_quic     = "true"
 
 	_dns = "true"
 
@@ -72,12 +74,14 @@ var (
 		"_https_listen_addr": _https_listen_addr,
 		"_sshd_listen_addr":  _sshd_listen_addr,
 		"_dns_listen_addr":   _dns_listen_addr,
+		"_quic_listen_addr":  _quic_listen_addr,
 
 		"_verbosity": _verbosity,
 
 		"_tls":      _tls,
 		"_tls_cert": _tls_cert,
 		"_tls_key":  _tls_key,
+		"_quic":     _quic,
 
 		"_dns": _dns,
 
@@ -114,12 +118,14 @@ type ServerConfig struct {
 	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-listen-addr" optional:"" help:"HTTPS address to bind to, port 0 => Random."`
 	SshdAddr  string `default:"${_sshd_listen_addr}"  name:"ssh-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 	DnsAddr   string `default:"${_dns_listen_addr}"  name:"dns-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
+	QuicAddr  string `default:"${_quic_listen_addr}"  name:"quic-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 
 	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
 
 	Tls     bool   `default:"${_tls}" negatable:"" name:"tls" help:"Enable TLS."`
 	TlsKey  string `default:"${_tls_key}" help:"Path to TLS certificate key." name:"tls-key"`
 	TlsCert string `default:"${_tls_cert}" help:"Path to TLS certificate." name:"tls-cert"`
+	Quic    bool   `default:"${_quic}" negatable:"" name:"quic" help:"Enable QUIC."`
 
 	DNS        bool   `default:"${_dns}" negatable:"" name:"dns" help:"Enable DNS."`
 	NoDB       bool   `default:"${_no_db}" negatable:"" name:"db" help:"Disable database usage."`
@@ -214,7 +220,23 @@ func (s *ServerConfig) UpdateHTTPSAddr(port int) {
 	}
 }
 
-// UpdateHTTPAddr return the local SSH address
+// UpdateQUICAddr return the local SSH address
+func (s *ServerConfig) UpdateQUICAddr(port int) {
+	split := strings.Split(s.QuicAddr, ":")
+	if len(split) == 2 && split[1] == "0" {
+		s.QuicAddr = fmt.Sprintf("%s:%d", split[0], port)
+	}
+}
+
+// UpdateDNSAddr updates the local DNS address
+func (s *ServerConfig) UpdateDNSAddr(port int) {
+	split := strings.Split(s.DnsAddr, ":")
+	if len(split) == 2 && split[1] == "0" {
+		s.DnsAddr = fmt.Sprintf("%s:%d", split[0], port)
+	}
+}
+
+// UpdateHTTPAddr updates the local HTTP address
 func (s *ServerConfig) UpdateHTTPAddr(port int) {
 	split := strings.Split(s.HttpsAddr, ":")
 	if len(split) == 2 && split[1] == "0" {

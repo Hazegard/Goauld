@@ -294,7 +294,7 @@ func (db *DB) GetAgentsByUsedPort(port int) ([]Agent, error) {
 // Direct (SSH), SSH over TLS, ssh over Websockets, SSH over HTTP
 func (db *DB) SetAgentSshMode(id string, mode string) error {
 	switch mode {
-	case "HTTP", "SSH", "TLS", "WS", "DNS", "OFF":
+	case "HTTP", "SSH", "TLS", "WS", "DNS", "OFF", "QUIC":
 	default:
 		return fmt.Errorf("unknown mode: %s", mode)
 	}

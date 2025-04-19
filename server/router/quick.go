@@ -8,20 +8,20 @@ import (
 	"net"
 )
 
-// ServeQuick start a TLS listener on the configured port
-func (router *MainRouter) ServeQuick() {
+// ServeQUIC start a TLS listener on the configured port
+func (router *MainRouter) ServeQuic() {
 	httpsAddr := config.Get().LocalHttpsAddr()
 	quicConf := &quic.Config{
 		EnableDatagrams: true,
 	}
-	listener, err := quic.ListenAddr(httpsAddr, router.tlsConfig, quicConf)
+	listener, err := quic.ListenAddr(httpsAddr, router.server3.TLSConfig, quicConf)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to start TLS listener")
+		log.Error().Err(err).Msg("Failed to start QUIC listener")
 		return
 	}
 	defer listener.Close()
-	config.Get().UpdateHTTPSAddr(listener.Addr().(*net.TCPAddr).Port)
-	log.Info().Str("Address", config.Get().LocalHttpsAddr()).Msgf("HTTPS server listening")
+	config.Get().UpdateQUICAddr(listener.Addr().(*net.UDPAddr).Port)
+	log.Info().Str("Address", config.Get().QuicAddr).Msgf("QUIC server listening")
 
 	for {
 		conn, err := listener.Accept(context.Background())
@@ -29,21 +29,25 @@ func (router *MainRouter) ServeQuick() {
 			log.Warn().Err(err).Msg("Failed to accept connection")
 			continue
 		}
-		go router.HandleQuick(conn)
+		go router.HandleQUIC(conn)
 	}
 }
 
-// HandleQuick handle the incoming TLS request
+// HandleQUIC handle the incoming TLS request
 // If the request matched the HTTP domain, forward this request to the HTTP router
 // If the request matches the TLS domain, forward this TLS traffic to the SSH over TLS
-func (router *MainRouter) HandleQuick(c quic.Connection) {
+func (router *MainRouter) HandleQUIC(c quic.Connection) {
 
 	alpn := c.ConnectionState().TLS.NegotiatedProtocol
 
 	switch alpn {
 	case "h3":
-		router.server3.ServeQUICConn(c)
-	case "ssh":
+		err := router.server3.ServeQUICConn(c)
+		if err != nil {
+			log.Warn().Err(err).Msg("Failed to serve QUIC connection")
+			return
+		}
+	case "quic":
 		stream, err := c.AcceptStream(context.Background())
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to accept stream")
@@ -54,17 +58,17 @@ func (router *MainRouter) HandleQuick(c quic.Connection) {
 		rawId := make([]byte, 128)
 		n, err := stream.Read(rawId)
 		if err != nil {
-			log.Error().Err(err).Msg("TLS read ID fail")
+			log.Error().Err(err).Msg("QUIC read ID fail")
 			return
 		}
 		id := string(rawId[:n])
-		log.Info().Str("ID", id).Msg("Receiving incoming SSH connection over TLS")
+		log.Info().Str("ID", id).Msg("Receiving incoming SSH connection over QUIC")
 
-		router.quickSSH.HandleQuick(stream, id)
+		router.quicSSH.HandleQuic(stream, id)
 	}
 }
 
-/*func (router *MainRouter) quickssh(quickConn quic.Stream) {
+/*func (router *MainRouter) quicssh(quicConn quic.Stream) {
 
 	sshConn, err := net.Dial("tcp", config.Get().SshdAddr)
 	if err != nil {
@@ -75,7 +79,7 @@ func (router *MainRouter) HandleQuick(c quic.Connection) {
 	errChan := make(chan error, 1)
 	// Initializes the QUIC to SSH connection
 	go func() {
-		_, err := io.Copy(quickConn, sshConn)
+		_, err := io.Copy(quicConn, sshConn)
 		if err != nil && !errors.Is(err, io.EOF) {
 			log.Error().Str("ID", id).Str("Mode", "TLS").Err(err).Msg("TLS -> SSH connection failed")
 			errChan <- err
@@ -83,7 +87,7 @@ func (router *MainRouter) HandleQuick(c quic.Connection) {
 	}()
 	// Initializes the SSH to QUIC connection
 	go func() {
-		_, err := io.Copy(sshConn, quickConn)
+		_, err := io.Copy(sshConn, quicConn)
 		if err != nil && !errors.Is(err, io.EOF) {
 			log.Error().Str("ID", id).Str("Mode", "TLS").Err(err).Msg("SSH -> TLS connection failed")
 			errChan <- err

@@ -24,6 +24,9 @@ ssh-listen-addr: :2222
 # Remote address to bind to, port 0 => Random.
 dns-listen-addr: :53
 
+# Remote address to bind to, port 0 => Random.
+quic-listen-addr: :443
+
 # Verbosity. Repeat to increase
 verbose: 0
 
@@ -35,6 +38,9 @@ tls-key: ""
 
 # Path to TLS certificate.
 tls-cert: ""
+
+# Enable QUIC.
+quic: true
 
 # Enable DNS.
 dns: true

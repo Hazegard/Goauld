@@ -174,6 +174,7 @@ func run() utils.CancelReason {
 		err = sshAgent.Init(ctx, dnsTransport)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
+			globalCanceler.Restart()
 			return
 		}
 

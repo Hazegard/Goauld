@@ -29,12 +29,14 @@ env:
   - SERVER__HTTPS_LISTEN_ADDR={{ .Env.SERVER__HTTPS_LISTEN_ADDR }}
   - SERVER__SSHD_LISTEN_ADDR={{ .Env.SERVER__SSHD_LISTEN_ADDR }}
   - SERVER__DNS_LISTEN_ADDR={{ .Env.SERVER__DNS_LISTEN_ADDR }}
+  - SERVER__QUIC_LISTEN_ADDR={{ .Env.SERVER__QUIC_LISTEN_ADDR }}
 
   - SERVER__VERBOSITY={{ .Env.SERVER__VERBOSITY }}
 
   - SERVER__TLS={{ .Env.SERVER__TLS }}
   - SERVER__TLS_KEY={{ .Env.SERVER__TLS_KEY }}
   - SERVER__TLS_CERT={{ .Env.SERVER__TLS_CERT }}
+  - SERVER__QUIC={{ .Env.SERVER__QUIC }}
 
   - SERVER__DNS={{ .Env.SERVER__DNS }}
   - SERVER__NO_DB={{ .Env.SERVER__NO_DB }}
@@ -56,6 +58,7 @@ env:
 
   - AGENT__SERVER={{ .Env.AGENT__SERVER }}
   - AGENT__SSH_SERVER={{ .Env.AGENT__SSH_SERVER }}
+  - AGENT__QUIC_DOMAIN={{ .Env.AGENT__QUIC_DOMAIN }}
   - AGENT__TLS_SERVER={{ .Env.AGENT__TLS_SERVER }}
   - AGENT__DNS_SERVER={{ .Env.AGENT__DNS_SERVER }}
   - AGENT__DNS_DOMAIN={{ .Env.AGENT__DNS_DOMAIN }}
@@ -214,12 +217,14 @@ builds:
       - '{{ if (index .Env "SERVER__HTTPS_LISTEN_ADDR") }} -X Goauld/server/config._https_listen_addr={{ .Env.SERVER__HTTPS_LISTEN_ADDR }}{{end}}'
       - '{{ if (index .Env "SERVER__SSHD_LISTEN_ADDR") }} -X Goauld/server/config._sshd_listen_addr={{ .Env.SERVER__SSHD_LISTEN_ADDR }}{{end}}'
       - '{{ if (index .Env "SERVER__DNS_LISTEN_ADDR") }} -X Goauld/server/config._dns_listen_addr={{ .Env.SERVER__DNS_LISTEN_ADDR }}{{end}}'
+      - '{{ if (index .Env "SERVER__QUIC_LISTEN_ADDR") }} -X Goauld/server/config._quic_listen_addr={{ .Env.SERVER__QUIC_LISTEN_ADDR }}{{end}}'
 
       - '{{ if (index .Env "SERVER__VERBOSITY") }} -X Goauld/server/config._verbosity={{ .Env.SERVER__VERBOSITY }}{{end}}'
 
       - '{{ if (index .Env "SERVER__TLS") }} -X Goauld/server/config._tls={{ .Env.SERVER__TLS }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_KEY") }} -X Goauld/server/config._tls_key={{ .Env.SERVER__TLS_KEY }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_CERT") }} -X Goauld/server/config._tls_cert={{ .Env.SERVER__TLS_CERT }}{{end}}'
+      - '{{ if (index .Env "SERVER__QUIC") }} -X Goauld/server/config._quic={{ .Env.SERVER__QUIC }}{{end}}'
 
       - '{{ if (index .Env "SERVER__DNS") }} -X Goauld/server/config._dns={{ .Env.SERVER__DNS }}{{end}}'
       - '{{ if (index .Env "SERVER__NO_DB") }} -X Goauld/server/config._no_db={{ .Env.SERVER__NO_DB }}{{end}}'
@@ -272,6 +277,7 @@ builds:
 
       - '{{ if (index .Env "AGENT__SERVER") }} -X Goauld/agent/config._server={{ .Env.AGENT__SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__SSH_SERVER") }} -X Goauld/agent/config._ssh_server={{ .Env.AGENT__SSH_SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__QUIC_DOMAIN") }} -X Goauld/agent/config._quic_domain={{ .Env.AGENT__QUIC_DOMAIN }}{{end}}'
       - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_SERVER") }} -X Goauld/agent/config._dns_server={{ .Env.AGENT__DNS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'

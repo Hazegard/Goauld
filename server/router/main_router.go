@@ -19,7 +19,7 @@ import (
 	"github.com/urfave/negroni"
 )
 
-// MainRouter is the primary router that listens on
+// MainRouter is the primary router that listens to
 type MainRouter struct {
 	controlServer *sio.Server
 	wsshHandler   *transport.WSshHandler
@@ -28,7 +28,7 @@ type MainRouter struct {
 	router        *http.ServeMux
 	tlsshHandler  *transport.TLSSHServer
 	tlsConfig     *tls.Config
-	quickSSH      *transport.QUICKServer
+	quicSSH       *transport.QUICServer
 }
 
 func NewHttpRouter(controlServer *control.SocketIO,
@@ -38,6 +38,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	manageRouter *ManageRouter,
 	adminRouter *AdminRouter,
 	staticRouter *StaticRouter,
+	quicSSH *transport.QUICServer,
 ) (*MainRouter, error) {
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
@@ -89,6 +90,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 		server:        server,
 		server3:       server3,
 		router:        router,
+		quicSSH:       quicSSH,
 	}
 
 	// If the TLS is enabled, configure the server to use TLS
@@ -104,7 +106,13 @@ func NewHttpRouter(controlServer *control.SocketIO,
 				MinVersion:   tls.VersionSSL30,
 			}
 			httprouter.tlsConfig = tlsC
-			httprouter.server3.TLSConfig = tlsC
+			quicTls := &tls.Config{
+				NextProtos:   []string{"quic"},
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS13,
+			}
+
+			httprouter.server3.TLSConfig = quicTls
 		} else {
 			// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 			certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
@@ -118,7 +126,15 @@ func NewHttpRouter(controlServer *control.SocketIO,
 			tlsConfig.NextProtos = []string{"http/1.1"}
 			tlsConfig.MinVersion = tls.VersionSSL30
 			httprouter.tlsConfig = tlsConfig
-			httprouter.server3.TLSConfig = tlsConfig
+
+			quicConfig, err := certmagic.TLS(config.Get().GetTlsDomains())
+			if err != nil {
+				return nil, err
+			}
+			quicConfig.NextProtos = []string{"quic", "ssh", "h3"}
+			quicConfig.MinVersion = tls.VersionTLS13
+
+			httprouter.server3.TLSConfig = quicConfig
 		}
 
 	}
@@ -133,6 +149,10 @@ func (router *MainRouter) Serve() error {
 	// If the TLS is enabled, run the TLS server in a dedicated goroutine
 	if config.Get().Tls {
 		go router.ServeTLS()
+
+		if config.Get().Quic {
+			go router.ServeQuic()
+		}
 	}
 	// serve the HTTP server
 	listener, err := net.Listen("tcp", config.Get().LocalHttpAddr())

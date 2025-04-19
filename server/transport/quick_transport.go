@@ -12,72 +12,72 @@ import (
 	"Goauld/server/store"
 )
 
-// QUICKServer is the struct used to handle SSH over QUICK
-type QUICKServer struct {
+// QUICServer is the struct used to handle SSH over QUIC
+type QUICServer struct {
 	store *store.AgentStore
 	db    *persistence.DB
 }
 
-// NewQUICKSHServer returns a new QUICKSHServer
-func NewQUICKServer(store *store.AgentStore, db *persistence.DB) *QUICKServer {
-	return &QUICKServer{
+// NewQUICServer returns a new QUICSHServer
+func NewQUICServer(store *store.AgentStore, db *persistence.DB) *QUICServer {
+	return &QUICServer{
 		store: store,
 		db:    db,
 	}
 }
 
-// HandleQUICKSH handle the SSH over QUICK connection
+// HandleQuic handle the SSH over QUIC connection
 // It initializes a connection to the SSH server
-// and start bidirectional communication between the QUICK connection
+// and start bidirectional communication between the QUIC connection
 // and the SSH connection
-func (qssh *QUICKServer) HandleQuick(quickConn quic.Stream, id string) {
+func (qssh *QUICServer) HandleQuic(quicConn quic.Stream, id string) {
 	// Initializes a connection to the SSH server
 	sshConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
 	if err != nil {
-		log.Error().Str("ID", id).Str("Mode", "QUICK").Err(err).Msg("error connecting to server")
+		log.Error().Str("ID", id).Str("Mode", "QUIC").Err(err).Msg("error connecting to server")
 		return
 	}
-	// Adds the agent to the QUICK over SSH store
-	QUICKshAgent := &store.QUICAgent{QUICStream: quickConn, SSHConn: sshConn}
-	qssh.store.QuicAddAgent(id, QUICKshAgent)
+	// Adds the agent to the QUIC over SSH store
+	QUICshAgent := &store.QUICAgent{QUICStream: quicConn, SSHConn: sshConn}
+	qssh.store.QuicAddAgent(id, QUICshAgent)
 
 	errChan := make(chan error, 1)
-	// Initializes the QUICK to SSH connection
+	// Initializes the QUIC to SSH connection
 	go func() {
-		_, err := io.Copy(quickConn, sshConn)
+		_, err := io.Copy(quicConn, sshConn)
 		if err != nil && !errors.Is(err, io.EOF) {
-			log.Error().Str("ID", id).Str("Mode", "QUICK").Err(err).Msg("QUICK -> SSH connection failed")
+			log.Error().Str("ID", id).Str("Mode", "QUIC").Err(err).Msg("QUIC -> SSH connection failed")
 			errChan <- err
 		}
 	}()
-	// Initializes the SSH to QUICK connection
+	// Initializes the SSH to QUIC connection
 	go func() {
-		_, err := io.Copy(sshConn, quickConn)
+		_, err := io.Copy(sshConn, quicConn)
 		if err != nil && !errors.Is(err, io.EOF) {
-			log.Error().Str("ID", id).Str("Mode", "QUICK").Err(err).Msg("SSH -> QUICK connection failed")
+			log.Error().Str("ID", id).Str("Mode", "QUIC").Err(err).Msg("SSH -> QUIC connection failed")
 			errChan <- err
 		}
 	}()
-	// Adds the QUICK mode of the agent to the database
-	err = qssh.db.SetAgentSshMode(id, "QUICK")
+	// Adds the QUIC mode of the agent to the database
+	err = qssh.db.SetAgentSshMode(id, "QUIC")
 	if err != nil {
-		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUICK").Msg("error setting agent mode to QUICK")
+		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error setting agent mode to QUIC")
 	}
 	// Waits for an error to occur, either in the
-	// SSH -> QUICK connection or in the QUICK -> SSH connection
+	// SSH -> QUIC connection or in the QUIC -> SSH connection
 	err = <-errChan
 	if err != nil {
-		log.Error().Str("ID", id).Err(err).Str("Mode", "QUICK").Msg("error during copy")
+		log.Error().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error during copy")
 	}
 
 	// Closes all remaining connections of the agent
 	err = qssh.store.TlsshCloseAgent(id)
 	if err != nil {
-		log.Error().Str("ID", id).Err(err).Str("Mode", "QUICK").Msg("error while closing QUICK streams")
+		log.Error().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error while closing QUIC streams")
 	}
 	// Updates the database to set the agent mode as disconnected
 	err = qssh.db.SetAgentSshMode(id, "OFF")
 	if err != nil {
-		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUICK").Msg("error setting agent mode to OFF")
+		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error setting agent mode to OFF")
 	}
 }

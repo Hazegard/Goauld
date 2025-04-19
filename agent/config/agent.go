@@ -302,6 +302,22 @@ func (a *Agent) TlsUrl() string {
 	return a.cfg.TlsServer
 }
 
+// QuicUrl return the SSH over TLS connection URL
+func (a *Agent) QuicUrl() string {
+	if a.cfg.QuicServer == "" {
+		return a.TlsUrl()
+	}
+	u, p, err := net.SplitHostPort(a.cfg.QuicServer)
+	if err != nil {
+		// An error occurred while parsing the TLS sever, so we pass it as is to see if the TLS connection can succeed
+		return a.cfg.QuicServer
+	}
+	if p == "" {
+		return fmt.Sprintf("%s:443", u)
+	}
+	return a.cfg.QuicServer
+}
+
 // Name returns the agent name
 func (a *Agent) Name() string {
 	return a.cfg.Name

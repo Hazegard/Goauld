@@ -21,11 +21,12 @@ var (
 	_shared_password  = ""
 	_name             = "user@hostname"
 
-	_server     = "www.example.com"
-	_ssh_server = "www.example.com:22222"
-	_tls_server = "app.example.com"
-	_dns_server = "8.8.8.8,1.1.1.1,9.9.9.9"
-	_dns_domain = "www.example.com"
+	_server      = "www.example.com"
+	_ssh_server  = "www.example.com:22222"
+	_tls_server  = "app.example.com"
+	_quic_domain = "app.example.com"
+	_dns_server  = "8.8.8.8,1.1.1.1,9.9.9.9"
+	_dns_domain  = "www.example.com"
 
 	_sshd_enabled           = "true"
 	_socks_enabled          = "true"
@@ -102,11 +103,12 @@ var (
 		"_http_proxy_password": _http_proxy_password,
 		"_http_proxy_domain":   _http_proxy_domain,
 
-		"_server":     _server,
-		"_ssh_server": _ssh_server,
-		"_tls_server": _tls_server,
-		"_dns_server": _dns_server,
-		"_dns_domain": _dns_domain,
+		"_server":      _server,
+		"_ssh_server":  _ssh_server,
+		"_tls_server":  _tls_server,
+		"_quic_domain": _quic_domain,
+		"_dns_server":  _dns_server,
+		"_dns_domain":  _dns_domain,
 
 		"_rssh_port":  _rssh_port,
 		"_socks_port": _socks_port,
@@ -146,6 +148,7 @@ type AgentConfig struct {
 
 	Server          string   `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server to connect to."`
 	SshServer       string   `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
+	QuicServer      string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" optional:"" help:"The QUIC domain used to tunnel the traffic."`
 	TlsServer       string   `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
 	DnsServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections."`
 	DnsServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`

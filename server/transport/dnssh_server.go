@@ -778,6 +778,9 @@ func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, 
 		return nil, fmt.Errorf("cannot listen for DNS packets: %v", err)
 	}
 
+	config.Get().UpdateDNSAddr(dnsConn.LocalAddr().(*net.UDPAddr).Port)
+	log.Info().Str("Address", config.Get().DnsAddr).Msgf("DNS server listening")
+
 	return &DNSSHServer{
 		store:        store,
 		db:           db,

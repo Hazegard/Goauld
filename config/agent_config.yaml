@@ -7,6 +7,9 @@ server: www.example.com
 # The SSH server to connect to when using direct SSH connections.
 ssh-server: www.example.com:22222
 
+# The QUIC domain used to tunnel the traffic.
+quic-domain: app.example.com
+
 # The TLS server to connect to when using SSH over TLS connections.
 tls-server: app.example.com
 
