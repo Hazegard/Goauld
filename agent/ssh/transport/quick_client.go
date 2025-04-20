@@ -8,44 +8,60 @@ import (
 	"fmt"
 	"github.com/quic-go/quic-go"
 	"net"
+	"time"
 )
 
 type StreamConn struct {
 	quic.Stream
 	lAddr net.Addr
-	rADdr net.Addr
+	rAddr net.Addr
 }
 
 func (s *StreamConn) LocalAddr() net.Addr  { return s.lAddr }
-func (s *StreamConn) RemoteAddr() net.Addr { return s.rADdr }
+func (s *StreamConn) RemoteAddr() net.Addr { return s.rAddr }
 
+// GetQuicConn dials a QUIC connection and opens a stream, all respecting ctx.
+// If ctx is done at any point, dialing, stream open or the header write will error out.
 func GetQuicConn(ctx context.Context) (*StreamConn, error) {
-
+	// 1) Prepare TLS and QUIC configs
 	tlsConf := proxy.NewTlsConfig()
 	tlsConf.NextProtos = []string{"quic"}
 	tlsConf.MinVersion = tls.VersionTLS13
 
 	quicConf := &quic.Config{}
+
+	// 2) Dial QUIC with context
 	conn, err := quic.DialAddr(ctx, config.Get().QuicUrl(), tlsConf, quicConf)
 	if err != nil {
-		return nil, fmt.Errorf("error dialing QUIC address: %s", err)
-	}
-	stream, err := conn.OpenStreamSync(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error opening QUIC stream: %s", err)
+		return nil, fmt.Errorf("error dialing QUIC address: %w", err)
 	}
 
-	// Write the agent ID as header to allow the server to identify which agent
-	// is currently connecting
-	_, err = stream.Write([]byte(config.Get().Id))
+	// 3) Open the stream with context
+	stream, err := conn.OpenStreamSync(ctx)
 	if err != nil {
+		// Clean up the QUIC connection on failure
+		_ = conn.CloseWithError(0, "stream open failed")
+		return nil, fmt.Errorf("error opening QUIC stream: %w", err)
+	}
+
+	// 4) Write the agent ID header, bounded by ctx’s deadline (if any)
+	if dl, ok := ctx.Deadline(); ok {
+		// quic-go streams implement SetWriteDeadline
+		_ = stream.SetWriteDeadline(dl)
+	}
+	header := []byte(config.Get().Id)
+	if _, err := stream.Write(header); err != nil {
+		_ = conn.CloseWithError(0, "header write failed")
 		return nil, err
 	}
+	// Clear deadline so subsequent I/O isn’t affected
+	_ = stream.SetWriteDeadline(time.Time{})
+
+	// 5) Return a wrapper around the stream+addresses
 	sc := &StreamConn{
 		Stream: stream,
 		lAddr:  conn.LocalAddr(),
-		rADdr:  conn.RemoteAddr(),
+		rAddr:  conn.RemoteAddr(),
 	}
-
-	return sc, err
+	return sc, nil
 }

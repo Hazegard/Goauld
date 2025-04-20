@@ -31,10 +31,12 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 		go func() {
 			switch {
 			case strings.HasPrefix(proto, "ssh"):
-				client = directSSH(sshConfig)
+				client = directSSH(sshConfig, ctx)
 				if client != nil {
 					closer = client
 					resultChan <- struct{}{}
+				} else {
+					cancel()
 				}
 
 			case strings.HasPrefix(proto, "quic"):
@@ -45,6 +47,8 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					conn = stream
 					resultChan <- struct{}{}
 					// return client, stream, stream, nil
+				} else {
+					cancel()
 				}
 			case strings.HasPrefix(proto, "tls"):
 				client, conn = proxyTls(sshConfig, ctx)
@@ -52,6 +56,8 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					closer = conn
 					resultChan <- struct{}{}
 					// return client, conn, nil, nil
+				} else {
+					cancel()
 				}
 
 			case strings.HasPrefix(proto, "ws"):
@@ -60,6 +66,8 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					closer = conn
 					resultChan <- struct{}{}
 					// return client, conn, conn, nil
+				} else {
+					cancel()
 				}
 
 			case strings.HasPrefix(proto, "http"):
@@ -70,6 +78,8 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					closer = conn
 					resultChan <- struct{}{}
 					// return client, conn, ssHTTP, nil
+				} else {
+					cancel()
 				}
 
 			case strings.HasPrefix(proto, "dns"):
@@ -79,6 +89,8 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 						closer = conn
 						resultChan <- struct{}{}
 						// return client, conn, conn, nil
+					} else {
+						cancel()
 					}
 				}
 			}
@@ -99,9 +111,9 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 }
 
 // directSSH perform a direct ssh connection to the SSHD server
-func directSSH(sshConfig *ssh.ClientConfig) *ssh.Client {
+func directSSH(sshConfig *ssh.ClientConfig, ctx context.Context) *ssh.Client {
 	log.Info().Str("Target", config.Get().ControlSshServer()).Msgf("Trying to direct connect to ssh server")
-	client, err := transport.DirectSshConnect(sshConfig)
+	client, err := transport.DirectSshConnect(sshConfig, ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to connect directly to ssh server")
 		return nil
@@ -237,6 +249,7 @@ func tryProxySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error) 
 	case client := <-chanSuccess:
 		return client, nil
 	case err := <-chanErr:
+		netConn.Close()
 		return nil, err
 	case <-time.After(30 * time.Second):
 		return nil, fmt.Errorf("timeout while proxying ssh")

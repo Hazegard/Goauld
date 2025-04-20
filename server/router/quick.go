@@ -47,7 +47,7 @@ func (router *MainRouter) HandleQUIC(c quic.Connection) {
 			log.Warn().Err(err).Msg("Failed to serve QUIC connection")
 			return
 		}
-	case "quic":
+	case "ssh":
 		stream, err := c.AcceptStream(context.Background())
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to accept stream")

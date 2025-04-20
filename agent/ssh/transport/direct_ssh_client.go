@@ -2,6 +2,7 @@ package transport
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -48,15 +49,40 @@ func CheckDirectSshAccess(address string) error {
 	return nil
 }
 
-// DirectSshConnect perform direct SSH connection to the server
-func DirectSshConnect(sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	err := CheckDirectSshAccess(config.Get().ControlSshServer())
-	if err != nil {
-		return nil, fmt.Errorf("unable to access the ssh server directly (%s): %w", config.Get().ControlSshServer(), err)
+// DirectSshConnect performs a direct SSH connection to the server
+// and will abort dialing or handshaking if ctx is cancelled.
+func DirectSshConnect(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, error) {
+	addr := config.Get().ControlSshServer()
+
+	if err := CheckDirectSshAccess(addr); err != nil {
+		return nil, fmt.Errorf(
+			"unable to access the SSH server directly (%s): %w",
+			addr, err,
+		)
 	}
-	client, err := ssh.Dial("tcp", config.Get().ControlSshServer(), sshConfig)
+
+	// 2) Dial TCP with context
+	dialer := &net.Dialer{}
+	rawConn, err := dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to %s: %w", config.Get().ControlSshServer(), err)
+		return nil, fmt.Errorf("failed to dial %s: %w", addr, err)
 	}
-	return client, nil
+
+	// If the context has a deadline, use it to bound the handshake
+	if dl, ok := ctx.Deadline(); ok {
+		rawConn.SetDeadline(dl)
+	}
+
+	// 3) Upgrade to SSH (this does the SSH handshake)
+	conn, chans, reqs, err := ssh.NewClientConn(rawConn, addr, sshConfig)
+	if err != nil {
+		rawConn.Close()
+		return nil, fmt.Errorf("SSH handshake with %s failed: %w", addr, err)
+	}
+
+	// 4) Clear the deadline so further I/O isn’t accidentally limited
+	rawConn.SetDeadline(time.Time{})
+
+	// 5) Build the high‐level SSH client
+	return ssh.NewClient(conn, chans, reqs), nil
 }

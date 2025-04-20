@@ -23,9 +23,12 @@ func GetWebsocketConn(ctx context.Context) (net.Conn, error) {
 		HTTPClient: httpclient,
 	})
 	if err != nil {
+		if wsConn != nil {
+			_ = wsConn.Close(0, "timeout")
+		}
 		if resp != nil && resp.Body != nil {
 			body, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return nil, fmt.Errorf("websocket dial error, got response: %s: %s", body, err)
 		}
 		return nil, fmt.Errorf("websocket dial error: %v", err)

@@ -49,7 +49,6 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	}
 	pconn := NewPollingPacketConn(turbotunnel.DummyAddr{}, poller, httpClient)
 
-	// Open a KCP conn over the Noise layer.
 	conn, err := kcp.NewConn2(turbotunnel.DummyAddr{}, nil, 0, 0, pconn)
 	if err != nil {
 		return nil, fmt.Errorf("opening KCP conn: %v", err)
