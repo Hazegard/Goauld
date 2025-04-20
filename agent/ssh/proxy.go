@@ -98,7 +98,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 
 		select {
 		case <-resultChan:
-			cancel()
+			// cancel()
 			return client, conn, closer, nil
 		case <-ctx.Done():
 			log.Warn().Str("Mode", proto).Msg("Connection timed out, trying next...")

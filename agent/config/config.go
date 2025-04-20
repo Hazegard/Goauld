@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -210,6 +211,12 @@ func (c *AgentConfig) Validate() error {
 		wd := NewWorkingDay(c.WorkingDayStart, c.WorkingDayEnd, c.WorkingDayTimeZone)
 		return wd.Validate()
 	}
+	if HasProto(c.TlsServer) {
+		return fmt.Errorf("the TLS server name must not contains protocol prefix")
+	}
+	if HasProto(c.QuicServer) {
+		return fmt.Errorf("the QUIC server name must not contains protocol prefix")
+	}
 	return nil
 }
 
@@ -222,10 +229,13 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	}
 	configSearchDir := []string{
 		filepath.Join(dir, "goauld_agent.yaml"),
+		filepath.Join(dir, "goauld.yaml"),
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
 		homeConfig := filepath.Join(home, ".config", "goauld_agent.yaml")
+		configSearchDir = append(configSearchDir, homeConfig)
+		homeConfig = filepath.Join(home, ".config", "goauld.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
@@ -246,4 +256,9 @@ func parse() (*kong.Context, *AgentConfig, error) {
 
 	log.SetLogLevel(cfg.Verbose)
 	return app, cfg, nil
+}
+
+func HasProto(u string) bool {
+	split := strings.Split(u, "://")
+	return len(split) > 1
 }

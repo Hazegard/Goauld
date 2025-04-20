@@ -47,7 +47,7 @@ func (router *MainRouter) HandleQUIC(c quic.Connection) {
 			log.Warn().Err(err).Msg("Failed to serve QUIC connection")
 			return
 		}
-	case "ssh":
+	case "quic":
 		stream, err := c.AcceptStream(context.Background())
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to accept stream")
@@ -55,7 +55,7 @@ func (router *MainRouter) HandleQUIC(c quic.Connection) {
 		}
 		// The client first sends its ID before transferring the conn to the SSH client
 		// The ID is a MD5 hash
-		rawId := make([]byte, 128)
+		rawId := make([]byte, 32)
 		n, err := stream.Read(rawId)
 		if err != nil {
 			log.Error().Err(err).Msg("QUIC read ID fail")

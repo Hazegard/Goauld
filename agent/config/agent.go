@@ -291,12 +291,8 @@ func (a *Agent) SSHTTPUrl() string {
 
 // TlsUrl return the SSH over TLS connection URL
 func (a *Agent) TlsUrl() string {
-	u, err := url.Parse(a.cfg.TlsServer)
-	if err != nil {
-		// An error occurred while parsing the TLS sever, so we pass it as is to see if the TLS connection can succeed
-		return a.cfg.TlsServer
-	}
-	if u.Port() == "" {
+	u := strings.Split(a.cfg.TlsServer, ":")
+	if len(u) == 1 {
 		return fmt.Sprintf("%s:443", a.cfg.TlsServer)
 	}
 	return a.cfg.TlsServer

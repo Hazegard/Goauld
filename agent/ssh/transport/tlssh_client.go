@@ -1,13 +1,13 @@
 package transport
 
 import (
+	"Goauld/agent/config"
+	"Goauld/agent/proxy"
 	"context"
 	"crypto/tls"
 	"net"
+	"strings"
 	"time"
-
-	"Goauld/agent/config"
-	"Goauld/agent/proxy"
 )
 
 // GetTlsConn returns a TLS connection and will abort dialing,
@@ -20,8 +20,11 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 		return nil, err
 	}
 
+	tlsConf := proxy.NewTlsConfig()
+	hostPort := strings.Split(config.Get().TlsUrl(), ":")
+	tlsConf.ServerName = hostPort[0]
 	// 2) Wrap in TLS
-	tlsConn := tls.Client(rawConn, proxy.NewTlsConfig())
+	tlsConn := tls.Client(rawConn, tlsConf)
 
 	// 3) Do the TLS handshake with context
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
@@ -44,4 +47,21 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 	tlsConn.SetWriteDeadline(time.Time{})
 
 	return tlsConn, nil
+}
+
+// GetTlsConn returns a TLS connection
+func GoodGetTlsConn(ctx context.Context) (net.Conn, error) {
+	// Initializes a TLS connection to the server
+	conn, err := tls.Dial("tcp", config.Get().TlsUrl(), proxy.NewTlsConfig())
+	if err != nil {
+		return nil, err
+	}
+	// Write the agent ID as header to allows the server to identify which agent
+	// Write the agent ID as header to allow the server to identify which agent
+	// is currently connecting
+	_, err = conn.Write([]byte(config.Get().Id))
+	if err != nil {
+		return nil, err
+	}
+	return conn, err
 }

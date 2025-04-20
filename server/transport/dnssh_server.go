@@ -158,7 +158,7 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 
 			// The client first send its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
-			rawId := make([]byte, 128)
+			rawId := make([]byte, 32)
 			n, err := stream.Read(rawId)
 			if err != nil {
 				log.Error().Err(err).Bytes("ID", rawId).Msg("DNS read ID fail")

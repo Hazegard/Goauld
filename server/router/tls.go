@@ -59,7 +59,7 @@ func (router *MainRouter) HandleTls(c net.Conn) {
 
 			// The client first sends its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
-			rawId := make([]byte, 128)
+			rawId := make([]byte, 32)
 			n, err := tlsConn.Read(rawId)
 			if err != nil {
 				log.Error().Err(err).Msg("TLS read ID fail")

@@ -44,7 +44,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 
 	// The client first send its ID before transferring the conn to the SSH client
 	// The ID is a MD5 hash
-	rawId := make([]byte, 128)
+	rawId := make([]byte, 32)
 	n, err := stream.Read(rawId)
 	if err != nil {
 		return fmt.Errorf("stream %08x:%d read ID fail", conv, stream.ID())
