@@ -78,7 +78,7 @@ func InitAgent() (*kong.Context, error, []error) {
 	}
 
 	// Generate the agent name if not provided
-	if cfg.Name == _name {
+	if cfg.Name == "user@hostname" {
 		name := ""
 		userName, err := user.Current()
 		if err != nil {
