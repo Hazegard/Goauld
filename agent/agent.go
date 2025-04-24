@@ -74,7 +74,14 @@ func main() {
 	operation := func() (any, error) {
 		log.Info().Msg("Starting agent")
 		if config.Get().IsOutOfWorkingDay() {
-			log.Warn().Msg("Agent running out of working day")
+			next, now, err := config.Get().NextStart()
+			if err != nil {
+				log.Warn().Err(err).Msg("error getting the next start date")
+				log.Warn().Str("Start", config.Get().StartTime()).Msgf("Agent is out of working day")
+				return nil, err
+			} else {
+				log.Warn().Time("Now", now).Time("Next Start", next).Msgf("Agent is out of working day")
+			}
 			return nil, errors.New("agent started out of working day")
 		}
 		cancelReason := run()

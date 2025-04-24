@@ -82,3 +82,41 @@ func (wd *WorkingDay) isWorkingHour() bool {
 func (wd *WorkingDay) IsWorkingPeriod() bool {
 	return wd.isWorkingDay() && wd.isWorkingHour()
 }
+
+func (wd *WorkingDay) NextStartAndNow() (time.Time, time.Time, error) {
+	var nextHourMin time.Time
+	var err error
+	nextHourMin, err = parseHour(wd.Start)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	tz, _ := time.LoadLocation(wd.TZ)
+	now := time.Now().In(tz)
+	// Construct a new time using today’s Y/M/D + parsed H/M/S/nsec.
+	next := time.Date(
+		now.Year(), now.Month(), now.Day(),
+		nextHourMin.Hour(), nextHourMin.Minute(), nextHourMin.Second(), nextHourMin.Nanosecond(),
+		now.Location(),
+	)
+
+	if wd.isWorkingDay() {
+		return next, now, nil
+	}
+	next = moveToMondayIfWeekend(next)
+	return next, now, nil
+}
+
+// moveToMondayIfWeekend returns t unchanged, unless it’s Saturday or Sunday,
+// in which case it returns t shifted forward to the next Monday.
+func moveToMondayIfWeekend(t time.Time) time.Time {
+	switch t.Weekday() {
+	case time.Saturday:
+		// Saturday → +2 days
+		return t.AddDate(0, 0, 2)
+	case time.Sunday:
+		// Sunday → +1 day
+		return t.AddDate(0, 0, 1)
+	default:
+		return t
+	}
+}

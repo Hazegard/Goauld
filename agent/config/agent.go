@@ -343,6 +343,14 @@ func (a *Agent) IsOutOfWorkingDay() bool {
 	return a.cfg.OnlyWorkingDays && !a.WorkingDay.IsWorkingPeriod()
 }
 
+func (a *Agent) NextStart() (time.Time, time.Time, error) {
+	return a.WorkingDay.NextStartAndNow()
+}
+
+func (a *Agent) StartTime() string {
+	return a.WorkingDay.Start
+}
+
 // GetRsshOrder returns the order that the agent should follow to attempt to connect
 // to the SSHD server
 func (a *Agent) GetRsshOrder() []string {
