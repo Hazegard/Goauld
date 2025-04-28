@@ -27,7 +27,7 @@ var (
 	_tls_server  = "app.example.com"
 	_quic_domain = "app.example.com"
 	_dns_server  = "8.8.8.8,1.1.1.1,9.9.9.9"
-	_dns_domain  = "www.example.com"
+	_dns_domain  = "t.example.com"
 
 	_sshd_enabled           = "true"
 	_socks_enabled          = "true"

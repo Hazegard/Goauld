@@ -262,16 +262,62 @@ func (a *Agent) UpdateSshdPort(port int) {
 
 // ServerUrl return the HTTP control server URL
 func (a *Agent) ServerUrl() string {
-	url := ""
+	u := normalizeAddr(a.cfg.Server)
+	if u != "" {
+		return u
+	}
+	// TODO voir pour ajouter port 80 si pas de port spécifié
+	// et 443 si https mais pas de port spécifié
 	if strings.HasPrefix(a.cfg.Server, "http://") {
-		url = a.cfg.Server
+		u = a.cfg.Server
 	} else if strings.HasPrefix(a.cfg.Server, "https://") {
-		url = a.cfg.Server
+		u = a.cfg.Server
 	} else {
-		url = "http://" + a.cfg.Server
+		u = "http://" + a.cfg.Server
+	}
+	return u
+}
+
+func normalizeAddr(input string) string {
+	// 1) Split off any “scheme://”
+	hasScheme := strings.Contains(input, "://")
+	working := input
+	if !hasScheme {
+		// Tentatively prepend a fake scheme so url.Parse will let us split Host vs Path
+		working = "http://" + working
 	}
 
-	return url
+	u, err := url.Parse(working)
+	if err != nil {
+		return ""
+	}
+
+	host := u.Hostname()
+	port := u.Port()
+
+	// 2) Decide on scheme if missing
+	scheme := u.Scheme
+	if !hasScheme {
+		if port == "443" {
+			scheme = "https"
+		} else {
+			scheme = "http"
+		}
+	}
+
+	// 3) Decide on port if missing
+	if port == "" {
+		switch scheme {
+		case "https":
+			port = "443"
+		default:
+			port = "80"
+		}
+	}
+
+	// Recombine
+	// note: u.Path, u.User, u.RawQuery etc. are ignored here; this is just host:port normalization
+	return fmt.Sprintf("%s://%s:%s", scheme, host, port)
 }
 
 // WSshUrl return the SSH over Websocket connection URL
@@ -300,18 +346,12 @@ func (a *Agent) TlsUrl() string {
 
 // QuicUrl return the SSH over TLS connection URL
 func (a *Agent) QuicUrl() string {
-	if a.cfg.QuicServer == "" {
-		return a.TlsUrl()
+
+	u := strings.Split(a.cfg.QuicServer, ":")
+	if len(u) == 1 {
+		return fmt.Sprintf("%s:443", a.cfg.QuicServer)
 	}
-	u, p, err := net.SplitHostPort(a.cfg.QuicServer)
-	if err != nil {
-		// An error occurred while parsing the TLS sever, so we pass it as is to see if the TLS connection can succeed
-		return a.cfg.QuicServer
-	}
-	if p == "" {
-		return fmt.Sprintf("%s:443", u)
-	}
-	return a.cfg.QuicServer
+	return a.cfg.TlsServer
 }
 
 // Name returns the agent name

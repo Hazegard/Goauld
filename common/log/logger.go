@@ -35,6 +35,8 @@ func initLoggers() {
 		}
 		return l.String()
 	}
+	// fileWriter := zerolog.Writer
+	// writers := zerolog.MultiLevelWriter(writer)
 	writer.FormatLevel = func(i interface{}) string {
 		if level, ok := i.(string); ok {
 			if level == Custom {
@@ -66,7 +68,9 @@ func initLoggers() {
 
 		return fmt.Sprintf("%v", i)
 	}
-	l := zerolog.New(writer).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
+
+	ml := zerolog.MultiLevelWriter(writer)
+	l := zerolog.New(ml).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		return fmt.Sprintf("%s:%d", strings.TrimPrefix(file, root+"/"), line)
 	}

