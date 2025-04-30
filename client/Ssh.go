@@ -68,16 +68,12 @@ func (c *Command) Execute() error {
 func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
 	if cfg.Socks.Target != "" {
 		// we are in socks mode, so apply the socks option to the ssh
-		cfg.Ssh.Socks = true
-		cfg.Ssh.Http = true
-		cfg.Ssh.Target = cfg.Socks.Target
-		cfg.Ssh.LocalSocksPort = e.LocalSocksPort
-		cfg.Ssh.Ssh = false
 		cfg.Ssh = Ssh{
 			Target:         cfg.Socks.Target,
 			Socks:          cfg.Socks.Socks,
 			Http:           cfg.Ssh.Http,
 			LocalSocksPort: cfg.Socks.LocalSocksPort,
+			LocalHttpPort:  cfg.Socks.LocalHttpPort,
 			Ssh:            false,
 			Print:          cfg.Ssh.Print,
 			Proxy:          false,

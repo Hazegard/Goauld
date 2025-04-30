@@ -21,6 +21,7 @@ func (s *Socks) Run(api *api.API, cfg ClientConfig) error {
 		Socks:          s.Socks,
 		Http:           s.Http,
 		LocalSocksPort: s.LocalSocksPort,
+		LocalHttpPort:  s.LocalHttpPort,
 		Ssh:            s.Ssh,
 		Print:          s.Print,
 		Proxy:          s.Proxy,
