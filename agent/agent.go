@@ -116,7 +116,9 @@ func run() utils.CancelReason {
 
 	var forwardedPorts []commonssh.RemotePortForwarding
 
-	// Announce to hanging goroutines that the configuration is completed
+	// configDone is a one time chan used to signal that the configuration exchange with the server is completed.
+	// The signal is emitted by the socket.io handler, and the agent waits it before starting component initialization
+	// (sshd, ssh, socks, etc.)
 	configDone := make(chan struct{})
 	log.Info().Msg("Agent init done")
 
@@ -170,7 +172,15 @@ func run() utils.CancelReason {
 			return utils.Restart
 		}
 		defer dnsTransport.Close()
+		// chanErr is used to signal that an error occurred when launching the socket.io client.
+		// The errors come from either an error while starting the client or a network error preventing the
+		// socket.io client from connecting to the server.
 		chanErr := make(chan error)
+		// chanSuccess indicate that the socket.io connection has been established
+		// Note: it differs with the previous configDone chan as here we do not wait for the
+		// configuration exchange with the server.
+		// Indeed, this chan is only used to know that the connection is fully established, and we do not
+		// have to try the other connection methods (DNS).
 		chanSuccess := make(chan struct{})
 		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
 		err = controlPlanClient.InitOverDns(dnsTransport.ControlStream, chanSuccess, chanErr)
@@ -179,6 +189,9 @@ func run() utils.CancelReason {
 			return utils.Restart
 		}
 		go func() {
+			// Start the controlPlan (socket.io client) in the background and wait
+			// either for the end of the session (ctx), or an error on the socket.io side.
+			// Then it proceeds to close the socket.io client
 			select {
 			case controlErr <- controlPlanClient.Start():
 			case <-ctx.Done():
