@@ -10,3 +10,4 @@ dist/
 output
 scripts/build/MacOSX15.sdk/
 .env.build
+cert/

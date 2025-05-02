@@ -66,6 +66,7 @@ type State struct {
 	SSHMode      string    `yaml:"SSHMode,omitempty"`
 	UsedPorts    string    `yaml:"usedPorts,omitempty"`
 	LastUpdated  time.Time `yaml:"lastUpdated"`
+	LastPing     time.Time `yaml:"lastPing"`
 	Platform     string    `yaml:"platform,omitempty"`
 	Architecture string    `yaml:"architecture,omitempty"`
 	Username     string    `yaml:"username,omitempty"`

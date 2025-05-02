@@ -62,6 +62,7 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	dump.Name = agent.Name
 	dump.Id = agent.Id
 	dump.LastUpdated = agent.LastUpdated
+	dump.LastPing = agent.LastPing
 	dump.Platform = agent.Platform
 	dump.SSHMode = agent.SshMode
 	dump.Architecture = agent.Architecture
@@ -94,6 +95,7 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 		d.Name = agent.Name
 		d.Id = agent.Id
 		d.LastUpdated = agent.LastUpdated
+		d.LastPing = agent.LastPing
 		d.Platform = agent.Platform
 		d.SSHMode = agent.SshMode
 		d.Architecture = agent.Architecture

@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"Goauld/client/api"
@@ -108,15 +109,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	selRow := m.agentsTable.HighlightedRow()
 	data := selRow.Data["N"]
 	if data != nil {
-		id, err := strconv.Atoi(selRow.Data["N"].(string))
-		if err == nil {
-			// fmt.Println(len(m.agents))
-			if len(m.agents) == 0 {
-				selectedAgent = types.Agent{}
-			} else {
-				selectedAgent = m.agents[id-1]
+		d, ok := data.(string)
+		if ok == true {
+			// We trim spaces as they might be added du to the padding (centering in the column).
+			id, err := strconv.Atoi(strings.TrimSpace(d))
+			if err == nil {
+				// fmt.Println(len(m.agents))
+				if len(m.agents) == 0 {
+					selectedAgent = types.Agent{}
+				} else {
+					selectedAgent = m.agents[id-1]
+				}
 			}
 		}
+
 	}
 
 	switch msg := msg.(type) {
@@ -365,17 +371,36 @@ func (m *Model) View() string {
 	return baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.Help() + "\n"
 }
 
+func centerString(str string, length int) string {
+	// If the string is already longer than or equal to the required length, return it as is.
+	if len(str) >= length {
+		return str
+	}
+
+	// Calculate how many spaces need to be added to the left and right.
+	totalPadding := length - len(str)
+	leftPadding := totalPadding / 2
+	//rightPadding := totalPadding - leftPadding
+
+	// Create the padded string.
+	return strings.Repeat(" ", leftPadding) + str
+}
+
+func NewCenterColumn(key string, title string, width int) table.Column {
+	return table.NewColumn(key, centerString(title, width), width)
+}
+
 // GenerateAgentTable initialize the agent table
 func GenerateAgentTable() table.Model {
 	columns := []table.Column{
-		// {Title: "ID", Width: 32},
-		table.NewColumn("N", "N", 3),
-		table.NewColumn("Name", "Name", 30),
-		table.NewColumn("Last seen", "Last seen", 15),
-		table.NewColumn("Mode", "Mode", 10),
-		table.NewColumn("SSHD Port", "SSHD Port", 15),
-		table.NewColumn("HTTP Port", "HTTP Port", 15),
-		table.NewColumn("Socks Port", "Socks Port", 15),
+		NewCenterColumn("N", "N", 3),
+		NewCenterColumn("Name", "Name", 30),
+		NewCenterColumn("Last Updated", "Last Updated", 14),
+		NewCenterColumn("Last Ping", "Last Ping", 13),
+		NewCenterColumn("Mode", "Mode", 10),
+		NewCenterColumn("SSHD Port", "SSHD Port", 13),
+		NewCenterColumn("HTTP Port", "HTTP Port", 13),
+		NewCenterColumn("Socks Port", "Socks Port", 14),
 	}
 	t := table.New(columns).
 		Focused(true).
@@ -414,15 +439,16 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 	for i, agent := range agents {
 		row := table.NewRow(
 			table.RowData{
-				"Id":         agent.Id,
-				"N":          strconv.Itoa(i + 1),
-				"Name":       " " + agent.Name,
-				"Last seen":  timeAgo(agent.LastUpdated),
-				"Mode":       agent.SshMode,
-				"SSHD Port":  " " + agent.GetSSHPort(),
-				"Socks Port": " " + agent.GetSocksPort(),
-				"HTTP Port":  " " + agent.GetHttpPort(),
-				"Other Port": " " + agent.GetOtherPort(),
+				"Id":           agent.Id,
+				"N":            centerString(strconv.Itoa(i+1), 3),
+				"Name":         centerString(agent.Name, 30),
+				"Last Updated": centerString(timeAgo(agent.LastUpdated), 14),
+				"Last Ping":    centerString(timeAgo(agent.LastPing), 13),
+				"Mode":         centerString(agent.SshMode, 10),
+				"SSHD Port":    centerString(agent.GetSSHPort(), 13),
+				"Socks Port":   centerString(agent.GetSocksPort(), 13),
+				"HTTP Port":    centerString(agent.GetHttpPort(), 14),
+				"Other Port":   agent.GetOtherPort(),
 			})
 
 		rows = append(rows, row)

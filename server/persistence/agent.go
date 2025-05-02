@@ -192,10 +192,23 @@ func (db *DB) FindAgentByName(name string) (*Agent, error) {
 	return &agent, nil
 }
 
+// UpdateAgentFieldShadow update the specified field information in the database without touching
+// the lastUpdated field.
+// Mainly used to update the last ping field
+func (db *DB) UpdateAgentFieldShadow(agent *Agent, fields ...string) error {
+	result := db.db.Select(fields).Updates(agent)
+	if result.Error != nil {
+		return fmt.Errorf("could not update agent: %s", result.Error)
+	}
+	return nil
+}
+
 // UpdateAgentField update the specified field information in the database
 func (db *DB) UpdateAgentField(agent *Agent, fields ...string) error {
 	agent.LastUpdated = time.Now()
 	fields = append(fields, "LastUpdated")
+	agent.LastPing = time.Now()
+	fields = append(fields, "LastPing")
 	result := db.db.Select(fields).Updates(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not update agent: %s", result.Error)

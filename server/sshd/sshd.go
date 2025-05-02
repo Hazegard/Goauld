@@ -160,7 +160,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				log.Warn().Err(err).Str("Incoming", password).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
 				return false
 			}
-			err = db.UpdateAgentField(agent, "OneTimePassword")
+			err = db.UpdateAgentFieldShadow(agent, "OneTimePassword")
 			if err != nil {
 				log.Warn().Err(err).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to update agent password")
 				return false
@@ -195,8 +195,8 @@ func HandleKeepAlive(db *persistence.DB) func(ctx ssh.Context, srv *ssh.Server, 
 			log.Error().Err(err).Str("User", id).Msg("Failed to find agent")
 			return true, []byte("pong")
 		}
-		agent.LastUpdated = time.Now()
-		_ = db.UpdateAgentField(agent, "LastUpdated")
+		agent.LastPing = time.Now()
+		_ = db.UpdateAgentFieldShadow(agent, "LastPing")
 		return true, []byte("pong")
 	}
 }

@@ -224,10 +224,10 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent := sio.agentStore.SioGetAgent(socket)
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Received socketio.PingEvent")
 			socket.Emit(socketio.PongEvent)
-			agent.LastUpdated = time.Now()
+			agent.LastPing = time.Now()
 			// We update the lastUpdated field in the database to show clients
 			// that the connection with the agent is still working
-			_ = sio.db.UpdateAgentField(agent, "LastUpdated")
+			_ = sio.db.UpdateAgentFieldShadow(agent, "LastPing")
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Msg("Sent socketio.PongEvent")
 		})
 

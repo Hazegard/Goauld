@@ -20,6 +20,7 @@ type Agent struct {
 	SshPasswd            string                     `gorm:"type:text" json:"sshPasswd"`
 	OneTimePassword      string                     `gorm:"type:text" json:"one_time_password,omitempty"`
 	LastUpdated          time.Time                  `gorm:"type:datetime" json:"lastUpdated"`
+	LastPing             time.Time                  `gorm:"type:datetime" json:"lastPing"`
 
 	Platform     string `gorm:"type:text" json:"platform"`
 	Architecture string `gorm:"type:text" json:"architecture"`
