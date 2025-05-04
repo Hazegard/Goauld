@@ -408,7 +408,9 @@ func GenerateAgentTable() table.Model {
 		WithRowStyleFunc(func(input table.RowStyleFuncInput) lipgloss.Style {
 			row := input.Row.Data
 			s := input.Row.Style
-			if row["Mode"] == "OFF" || row["Mode"] == "" {
+			mode := row["Mode"].(string)
+			mode = strings.TrimSpace(mode)
+			if mode == "OFF" || mode == "" {
 				s = s.Foreground(lipgloss.Color("245"))
 			}
 			if input.IsHighlighted {
