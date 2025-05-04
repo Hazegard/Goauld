@@ -192,6 +192,34 @@ func (db *DB) FindAgentByName(name string) (*Agent, error) {
 	return &agent, nil
 }
 
+// FindAgentById returns the agent identified by id
+func (db *DB) FindAgentByIdAndName(id string, name string) (*Agent, error) {
+	var agent Agent
+	// Pass the struct as a pointer
+	result := db.db.First(&agent, "id = ? and name = ?", id, name)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &agent, nil
+}
+
+func (db *DB) ValidatePasswordAndRotateIfTrue(id string, password string) error {
+	newPassword, err := crypto.GeneratePassword(32)
+	if err != nil {
+		return err
+	}
+	res := db.db.Model(&Agent{}).
+		Where("id = ? and one_time_password = ?", id, password).
+		Update("one_time_password", newPassword)
+	if res.Error != nil {
+		return fmt.Errorf("could not update agent: %s", res.Error)
+	}
+	if res.RowsAffected != 1 {
+		return fmt.Errorf("could not update agent: no agent updated")
+	}
+	return nil
+}
+
 // UpdateAgentFieldShadow update the specified field information in the database without touching
 // the lastUpdated field.
 // Mainly used to update the last ping field
@@ -249,7 +277,7 @@ func (db *DB) RemovePortToAgent(id string, port int) error {
 // If no agent corresponding to this ID exists,
 // an empty one that will be populated later is returned
 func (db *DB) FindOrCreate(id string, name string) (*Agent, error) {
-	agent, _ := db.FindAgentById(id)
+	agent, _ := db.FindAgentByIdAndName(id, name)
 	if agent != nil {
 		return agent, nil
 	}

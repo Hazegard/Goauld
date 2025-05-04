@@ -140,6 +140,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 		},
 		PasswordHandler: func(ctx ssh.Context, password string) bool {
 			sourceIp := strings.Split(ctx.RemoteAddr().String(), ":")[0]
+			log.Trace().Str("User", ctx.User()).Str("IP", sourceIp).Msg("SSH Connection attempt")
 			if !_net.IsIPAllowed(sourceIp, config.Get().AllowedIPs) {
 				log.Trace().Str("Remote", sourceIp).Msg("Connection attempt from non whitelisted IP address")
 				return false
@@ -155,7 +156,8 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				return false
 			}
 			agent.Source = sourceIp
-			err = agent.ValidatePasswordAndRotateIfTrue(password)
+			err = db.ValidatePasswordAndRotateIfTrue(agent.Id, password)
+			// err = agent.ValidatePasswordAndRotateIfTrue(password)
 			if err != nil {
 				log.Warn().Err(err).Str("Incoming", password).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
 				return false
