@@ -20,7 +20,7 @@ dns-server:
     - 9.9.9.9
 
 # The DNS domain used to tunnel the traffic.
-dns-domain: www.example.com
+dns-domain: t.example.com
 
 # SSH password to access the agent. If no password is provided, a random password is automatically generated.
 password: ""
