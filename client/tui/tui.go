@@ -311,12 +311,15 @@ func (m *Model) doTick() tea.Cmd {
 
 // GenerateInfoTable populate the info table to show the details of the currently selected agent
 func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
+
 	rows := []teatable.Row{
 		{"Id", agent.Id},
 		{"OS", agent.Platform},
 		{"Archi", agent.Architecture},
 		{"Username", agent.Username},
 		{"Hostname", agent.Hostname},
+		{"Last Updated", timeAgo(agent.LastUpdated)},
+		{"Last Ping", timeAgo(agent.LastPing)},
 		{"IPs", agent.IPs},
 		{"Path", agent.Path},
 		{"Ssh Mode", agent.SshMode},
@@ -334,6 +337,8 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		agent.Architecture,
 		agent.Username,
 		agent.Hostname,
+		timeAgo(agent.LastUpdated),
+		timeAgo(agent.LastPing),
 		agent.IPs,
 		agent.Path,
 		agent.SshMode,

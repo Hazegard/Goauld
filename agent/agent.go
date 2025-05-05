@@ -117,7 +117,7 @@ func run() utils.CancelReason {
 	var forwardedPorts []commonssh.RemotePortForwarding
 
 	// configDone is a one time chan used to signal that the configuration exchange with the server is completed.
-	// The signal is emitted by the socket.io handler, and the agent waits it before starting component initialization
+	// The signal is emitted by the socket.io handler, and the agent waits for it before starting component initialization
 	// (sshd, ssh, socks, etc.)
 	configDone := make(chan struct{})
 	log.Info().Msg("Agent init done")
@@ -132,81 +132,63 @@ func run() utils.CancelReason {
 	var controlPlanClient *control.ControlPlanClient
 	var err error
 
-	// Initialize the control socket.io
-	{
-		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
-		config.Get().QuicUrl()
-		chanErr := make(chan error)
-		chanSuccess := make(chan struct{})
-		err = controlPlanClient.Init(chanSuccess, chanErr)
-		if err != nil {
-			log.Error().Err(err).Msg("error initializing the control plan")
-			log.Info().Msg("trying to start the control plan in DNS mode")
-		} else {
-			// Start the control socket.io
-			go func() {
-				select {
-				case controlErr <- controlPlanClient.Start():
-				case <-ctx.Done():
+	// Define the different strategies to initialize the control socket
+	//  Currently, all strategies are tried in order.
+	controlInitStrategy := []control.InitStrategy{
+		{
+			Name: "Websocket",
+			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+				return client.InitWs(success, chanErr)
+			},
+		},
+		{
+			Name: "Polling",
+			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+				return client.InitPolling(success, chanErr)
+			},
+		},
+		{
+			Name: "Upgrade",
+			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+				return client.InitWsUpgrade(success, chanErr)
+			},
+		},
+		{
+			Name: "DNS",
+			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+				if dnsTransport == nil {
+					dnsTransport, err = transport.NewDNSSH()
+					if err != nil {
+						return err
+					}
 				}
-				controlPlanClient.Close()
-			}()
-			select {
-			case e := <-chanErr:
-				log.Error().Err(err).Msg("error starting the control plan")
-				controlPlanClient.Close()
-				err = e
-			case <-chanSuccess:
-				log.Info().Str("Mode", "Standard").Msg("Control plan started")
-				err = nil
-			}
-		}
+				return client.InitOverDns(dnsTransport.ControlStream, success, chanErr)
+			},
+		},
 	}
 
-	// If the standard init failed, we are in a DNS mode
-	if err != nil {
-		log.Info().Msg("Initializing agent in DNS tunnel mode")
-		dnsTransport, err = transport.NewDNSSH()
-		if err != nil {
-			log.Error().Err(err).Msg("error initializing the DNS transport")
-			return utils.Restart
+	success := false
+	// We iterate over the different strategies to initialize the control socket
+	// If the initialization is successful, we stop the loop
+	for _, initializer := range controlInitStrategy {
+		log.Info().Str("ControlMode", initializer.Name).Msg("Trying to connect to the control socket")
+		err, cpc := control.Init(ctx, globalCanceler, configDone, controlErr, initializer.InitFunc)
+		if err == nil {
+			log.Info().Str("SocketMode", initializer.Name).Msg("Control plan started")
+			success = true
+			controlPlanClient = cpc
+			break
 		}
+		log.Error().Err(err).Str("ControlMode", initializer.Name).Msg("error initializing the control plan")
+	}
+
+	// If no strategy was successful, we restart the agent
+	if !success {
+		return utils.Restart
+	}
+
+	if dnsTransport != nil {
 		defer dnsTransport.Close()
-		// chanErr is used to signal that an error occurred when launching the socket.io client.
-		// The errors come from either an error while starting the client or a network error preventing the
-		// socket.io client from connecting to the server.
-		chanErr := make(chan error)
-		// chanSuccess indicate that the socket.io connection has been established
-		// Note: it differs with the previous configDone chan as here we do not wait for the
-		// configuration exchange with the server.
-		// Indeed, this chan is only used to know that the connection is fully established, and we do not
-		// have to try the other connection methods (DNS).
-		chanSuccess := make(chan struct{})
-		controlPlanClient = control.NewControlPlanClient(ctx, configDone, globalCanceler)
-		err = controlPlanClient.InitOverDns(dnsTransport.ControlStream, chanSuccess, chanErr)
-		if err != nil {
-			log.Error().Err(err).Msg("error initializing the control plan over DNS")
-			return utils.Restart
-		}
-		go func() {
-			// Start the controlPlan (socket.io client) in the background and wait
-			// either for the end of the session (ctx), or an error on the socket.io side.
-			// Then it proceeds to close the socket.io client
-			select {
-			case controlErr <- controlPlanClient.Start():
-			case <-ctx.Done():
-			}
-			controlPlanClient.Close()
-		}()
-		select {
-		case e := <-chanErr:
-			log.Error().Err(err).Msg("error starting the control plan")
-			controlPlanClient.Close()
-			err = e
-		case <-chanSuccess:
-			log.Info().Str("Mode", "DNS").Msg("Control plan started")
-			err = nil
-		}
 	}
 
 	cancelCtrlC := HandleCtrlC(controlPlanClient, globalCanceler)

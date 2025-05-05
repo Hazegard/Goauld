@@ -42,15 +42,70 @@ func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, cance
 	}
 }
 
-func (cpc *ControlPlanClient) Init(success chan struct{}, chanErr chan error) error {
-	cfg := getEioConfig()
+// InitStrategy is a struc holding the name of the transport as well
+// as the function that will be used to initialize the socket.io connection
+type InitStrategy struct {
+	Name     string
+	InitFunc CpcStarter
+}
+
+// CpcStarter is a function that will be used to initialize the socket.io connection
+// It returns an error if the connection failed
+type CpcStarter func(*ControlPlanClient, chan<- struct{}, chan<- error) error
+
+// Init tries to connect to the control plan using the different strategies (CpcStarter)
+// A successful connection will send a signal using the configDone channel
+func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, CpcStarter CpcStarter) (error, *ControlPlanClient) {
+	controlPlanClient := NewControlPlanClient(ctx, configDone, globalCanceler)
+	chanErr := make(chan error)
+	chanSuccess := make(chan struct{})
+	err := CpcStarter(controlPlanClient, chanSuccess, chanErr)
+	if err != nil {
+		return err, nil
+	}
+	// Start the control socket.io
+	go func() {
+		select {
+		case controlErr <- controlPlanClient.Start():
+		case <-ctx.Done():
+		}
+		controlPlanClient.Close()
+	}()
+	select {
+	case e := <-chanErr:
+		// log.Error().Err(err).Msg("error starting the control plan")
+		controlPlanClient.Close()
+		return e, nil
+	case <-chanSuccess:
+		// log.Info().Str("Mode", "Standard").Msg("Control plan started")
+		return nil, controlPlanClient
+	}
+}
+
+// InitWs tries to connect to the control plan using the websocket transport
+func (cpc *ControlPlanClient) InitWs(success chan<- struct{}, chanErr chan<- error) error {
+	cfg := getEioConfig([]string{"websocket"})
 	return cpc.init(cfg, success, chanErr)
 }
 
-func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream, success chan struct{}, chanErr chan error) error {
+// InitWsUpgrade tries to connect to the control plan using the http the websocket upgrade transport
+func (cpc *ControlPlanClient) InitWsUpgrade(success chan<- struct{}, chanErr chan<- error) error {
+	cfg := getEioConfig([]string{"polling", "websocket"})
+	return cpc.init(cfg, success, chanErr)
+}
+
+// InitPolling tries to connect to the control plan using the HTTP long polling transport
+func (cpc *ControlPlanClient) InitPolling(success chan<- struct{}, chanErr chan<- error) error {
+	cfg := getEioConfig([]string{"polling"})
+	return cpc.init(cfg, success, chanErr)
+}
+
+// InitOverDns tries to connect to the control plan using the DNS transport
+func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream, success chan<- struct{}, chanErr chan<- error) error {
 	_, err := session.Write([]byte(config.Get().Id))
 	// DNS MODE means we are using http, to simplify the exchanges
-	cpc.url = fmt.Sprintf("http://%s", strings.TrimPrefix(config.Get().SocketIoUrl(), "https://"))
+	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoUrl(), "https://"), "http://")
+	cpc.url = fmt.Sprintf("http://%s", u)
 	if err != nil {
 		return fmt.Errorf("error writing id to DNS tunnelled session: %v", err)
 	}
@@ -63,7 +118,7 @@ func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream, success chan str
 }
 
 // Init initialize the socket.io handlers
-func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan struct{}, chanErr chan error) error {
+func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct{}, chanErr chan<- error) error {
 	manager := sio.NewManager(cpc.url, cfg)
 	socket := manager.Socket("/", nil)
 
@@ -267,7 +322,7 @@ func (cpc *ControlPlanClient) Close() {
 }
 
 // getEioConfig return the socket.io underlying configuration
-func getEioConfig() *sio.ManagerConfig {
+func getEioConfig(transport []string) *sio.ManagerConfig {
 	return &sio.ManagerConfig{
 		EIO: eio.ClientConfig{
 			UpgradeDone: func(transportName string) {
@@ -280,7 +335,7 @@ func getEioConfig() *sio.ManagerConfig {
 			WebTransportDialer: &webtransport.Dialer{
 				TLSClientConfig: proxy.NewTlsConfig(),
 			},
-			Transports: []string{"polling"}, //, "websocket", "webtransport"},
+			Transports: transport, // []string{"polling"}, //, "websocket", "webtransport"},
 			// Debugger:   sio.NewPrintDebugger(),
 		},
 	}
