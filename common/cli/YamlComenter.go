@@ -34,6 +34,7 @@ type comment struct {
 	FootComment string
 }
 
+// setComment set a comment to the yaml element
 func setComment(cm *comment, tag reflect.StructTag) {
 	if cm == nil {
 		return
@@ -43,6 +44,7 @@ func setComment(cm *comment, tag reflect.StructTag) {
 	cm.FootComment = tag.Get(FootCommentTag)
 }
 
+// newComment returns a new comment
 func newComment(tag reflect.StructTag) *comment {
 	cm := new(comment)
 	setComment(cm, tag)

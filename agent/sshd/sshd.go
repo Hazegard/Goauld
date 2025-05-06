@@ -15,6 +15,7 @@ type Sshd struct {
 	listener net.Listener
 }
 
+// NewSshdServer configure and return an SSHD server
 func NewSshdServer(ctx context.Context) *Sshd {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{

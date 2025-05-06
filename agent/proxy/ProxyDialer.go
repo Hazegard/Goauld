@@ -25,6 +25,7 @@ type ProxyDialer struct {
 	ProxyOverrides map[string]*url.URL
 }
 
+// NewHttpProxyDialer returns a new ProxyDialer instance
 func NewHttpProxyDialer() *ProxyDialer {
 	//
 	// LRU Cache: Memoize DialContexts for 60 minutes

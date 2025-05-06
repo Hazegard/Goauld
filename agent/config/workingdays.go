@@ -27,6 +27,7 @@ func NewWorkingDay(start, end, tz string) *WorkingDay {
 // Date parser layout
 const hourLayout = "15:04" // hh:mm
 
+// Validate checks if the working day is valid
 func (wd *WorkingDay) Validate() error {
 	var errs []error
 	_, err := parseHour(wd.Start)
@@ -38,16 +39,22 @@ func (wd *WorkingDay) Validate() error {
 	return errors.Join(errs...)
 }
 
+// parseHour parses the hour and returns the time.Time object
+// If the hour is invalid, an error is returned.
+// The hour is expected to be in the format hh:mm
 func parseHour(hour string) (time.Time, error) {
 	return time.Parse(hourLayout, hour)
 }
 
+// getCurrentTime returns the current time in the configured timezone
+// The timezone is loaded from the config file.
+// If the timezone is invalid, the local timezone is used.
 func (wd *WorkingDay) getCurrentTime() time.Time {
 	loc, _ := time.LoadLocation(wd.TZ)
 	return time.Now().In(loc)
 }
 
-// Trims days year etc.
+// Trims day year etc.
 func (wd *WorkingDay) getCurrentTimeTrimed() time.Time {
 	t := wd.getCurrentTime()
 	n, err := time.Parse(hourLayout, fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute()))
@@ -83,6 +90,8 @@ func (wd *WorkingDay) IsWorkingPeriod() bool {
 	return wd.isWorkingDay() && wd.isWorkingHour()
 }
 
+// NextStartAndNow return the current date as well as the next date the agent will be allowed to start
+// Dates are returned in the configured timezone.
 func (wd *WorkingDay) NextStartAndNow() (time.Time, time.Time, error) {
 	var nextHourMin time.Time
 	var err error

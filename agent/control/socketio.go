@@ -88,7 +88,7 @@ func (cpc *ControlPlanClient) InitWs(success chan<- struct{}, chanErr chan<- err
 	return cpc.init(cfg, success, chanErr)
 }
 
-// InitWsUpgrade tries to connect to the control plan using the http the websocket upgrade transport
+// InitWsUpgrade tries to connect to the control plan using the http to websocket upgrade transport
 func (cpc *ControlPlanClient) InitWsUpgrade(success chan<- struct{}, chanErr chan<- error) error {
 	cfg := getEioConfig([]string{"polling", "websocket"})
 	return cpc.init(cfg, success, chanErr)
@@ -103,7 +103,7 @@ func (cpc *ControlPlanClient) InitPolling(success chan<- struct{}, chanErr chan<
 // InitOverDns tries to connect to the control plan using the DNS transport
 func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream, success chan<- struct{}, chanErr chan<- error) error {
 	_, err := session.Write([]byte(config.Get().Id))
-	// DNS MODE means we are using http, to simplify the exchanges
+	// DNS MODE means we are using http to simplify the exchanges
 	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoUrl(), "https://"), "http://")
 	cpc.url = fmt.Sprintf("http://%s", u)
 	if err != nil {
@@ -117,7 +117,7 @@ func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream, success chan<- s
 	return cpc.init(cfg, success, chanErr)
 }
 
-// Init initialize the socket.io handlers
+// Init initializes the socket.io handlers
 func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct{}, chanErr chan<- error) error {
 	manager := sio.NewManager(cpc.url, cfg)
 	socket := manager.Socket("/", nil)
@@ -194,7 +194,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	})
 
 	// SendAgentDataSuccess Logs when the server returns no error
-	// As it complete the configuration steps between the
+	// As it complete the configuration steps between the agent and the server
 	socket.OnEvent(socketio.SendAgentDataSuccess, func() {
 		log.Trace().Msg("OnEvent: SendAgentDataSuccess")
 		cpc.configDone <- struct{}{}
@@ -203,13 +203,14 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 
 	socket.OnEvent(socketio.RegisterError, func(data socketio.SioError) {
 		log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
-		log.Info().Msgf("Quitting...")
+		log.Info().Msgf("Restarting...")
 		socket.Disconnect()
 
-		cpc.canceler.Exit()
+		cpc.canceler.Restart()
 		cpc.Close()
 	})
 
+	// ExitEvent is sent by the server when the agent is requested to exit
 	socket.OnEvent(socketio.ExitEvent, func(doExit bool) {
 		log.Info().Msg("OnEvent: Exit requested")
 		socket.Emit(socketio.ExitSuccess)
@@ -221,6 +222,8 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		cpc.Close()
 	})
 
+	// AlreadyConnectedEvent is sent by the server when the agent is already running.
+	// The agent should exit
 	socket.OnEvent(socketio.AlreadyConnectedEvent, func() {
 		log.Info().Msg("AlreadyConnectedEvent: Exit requested because agent is already running")
 		socket.Emit(socketio.ExitSuccess)
@@ -228,10 +231,10 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		cpc.canceler.Exit()
 	})
 
+	// SendRemotePortForwardingDataError is sent by the server when the forwarding ports
+	// are successfully received by the server
 	socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
-		log.Trace().Msg("OnEvent: SendRemotePortForwardingDataSuccess")
 		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
-		log.Trace().Msg("OnEvent: SendRemotePortForwardingDataSuccess done")
 		log.OK().Msg("Agent successfully started.")
 	})
 
@@ -260,7 +263,7 @@ func (cpc *ControlPlanClient) Start() error {
 	})
 
 	cpc.socket.Connect()
-	// starts the keepalive in background
+	// starts the keepalive in the background
 	go cpc.keepAliveLoop(cpc.ctx)
 	log.Debug().Msgf("Connected to the control server %s", cpc.url)
 	log.Trace().Msg("Event send: RegisterEvent")
@@ -305,6 +308,9 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	}
 }
 
+// ErrorPlusPlus handle when an error occurs on the socket.io side
+// If more than 5 errors occur, the agent will automatically restart
+// See to check the errors in a given time, reset the counter after some time
 func (cpc *ControlPlanClient) ErrorPlusPlus() {
 	cpc.errorCounter++
 	if cpc.errorCounter > 5 {

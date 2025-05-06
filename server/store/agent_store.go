@@ -19,7 +19,7 @@ var (
 )
 
 // NewAgentStore saves in memory all the information related
-// to the actives connections
+// to the active connections
 func NewAgentStore(_db *persistence.DB) *AgentStore {
 	once.Do(func() {
 		store = &AgentStore{

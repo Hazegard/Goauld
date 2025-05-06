@@ -58,7 +58,12 @@ func (c *Compiler) Run() error {
 		if err != nil {
 			return fmt.Errorf("could not create temp dir: %v", err)
 		}
-		defer os.RemoveAll(tempDir)
+		defer func(path string) {
+			err := os.RemoveAll(path)
+			if err != nil {
+				log.Error().Err(err).Str("Path", path).Msg("could not remove temp dir, please remove it manually")
+			}
+		}(tempDir)
 		c.Source = tempDir
 		err = drop(tempDir, Sources.Sources)
 		if err != nil {
@@ -177,7 +182,7 @@ func run(config Compiler) error {
 	log.Info().Msgf("compiling %s", config.Id)
 	missingCommands := CheckCommands(requiredCommands)
 	if len(missingCommands) > 0 {
-		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.App_Name)).Str("commands", strings.Join(missingCommands, "\n")).Msg("Missing required commands")
+		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.App_Name)).Str("commands", strings.Join(missingCommands, ", ")).Msg("Missing required commands")
 		return fmt.Errorf("commands required to build %s", goauldcommon.App_Name)
 	}
 

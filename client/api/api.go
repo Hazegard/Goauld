@@ -12,10 +12,10 @@ import (
 	"net/url"
 	"strings"
 
-	socket_io "Goauld/common/socket.io"
+	socketio "Goauld/common/socket.io"
 
 	"Goauld/client/types"
-	common_types "Goauld/common/types"
+	commontypes "Goauld/common/types"
 	httpTypes "Goauld/common/types"
 )
 
@@ -58,7 +58,7 @@ func (api *API) delete(p string) (*http.Response, error) {
 	return api.client.Do(req)
 }
 
-// get generic method to perform GET request with the appropriate authentication header
+// get is generic method to perform GET request with the appropriate authentication header
 func (api *API) get(p string) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
@@ -109,7 +109,7 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 	return agents, nil
 }
 
-// GetAgentById fetch the agent associated to the id
+// GetAgentById fetch the agent associated with the id
 func (api *API) GetAgentById(id string) (types.Agent, error) {
 	id = url.PathEscape(id)
 	res, err := api.get("/manage/agent/" + id)
@@ -164,7 +164,7 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 func (api *API) KillAgent(id string, doExit bool) error {
 	id = url.PathEscape(id)
 	u := fmt.Sprintf("/manage/agent/%s/kill", id)
-	body := socket_io.ExitData{Kill: doExit}
+	body := socketio.ExitData{Kill: doExit}
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err
@@ -192,7 +192,7 @@ func (api *API) DeleteAgent(id string) error {
 	return nil
 }
 
-func (api *API) DumpAll() (error, []common_types.State) {
+func (api *API) DumpAll() (error, []commontypes.State) {
 	res, err := api.get("/admin/dump/")
 	if err != nil {
 		return err, nil
@@ -206,7 +206,7 @@ func (api *API) DumpAll() (error, []common_types.State) {
 		return fmt.Errorf("error while dumping active agents : %s", strings.TrimSpace(string(body))), nil
 	}
 
-	var result []common_types.State
+	var result []commontypes.State
 	err = yaml.Unmarshal(body, &result)
 	if err != nil {
 		return err, nil

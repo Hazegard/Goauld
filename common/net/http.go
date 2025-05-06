@@ -7,8 +7,8 @@ import (
 
 // Http10ToHttp11FakeUpgrader perform a fake upgrade from HTTP/1.0 to HTTP/1.1
 // If the agent runs through a proxy forcing HTTP/1.0.
-// Even through HTTP/1.0 does not really support websockets, it sometimes helps as the websocket library used
-// reject HTTP/1.0 connection.
+// Even though HTTP/1.0 does not really support websockets, it sometimes helps as the websocket library used
+// rejects HTTP/1.0 connection.
 // See: https://github.com/coder/websocket/blob/246891f172ef96b0b5681c8e4d59dfd32ad1b091/accept.go#L186
 func Http10ToHttp11FakeUpgrader(r *http.Request) *http.Request {
 	if r.ProtoAtLeast(1, 1) {

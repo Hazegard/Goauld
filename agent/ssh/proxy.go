@@ -17,8 +17,7 @@ import (
 )
 
 // getProxiedClient return a connected SSH client
-// This client may be proxies (TLS, Websocket, HTTP), or not, depending
-// on the egress restrictions
+// This client may be proxies (TLS, Websocket, HTTP), or not, depending on the egress restrictions
 // The order of the connection attempt is defined in the agent configuration
 func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn, io.Closer, error) {
 	var client *ssh.Client

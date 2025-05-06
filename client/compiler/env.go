@@ -14,7 +14,7 @@ func ParseEnvFile(filepath string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Convert the map to slice of "key=value"
+	// Convert the map to a slice of "key=value"
 	var envs []string
 	for k, v := range envMap {
 		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
@@ -23,6 +23,9 @@ func ParseEnvFile(filepath string) ([]string, error) {
 	return envs, nil
 }
 
+// parseAndResolveEnvFile parsed the .env file provided.
+// If variables are referenced within the environment file (${ENV}),
+// the variable is replaced by the corresponding value if found
 func parseAndResolveEnvFile(filePath string) (map[string]string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -65,6 +68,7 @@ func parseAndResolveEnvFile(filePath string) (map[string]string, error) {
 
 var varRegex = regexp.MustCompile(`\$(\w+)`)
 
+// resolveValue try to find the value associated with a variable
 func resolveValue(key string, env map[string]string, resolved map[string]string, seen map[string]bool) string {
 	// Prevent circular references
 	if seen[key] {

@@ -7,6 +7,7 @@ import (
 	"os/exec"
 )
 
+// Goreleaser executes the Goreleaser build process with the provided compiler configuration.
 func Goreleaser(cfg Compiler) error {
 	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate", "--verbose"}
 	// customBuild, err := DoSpecificBuild(cfg)
@@ -50,7 +51,8 @@ func Goreleaser(cfg Compiler) error {
 	return cmd.Run()
 }
 
-// CheckCommands checks whether
+// CheckCommands checks whether the provided commands are found in the path
+// It returns all commands that are not found in the path
 func CheckCommands(cmds []string) []string {
 	var notFound []string
 	for _, cmd := range cmds {

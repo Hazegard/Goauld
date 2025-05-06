@@ -132,6 +132,7 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 	return nil
 }
 
+// buildCommand build the ssh command
 func (e *Ssh) buildCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	if e.Proxy {
 		return e.buildTunnelSshCommand(cfg, agent, exePath)

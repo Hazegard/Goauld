@@ -42,7 +42,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 	defer upstreamConn.Close()
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
 
-	// The client first send its ID before transferring the conn to the SSH client
+	// The client first sends its ID before transferring the conn to the SSH client
 	// The ID is a MD5 hash
 	rawId := make([]byte, 32)
 	n, err := stream.Read(rawId)
@@ -138,7 +138,7 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 			return err
 		}
 		log.Debug().Str("Mode", "SSHTTP").Msgf("begin session %08x", conn.GetConv())
-		// Permit coalescing the payloads of consecutive sends.
+		// Permit coalescing the payloads of consecutive sending.
 		conn.SetStreamMode(true)
 		// Disable the dynamic congestion window (limit only by the
 		// maximum of local and remote static windows).

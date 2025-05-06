@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 )
 
+// getShell return the first shell found on the system
 func getShell() Command {
 	commands := []Command{
 		{
@@ -40,6 +41,7 @@ var defaultPaths = []string{
 	"/usr/sbin",
 }
 
+// lookBinaries returns the first Command found in the paths
 func lookBinaries(commands []Command) Command {
 	for _, cmd := range commands {
 		c := lookPaths(cmd, defaultPaths)
@@ -49,6 +51,8 @@ func lookBinaries(commands []Command) Command {
 	}
 	return Command{}
 }
+
+// lookPaths returns whether the provided command if found in the provided paths
 func lookPaths(binaryName Command, paths []string) Command {
 	for _, path := range paths {
 		absCmd, err := lookPath(binaryName, path)

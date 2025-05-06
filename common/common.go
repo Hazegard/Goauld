@@ -22,7 +22,7 @@ func AppName() string {
 		}
 		return -1
 	}, App_Name)
-	return string(out)
+	return out
 }
 
 func GetVersion() string {

@@ -22,7 +22,7 @@ var srvCfg *ServerConfig
 // They can be overridden via:
 //
 // From the most priority to the least
-// 1. Command line argument (--config=1 )
+// 1. Command line argument (--config=1)
 // 2. Environment variable (CONFIG=1)
 // 3. Configuration file (./config.yaml)
 // 4. Compile defined variable (-ldflag)

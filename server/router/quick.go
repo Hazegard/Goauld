@@ -9,7 +9,7 @@ import (
 )
 
 // ServeQUIC start a TLS listener on the configured port
-func (router *MainRouter) ServeQuic() {
+func (router *MainRouter) ServeQUIC() {
 	httpsAddr := config.Get().LocalHttpsAddr()
 	quicConf := &quic.Config{
 		EnableDatagrams: true,
@@ -67,53 +67,3 @@ func (router *MainRouter) HandleQUIC(c quic.Connection) {
 		router.quicSSH.HandleQuic(stream, id)
 	}
 }
-
-/*func (router *MainRouter) quicssh(quicConn quic.Stream) {
-
-	sshConn, err := net.Dial("tcp", config.Get().SshdAddr)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to connect to SSH server")
-		return
-	}
-
-	errChan := make(chan error, 1)
-	// Initializes the QUIC to SSH connection
-	go func() {
-		_, err := io.Copy(quicConn, sshConn)
-		if err != nil && !errors.Is(err, io.EOF) {
-			log.Error().Str("ID", id).Str("Mode", "TLS").Err(err).Msg("TLS -> SSH connection failed")
-			errChan <- err
-		}
-	}()
-	// Initializes the SSH to QUIC connection
-	go func() {
-		_, err := io.Copy(sshConn, quicConn)
-		if err != nil && !errors.Is(err, io.EOF) {
-			log.Error().Str("ID", id).Str("Mode", "TLS").Err(err).Msg("SSH -> TLS connection failed")
-			errChan <- err
-		}
-	}()
-	// Adds the QUIC mode of the agent to the database
-	err = tlssh.db.SetAgentSshMode(id, "QUIC")
-	if err != nil {
-		log.Warn().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error setting agent mode to TLS")
-	}
-	// Waits for an error to occur, either in the
-	// SSH -> TLS connection or in the TLS -> SSH connection
-	err = <-errChan
-	if err != nil {
-		log.Error().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error during copy")
-	}
-
-	// Closes all remaining connections of the agent
-	err = tlssh.store.TlsshCloseAgent(id)
-	if err != nil {
-		log.Error().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error while closing TLS streams")
-	}
-	// Updates the database to set the agent mode as disconnected
-	err = tlssh.db.SetAgentSshMode(id, "OFF")
-	if err != nil {
-		log.Warn().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error setting agent mode to OFF")
-	}
-}
-*/

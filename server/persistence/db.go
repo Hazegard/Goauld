@@ -32,7 +32,7 @@ func InitDB() (*DB, error) {
 	return db, nil
 }
 
-// get return the database connection object
+// get to return the database connection object
 func get() *DB {
 	var err error
 	once.Do(func() {

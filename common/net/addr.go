@@ -24,6 +24,7 @@ func validateCIDR(cidr string) error {
 	return nil
 }
 
+// IsValidPort verify if the given port is a valid port number
 func IsValidPort(port int) bool {
 	return port >= 0 && port <= 65535 || port == -1
 }

@@ -31,7 +31,7 @@ type DNSSH struct {
 const idleTimeout = 2 * time.Minute
 
 // dnsNameCapacity returns the number of bytes remaining for encoded data after
-// including domain in a DNS name.
+// including the domain in a DNS name.
 func dnsNameCapacity(domain dns.Name) int {
 	// Names must be 255 octets or shorter in total length.
 	// https://tools.ietf.org/html/rfc1035#section-2.3.4

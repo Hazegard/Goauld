@@ -17,7 +17,7 @@ import (
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	// Initialize the server configuration from command line, environment variable and configuration files
+	// Initialize the server configuration from the command line, environment variable and configuration files
 	_, _, err := config.InitServer()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the server")

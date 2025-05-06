@@ -85,7 +85,6 @@ func (ur *ManageRouter) GetAgentByName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-func (ur *ManageRouter) ReturnAgent(w http.ResponseWriter, r *http.Request) {}
 
 // GetAgentById handles the /agent/{id} endpoints
 // it returns to the caller the associated agent

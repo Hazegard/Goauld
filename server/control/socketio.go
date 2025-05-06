@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	common_net "Goauld/common/net"
+	commonnet "Goauld/common/net"
 
 	"Goauld/common/log"
 	socketio "Goauld/common/socket.io"
@@ -24,7 +24,7 @@ type SocketIO struct {
 
 // ServeHTTP serves the socket.IO HTTP server
 func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	r = common_net.Http10ToHttp11FakeUpgrader(r)
+	r = commonnet.Http10ToHttp11FakeUpgrader(r)
 	sio.Server.ServeHTTP(w, r)
 }
 

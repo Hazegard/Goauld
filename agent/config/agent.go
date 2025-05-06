@@ -45,7 +45,7 @@ var agent *Agent
 
 // InitAgent parses the command lines arguments and initializes the temporary values (shared secret,etc...)
 func InitAgent() (*kong.Context, error, []error) {
-	warnings := []error{}
+	var warnings []error
 	// Parse the command line arguments
 	ctx, cfg, err := parse()
 	if err != nil {
@@ -146,7 +146,7 @@ func InitAgent() (*kong.Context, error, []error) {
 	return ctx, nil, warnings
 }
 
-// Get return the Agent global object
+// Get returns the Agent global object
 func Get() *Agent {
 	return agent
 }
@@ -156,46 +156,29 @@ func (a *Agent) Verbosity() int {
 	return a.cfg.Verbose
 }
 
-/*
-// LocalSShdAddress returns the local address the sshd server listens
-func (a *Agent) LocalSShdAddress() string {
-	return net.JoinHostPort("127.0.0.1", strconv.Itoa(a.cfg.SshdPort))
-}
-*/
-// LocalSShdPassword returns the current ssh password allowing to connect
+// LocalSSHDPassword returns the current ssh password allowing to connect
 func (a *Agent) LocalSSHDPassword() string {
 	return a.cfg.LocalSshPassword
 }
 
+// PrivateSshdPassword return the static password
 func (a *Agent) PrivateSshdPassword() string {
 	return _private_password
 }
 
+// ValidatePassword return whether the incoming password is valid.
+// The password is concatenated using the dynamic password, and the compiled-time-defined password
+// (private sshd password)
 func (a *Agent) ValidatePassword(in string) bool {
 	return in == a.PrivateSshdPassword()+a.LocalSSHDPassword()
 }
 
-/*
-// LocalSshdPort returns the local SSHD password
-func (a *Agent) LocalSshdPort() int {
-	return a.cfg.SshdPort
-}
-
-// SetLocalSshdPort sets the SSHD port to the configuration
-func (a *Agent) SetLocalSshdPort(p int) {
-	a.cfg.SshdPort = p
-}
-
-// IsLocalSshdRandomPort returns whether the local SSHD port is random
-func (a *Agent) IsLocalSshdRandomPort() bool {
-	return a.cfg.SshdPort == 0
-}
-*/
-
+// DNSServer returns the DNS servers that will be used to tunnel the connection
 func (a *Agent) DNSServer() []string {
 	return a.cfg.DnsServer
 }
 
+// DNSDomain returns the DNS domain that will be used to query the DNS server
 func (a *Agent) DNSDomain() string {
 	return a.cfg.DnsServerDomain
 }
@@ -230,7 +213,7 @@ func (a *Agent) RemoteForwardedHttpProxyAddress() string {
 	return fmt.Sprintf("127.0.0.1:%d", a.cfg.HttpProxyPort)
 }
 
-// RemoteForwardedSocksPort returns the remote forwarded Socks port
+// RemoteForwardedHttpProxyPort returns the remote forwarded HTTP port
 func (a *Agent) RemoteForwardedHttpProxyPort() int {
 	return a.cfg.HttpProxyPort
 }
@@ -240,7 +223,7 @@ func (a *Agent) RemoteForwardedSocksPort() int {
 	return a.cfg.SocksPort
 }
 
-// RemoteForwardedSocksPort returns the remote forwarded Socks port
+// RemoteForwardedSshdPort returns the remote forwarded SSHD port
 func (a *Agent) RemoteForwardedSshdPort() int {
 	return a.cfg.RsshPort
 }
@@ -266,8 +249,6 @@ func (a *Agent) ServerUrl() string {
 	if u != "" {
 		return u
 	}
-	// TODO voir pour ajouter port 80 si pas de port spécifié
-	// et 443 si https mais pas de port spécifié
 	if strings.HasPrefix(a.cfg.Server, "http://") {
 		u = a.cfg.Server
 	} else if strings.HasPrefix(a.cfg.Server, "https://") {
@@ -278,12 +259,14 @@ func (a *Agent) ServerUrl() string {
 	return u
 }
 
+// normalizeAddr transform the incoming url to ensure that a scheme and a port are always present
+// It tries to allocate the corresponding port/scheme (HTTPS/443, HTTP/80, etc.)
 func normalizeAddr(input string) string {
 	// 1) Split off any “scheme://”
 	hasScheme := strings.Contains(input, "://")
 	working := input
 	if !hasScheme {
-		// Tentatively prepend a fake scheme so url.Parse will let us split Host vs Path
+		// Tentatively prepend a fake scheme, so url.Parse will let us split Host vs Path
 		working = "http://" + working
 	}
 
@@ -295,7 +278,7 @@ func normalizeAddr(input string) string {
 	host := u.Hostname()
 	port := u.Port()
 
-	// 2) Decide on scheme if missing
+	// 2) Decide on a scheme if missing
 	scheme := u.Scheme
 	if !hasScheme {
 		if port == "443" {
@@ -383,6 +366,7 @@ func (a *Agent) IsOutOfWorkingDay() bool {
 	return a.cfg.OnlyWorkingDays && !a.WorkingDay.IsWorkingPeriod()
 }
 
+// NextStart return the next date when the agent will be allowed to start
 func (a *Agent) NextStart() (time.Time, time.Time, error) {
 	return a.WorkingDay.NextStartAndNow()
 }
@@ -397,7 +381,7 @@ func (a *Agent) GetRsshOrder() []string {
 	return utils.ToLower(utils.Unique(a.cfg.RsshOrder))
 }
 
-// AgePubKey returns the age public key used to encrypt asymmetrically data
+// AgePubKey returns the age public key used to asymmetrically encrypt data
 func (a *Agent) AgePubKey() string {
 	return a.cfg.AgePubKey
 }

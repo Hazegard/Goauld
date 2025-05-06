@@ -103,13 +103,13 @@ func (a *Agent) SetRemotePortForwarding(rpf []ssh.RemotePortForwarding) {
 	// a.RemotePortForwarding = strings.Join(rpfString, ",")
 }
 
-// SetConnect sets the agent state to connected state
+// SetConnect sets the agent state to "connected" state
 func (a *Agent) SetConnect() {
 	a.Connected = true
 	a.LastUpdated = time.Now()
 }
 
-// SetDisconnect sets the agent state to disconnected state
+// SetDisconnect sets the agent state to "disconnected" state
 func (a *Agent) SetDisconnect() {
 	a.Connected = false
 	a.LastUpdated = time.Now()
@@ -203,6 +203,8 @@ func (db *DB) FindAgentByIdAndName(id string, name string) (*Agent, error) {
 	return &agent, nil
 }
 
+// ValidatePasswordAndRotateIfTrue use atomic SQL query
+// to update the password if the provided one matched the stored one
 func (db *DB) ValidatePasswordAndRotateIfTrue(id string, password string) error {
 	newPassword, err := crypto.GeneratePassword(32)
 	if err != nil {
@@ -314,7 +316,7 @@ func (db *DB) DeleteAgentById(id string) error {
 	return nil
 }
 
-// GetAgentsByUsedPort returns all agent using the port
+// GetAgentsByUsedPort returns all agents using the port
 // only on agent should be returned at a time
 func (db *DB) GetAgentsByUsedPort(port int) ([]Agent, error) {
 	agents, err := db.GetAllAgents()

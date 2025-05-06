@@ -14,10 +14,12 @@ import (
 
 const escape = "\x1b"
 
+// format returns the ANSI code associated with the color
 func format(attr color.Attribute) string {
 	return fmt.Sprintf("%s[%dm", escape, attr)
 }
 
+// PrintColorizedYAML pretty print a YAML, with colors if printed to a terminal
 func PrintColorizedYAML(input string) {
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 

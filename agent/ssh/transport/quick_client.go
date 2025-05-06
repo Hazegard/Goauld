@@ -21,7 +21,6 @@ func (s *StreamConn) LocalAddr() net.Addr  { return s.lAddr }
 func (s *StreamConn) RemoteAddr() net.Addr { return s.rAddr }
 
 // GetQuicConn dials a QUIC connection and opens a stream, all respecting ctx.
-// If ctx is done at any point, dialing, stream open or the header write will error out.
 func GetQuicConn(ctx context.Context) (*StreamConn, error) {
 	// 1) Prepare TLS and QUIC configs
 	tlsConf := proxy.NewTlsConfig()

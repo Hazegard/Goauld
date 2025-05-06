@@ -42,7 +42,7 @@ func (rpf *RemotePortForwarding) String() string {
 	return fmt.Sprintf("%d:%s:%d", rpf.ServerPort, rpf.AgentIP, rpf.AgentPort)
 }
 
-// Info returns the string marshaled structure to be stored in the database
+// Info returns the string-marshaled structure to be stored in the database
 func (rpf *RemotePortForwarding) Info() string {
 	return fmt.Sprintf("%d:%s:%d#%s", rpf.ServerPort, rpf.AgentIP, rpf.AgentPort, rpf.Tag)
 }

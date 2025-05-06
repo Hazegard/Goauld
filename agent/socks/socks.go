@@ -42,7 +42,7 @@ func NewSocks() (*SocksServer, error) {
 	return socksServer, nil
 }
 
-// Serve use the provided listener to listen and serve the Socks proxy
+// Serve uses the provided listener to listen and serve the Socks proxy
 func (s *SocksServer) Serve(l net.Listener) (err error) {
 	defer func() {
 		if r := recover(); r != nil {

@@ -36,7 +36,7 @@ func (router *MainRouter) ServeTLS() {
 // If the request matches the TLS domain, forward this TLS traffic to the SSH over TLS
 func (router *MainRouter) HandleTls(c net.Conn) {
 	defer c.Close()
-	// Check if connection is TLS
+	// Check if the connection is a TLS connection
 	if tlsConn, ok := c.(*tls.Conn); ok {
 		// If the connection is TLS, performs the TLS handshake
 		if err := tlsConn.Handshake(); err != nil {

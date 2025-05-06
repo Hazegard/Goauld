@@ -18,14 +18,21 @@ import (
 // This is done to have environment variable precedence over
 // the configuration files
 
+// YAMLKeepEnvVar resolve the YAML configuration file.
+// It does not override values found in the environment variables
 func YAMLKeepEnvVar(r io.Reader) (kong.Resolver, error) {
 	return YAML(r, true)
 }
 
+// YAMLOverwriteEnvVar resolve the YAML configuration file.
+// Values found in the file are overwriting the value found in the environment variable
 func YAMLOverwriteEnvVar(r io.Reader) (kong.Resolver, error) {
 	return YAML(r, false)
 }
 
+// YAML returns a kong resolver to load YAML configuration file
+// overwriteEnvVar should be set to true if we want the values in the YAML file to take precedence over
+// the environment variable. If not, the value should be set to false
 func YAML(r io.Reader, overwriteEnvVar bool) (kong.Resolver, error) {
 	decoder := yaml.NewDecoder(r)
 	config := map[string]interface{}{}

@@ -133,7 +133,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// ctrl+k: shortcut to kill the agent
 		case action_kill:
-			// if selected agent is not empty
+			// if the selected agent is not empty
 			if m.confirmAction == "" {
 				m.confirmAction = action_kill
 				text = fmt.Sprintf("Confirm killing %s? (%s to confirm)", selectedAgent.Name, action_kill)
@@ -159,7 +159,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			doUpdateStatus = true
 		case action_reset:
-			// if selected agent is not empty
+			// if the selected agent is not empty
 			if m.confirmAction == "" {
 				m.confirmAction = action_reset
 				text = fmt.Sprintf("Confirm reset %s? (%s to confirm)", selectedAgent.Name, action_reset)
@@ -181,7 +181,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			doUpdateStatus = true
 		case action_delete:
-			// if selected agent is not empty
+			// if the selected agent is not empty
 			if m.confirmAction == "" {
 				m.confirmAction = action_delete
 				text = fmt.Sprintf("Confirm deleting %s? (%s to confirm)", selectedAgent.Name, action_delete)
@@ -376,6 +376,7 @@ func (m *Model) View() string {
 	return baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.Help() + "\n"
 }
 
+// centerString adds left padding to center the string in the column given the column length
 func centerString(str string, length int) string {
 	// If the string is already longer than or equal to the required length, return it as is.
 	if len(str) >= length {
@@ -391,6 +392,7 @@ func centerString(str string, length int) string {
 	return strings.Repeat(" ", leftPadding) + str
 }
 
+// NewCenterColumn return a column with its title centered
 func NewCenterColumn(key string, title string, width int) table.Column {
 	return table.NewColumn(key, centerString(title, width), width)
 }

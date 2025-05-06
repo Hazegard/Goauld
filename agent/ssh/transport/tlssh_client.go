@@ -35,7 +35,7 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 	// 4) Write the agent ID header, but bound the write by ctx's deadline
 	if dl, ok := ctx.Deadline(); ok {
 		// Set a write deadline so if ctx is Done(), Write will fail promptly
-		tlsConn.SetWriteDeadline(dl)
+		_ = tlsConn.SetWriteDeadline(dl)
 	}
 
 	header := []byte(config.Get().Id)
@@ -44,7 +44,7 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 		return nil, err
 	}
 	// Clear deadlines so future reads/writes aren’t affected
-	tlsConn.SetWriteDeadline(time.Time{})
+	_ = tlsConn.SetWriteDeadline(time.Time{})
 
 	return tlsConn, nil
 }
@@ -56,8 +56,8 @@ func GoodGetTlsConn(ctx context.Context) (net.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Write the agent ID as header to allows the server to identify which agent
-	// Write the agent ID as header to allow the server to identify which agent
+	// Write the agent ID as a header to allow the server to identify which agent
+	// Write the agent ID as a header to allow the server to identify which agent
 	// is currently connecting
 	_, err = conn.Write([]byte(config.Get().Id))
 	if err != nil {

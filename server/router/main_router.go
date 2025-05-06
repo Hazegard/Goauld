@@ -151,7 +151,7 @@ func (router *MainRouter) Serve() error {
 		go router.ServeTLS()
 
 		if config.Get().Quic {
-			go router.ServeQuic()
+			go router.ServeQUIC()
 		}
 	}
 	// serve the HTTP server

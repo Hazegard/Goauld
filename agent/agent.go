@@ -188,7 +188,12 @@ func run() utils.CancelReason {
 	}
 
 	if dnsTransport != nil {
-		defer dnsTransport.Close()
+		defer func(dnsTransport *transport.DNSSH) {
+			err := dnsTransport.Close()
+			if err != nil {
+				log.Debug().Err(err).Msg("error while closing dns transport")
+			}
+		}(dnsTransport)
 	}
 
 	cancelCtrlC := HandleCtrlC(controlPlanClient, globalCanceler)
@@ -392,7 +397,7 @@ func run() utils.CancelReason {
 }
 
 // HandleCtrlC intercepts the ctrl-c events.
-// It signals to close all running goroutines, and wait one second to allow the agent to signal the disconnection
+// It signals to close all running goroutines and wait one second to allow the agent to signal the disconnection
 // to the server. Then it exits.
 func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.GlobalCanceler) func() {
 	c := make(chan os.Signal, 1)

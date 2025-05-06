@@ -38,6 +38,7 @@ func (s *Scp) GetTarget() (string, error) {
 	return "", fmt.Errorf("SCP target not found in %s or %s", s.Source, s.Destination)
 }
 
+// ExtractRemote tries to find the remote agent, whether located in the source or in the destination of the command
 func ExtractRemote(s string) (bool, string) {
 	parts := strings.Split(s, ":")
 	if len(parts) == 1 {

@@ -2,6 +2,7 @@
 
 package shell
 
+// getShell return the first shell found on the system
 func getShell() Command {
 	commands := []Command{
 		{

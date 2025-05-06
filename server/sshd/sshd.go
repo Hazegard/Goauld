@@ -91,7 +91,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				ok, payload, _ = forwardHandler.HandleSSHRequest(ctx, srv, req)
 				return ok, payload
 			},
-			// HandleKeepAlive returns pong when an agent send a ping
+			// HandleKeepAlive returns pong when an agent sends a ping
 			// This ping pong mechanism is used to perform a keepalive of the connections
 			"ping":                  HandleKeepAlive(db),
 			"keepalive@openssh.com": HandleKeepAlive(db),
@@ -105,7 +105,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 		},
 		// PublicKeyHandler handles the public key authentication
 		// the username connecting is the id of the agent
-		// The authentication only succeed if
+		// The authentication only succeeds if
 		// - The username matches the ID of an already registered agent
 		// - The agent has a public key configured
 		// - The public key matched

@@ -258,6 +258,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	return app, cfg, nil
 }
 
+// HasProto returns true if the url contains a protocol prefix
 func HasProto(u string) bool {
 	split := strings.Split(u, "://")
 	return len(split) > 1
