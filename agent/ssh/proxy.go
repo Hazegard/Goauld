@@ -25,12 +25,12 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 	var closer io.Closer
 	for _, proto := range config.Get().GetRsshOrder() {
 		log.Info().Str("Mode", proto).Msg("Connecting to ssh")
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 		resultChan := make(chan struct{}, 1)
 		go func() {
 			switch {
 			case strings.HasPrefix(proto, "ssh"):
-				client = directSSH(sshConfig, ctx)
+				client = directSSH(sshConfig, timeoutCtx)
 				if client != nil {
 					closer = client
 					resultChan <- struct{}{}
@@ -39,7 +39,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 				}
 
 			case strings.HasPrefix(proto, "quic"):
-				_client, stream := proxyQuic(sshConfig, ctx)
+				_client, stream := proxyQuic(sshConfig, timeoutCtx)
 				if _client != nil {
 					client = _client
 					closer = stream
@@ -50,7 +50,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					cancel()
 				}
 			case strings.HasPrefix(proto, "tls"):
-				client, conn = proxyTls(sshConfig, ctx)
+				client, conn = proxyTls(sshConfig, timeoutCtx)
 				if client != nil {
 					closer = conn
 					resultChan <- struct{}{}
@@ -60,7 +60,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 				}
 
 			case strings.HasPrefix(proto, "ws"):
-				client, conn = proxyWS(sshConfig, ctx)
+				client, conn = proxyWS(sshConfig, timeoutCtx, ctx)
 				if client != nil {
 					closer = conn
 					resultChan <- struct{}{}
@@ -99,7 +99,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 		case <-resultChan:
 			// cancel()
 			return client, conn, closer, nil
-		case <-ctx.Done():
+		case <-timeoutCtx.Done():
 			log.Warn().Str("Mode", proto).Msg("Connection timed out, trying next...")
 			cancel()
 			continue
@@ -158,9 +158,9 @@ func proxyQuic(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, n
 }
 
 // proxyWS proxies the SSH traffic using a websocket connection to the server
-func proxyWS(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, net.Conn) {
+func proxyWS(sshConfig *ssh.ClientConfig, timeoutContext context.Context, globalContext context.Context) (*ssh.Client, net.Conn) {
 	log.Info().Str("Mode", "WSSH").Str("Target", config.Get().WSshUrl()).Msg("Trying to proxy SSH using websocket")
-	wsConn, err := transport.GetWebsocketConn(ctx)
+	wsConn, err := transport.GetWebsocketConn(timeoutContext, globalContext)
 	if err != nil {
 		log.Error().Str("Mode", "WSSH").Err(err).Msg("Failed to create WebSocket connection")
 		return nil, nil

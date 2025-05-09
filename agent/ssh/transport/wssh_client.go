@@ -13,13 +13,13 @@ import (
 )
 
 // GetWebsocketConn returns a net.Conn wrapping a websocket connection
-func GetWebsocketConn(ctx context.Context) (net.Conn, error) {
+func GetWebsocketConn(localCtx context.Context, globalCtx context.Context) (net.Conn, error) {
 	url := config.Get().WSshUrl()
 
 	httpclient := proxy.NewHttpClientProxy()
 
 	// Attempt to connect to the websocket server
-	wsConn, resp, err := websocket.Dial(ctx, url, &websocket.DialOptions{
+	wsConn, resp, err := websocket.Dial(localCtx, url, &websocket.DialOptions{
 		HTTPClient: httpclient,
 	})
 	if err != nil {
@@ -35,7 +35,7 @@ func GetWebsocketConn(ctx context.Context) (net.Conn, error) {
 	}
 
 	// Wraps the websocket connection to expose it as a raw net.Conn connection
-	netConn := websocket.NetConn(ctx, wsConn, websocket.MessageBinary)
+	netConn := websocket.NetConn(globalCtx, wsConn, websocket.MessageBinary)
 
 	return netConn, nil
 }
