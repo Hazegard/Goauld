@@ -97,6 +97,9 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 	if err != nil {
 		return nil, errors.New("Error while reading agent list: " + err.Error())
 	}
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.New(strings.TrimSpace(string(body)))
+	}
 
 	var agents []types.Agent
 	err = json.Unmarshal(body, &agents)
@@ -121,6 +124,9 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 	if err != nil {
 		return types.Agent{}, errors.New("Error while reading agent by id: " + err.Error())
 	}
+	if res.StatusCode != http.StatusOK {
+		return types.Agent{}, errors.New(strings.TrimSpace(string(body)))
+	}
 
 	var agents types.Agent
 	err = json.Unmarshal(body, &agents)
@@ -143,7 +149,7 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return types.Agent{}, fmt.Errorf("Error while reading agent by id: %v", err)
+		return types.Agent{}, fmt.Errorf("error while reading agent by id: %v", err)
 	}
 	if res.StatusCode != http.StatusOK {
 		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %s", strings.TrimSpace(string(body)))
@@ -174,7 +180,12 @@ func (api *API) KillAgent(id string, doExit bool) error {
 		return err
 	}
 	if res.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("%d", res.StatusCode)
+		defer res.Body.Close()
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("error reading response (%s)", res.Status)
+		}
+		return fmt.Errorf("%s", string(body))
 	}
 	return nil
 }
@@ -187,7 +198,12 @@ func (api *API) DeleteAgent(id string) error {
 		return err
 	}
 	if res.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("%d", res.StatusCode)
+		defer res.Body.Close()
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("error reading response (%s)", res.Status)
+		}
+		return fmt.Errorf("%s", string(body))
 	}
 	return nil
 }
