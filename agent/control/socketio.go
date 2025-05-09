@@ -139,6 +139,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		cpc.ErrorPlusPlus()
 	})
 	manager.OnReconnect(func(attempt uint32) {
+		cpc.canceler.Restart()
 		log.Trace().Msg("OnReconnect")
 		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", cpc.url, attempt)
 	})

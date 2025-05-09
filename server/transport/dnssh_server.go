@@ -156,7 +156,7 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 			// 	stream.Close()
 			// }()
 
-			// The client first send its ID before transferring the conn to the SSH client
+			// The client first sends its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
 			rawId := make([]byte, 32)
 			n, err := stream.Read(rawId)
