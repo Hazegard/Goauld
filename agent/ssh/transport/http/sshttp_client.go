@@ -41,8 +41,11 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 
 	// http.DefaultTransport.(*http.Transport).MaxConnsPerHost = 20
 
-	httpClient := proxy.NewHttpClientProxy()
-	httpClient.Transport.(*http.Transport).MaxConnsPerHost = 20
+	tr := &http.Transport{
+		MaxIdleConns: 20,
+	}
+	httpClient := proxy.NewHttpClientProxy(tr)
+	// httpClient.Transport.(*http.Transport).MaxConnsPerHost = 20
 
 	var poller PollFunc = func(ctx context.Context, client *http.Client, p []byte) (io.ReadCloser, error) {
 		return poll(ctx, httpClient, serverURL, p)
@@ -109,7 +112,7 @@ func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []by
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	req.Header.Set("User-Agent", "") // Disable default "Go-http-client/1.1".
+	// req.Header.Set("User-Agent", "") // Disable default "Go-http-client/1.1".
 
 	resp, err := httpClient.Transport.RoundTrip(req) //http.DefaultTransport.RoundTrip(req)
 	if err != nil {

@@ -1,13 +1,12 @@
 package transport
 
 import (
+	"Goauld/agent/config"
+	"Goauld/agent/proxy"
 	"context"
 	"fmt"
 	"io"
 	"net"
-
-	"Goauld/agent/config"
-	"Goauld/agent/proxy"
 
 	"nhooyr.io/websocket"
 )
@@ -16,7 +15,7 @@ import (
 func GetWebsocketConn(localCtx context.Context, globalCtx context.Context) (net.Conn, error) {
 	url := config.Get().WSshUrl()
 
-	httpclient := proxy.NewHttpClientProxy()
+	httpclient := proxy.NewHttpClientProxy(nil)
 
 	// Attempt to connect to the websocket server
 	wsConn, resp, err := websocket.Dial(localCtx, url, &websocket.DialOptions{

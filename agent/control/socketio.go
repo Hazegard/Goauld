@@ -337,7 +337,7 @@ func getEioConfig(transport []string) *sio.ManagerConfig {
 			},
 			HTTPTransport: proxy.NewTransportProxy(),
 			WebSocketDialOptions: &websocket.DialOptions{
-				HTTPClient: proxy.NewHttpClientProxy(),
+				HTTPClient: proxy.NewHttpClientProxy(nil),
 			},
 			WebTransportDialer: &webtransport.Dialer{
 				TLSClientConfig: proxy.NewTlsConfig(),

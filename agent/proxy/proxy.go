@@ -10,6 +10,18 @@ import (
 	"github.com/aus/proxyplease"
 )
 
+type userAgentTransport struct {
+	rt http.RoundTripper
+	ua string
+}
+
+func (t *userAgentTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// clone so we don’t stomp on callers’ headers
+	r2 := req.Clone(req.Context())
+	r2.Header.Set("User-Agent", t.ua)
+	return t.rt.RoundTrip(r2)
+}
+
 // NewProxyDialer return a proxied dialer
 func NewProxyDialer(proxyUrl *url.URL, username string, password string, domain string) proxyplease.DialContext {
 	proxyplease.SetDebugf(log.ProxyPleaseLog())
@@ -32,22 +44,31 @@ func NewProxyDialer(proxyUrl *url.URL, username string, password string, domain 
 }
 
 // NewHttpClientProxy return a new http Client configured to use the proxy
-func NewHttpClientProxy() *http.Client {
-	transport := http.Transport{
-		TLSClientConfig:   NewTlsConfig(),
-		ForceAttemptHTTP2: false,
+func NewHttpClientProxy(tr *http.Transport) *http.Client {
+	if tr == nil {
+		tr = &http.Transport{}
 	}
+	tr.TLSClientConfig = NewTlsConfig()
+	tr.ForceAttemptHTTP2 = false
 
 	if config.Get().NoProxy() {
 		return &http.Client{
-			Transport: &transport,
+			// Transport: &transport,
+			Transport: &userAgentTransport{
+				rt: tr,
+				ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
+			},
 		}
 	}
 
 	dialContext := NewProxyDialer(config.Get().Proxy(), config.Get().ProxyUsername(), config.Get().ProxyPassword(), config.Get().ProxyDomain())
-	transport.DialContext = dialContext
+	tr.DialContext = dialContext
 	return &http.Client{
-		Transport: &transport,
+		// Transport: &transport,
+		Transport: &userAgentTransport{
+			rt: tr,
+			ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
+		},
 	}
 }
 
