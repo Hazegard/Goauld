@@ -51,6 +51,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 	}
 	id := string(rawId[:n])
 
+	s.db.SetAgentSshMode(id, "HTTP")
 	s.store.SshttpAddAgent(upstreamConn, stream, id)
 
 	var wg sync.WaitGroup
