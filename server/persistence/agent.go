@@ -170,6 +170,24 @@ func (db *DB) GetAllAgents() ([]Agent, error) {
 	return agents, nil
 }
 
+// GetAllAgentsSanitizes returns all the agents in the database, but clear all secrets
+func (db *DB) GetAllAgentsSanitized() ([]Agent, error) {
+	var agents []Agent
+	result := db.db.Find(&agents)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	for i := range agents {
+		agents[i].SharedSecret = "[REDACTED]"
+		agents[i].PrivateKey = "[REDACTED]"
+		agents[i].PublicKey = "[REDACTED]"
+		agents[i].SshPasswd = "[REDACTED]"
+		agents[i].OneTimePassword = "[REDACTED]"
+
+	}
+	return agents, nil
+}
+
 // FindAgentById returns the agent identified by id
 func (db *DB) FindAgentById(id string) (*Agent, error) {
 	var agent Agent

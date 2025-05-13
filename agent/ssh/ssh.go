@@ -204,7 +204,7 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 			if err != nil {
 				return
 			}
-			log.Trace().Msgf("Keepalive %s recveived from server", string(b))
+			log.Trace().Msgf("Keepalive %s received from server", string(b))
 		case <-ctx.Done():
 			return
 		}

@@ -125,7 +125,7 @@ func NewDNSSH() (*DNSSH, error) {
 	// 	fmt.Fprintf(os.Stderr, "pubkey format error: %v\n", err)
 	// 	os.Exit(1)
 	// }
-	d := ""
+	d := "127.0.0.1"
 	port := 53
 	dnsServers := config.Get().DNSServer()
 	for _, _dns := range nameserver.GetDNSServers() {

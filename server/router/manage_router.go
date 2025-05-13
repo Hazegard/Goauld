@@ -142,19 +142,13 @@ func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) 
 
 // GetAgents return all agents stored in the database
 func (ur *ManageRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
-	agents, err := ur.db.GetAllAgents()
+	agents, err := ur.db.GetAllAgentsSanitized()
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("find all agents failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	for i := range agents {
-		agents[i].SharedSecret = ""
-		agents[i].PrivateKey = ""
-		agents[i].PublicKey = ""
-		agents[i].SshPasswd = ""
 
-	}
 	jsonAgent, err := json.Marshal(agents)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating json response")

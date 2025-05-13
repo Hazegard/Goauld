@@ -1,16 +1,16 @@
 package router
 
 import (
-	"encoding/json"
-	"gopkg.in/yaml.v3"
-	"net/http"
-
+	"Goauld/common"
 	"Goauld/common/log"
 	"Goauld/common/types"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
 	"Goauld/server/router/midleware"
 	"Goauld/server/store"
+	"encoding/json"
+	"gopkg.in/yaml.v3"
+	"net/http"
 
 	"github.com/rs/zerolog"
 	"github.com/urfave/negroni"
@@ -32,6 +32,7 @@ func NewAdminRouter(_db *persistence.DB, store *store.AgentStore) *AdminRouter {
 	}
 	r.userRouter.HandleFunc("GET /config/", r.GetConfig)
 	r.userRouter.HandleFunc("GET /dump/", r.DumpAll)
+	r.userRouter.HandleFunc("GET /state/", r.State)
 	r.userRouter.HandleFunc("GET /dump/{id}", r.Dump)
 	r.userRouter.HandleFunc("POST /loglevel/{level}", r.UpdateLogLevel)
 	return r
@@ -81,8 +82,7 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DumpAll return all the information stored regarding all the agents
-func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
+func (ur *AdminRouter) dumpAllAgents() []types.State {
 	dump := ur.store.GetAllStates()
 	var outDump []types.State
 	for _, d := range dump {
@@ -105,6 +105,12 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 		d.IPs = agent.IPs
 		outDump = append(outDump, d)
 	}
+	return outDump
+}
+
+// DumpAll return all the information stored regarding all the agents
+func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
+	outDump := ur.dumpAllAgents()
 	res, err := yaml.Marshal(outDump)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
@@ -160,6 +166,48 @@ func (ur *AdminRouter) GetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = w.Write(res.Bytes())
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("write response failed")
+	}
+}
+
+func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
+	var errs []error
+	agents, err := ur.db.GetAllAgentsSanitized()
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	var dbAgents []types.DbAgent
+	for _, a := range agents {
+		agent := types.DbAgent{
+			CreatedAt: a.CreatedAt,
+			UpdatedAt: a.UpdatedAt,
+			DeletedAt: a.DeletedAt,
+			SocketId:  a.SocketId,
+			Agent:     a.Agent,
+		}
+		dbAgents = append(dbAgents, agent)
+	}
+	c := *config.Get()
+	c.AccessToken = "[REDACTED]"
+	c.AdminToken = "[REDACTED]"
+	c.BinariesBasicAuth = "[REDACTED]"
+	c.PrivKey = "[REDACTED]"
+
+	activeAgents := ur.dumpAllAgents()
+	fullState := types.Status{
+		Version:      common.GetVersion(),
+		ActiveAgents: activeAgents,
+		AllAgents:    dbAgents,
+		Config:       c,
+	}
+	res, err := yaml.Marshal(fullState)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	_, err = w.Write(res)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("write response failed")
 	}

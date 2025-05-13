@@ -10,11 +10,14 @@ type Admin struct {
 	Dump     Dump     `cmd:""`
 	Loglevel Loglevel `cmd:""`
 	Config   Config   `cmd:""`
+	State    State    `cmd:""`
 }
 
 type Dump struct{}
 type Config struct{}
 
+type State struct {
+}
 type Loglevel struct {
 	Level string `arg:"" help:"Log level"`
 }
@@ -60,5 +63,23 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 	}
 
 	colorYaml.PrintColorizedYAML(res)
+	return nil
+}
+
+func (c *State) Run(_ *api.API, cfg ClientConfig) error {
+
+	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
+
+	err, res := adminApi.DumpState()
+	if err != nil {
+		return err
+	}
+
+	state, err := yaml.Marshal(res)
+	if err != nil {
+		return err
+	}
+
+	colorYaml.PrintColorizedYAML(string(state))
 	return nil
 }

@@ -237,6 +237,9 @@ func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
 		return err, nil
 	}
 	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("error while updating log level : %s", res.Status), nil
+	}
 	result := map[string]interface{}{}
 	body, err := io.ReadAll(res.Body)
 	err = json.Unmarshal(body, &result)
@@ -252,6 +255,9 @@ func (api *API) GetConfig() (error, string) {
 		return err, ""
 	}
 	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("error while getting config : %s", res.Status), ""
+	}
 	result := httpTypes.HttpResponse{}
 
 	body, err := io.ReadAll(res.Body)
@@ -264,4 +270,30 @@ func (api *API) GetConfig() (error, string) {
 	}
 	cfg := result.Message
 	return nil, cfg
+}
+
+func (api *API) DumpState() (error, commontypes.Status) {
+	res, err := api.get("/admin/state/")
+	if err != nil {
+		return err, commontypes.Status{}
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("error while dumping active agents : %s", res.Status), commontypes.Status{}
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err, commontypes.Status{}
+	}
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("error while dumping active agents : %s", strings.TrimSpace(string(body))), commontypes.Status{}
+	}
+
+	var result commontypes.Status
+	err = yaml.Unmarshal(body, &result)
+	if err != nil {
+		return err, commontypes.Status{}
+	}
+
+	return nil, result
 }
