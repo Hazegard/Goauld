@@ -134,26 +134,26 @@ func run() utils.CancelReason {
 
 	// Define the different strategies to initialize the control socket
 	//  Currently, all strategies are tried in order.
-	controlInitStrategy := []control.InitStrategy{
-		{
+	controlInitStrategy := map[string]control.InitStrategy{
+		"Websocket": {
 			Name: "Websocket",
 			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
 				return client.InitWs(success, chanErr)
 			},
 		},
-		{
+		"Polling": {
 			Name: "Polling",
 			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
 				return client.InitPolling(success, chanErr)
 			},
 		},
-		{
+		"Upgrade": {
 			Name: "Upgrade",
 			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
 				return client.InitWsUpgrade(success, chanErr)
 			},
 		},
-		{
+		"DNS": {
 			Name: "DNS",
 			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
 				if dnsTransport == nil {
@@ -165,6 +165,12 @@ func run() utils.CancelReason {
 				return client.InitOverDns(dnsTransport.ControlStream, success, chanErr)
 			},
 		},
+	}
+	order := config.Get().GetRsshOrder()
+	if len(order) == 1 && order[0] == "dns" {
+		controlInitStrategy = map[string]control.InitStrategy{
+			"DNS": controlInitStrategy["DNS"],
+		}
 	}
 
 	success := false
