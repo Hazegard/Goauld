@@ -167,9 +167,21 @@ func run() utils.CancelReason {
 		},
 	}
 	order := config.Get().GetRsshOrder()
-	if len(order) == 1 && order[0] == "dns" {
-		controlInitStrategy = map[string]control.InitStrategy{
-			"DNS": controlInitStrategy["DNS"],
+	if len(order) == 1 {
+		if order[0] == "dns" {
+			controlInitStrategy = map[string]control.InitStrategy{
+				"DNS": controlInitStrategy["DNS"],
+			}
+		}
+		if order[0] == "http" {
+			controlInitStrategy = map[string]control.InitStrategy{
+				"Polling": controlInitStrategy["Polling"],
+			}
+		}
+		if order[0] == "ws" {
+			controlInitStrategy = map[string]control.InitStrategy{
+				"Websocket": controlInitStrategy["Websocket"],
+			}
 		}
 	}
 
