@@ -11,9 +11,9 @@ var (
 )
 
 // CheckHostPortAvailability checks if the provided host:port is reachable
-func CheckHostPortAvailability(host string, port int) bool {
+func CheckHostPortAvailability(proto string, host string, port int) bool {
 	address := net.JoinHostPort(host, strconv.Itoa(port))
-	conn, err := net.DialTimeout("tcp", address, timeout)
+	conn, err := net.DialTimeout(proto, address, timeout)
 	if err != nil {
 		return false
 	}

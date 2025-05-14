@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	miekgDns "github.com/miekg/dns"
+
 	"github.com/xtaci/kcp-go/v5"
 	"github.com/xtaci/smux"
 	"www.bamsoftware.com/git/dnstt.git/dns"
@@ -150,7 +152,7 @@ func NewDNSSH() (*DNSSH, error) {
 			ip = domain
 		}
 		log.Debug().Str("IP", ip).Str("Mode", "DNSSH").Int("Port", p).Msgf("Testing DNS server availability")
-		if common_net.CheckHostPortAvailability(ip, p) {
+		if TestDNSServer(ip, port, config.Get().DNSDomain()) {
 			d = ip
 			port = p
 			break
@@ -185,6 +187,42 @@ func NewDNSSH() (*DNSSH, error) {
 	}
 	dnsConn.pconn = pconn
 	return dnsConn, nil
+}
+
+func TestDNSServer(ip string, port int, d string) bool {
+	// Define the domain and DNS server
+	isOpen := common_net.CheckHostPortAvailability("udp", ip, port)
+	srv := fmt.Sprintf("%s:%d", ip, port)
+	if !isOpen {
+		log.Debug().Str("Mode", "DNSSH").Str("Server", srv).Msg("No DNS server found")
+		return false
+	}
+	log.Debug().Str("Mode", "DNSSH").Str("Server", srv).Msg("Testing DNS server (TXT)")
+	domain := fmt.Sprintf("ingesrkokreujy6zumkse43vobsxey3bnruwm4tbm5uwy2ltoruwgzlyobuwc3d.jmrxwg2lpovz.%s", d)
+
+	// Prepare the DNS client
+	client := new(miekgDns.Client)
+	message := new(miekgDns.Msg)
+	message.SetQuestion(miekgDns.Fqdn(domain), miekgDns.TypeTXT)
+
+	// Send the DNS query to the specified server
+	response, _, err := client.Exchange(message, srv)
+	if err != nil {
+		log.Debug().Err(err).Str("Mode", "DNSSH").Str("Domain", domain).Str("Server", srv).Msg("error testing DNS server")
+		return false
+	}
+
+	// Check if we received any TXT records in the response
+	if len(response.Answer) > 0 {
+		for _, ans := range response.Answer {
+			if txtRecord, ok := ans.(*miekgDns.TXT); ok {
+				log.Debug().Str("Record", txtRecord.String()).Str("Domain", domain).Str("Server", srv).Msg("record found")
+				return true
+			}
+		}
+	}
+	log.Debug().Str("Domain", domain).Str("Server", srv).Msg("no record found")
+	return false
 }
 
 func (d *DNSSH) Close() error {
