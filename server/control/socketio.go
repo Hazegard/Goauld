@@ -1,6 +1,7 @@
 package control
 
 import (
+	"Goauld/common"
 	"fmt"
 	"net/http"
 	"time"
@@ -56,6 +57,8 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 		socket.OnEvent(socketio.RegisterEvent, func(data socketio.Register) {
 			// Retrieving the agent id from the received data
 			log.Debug().Str("Agent.Id", data.Id).Msg("socketio.RegisterEvent")
+
+			socket.Emit(socketio.VersionEvent, common.JsonVersion())
 
 			// Decrypting the agent name using the age private key
 			log.Trace().Str("Agent.name", "?????").Str("Agent.Id", data.Id).Msg("START socketio.decrypting agent name")

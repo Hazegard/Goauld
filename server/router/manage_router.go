@@ -1,6 +1,7 @@
 package router
 
 import (
+	"Goauld/common"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -38,25 +39,38 @@ func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter
 	r.userRouter.HandleFunc("GET /agent/by_name/{name}", r.GetAgentByName)
 	r.userRouter.HandleFunc("GET /agent/{$}", r.GetAgents)
 	r.userRouter.HandleFunc("POST /clearport/{$}", r.ClearPort)
+	r.userRouter.HandleFunc("GET /version/", r.Version)
 	return r
 }
 
 // GetRouter returns the router, with the configured middleware
 // - Authentication middleware
 // - IP allowlisting middleware
-func (ur *ManageRouter) GetRouter() *negroni.Negroni {
+func (mr *ManageRouter) GetRouter() *negroni.Negroni {
 	n := negroni.New()
 	n.Use(midleware.AuthMiddleware(config.Get().AccessToken))
 	n.Use(midleware.WhitelistMiddleware(config.Get().AllowedIPs))
-	n.UseHandler(ur.userRouter)
+	n.UseHandler(mr.userRouter)
 	return n
 }
 
+func (mr *ManageRouter) Version(w http.ResponseWriter, r *http.Request) {
+	res, err := json.Marshal(common.JsonVersion())
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	_, err = w.Write(res)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("write response failed")
+	}
+}
+
 // GetAgentByName return the agent information
-func (ur *ManageRouter) GetAgentByName(w http.ResponseWriter, r *http.Request) {
+func (mr *ManageRouter) GetAgentByName(w http.ResponseWriter, r *http.Request) {
 	// Find the agent corresponding to the name
 	name := r.PathValue("name")
-	agent, err := ur.db.FindAgentByName(name)
+	agent, err := mr.db.FindAgentByName(name)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Name", name).Msg("find agent failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -88,10 +102,10 @@ func (ur *ManageRouter) GetAgentByName(w http.ResponseWriter, r *http.Request) {
 
 // GetAgentById handles the /agent/{id} endpoints
 // it returns to the caller the associated agent
-func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
+func (mr *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 	// Find the agent corresponding to the id
 	id := r.PathValue("id")
-	agent, err := ur.db.FindAgentById(id)
+	agent, err := mr.db.FindAgentById(id)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("find agent failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -123,14 +137,14 @@ func (ur *ManageRouter) GetAgentById(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteAgentById kills the agent and deletes the remaining connections
-func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) {
+func (mr *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	err := ur.store.KillAGent(id, true)
+	err := mr.store.KillAGent(id, true)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}
-	err = ur.db.DeleteAgentById(id)
+	err = mr.db.DeleteAgentById(id)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("delete agent failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -141,8 +155,8 @@ func (ur *ManageRouter) DeleteAgentById(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetAgents return all agents stored in the database
-func (ur *ManageRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
-	agents, err := ur.db.GetAllAgentsSanitized()
+func (mr *ManageRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
+	agents, err := mr.db.GetAllAgentsSanitized()
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("find all agents failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -170,7 +184,7 @@ type ClearPortData struct {
 }
 
 // ClearPort delete all the remaining connections related to the agent and the port
-func (ur *ManageRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
+func (mr *ManageRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
 	var data ClearPortData
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&data)
@@ -186,11 +200,11 @@ func (ur *ManageRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
 	}(r.Body)
 
 	if data.AgentId != "" {
-		ur.ClearPortsByAgentId(data.AgentId, w, r)
+		mr.ClearPortsByAgentId(data.AgentId, w, r)
 		return
 	}
 	if data.Port != "" {
-		ur.ClearPortByPortNumber(data.Port, w, r)
+		mr.ClearPortByPortNumber(data.Port, w, r)
 		return
 	}
 	http.Error(w, "No agent id or port specified", http.StatusBadRequest)
@@ -198,14 +212,14 @@ func (ur *ManageRouter) ClearPort(w http.ResponseWriter, r *http.Request) {
 }
 
 // ClearPortByPortNumber clears all the remaining connections associated to the port
-func (ur *ManageRouter) ClearPortByPortNumber(p string, w http.ResponseWriter, r *http.Request) {
+func (mr *ManageRouter) ClearPortByPortNumber(p string, w http.ResponseWriter, r *http.Request) {
 	port, err := strconv.Atoi(p)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Port", p).Msg("error converting port")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = ur.store.ClearByPort(port)
+	err = mr.store.ClearByPort(port)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("Port", p).Msg("error clearing port")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -215,8 +229,8 @@ func (ur *ManageRouter) ClearPortByPortNumber(p string, w http.ResponseWriter, r
 }
 
 // ClearPortsByAgentId clears all the remaining connections associated to the agent
-func (ur *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWriter, r *http.Request) {
-	err := ur.store.ClearById(agentId)
+func (mr *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWriter, r *http.Request) {
+	err := mr.store.ClearById(agentId)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("AgentId", agentId).Msg("error clearing port")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -226,7 +240,7 @@ func (ur *ManageRouter) ClearPortsByAgentId(agentId string, w http.ResponseWrite
 }
 
 // KillAgent kill the agent
-func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
+func (mr *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -241,11 +255,11 @@ func (ur *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = ur.store.KillAGent(id, jsonBody.Kill)
+	err = mr.store.KillAGent(id, jsonBody.Kill)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}
-	err = ur.store.CloseAgentConnections(id)
+	err = mr.store.CloseAgentConnections(id)
 	if err != nil {
 		// http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")

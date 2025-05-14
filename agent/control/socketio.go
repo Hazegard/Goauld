@@ -1,6 +1,7 @@
 package control
 
 import (
+	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
 	"errors"
@@ -178,6 +179,15 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError")
 		log.Error().Msgf("Error occured (%s) %s", "SendSshHPrivateKeyError", cpc.url)
 		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError done")
+	})
+
+	socket.OnEvent(socketio.VersionEvent, func(srvVersion common.JVersion) {
+		agentVersion := common.JsonVersion()
+		if agentVersion.Compare(srvVersion) != 0 {
+			log.Warn().Err(fmt.Errorf("mismatch version")).Str("Server", srvVersion.Version).Str("Agent", agentVersion.Version).Msgf("Version mismatch")
+			log.Trace().Str("ServerCommit", srvVersion.Commit).Str("AgentCommit", agentVersion.Commit).Msgf("Version mismatch")
+			log.Trace().Str("ServerDate", srvVersion.Date).Str("AgentDate", agentVersion.Date).Msgf("Version mismatchs")
+		}
 	})
 
 	// SendSshPrivateKeySuccess Logs when the server returns no error

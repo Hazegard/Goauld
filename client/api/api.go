@@ -1,6 +1,7 @@
 package api
 
 import (
+	"Goauld/common"
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
@@ -247,6 +248,32 @@ func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
 		return err, nil
 	}
 	return nil, result
+}
+
+func (api *API) ManageVersion() (error, common.JVersion) {
+	return api.version("manage")
+}
+
+func (api *API) version(route string) (error, common.JVersion) {
+	res, err := api.get(fmt.Sprintf("/%s/version/", route))
+	if err != nil {
+		return err, common.JVersion{}
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("error while getting version : %s", res.Status), common.JVersion{}
+	}
+	body, err := io.ReadAll(res.Body)
+	result := common.JVersion{}
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return err, common.JVersion{}
+	}
+	return nil, result
+}
+
+func (api *API) AdminVersion() (error, common.JVersion) {
+	return api.version("admin")
 }
 
 func (api *API) GetConfig() (error, string) {

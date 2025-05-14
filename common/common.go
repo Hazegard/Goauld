@@ -9,11 +9,29 @@ import (
 
 const App_Name = "Goa'uld"
 
+type JVersion struct {
+	Commit  string `json:"commit"`
+	Date    string `json:"date"`
+	Version string `json:"version"`
+}
+
 var (
 	Commit  = "none"
 	Date    = "2006-01-02T15:04:05Z"
 	Version = "dev"
 )
+
+func JsonVersion() JVersion {
+	return JVersion{
+		Commit:  Commit,
+		Date:    Date,
+		Version: Version,
+	}
+}
+
+func (j JVersion) Compare(jj JVersion) int {
+	return strings.Compare(j.Version, jj.Version)
+}
 
 func AppName() string {
 	out := strings.Map(func(r rune) rune {

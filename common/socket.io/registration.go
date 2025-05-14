@@ -13,6 +13,10 @@ const (
 	RegisterSuccess_AskSSHPassword = "register success"
 )
 
+const (
+	VersionEvent = "version"
+)
+
 // Deregister is used to communicate when the agent disconnects
 type Deregister struct{}
 

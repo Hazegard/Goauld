@@ -49,6 +49,18 @@ func (ur *AdminRouter) GetRouter() *negroni.Negroni {
 	return n
 }
 
+func (ur *AdminRouter) Version(w http.ResponseWriter, r *http.Request) {
+	res, err := json.Marshal(common.JsonVersion())
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	_, err = w.Write(res)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("write response failed")
+	}
+}
+
 // Dump return all the information stored regarding the agent
 func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")

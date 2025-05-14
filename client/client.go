@@ -51,6 +51,7 @@ func main() {
 		return
 	}
 	httpclient := api.NewAPI(cfg.ServerUrl(), cfg.AccessToken, cfg.Insecure)
+	CheckApiVersion(httpclient)
 	kong.Bind(*cfg, httpclient)
 
 	err = kong.Run(httpclient, cfg)
@@ -61,5 +62,19 @@ func main() {
 			return
 		}
 		log.Error().Err(err).Msg("error running " + common.APP_NAME)
+	}
+}
+
+func CheckApiVersion(api *api.API) {
+	err, srvVersion := api.ManageVersion()
+	if err != nil {
+		log.Warn().Err(err).Msg("error getting version")
+		return
+	}
+	clientVersion := _common.JsonVersion()
+	if srvVersion.Compare(clientVersion) != 0 {
+		log.Warn().Str("Server", srvVersion.Version).Str("Client", clientVersion.Version).Msg("version mismatch")
+		log.Trace().Str("Server Commit", srvVersion.Commit).Str("Client Commit", clientVersion.Commit).Msg("version mismatch")
+		log.Trace().Str("Server Date", srvVersion.Date).Str("Client Date", clientVersion.Date).Msg("version mismatch")
 	}
 }
