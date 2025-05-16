@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	commonnet "Goauld/common/net"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -353,7 +354,7 @@ func (db *DB) GetAgentsByUsedPort(port int) ([]Agent, error) {
 
 // SetAgentSshMode updates the agent to reflect the current connection mode used
 // Direct (SSH), SSH over TLS, ssh over Websockets, SSH over HTTP
-func (db *DB) SetAgentSshMode(id string, mode string) error {
+func (db *DB) SetAgentSshMode(id string, mode string, remoteAddr string) error {
 	switch mode {
 	case "HTTP", "SSH", "TLS", "WS", "DNS", "OFF", "QUIC":
 	default:
@@ -379,8 +380,20 @@ func (db *DB) SetAgentSshMode(id string, mode string) error {
 		agent.RemotePortForwarding = []ssh.RemotePortForwarding{}
 		agent.SocketId = ""
 	}
+
+	remoteIp, _ := commonnet.ExtractIP(remoteAddr)
+	isLoopback := commonnet.IsLoopback(remoteIp)
+	if isLoopback {
+		// If the new address is loopback, only set if none stored yet
+		if agent.RemoteAddr == "" {
+			agent.RemoteAddr = remoteIp
+		}
+	} else if commonnet.IsValidIP(remoteIp) {
+		// If the new address is NOT loopback, always override
+		agent.RemoteAddr = remoteIp
+	}
 	agent.LastUpdated = time.Now()
-	err = db.UpdateAgentField(agent, "SshMode", "LastUpdated", "UsedPorts", "Connected", "RemotePortForwarding", "SocketId")
+	err = db.UpdateAgentField(agent, "SshMode", "LastUpdated", "UsedPorts", "Connected", "RemotePortForwarding", "SocketId", "RemoteAddr")
 	if err != nil {
 		return fmt.Errorf("could not update agent: %s", err)
 	}

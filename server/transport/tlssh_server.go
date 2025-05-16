@@ -58,7 +58,7 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 		}
 	}()
 	// Adds the TLS mode of the agent to the database
-	err = tlssh.db.SetAgentSshMode(id, "TLS")
+	err = tlssh.db.SetAgentSshMode(id, "TLS", tlsConn.RemoteAddr().String())
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error setting agent mode to TLS")
 	}
@@ -75,7 +75,7 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 		log.Error().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error while closing TLS streams")
 	}
 	// Updates the database to set the agent mode as disconnected
-	err = tlssh.db.SetAgentSshMode(id, "OFF")
+	err = tlssh.db.SetAgentSshMode(id, "OFF", "")
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error setting agent mode to OFF")
 	}

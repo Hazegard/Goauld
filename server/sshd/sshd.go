@@ -132,7 +132,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			}
 
 			log.Trace().Msgf("SSH connection succeeded from %s (%s)", ctx.User(), id)
-			err = db.SetAgentSshMode(id, "SSH")
+			err = db.SetAgentSshMode(id, "SSH", remote)
 			if err != nil {
 				log.Warn().Str("User", id).Str("Remote", remote).Str("SSH Mode", "SSH").Msg("Error updating connection mode...")
 			}

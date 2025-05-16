@@ -83,6 +83,7 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	dump.Username = agent.Username
 	dump.UsedPorts = agent.UsedPorts
 	dump.IPs = agent.IPs
+	dump.RemoteAddr = agent.RemoteAddr
 	res, err := json.Marshal(dump)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
@@ -111,6 +112,7 @@ func (ur *AdminRouter) dumpAllAgents() []types.State {
 		d.Platform = agent.Platform
 		d.SSHMode = agent.SshMode
 		d.Architecture = agent.Architecture
+		d.RemoteAddr = agent.RemoteAddr
 		d.Hostname = agent.Hostname
 		d.Username = agent.Username
 		d.UsedPorts = agent.UsedPorts

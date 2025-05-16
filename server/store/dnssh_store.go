@@ -11,13 +11,14 @@ type DNSSHAgent struct {
 	UpstreamConn []net.Conn
 	Session      *smux.Stream
 	KcpAddr      string
+	RemoteAddr   string
 }
 
 // TODO: ajouter les conn pour le serveur SSH et pour le serveur Websocket
 // idée: faire une map des upstream conn address pour garder l'implémentation simple et flexible ?
 
 // DnsshAddAgent adds the ssh connection of agent id to the agent store
-func (a *AgentStore) DnsshAddAgent(upstreamConn net.Conn, session *smux.Stream, kcpAddr string, id string) {
+func (a *AgentStore) DnsshAddAgent(upstreamConn net.Conn, session *smux.Stream, kcpAddr string, id string, publicRemoteAddr string) {
 	a.dnsshAgentMapMu.Lock()
 	agent, ok := a.dnsshAgentMap[id]
 	if !ok {
@@ -25,12 +26,14 @@ func (a *AgentStore) DnsshAddAgent(upstreamConn net.Conn, session *smux.Stream, 
 			UpstreamConn: []net.Conn{upstreamConn},
 			Session:      session,
 			KcpAddr:      kcpAddr,
+			RemoteAddr:   publicRemoteAddr,
 		}
 	} else {
 		agent.UpstreamConn = append(agent.UpstreamConn, upstreamConn)
 	}
 	a.dnsshAgentMap[id] = agent
 	a.dnsshAgentMapMu.Unlock()
+	a.AddRemote(id, publicRemoteAddr)
 }
 
 // DnsshRemoveAgent removes the ssh connection of the agent id to the agent store

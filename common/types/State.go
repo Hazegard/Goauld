@@ -73,6 +73,7 @@ type State struct {
 	Hostname     string    `yaml:"hostname,omitempty"`
 	IPs          string    `yaml:"IPs,omitempty"`
 	Path         string    `yaml:"path,omitempty"`
+	RemoteAddr   string    `yaml:"remoteAddr,omitempty"`
 
 	TLSSH    TLSSHState    `yaml:"TLSSH"`
 	QUIC     QUICState     `yaml:"QUIC"`

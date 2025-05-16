@@ -1,6 +1,7 @@
 package store
 
 import (
+	commonnet "Goauld/common/net"
 	"errors"
 	"fmt"
 	"sync"
@@ -47,6 +48,9 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 
 			dnsshAgentMap:   make(map[string]*DNSSHAgent),
 			dnsshAgentMapMu: sync.Mutex{},
+
+			remoteAddrMap:   make(map[string]string),
+			remoteAddrMapMu: sync.Mutex{},
 		}
 	})
 	return store
@@ -76,6 +80,9 @@ type AgentStore struct {
 
 	dnsshAgentMap   map[string]*DNSSHAgent
 	dnsshAgentMapMu sync.Mutex
+
+	remoteAddrMap   map[string]string
+	remoteAddrMapMu sync.Mutex
 }
 
 // ClearByPort Clears all agent connections related to a given port
@@ -115,7 +122,7 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 func (a *AgentStore) KillAGent(id string, doKill bool) error {
 	socket := a.SioGetSocket(id)
 	if socket == nil {
-		err := a.db.SetAgentSshMode(id, "OFF")
+		err := a.db.SetAgentSshMode(id, "OFF", "")
 		if err != nil {
 			return fmt.Errorf("socket not found, error while disconnecting agent: %v", err)
 		}
@@ -184,4 +191,30 @@ func (a *AgentStore) GetState(id string) types.State {
 		DNS:      a.DumpDNSSH(id),
 	}
 	return state
+}
+
+func (a *AgentStore) AddRemote(id string, remoteAddr string) {
+	remoteIp, _ := commonnet.ExtractIP(remoteAddr)
+	isLoopback := commonnet.IsLoopback(remoteIp)
+	a.remoteAddrMapMu.Lock()
+	defer a.remoteAddrMapMu.Unlock()
+	if isLoopback {
+		// If the new address is loopback, only set if none stored yet
+		if a.remoteAddrMap[id] == "" {
+			a.remoteAddrMap[id] = remoteIp
+			return
+		}
+		// else do nothing (don't override)
+		return
+	}
+	if remoteIp != "" {
+		// If the new address is NOT loopback, always override
+		a.remoteAddrMap[id] = remoteIp
+	}
+}
+
+func (a *AgentStore) GetRemote(id string) string {
+	a.remoteAddrMapMu.Lock()
+	defer a.remoteAddrMapMu.Unlock()
+	return a.remoteAddrMap[id]
 }

@@ -30,7 +30,7 @@ func NewQUICServer(store *store.AgentStore, db *persistence.DB) *QUICServer {
 // It initializes a connection to the SSH server
 // and start bidirectional communication between the QUIC connection
 // and the SSH connection
-func (qssh *QUICServer) HandleQuic(quicConn quic.Stream, id string) {
+func (qssh *QUICServer) HandleQuic(quicConn quic.Stream, id string, remote string) {
 	// Initializes a connection to the SSH server
 	sshConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
 	if err != nil {
@@ -59,7 +59,7 @@ func (qssh *QUICServer) HandleQuic(quicConn quic.Stream, id string) {
 		}
 	}()
 	// Adds the QUIC mode of the agent to the database
-	err = qssh.db.SetAgentSshMode(id, "QUIC")
+	err = qssh.db.SetAgentSshMode(id, "QUIC", remote)
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error setting agent mode to QUIC")
 	}
@@ -76,7 +76,7 @@ func (qssh *QUICServer) HandleQuic(quicConn quic.Stream, id string) {
 		log.Error().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error while closing QUIC streams")
 	}
 	// Updates the database to set the agent mode as disconnected
-	err = qssh.db.SetAgentSshMode(id, "OFF")
+	err = qssh.db.SetAgentSshMode(id, "OFF", "")
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error setting agent mode to OFF")
 	}

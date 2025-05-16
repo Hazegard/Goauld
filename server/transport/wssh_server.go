@@ -99,7 +99,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	// Updates the database to add the Websocket over SSH as the connection mode
-	err = wssh.db.SetAgentSshMode(id, "WS")
+	err = wssh.db.SetAgentSshMode(id, "WS", r.RemoteAddr)
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "WS").Msg("error setting agent mode to WS")
 	}
@@ -118,7 +118,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Updates the database to set the agent mode as disconnected
-	err = wssh.db.SetAgentSshMode(id, "OFF")
+	err = wssh.db.SetAgentSshMode(id, "OFF", "")
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "WS").Msg("error setting agent mode to [OFF]")
 	}

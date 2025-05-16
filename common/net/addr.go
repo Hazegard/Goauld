@@ -39,7 +39,24 @@ func IsValidIP(ip string) bool {
 	return validateIpAddress(ip) == nil
 }
 
-// IsValidIP verify if the provided string is a valid IP address or a valid CIDR range
+// IsIPorCIDR verify if the provided string is a valid IP address or a valid CIDR range
 func IsIPorCIDR(ip string) bool {
 	return IsValidIP(ip) || IsValidCIDR(ip)
+}
+
+// IsLoopback returns whether the provided IP is a loopback address
+func IsLoopback(addr string) bool {
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return false // invalid IP
+	}
+	return ip.IsLoopback()
+}
+
+func ExtractIP(addr string) (string, error) {
+	ip, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", err
+	}
+	return ip, nil
 }

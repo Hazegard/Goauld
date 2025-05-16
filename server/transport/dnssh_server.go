@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,13 +24,14 @@ import (
 
 // DNSSHServer is the server allowing to perform SSH over HTTP
 type DNSSHServer struct {
-	store        *store.AgentStore
-	db           *persistence.DB
-	dnsConn      net.PacketConn
-	sshUpstream  string
-	httpUpstream string
-	domain       dns.Name
-	kcpAddr      string
+	store         *store.AgentStore
+	db            *persistence.DB
+	dnsConn       net.PacketConn
+	sshUpstream   string
+	httpUpstream  string
+	domain        dns.Name
+	kcpAddr       string
+	clientIDIPMap *sync.Map
 }
 
 const (
@@ -75,7 +77,7 @@ var base32Encoding = base32.StdEncoding.WithPadding(base32.NoPadding)
 
 // handleStream bidirectionally connects a client stream with a TCP socket
 // addressed by upstream.
-func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *kcp.UDPSession, id string) error {
+func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *kcp.UDPSession, id string, publicRemoteAddr string) error {
 	dialer := net.Dialer{
 		Timeout: upstreamDialTimeout,
 	}
@@ -87,12 +89,12 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	}
 	defer upstreamConn.Close()
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
-	err = d.db.SetAgentSshMode(id, "DNS")
+	err = d.db.SetAgentSshMode(id, "DNS", stream.RemoteAddr().String())
 	if err != nil {
 		log.Warn().Str("Mode", "DNSSH").Err(err).Str("ID", id).Msg("failed to set agent SSH mode")
 	}
 
-	d.store.DnsshAddAgent(upstreamConn, stream, d.kcpAddr, id)
+	d.store.DnsshAddAgent(upstreamConn, stream, d.kcpAddr, id, publicRemoteAddr)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
@@ -176,32 +178,38 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 				stream.Close()
 				return
 			}
+			clientId := strings.TrimSpace(stream.RemoteAddr().String())
+			sourceIp, ok := d.clientIDIPMap.Load(clientId)
+			sourceIpStr := ""
+			if ok {
+				sourceIpStr = sourceIp.(string)
+			}
 			switch tag[0] {
 			// SSH mode
 			case 'S':
 				log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling ssh connection")
-				d.handleSSHStream(stream, conn, id)
+				d.handleSSHStream(stream, conn, id, sourceIpStr)
 			// Control mode
 			case 'C':
 				log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling control plan connection")
-				d.handleHTTPStream(stream, conn, id)
+				d.handleHTTPStream(stream, conn, id, sourceIpStr)
 			}
 
 		}()
 	}
 }
 
-func (d *DNSSHServer) handleSSHStream(stream *smux.Stream, conn *kcp.UDPSession, id string) {
+func (d *DNSSHServer) handleSSHStream(stream *smux.Stream, conn *kcp.UDPSession, id string, publicRemoteAddr string) {
 
-	err := d.handleStream(stream, d.sshUpstream, conn, id)
+	err := d.handleStream(stream, d.sshUpstream, conn, id, publicRemoteAddr)
 	if err != nil {
 		log.Warn().Err(err).Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("handleStream")
 	}
 }
 
-func (d *DNSSHServer) handleHTTPStream(stream *smux.Stream, conn *kcp.UDPSession, id string) {
+func (d *DNSSHServer) handleHTTPStream(stream *smux.Stream, conn *kcp.UDPSession, id string, sourceIp string) {
 
-	err := d.handleStream(stream, d.httpUpstream, conn, id)
+	err := d.handleStream(stream, d.httpUpstream, conn, id, sourceIp)
 	if err != nil {
 		log.Warn().Err(err).Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("handleStream")
 	}
@@ -431,7 +439,7 @@ type record struct {
 // the incoming DNS queries, and puts them on ttConn's incoming queue. Whenever
 // a query calls for a response, constructs a partial response and passes it to
 // sendLoop over ch.
-func recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch chan<- *record) error {
+func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch chan<- *record) error {
 	for {
 		var buf [4096]byte
 		n, addr, err := dnsConn.ReadFrom(buf[:])
@@ -456,6 +464,26 @@ func recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *turbotunnel.Queue
 		n = copy(clientID[:], payload)
 		payload = payload[n:]
 		if n == len(clientID) {
+
+			// retrieve the source IP address and store it in the clientIDIPMap
+			// to be able to map agent connection with the source IP address
+			go func() {
+				s := addr.String()
+
+				// Try to load existing entry
+				existing, ok := d.clientIDIPMap.Load(clientID.String())
+				if !ok {
+					// no entry yet → store it
+					d.clientIDIPMap.Store(clientID.String(), s)
+					return
+				}
+
+				existingStr, _ := existing.(string)
+				if existingStr != s {
+					// entry exists but is different → update it
+					d.clientIDIPMap.Store(clientID.String(), s)
+				}
+			}()
 			// Discard padding and pull out the packets contained in
 			// the payload.
 			r := bytes.NewReader(payload)
@@ -754,7 +782,7 @@ func (d *DNSSHServer) Run() error {
 		}
 	}()
 
-	return recvLoop(d.domain, d.dnsConn, ttConn, ch)
+	return d.recvLoop(d.domain, d.dnsConn, ttConn, ch)
 }
 
 func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, error) {
@@ -782,12 +810,13 @@ func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, 
 	log.Info().Str("Address", config.Get().DnsAddr).Msgf("DNS server listening")
 
 	return &DNSSHServer{
-		store:        store,
-		db:           db,
-		domain:       domain,
-		sshUpstream:  config.Get().LocalSShAddr(),
-		httpUpstream: config.Get().LocalHttpAddr(),
-		dnsConn:      dnsConn,
+		store:         store,
+		db:            db,
+		domain:        domain,
+		sshUpstream:   config.Get().LocalSShAddr(),
+		httpUpstream:  config.Get().LocalHttpAddr(),
+		dnsConn:       dnsConn,
+		clientIDIPMap: &sync.Map{},
 	}, nil
 
 }

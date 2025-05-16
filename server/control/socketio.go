@@ -3,7 +3,9 @@ package control
 import (
 	"Goauld/common"
 	"fmt"
+	eio "github.com/karagenc/socket.io-go/engine.io"
 	"net/http"
+	"regexp"
 	"time"
 
 	commonnet "Goauld/common/net"
@@ -23,15 +25,39 @@ type SocketIO struct {
 	Server     *gosio.Server
 }
 
+// deprecated
 // ServeHTTP serves the socket.IO HTTP server
 func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = commonnet.Http10ToHttp11FakeUpgrader(r)
 	sio.Server.ServeHTTP(w, r)
 }
 
+var md5Re = regexp.MustCompile(`\A(?i:[a-f0-9]{32})\z`)
+
+// ServeHTTPWithId serves the socket.IO HTTP server
+func (sio *SocketIO) ServeHTTPWithId(w http.ResponseWriter, r *http.Request) {
+	r = commonnet.Http10ToHttp11FakeUpgrader(r)
+	id := r.PathValue("agentId")
+	if !md5Re.MatchString(id) {
+		http.NotFound(w, r)
+		return
+	}
+	sio.agentStore.AddRemote(id, r.RemoteAddr)
+
+	sio.Server.ServeHTTP(w, r)
+}
+
 // InitSocketIOServer initialize the server socket.io used to manage the agents
 func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*SocketIO, error) {
-	io := gosio.NewServer(&gosio.ServerConfig{})
+	io := gosio.NewServer(&gosio.ServerConfig{
+		EIO: eio.ServerConfig{
+			Authenticator: func(w http.ResponseWriter, r *http.Request) (ok bool) {
+				return true
+			},
+			WebTransportServer:     nil,
+			WebSocketAcceptOptions: nil,
+		},
+	})
 	socketIO := &SocketIO{
 		agentStore: agentStore,
 		db:         db,
@@ -104,13 +130,15 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				log.Error().Str("Agent.name", agent.Name).Str("Agent.Id", agent.Id).Err(err).Msg("socketio.RegisterError decrypting shared secret")
 				return
 			}
+			remote := sio.agentStore.GetRemote(data.Id)
+			agent.RemoteAddr = remote
 
 			// Saving the agent information in the database
 			agent.SetSharedSecret(sharedSecret)
 			agent.SetName(agentName)
 			agent.SetConnect()
 			agent.SocketId = string(socket.ID())
-			err = sio.db.UpdateAgentField(agent, "SharedSecret", "Name", "Connected", "SocketId")
+			err = sio.db.UpdateAgentField(agent, "SharedSecret", "Name", "Connected", "SocketId", "RemoteAddr")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}
@@ -293,7 +321,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			// Remove the agent from the im memory store
 			sio.agentStore.SioRemoveAgent(socket)
 
-			err = sio.db.SetAgentSshMode(agent.Id, "OFF")
+			err = sio.db.SetAgentSshMode(agent.Id, "OFF", "")
 			if err != nil {
 				log.Warn().Err(err).Str("Agent.Name", agent.Name).Str("Agent.Id", agent.Id).Msg("socketio.Disconnect: error setting agent connection mode")
 			}

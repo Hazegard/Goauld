@@ -64,6 +64,6 @@ func (router *MainRouter) HandleQUIC(c quic.Connection) {
 		id := string(rawId[:n])
 		log.Info().Str("ID", id).Msg("Receiving incoming SSH connection over QUIC")
 
-		router.quicSSH.HandleQuic(stream, id)
+		router.quicSSH.HandleQuic(stream, id, c.RemoteAddr().String())
 	}
 }

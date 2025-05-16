@@ -321,7 +321,7 @@ func (a *Agent) WSshUrl() string {
 
 // SocketIoUrl return the control connection URL
 func (a *Agent) SocketIoUrl() string {
-	return fmt.Sprintf("%s/socket.io/", a.ServerUrl())
+	return fmt.Sprintf("%s/socket.io/%s/", a.ServerUrl(), a.Id)
 }
 
 // SSHTTPUrl return the SSH over HTTP connection URL

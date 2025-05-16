@@ -21,6 +21,7 @@ type Agent struct {
 	OneTimePassword      string                     `gorm:"type:text" json:"oneTimePassword,omitempty" yaml:"oneTimePassword"`
 	LastUpdated          time.Time                  `gorm:"type:datetime" json:"lastUpdated" yaml:"lastUpdated"`
 	LastPing             time.Time                  `gorm:"type:datetime" json:"lastPing" yaml:"lastPing"`
+	RemoteAddr           string                     `gorm:"type:text" json:"remoteAddr" yaml:"remoteAddr"`
 
 	Platform     string `gorm:"type:text" json:"platform"`
 	Architecture string `gorm:"type:text" json:"architecture"`
