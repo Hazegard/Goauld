@@ -26,7 +26,7 @@ var (
 	_ssh_server  = "www.example.com:22222"
 	_tls_server  = "app.example.com"
 	_quic_domain = "app.example.com"
-	_dns_server  = "8.8.8.8,1.1.1.1,9.9.9.9"
+	_dns_server  = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9"
 	_dns_domain  = "t.example.com"
 
 	_sshd_enabled           = "true"
@@ -151,7 +151,7 @@ type AgentConfig struct {
 	SshServer       string   `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
 	QuicServer      string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" optional:"" help:"The QUIC domain used to tunnel the traffic."`
 	TlsServer       string   `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
-	DnsServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections."`
+	DnsServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers."`
 	DnsServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`
 
 	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" optional:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`

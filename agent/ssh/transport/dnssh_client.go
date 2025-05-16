@@ -156,6 +156,10 @@ func NewDNSSH() (*DNSSH, error) {
 			d = ip
 			port = p
 			break
+		} else if TestDNSServer(ip, port, config.Get().DNSDomain()) {
+			d = ip
+			port = p
+			break
 		}
 	}
 	log.Debug().Str("DNS", d).Str("Mode", "DNSSH").Int("port", port).Msg("dns server")
@@ -204,6 +208,9 @@ func TestDNSServer(ip string, port int, d string) bool {
 	client := new(miekgDns.Client)
 	message := new(miekgDns.Msg)
 	message.SetQuestion(miekgDns.Fqdn(domain), miekgDns.TypeTXT)
+	// 3) Disable DNSSEC: DO bit = false
+	//    (EDNS UDP buffer size 4096, DNSSEC OK = false)
+	message.SetEdns0(4096, false)
 
 	// Send the DNS query to the specified server
 	response, _, err := client.Exchange(message, srv)

@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"github.com/qdm12/dns/v2/pkg/nameserver"
 	"net"
 	"net/url"
 	"os"
@@ -175,7 +176,17 @@ func (a *Agent) ValidatePassword(in string) bool {
 
 // DNSServer returns the DNS servers that will be used to tunnel the connection
 func (a *Agent) DNSServer() []string {
-	return a.cfg.DnsServer
+	var servers []string
+	for _, srv := range a.cfg.DnsServer {
+		if strings.ToLower(srv) == "system" {
+			for _, systemDnsServer := range nameserver.GetDNSServers() {
+				servers = append(servers, systemDnsServer.String())
+			}
+		} else {
+			servers = append(servers, srv)
+		}
+	}
+	return servers
 }
 
 // DNSDomain returns the DNS domain that will be used to query the DNS server
