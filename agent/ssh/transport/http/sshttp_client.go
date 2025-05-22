@@ -42,13 +42,14 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	// http.DefaultTransport.(*http.Transport).MaxConnsPerHost = 20
 
 	tr := &http.Transport{
-		MaxIdleConns: 20,
+		MaxIdleConns: 5,
 	}
 	httpClient := proxy.NewHttpClientProxy(tr)
+	// httpClient.Transport.(*http.Transport).
 	// httpClient.Transport.(*http.Transport).MaxConnsPerHost = 20
 
 	var poller PollFunc = func(ctx context.Context, client *http.Client, p []byte) (io.ReadCloser, error) {
-		return poll(ctx, httpClient, serverURL, p)
+		return poll(ctx, client, serverURL, p)
 	}
 	pconn := NewPollingPacketConn(turbotunnel.DummyAddr{}, poller, httpClient)
 
