@@ -109,7 +109,7 @@ func InitAgent() (*kong.Context, error, []error) {
 		log.Warn().Err(err).Msg("Multiple agents might run in parallel on the same host")
 		mid = cfg.Name
 	}
-	id := fmt.Sprintf("%x", md5.Sum([]byte(mid)))
+	id := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s-%s", mid, cfg.Name))))
 
 	host, err := os.Hostname()
 	if err != nil {
