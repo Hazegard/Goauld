@@ -89,12 +89,7 @@ func initLoggers() {
 
 	nl := zerolog.New(
 		zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339},
-	).Level(zerolog.TraceLevel).With().Timestamp().Str("Src", "Negroni").Logger().Sample(
-		&zerolog.BurstSampler{
-			Burst:       3,
-			Period:      10 * time.Second,
-			NextSampler: nil,
-		})
+	).Level(zerolog.TraceLevel).With().Timestamp().Str("Src", "Negroni").Logger()
 	negronilogger = &NegroniLogger{
 		logger: nl,
 	}
