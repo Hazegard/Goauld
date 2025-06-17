@@ -24,8 +24,8 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 	var conn net.Conn
 	var closer io.Closer
 	for _, proto := range config.Get().GetRsshOrder() {
-		log.Info().Str("Mode", proto).Msg("Connecting to ssh")
-		timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		log.Info().Str("Mode", proto).Dur("Timeout", config.Get().GetSshTimeout()).Msg("Connecting to ssh")
+		timeoutCtx, cancel := context.WithTimeout(ctx, config.Get().GetSshTimeout())
 		resultChan := make(chan struct{}, 1)
 		go func() {
 			switch {
@@ -218,10 +218,10 @@ func proxyDns(sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH) (*ssh.
 	}
 	client, err := tryProxySsh(sshConfig, dnsTransport.SshStream)
 	if err != nil {
-		log.Error().Str("Mode", "DNSSH").Err(err).Msg("failed to proxy ssh connection using HTTP")
+		log.Error().Str("Mode", "DNSSH").Err(err).Msg("failed to proxy ssh connection using DNS")
 		return nil, nil
 	}
-	log.Info().Str("Mode", "DNSSH").Msg("Proxy using HTTP succeeded")
+	log.Info().Str("Mode", "DNSSH").Msg("Proxy using DNS succeeded")
 	return client, dnsTransport.SshStream
 }
 
@@ -250,7 +250,7 @@ func tryProxySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error) 
 	case err := <-chanErr:
 		netConn.Close()
 		return nil, err
-	case <-time.After(30 * time.Second):
+	case <-time.After(config.Get().GetSshTimeout()):
 		return nil, fmt.Errorf("timeout while proxying ssh")
 	}
 }

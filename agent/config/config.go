@@ -65,7 +65,8 @@ var (
 	_working_day_end      = "19:30"
 	_working_day_timezone = "Europe/Paris"
 
-	_rssh_order = "SSH,TLS,WS,HTTP,DNS"
+	_rssh_order   = "SSH,TLS,WS,HTTP,DNS"
+	_rssh_timeout = "60"
 
 	_remote_port_forwarding = ""
 
@@ -124,7 +125,8 @@ var (
 		"_working_day_end":      _working_day_end,
 		"_working_day_timezone": _working_day_timezone,
 
-		"_rssh_order": _rssh_order,
+		"_rssh_order":   _rssh_order,
+		"_rssh_timeout": _rssh_timeout,
 
 		"_remote_port_forwarding": _remote_port_forwarding,
 
@@ -192,7 +194,8 @@ type AgentConfig struct {
 	WorkingDayEnd      string `default:"${_working_day_end}" name:"working-day-end" help:"End time of working day in days."`
 	WorkingDayTimeZone string `default:"${_working_day_timezone}" name:"working-day-timezone" help:"Timezone of working day."`
 
-	RsshOrder []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
+	RsshOrder  []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
+	SshTimeout int      `default:"${_rssh_timeout}" help:"Timeout in second to wait for the SSH tunnel to become available (independent for each protocol attempt), 0 means wait indefinitely."`
 
 	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server"`
 

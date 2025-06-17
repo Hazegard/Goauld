@@ -392,6 +392,14 @@ func (a *Agent) GetRsshOrder() []string {
 	return utils.ToLower(utils.Unique(a.cfg.RsshOrder))
 }
 
+// GetSshTimeout return the SSH timeout used when setting up the ssh connection
+func (a *Agent) GetSshTimeout() time.Duration {
+	if a.cfg.SshTimeout == 0 {
+		return time.Duration(1<<63 - 1)
+	}
+	return time.Duration(a.cfg.SshTimeout) * time.Second
+}
+
 // AgePubKey returns the age public key used to asymmetrically encrypt data
 func (a *Agent) AgePubKey() string {
 	return a.cfg.AgePubKey
