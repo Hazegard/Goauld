@@ -223,6 +223,7 @@ func buildAllSshOptions(cfg ClientConfig) []string {
 		"-oPubkeyAuthentication=no",
 		"-oPreferredAuthentications=password",
 		"-oLogLevel=ERROR",
+		"-oExitOnForwardFailure=no",
 	}
 
 	if cfg.Verbose > 0 {
