@@ -27,7 +27,7 @@ type Loglevel struct {
 func CheckAdminVersion(api *api.API) {
 	err, srvVersion := api.AdminVersion()
 	if err != nil {
-		log.Warn().Err(err).Msg("error getting version")
+		log.Debug().Err(err).Msg("error getting version")
 		return
 	}
 	clientVersion := common.JsonVersion()

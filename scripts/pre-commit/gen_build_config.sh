@@ -34,6 +34,9 @@ function GenConfig(){
     ENV_VAR="${PREFIX}_$(echo "$var" | tr '[:lower:]' '[:upper:]')"
 
     help="$(rg -o "default:\"\\$\{$var}\".*help:\"(.*?)\"" -r '$1' "$source_file"  )"
+    if [[ "$help" == "-" ]];then
+      continue
+    fi
 
     echo "# $help" >> "$ENV_FILE"
     echo "$ENV_VAR=" >> "$ENV_FILE"
@@ -41,7 +44,7 @@ function GenConfig(){
 
 
     echo "      - '{{ if (index .Env \"$ENV_VAR\") }} -X $module.$var={{ .Env.$ENV_VAR }}{{end}}'" >> "$GORELEASER_FLAGS"
-  done < <(cat "$source_file" | rg -A 1 'default:"\$\{(.*)\}"' -oa -r '$1' | sed '$d')
+  done < <(cat "$source_file" | rg -A 1 'default:"(\$\{(.*)\})?"' -oa -r '$2' | sed '$d')
 }
 
 : > "$ENV_FILE"

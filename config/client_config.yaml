@@ -26,10 +26,17 @@ generate-config: false
 config-file: ""
 
 # Agent password map.
-agent-password: {}
+agent-password:
+  mcatrice@MCAT: test
 
 # Agent password.
 password: ""
+
+# Prompt for the agent private password.
+prompt: false
+
+# Save the prompted password in the config file.
+save: false
 
 # Connect to the agent through SSH.
 ssh:
@@ -101,4 +108,5 @@ admin:
     level: ""
   config: {}
   state: {}
+searchconfigdir: ~/.config/tealc.yaml
 

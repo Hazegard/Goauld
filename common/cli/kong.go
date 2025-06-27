@@ -13,6 +13,17 @@ import (
 	"strings"
 )
 
+func GetConfigFile(paths ...string) string {
+	for _, path := range paths {
+		_, err := os.Stat(kong.ExpandPath(path))
+		if err != nil {
+			continue
+		}
+		return path
+	}
+	return ""
+}
+
 // Hack required because goccy/go-yaml CustomMarshaller does not accept empty result (either nil, empty []byte("")), etc.
 const EMPTUYRL = "THISISANEMPTYURL"
 

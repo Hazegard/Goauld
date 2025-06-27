@@ -25,6 +25,7 @@ dns-domain: t.example.com
 
 # SSH password to access the agent. If no password is provided, a random password is automatically generated.
 password: ""
+privatepassword: ""
 
 # Nice name to identify the agent. Defaults to 'user@hostname'
 name: user@hostname

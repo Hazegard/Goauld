@@ -3,6 +3,7 @@ package main
 import (
 	common2 "Goauld/common"
 	"Goauld/common/cli"
+	"Goauld/common/yaml"
 	"errors"
 	"fmt"
 	"os"
@@ -34,8 +35,10 @@ var (
 	_generate_config = "false"
 	_config_file     = ""
 
-	_static_ssh_agent_map = ""
-	_private_password     = ""
+	_static_ssh_agent_map   = ""
+	_private_password       = ""
+	_prompt_static_password = "false"
+	_save_static_password   = "false"
 
 	_ssh_http             = "true"
 	_ssh_socks            = "true"
@@ -82,7 +85,10 @@ var (
 		"_generate_config": _generate_config,
 		"_config_file":     _config_file,
 
-		"_static_ssh_agent_map": _static_ssh_agent_map,
+		"_static_ssh_agent_map":   _static_ssh_agent_map,
+		"_private_password":       "",
+		"_prompt_static_password": _prompt_static_password,
+		"_save_static_password":   _save_static_password,
 
 		"_ssh_http":             _ssh_http,
 		"_ssh_socks":            _ssh_socks,
@@ -134,6 +140,8 @@ type ClientConfig struct {
 
 	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" hidden:"true" name:"agent-password" yaml:"agent-password" help:"Agent password map."`
 	PrivatePassword string            `default:"" name:"password" yaml:"password" short:"P" help:"Agent password."`
+	PromptPassword  bool              `default:"${_prompt_static_password}" name:"prompt" yaml:"prompt" short:"Q" help:"Prompt for the agent private password."`
+	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" help:"Save the prompted password in the config file."`
 
 	Ssh     Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
 	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
@@ -142,6 +150,8 @@ type ClientConfig struct {
 	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
 	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
 	Admin   Admin    `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
+
+	SearchConfigDir string `hidden:""`
 }
 
 func (c *ClientConfig) Validate() error {
@@ -255,10 +265,30 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	_ = kong.Parse(cfgTmp, kongOptions...)
 	if cfgTmp.ConfigFile != "" {
 		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar, cfgTmp.ConfigFile))
+		configSearchDir = append([]string{cfgTmp.ConfigFile}, configSearchDir...)
 	}
 	cfg := &ClientConfig{}
 	app := kong.Parse(cfg, kongOptions...)
 
+	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
+
 	log.SetLogLevel(cfg.Verbose)
 	return app, cfg, nil
+}
+
+func (cfg *ClientConfig) Target() string {
+	if cfg.Ssh.Target != "" {
+		return cfg.Ssh.Target
+	}
+	if cfg.Scp.Target != "" {
+		return cfg.Scp.Target
+	}
+	if cfg.Socks.Target != "" {
+		return cfg.Socks.Target
+	}
+	return ""
+}
+
+func (cfg *ClientConfig) UpdatePassConfigFile() error {
+	return yaml.UpdateAgentPasswordConfig(cfg.SearchConfigDir, cfg.Target(), cfg.PrivatePassword)
 }

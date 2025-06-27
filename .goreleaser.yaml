@@ -127,6 +127,9 @@ env:
   - CLIENT__CONFIG_FILE={{ .Env.CLIENT__CONFIG_FILE }}
 
   - CLIENT__STATIC_SSH_AGENT_MAP={{ .Env.CLIENT__STATIC_SSH_AGENT_MAP }}
+
+  - CLIENT__PROMPT_STATIC_PASSWORD={{ .Env.CLIENT__PROMPT_STATIC_PASSWORD }}
+  - CLIENT__SAVE_STATIC_PASSWORD={{ .Env.CLIENT__SAVE_STATIC_PASSWORD }}
   - CLIENT__SSH_SOCKS={{ .Env.CLIENT__SSH_SOCKS }}
   - CLIENT__SSH_HTTP={{ .Env.CLIENT__SSH_HTTP }}
   - CLIENT__SSH_LOCAL_SOCKS_PORT={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}
@@ -378,6 +381,9 @@ builds:
       - '{{ if (index .Env "CLIENT__CONFIG_FILE") }} -X main._config_file={{ .Env.CLIENT__CONFIG_FILE }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__STATIC_SSH_AGENT_MAP") }} -X main._static_ssh_agent_map={{ .Env.CLIENT__STATIC_SSH_AGENT_MAP }}{{end}}'
+
+      - '{{ if (index .Env "CLIENT__PROMPT_STATIC_PASSWORD") }} -X main._prompt_static_password={{ .Env.CLIENT__PROMPT_STATIC_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SAVE_STATIC_PASSWORD") }} -X main._save_static_password={{ .Env.CLIENT__SAVE_STATIC_PASSWORD }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__SSH_SOCKS") }} -X main._ssh_socks={{ .Env.CLIENT__SSH_SOCKS }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_HTTP") }} -X main._ssh_http={{ .Env.CLIENT__SSH_HTTP }}{{end}}'

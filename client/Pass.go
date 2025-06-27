@@ -41,6 +41,6 @@ func (p *Password) GetStaticPassword(cfg ClientConfig) string {
 	if ok {
 		return pass
 	}
-	log.Warn().Str("Agent", cfg.Pass.Agent).Msg("No static password found, trying empty static password")
+	log.Debug().Str("Agent", cfg.Pass.Agent).Msg("No static password found, trying empty static password")
 	return ""
 }

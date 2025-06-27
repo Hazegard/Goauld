@@ -68,7 +68,7 @@ func main() {
 func CheckApiVersion(api *api.API) {
 	err, srvVersion := api.ManageVersion()
 	if err != nil {
-		log.Warn().Err(err).Msg("error getting version")
+		// log.Warn().Err(err).Msg("error getting version")
 		return
 	}
 	clientVersion := _common.JsonVersion()
