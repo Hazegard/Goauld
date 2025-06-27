@@ -102,6 +102,7 @@ env:
   - AGENT__WORKING_DAY_TIMEZONE={{ .Env.AGENT__WORKING_DAY_TIMEZONE }}
 
   - AGENT__RSSH_ORDER={{ .Env.AGENT__RSSH_ORDER }}
+  - AGENT__RSSH_TIMEOUT={{ .Env.AGENT__RSSH_TIMEOUT }}
 
   - AGENT__REMOTE_PORT_FORWARDING={{ .Env.AGENT__REMOTE_PORT_FORWARDING }}
 
@@ -321,6 +322,7 @@ builds:
       - '{{ if (index .Env "AGENT__WORKING_DAY_TIMEZONE") }} -X Goauld/agent/config._working_day_timezone={{ .Env.AGENT__WORKING_DAY_TIMEZONE }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_ORDER") }} -X Goauld/agent/config._rssh_order={{ .Env.AGENT__RSSH_ORDER }}{{end}}'
+      - '{{ if (index .Env "AGENT__RSSH_TIMEOUT") }} -X Goauld/agent/config._rssh_timeout={{ .Env.AGENT__RSSH_TIMEOUT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__REMOTE_PORT_FORWARDING") }} -X Goauld/agent/config._remote_port_forwarding={{ .Env.AGENT__REMOTE_PORT_FORWARDING }}{{end}}'
 
