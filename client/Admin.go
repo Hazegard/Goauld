@@ -5,7 +5,7 @@ import (
 	"Goauld/common"
 	"Goauld/common/log"
 	colorYaml "Goauld/common/yaml"
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 type Admin struct {

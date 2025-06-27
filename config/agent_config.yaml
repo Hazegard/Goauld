@@ -1,4 +1,4 @@
-# Age public key associated to the server. The provided public key should match the server public key
+#Age public key associated to the server. The provided public key should match the server public key
 age-pubkey: ""
 
 # The control HTTP server to connect to.
@@ -13,11 +13,12 @@ quic-domain: app.example.com
 # The TLS server to connect to when using SSH over TLS connections.
 tls-server: app.example.com
 
-# The DNS server to connect to when using SSH over DNS connections.
+# The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers.
 dns-server:
-    - 8.8.8.8
-    - 1.1.1.1
-    - 9.9.9.9
+- tns.example.com
+- 8.8.8.8
+- 1.1.1.1
+- 9.9.9.9
 
 # The DNS domain used to tunnel the traffic.
 dns-domain: t.example.com
@@ -38,7 +39,7 @@ socks: true
 http: true
 
 # Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
-proxy:
+proxy: ""
 
 # Username to use with the proxy
 proxy-username: ""
@@ -50,7 +51,7 @@ proxy-password: ""
 proxy-domain: ""
 
 # Use the provided proxy to use within the socks proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
-socks-custom-proxy:
+socks-custom-proxy: ""
 
 # Use the proxy of the underlying system if applicable for all requests going through the socks proxy.
 socks-proxy: true
@@ -65,7 +66,7 @@ socks-proxy-password: ""
 socks-proxy-domain: ""
 
 # Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
-http-custom-proxy:
+http-custom-proxy: ""
 
 # Username to use with the http upstream proxy
 http-proxy-username: ""
@@ -101,21 +102,24 @@ verbose: 0
 only-working-days: false
 
 # Start time of working day in days.
-working-day-start: 8:00
+working-day-start: "8:00"
 
 # End time of working day in days.
-working-day-end: 19:30
+working-day-end: "19:30"
 
 # Timezone of working day.
 working-day-timezone: Europe/Paris
 
 # Order the SSH tunnels connection attempts.
 rssh-order:
-    - SSH
-    - TLS
-    - WS
-    - HTTP
-    - DNS
+- SSH
+- TLS
+- WS
+- HTTP
+- DNS
+
+# Timeout in second to wait for the SSH tunnel to become available (independent for each protocol attempt), 0 means wait indefinitely.
+ssh-timeout: 60
 
 # Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server
 rpf: []

@@ -23,10 +23,10 @@ type Agent struct {
 	LastPing             time.Time                  `gorm:"type:datetime" json:"lastPing" yaml:"lastPing"`
 	RemoteAddr           string                     `gorm:"type:text" json:"remoteAddr" yaml:"remoteAddr"`
 
-	Platform     string `gorm:"type:text" json:"platform"`
-	Architecture string `gorm:"type:text" json:"architecture"`
-	Username     string `gorm:"type:text" json:"username"`
-	Hostname     string `gorm:"type:text" json:"hostname"`
-	IPs          string `gorm:"type:text" json:"ips"`
-	Path         string `gorm:"type:text" json:"path"`
+	Platform     string `gorm:"type:text" yaml:"platform"`
+	Architecture string `gorm:"type:text" yaml:"architecture"`
+	Username     string `gorm:"type:text" yaml:"username"`
+	Hostname     string `gorm:"type:text" yaml:"hostname"`
+	IPs          string `gorm:"type:text" yaml:"ips"`
+	Path         string `gorm:"type:text" yaml:"path"`
 }

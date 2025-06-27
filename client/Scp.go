@@ -12,9 +12,9 @@ import (
 // Scp wraps the scp command to copy files between the host and the agent
 type Scp struct {
 	Target      string
-	Print       bool     `default:"${_scp_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
+	Print       bool     `default:"${_scp_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
-	Destination string   `default:"${_scp_destination}" arg:"" name:"destination" help:"Destination to copy."`
+	Destination string   `default:"${_scp_destination}" arg:"" name:"destination" yaml:"destination" help:"Destination to copy."`
 	ScpArgs     []string `arg:"" passthrough:"" optional:""`
 }
 

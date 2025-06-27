@@ -33,7 +33,7 @@ function GenConfig(){
     PREFIX="$(echo "$ID" | tr '[:lower:]' '[:upper:]')"
     ENV_VAR="${PREFIX}_$(echo "$var" | tr '[:lower:]' '[:upper:]')"
 
-    help="$(rg -o "default:\"\\$\{$var}\".*help:\"(.*)\"" -r '$1' "$source_file"  )"
+    help="$(rg -o "default:\"\\$\{$var}\".*help:\"(.*?)\"" -r '$1' "$source_file"  )"
 
     echo "# $help" >> "$ENV_FILE"
     echo "$ENV_VAR=" >> "$ENV_FILE"

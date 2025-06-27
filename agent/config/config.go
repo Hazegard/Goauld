@@ -147,66 +147,66 @@ var (
 )
 
 type AgentConfig struct {
-	AgePubKey string `default:"${_agePubKey}" help:"Age public key associated to the server. The provided public key should match the server public key" name:"age-pubkey" short:"A"`
+	AgePubKey string `default:"${_agePubKey}" name:"age-pubkey" yaml:"age-pubkey" short:"A" help:"Age public key associated to the server. The provided public key should match the server public key"`
 
-	Server          string   `default:"${_server}" short:"s" name:"server" optional:"" help:"The control HTTP server to connect to."`
-	SshServer       string   `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
-	QuicServer      string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" optional:"" help:"The QUIC domain used to tunnel the traffic."`
-	TlsServer       string   `default:"${_tls_server}" short:"T" name:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
-	DnsServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers."`
-	DnsServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`
+	Server          string   `default:"${_server}" short:"s" name:"server" yaml:"server" optional:"" help:"The control HTTP server to connect to."`
+	SshServer       string   `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
+	QuicServer      string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" yaml:"quic-domain" optional:"" help:"The QUIC domain used to tunnel the traffic."`
+	TlsServer       string   `default:"${_tls_server}" short:"T" name:"tls-server" yaml:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
+	DnsServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers."`
+	DnsServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`
 
-	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" optional:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
-	Name             string `default:"${_name}" name:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
+	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" yaml:"password" optional:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
+	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
-	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
-	Socks bool `default:"${_socks_enabled}" name:"socks" optional:"" negatable:"" help:"Start the Socks proxy server."`
-	Http  bool `default:"${_http_proxy_enabled}" name:"http" optional:"" negatable:"" help:"Start the Http proxy server."`
+	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
+	Socks bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Start the Socks proxy server."`
+	Http  bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Start the Http proxy server."`
 
-	Proxy         *url.URL `default:"${_proxy}" name:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
-	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" optional:"" help:"Username to use with the proxy"`
-	ProxyPassword string   `default:"${_proxy_password}" name:"proxy-password" optional:"" help:"Password to use with the proxy"`
-	ProxyDomain   string   `default:"${_proxy_domain}" name:"proxy-domain" optional:"" help:"Domain to use with the proxy"`
+	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
+	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username to use with the proxy"`
+	ProxyPassword string   `default:"${_proxy_password}" name:"proxy-password" yaml:"proxy-password" optional:"" help:"Password to use with the proxy"`
+	ProxyDomain   string   `default:"${_proxy_domain}" name:"proxy-domain" yaml:"proxy-domain" optional:"" help:"Domain to use with the proxy"`
 
-	SocksCustomProxy    *url.URL `default:"${_socks_custom_proxy}" name:"socks-custom-proxy" optional:"" help:"Use the provided proxy to use within the socks proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
-	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" optional:"" negatable:"" help:"Use the proxy of the underlying system if applicable for all requests going through the socks proxy."`
-	SocksProxyUsername  string   `default:"${_socks_proxy_username}" name:"socks-proxy-username" optional:"" help:"Username to use with the socks http upstream proxy"`
-	SocksProxyPassword  string   `default:"${_socks_proxy_password}" name:"socks-proxy-password" optional:"" help:"Password to use with the socks http upstream proxy"`
-	SocksProxyDomain    string   `default:"${_socks_proxy_domain}" name:"socks-proxy-domain" optional:"" help:"Domain to use with the socks http upstream proxy"`
+	SocksCustomProxy    *url.URL `default:"${_socks_custom_proxy}" name:"socks-custom-proxy" yaml:"socks-custom-proxy" optional:"" help:"Use the provided proxy to use within the socks proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
+	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" yaml:"socks-proxy" optional:"" negatable:"" help:"Use the proxy of the underlying system if applicable for all requests going through the socks proxy."`
+	SocksProxyUsername  string   `default:"${_socks_proxy_username}" name:"socks-proxy-username" yaml:"socks-proxy-username" optional:"" help:"Username to use with the socks http upstream proxy"`
+	SocksProxyPassword  string   `default:"${_socks_proxy_password}" name:"socks-proxy-password" yaml:"socks-proxy-password" optional:"" help:"Password to use with the socks http upstream proxy"`
+	SocksProxyDomain    string   `default:"${_socks_proxy_domain}" name:"socks-proxy-domain" yaml:"socks-proxy-domain" optional:"" help:"Domain to use with the socks http upstream proxy"`
 
-	HttpCustomProxy   *url.URL `default:"${_http_custom_proxy}" name:"http-custom-proxy" optional:"" help:"Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
-	HttpProxyUsername string   `default:"${_http_proxy_username}" name:"http-proxy-username" optional:"" help:"Username to use with the http upstream proxy"`
-	HttpProxyPassword string   `default:"${_http_proxy_password}" name:"http-proxy-password" optional:"" help:"Password to use with the http upstream proxy"`
-	HttpProxyDomain   string   `default:"${_http_proxy_domain}" name:"http-proxy-domain" optional:"" help:"Domain to use with the http upstream proxy"`
+	HttpCustomProxy   *url.URL `default:"${_http_custom_proxy}" name:"http-custom-proxy" yaml:"http-custom-proxy" optional:"" help:"Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
+	HttpProxyUsername string   `default:"${_http_proxy_username}" name:"http-proxy-username" yaml:"http-proxy-username" optional:"" help:"Username to use with the http upstream proxy"`
+	HttpProxyPassword string   `default:"${_http_proxy_password}" name:"http-proxy-password" yaml:"http-proxy-password" optional:"" help:"Password to use with the http upstream proxy"`
+	HttpProxyDomain   string   `default:"${_http_proxy_domain}" name:"http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain to use with the http upstream proxy"`
 
-	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" optional:"" help:"Do not use the system proxy."`
+	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" yaml:"no-proxy" optional:"" help:"Do not use the system proxy."`
 
-	RsshPort      int `default:"${_rssh_port}"  name:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
-	SocksPort     int `default:"${_socks_port}"  name:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
-	HttpProxyPort int `default:"${_http_port}"  name:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
+	RsshPort      int `default:"${_rssh_port}"  name:"rssh-port" yaml:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
+	SocksPort     int `default:"${_socks_port}"  name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
+	HttpProxyPort int `default:"${_http_port}"  name:"http-port" yaml:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
 
-	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
-	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
-	Verbose   int  `default:"${_verbosity}" help:"Verbosity of the logs. Repeat -v to increase" name:"verbose" short:"v" type:"counter"`
+	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
+	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" yaml:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops."`
+	Verbose   int  `default:"${_verbosity}" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Verbosity of the logs. Repeat -v to increase"`
 
-	OnlyWorkingDays    bool   `default:"${_only_working_days}" name:"only-working-days" optional:"" help:"Only working days."`
-	WorkingDayStart    string `default:"${_working_day_start}" name:"working-day-start" help:"Start time of working day in days."`
-	WorkingDayEnd      string `default:"${_working_day_end}" name:"working-day-end" help:"End time of working day in days."`
-	WorkingDayTimeZone string `default:"${_working_day_timezone}" name:"working-day-timezone" help:"Timezone of working day."`
+	OnlyWorkingDays    bool   `default:"${_only_working_days}" name:"only-working-days" yaml:"only-working-days" optional:"" help:"Only working days."`
+	WorkingDayStart    string `default:"${_working_day_start}" name:"working-day-start" yaml:"working-day-start" help:"Start time of working day in days."`
+	WorkingDayEnd      string `default:"${_working_day_end}" name:"working-day-end" yaml:"working-day-end" help:"End time of working day in days."`
+	WorkingDayTimeZone string `default:"${_working_day_timezone}" name:"working-day-timezone" yaml:"working-day-timezone" help:"Timezone of working day."`
 
-	RsshOrder  []string `default:"${_rssh_order}" short:"O"  name:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
-	SshTimeout int      `default:"${_rssh_timeout}" help:"Timeout in second to wait for the SSH tunnel to become available (independent for each protocol attempt), 0 means wait indefinitely."`
+	RsshOrder  []string `default:"${_rssh_order}" short:"O" name:"rssh-order" yaml:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
+	SshTimeout int      `default:"${_rssh_timeout}" name:"ssh-timeout" yaml:"ssh-timeout" help:"Timeout in second to wait for the SSH tunnel to become available (independent for each protocol attempt), 0 means wait indefinitely."`
 
-	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server"`
+	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" yaml:"rpf"  short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server"`
 
-	MaxRetries int `default:"${_max_retries}" help:"Max retries connection attempts before giving up" name:"max-retries" short:"M"`
+	MaxRetries int `default:"${_max_retries}" name:"max-retries" yaml:"max-retries" short:"M" help:"Max retries connection attempts before giving up"`
 
-	Version        bool   `default:"${_version}" name:"version" short:"V" help:"Show version information"`
-	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `default:"${_config_file}" name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
+	Version        bool   `default:"${_version}" name:"version" yaml:"version" short:"V" help:"Show version information"`
+	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" yaml:"generate-config" help:"Generate configuration file based on the current options."`
+	ConfigFile     string `default:"${_config_file}" name:"config-file" yaml:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 
-	Background       bool `name:"background" short:"B" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
-	HiddenBackground bool `name:"hidden-background" hidden:""  negatable:"" optional:"" help:"Start the agent in the background."`
+	Background       bool `name:"background" yaml:"background" short:"B" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
+	HiddenBackground bool `name:"hidden-background" yaml:"hidden-background" hidden:""  negatable:"" optional:"" help:"Start the agent in the background."`
 }
 
 func (c *AgentConfig) Validate() error {

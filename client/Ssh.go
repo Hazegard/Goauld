@@ -15,13 +15,13 @@ import (
 
 type Ssh struct {
 	Target         string   `arg:"" help:"The target agent."`
-	Socks          bool     `default:"${_ssh_socks}" name:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
-	Http           bool     `default:"${_ssh_http}" name:"http" negatable:""  optional:"" help:"Forward the HTTP proxy ports on the local host."`
-	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
-	LocalHttpPort  int      `default:"${_ssh_local_http_port}" name:"http-port" optional:"" help:"Local port to bind the SOCKS to."`
-	Ssh            bool     `default:"${_ssh_ssh}" name:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
-	Print          bool     `default:"${_ssh_print}" name:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
+	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
+	Http           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:""  optional:"" help:"Forward the HTTP proxy ports on the local host."`
+	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
+	LocalHttpPort  int      `default:"${_ssh_local_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Local port to bind the SOCKS to."`
+	Ssh            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
+	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
+	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
 	SshArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
 }
 

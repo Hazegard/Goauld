@@ -1,13 +1,13 @@
-# Age private key to use.
-age-privkey:
+#Age private key to use.
+age-privkey: 
 
 # Domain used to serve HTTP content (HTTP/Websockets).
 http-domain:
-    - www.example.com
+- www.example.com
 
 # Domain used to serve raw TLS content (SSH over TLS).
 tls-domain:
-    - app.example.com
+- app.example.com
 
 # Domain used to serve DNS (SSH over DNS).
 dns-domain: www.example.com
@@ -53,14 +53,8 @@ db-file-name: Goauld.db
 
 # List of IP allowed to access the /manage/ endpoint.
 allowed-ips:
-    - [IP]
-    
-    
-    
-    
-    
-    
-    - 51.255.137.130
+- 127.0.0.1
+- 0.0.0.0/32
 
 # Access token required to access the /manage/ endpoint.
 access-token: TODO_TOKEN

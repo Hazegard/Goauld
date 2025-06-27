@@ -7,8 +7,8 @@ import (
 )
 
 type Password struct {
-	Agent string   `name:"agent" help:"Agent name to retrieve password."`
-	Type  string   `name:"type" help:"Password to retrieve (OTP/Agent)."`
+	Agent string   `name:"agent" yaml:"agent" help:"Agent name to retrieve password."`
+	Type  string   `name:"type" yaml:"type" help:"Password to retrieve (OTP/Agent)."`
 	Args  []string `arg:"" optional:""`
 }
 

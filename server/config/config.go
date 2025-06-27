@@ -108,39 +108,39 @@ var (
 )
 
 type ServerConfig struct {
-	PrivKey string `default:"${_age_privKey}"  name:"age-privkey" optional:"" help:"Age private key to use."`
+	PrivKey string `default:"${_age_privKey}"  name:"age-privkey" yaml:"age-privkey" optional:"" help:"Age private key to use."`
 
-	HttpDomain []string `default:"${_http_domain}"  name:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
-	TlsDomain  []string `default:"${_tls_domain}"  name:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
-	DnsDomain  string   `default:"${_dns_domain}"  name:"dns-domain" optional:"" help:"Domain used to serve DNS (SSH over DNS)."`
+	HttpDomain []string `default:"${_http_domain}"  name:"http-domain" yaml:"http-domain" optional:"" help:"Domain used to serve HTTP content (HTTP/Websockets)."`
+	TlsDomain  []string `default:"${_tls_domain}"  name:"tls-domain" yaml:"tls-domain" optional:"" help:"Domain used to serve raw TLS content (SSH over TLS)."`
+	DnsDomain  string   `default:"${_dns_domain}"  name:"dns-domain" yaml:"dns-domain" optional:"" help:"Domain used to serve DNS (SSH over DNS)."`
 
-	HttpAddr  string `default:"${_http_listen_addr}"  name:"http-listen-addr" optional:"" help:"HTTP address to bind to, port 0 => Random."`
-	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-listen-addr" optional:"" help:"HTTPS address to bind to, port 0 => Random."`
-	SshdAddr  string `default:"${_sshd_listen_addr}"  name:"ssh-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
-	DnsAddr   string `default:"${_dns_listen_addr}"  name:"dns-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
-	QuicAddr  string `default:"${_quic_listen_addr}"  name:"quic-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
+	HttpAddr  string `default:"${_http_listen_addr}"  name:"http-listen-addr" yaml:"http-listen-addr" optional:"" help:"HTTP address to bind to, port 0 => Random."`
+	HttpsAddr string `default:"${_https_listen_addr}"  name:"https-listen-addr" yaml:"https-listen-addr" optional:"" help:"HTTPS address to bind to, port 0 => Random."`
+	SshdAddr  string `default:"${_sshd_listen_addr}"  name:"ssh-listen-addr" yaml:"ssh-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
+	DnsAddr   string `default:"${_dns_listen_addr}"  name:"dns-listen-addr" yaml:"dns-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
+	QuicAddr  string `default:"${_quic_listen_addr}"  name:"quic-listen-addr" yaml:"quic-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 
-	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" yaml:"verbose" short:"v" type:"counter"`
 
-	Tls     bool   `default:"${_tls}" negatable:"" name:"tls" help:"Enable TLS."`
-	TlsKey  string `default:"${_tls_key}" help:"Path to TLS certificate key." name:"tls-key"`
-	TlsCert string `default:"${_tls_cert}" help:"Path to TLS certificate." name:"tls-cert"`
-	Quic    bool   `default:"${_quic}" negatable:"" name:"quic" help:"Enable QUIC."`
+	Tls     bool   `default:"${_tls}" negatable:"" name:"tls" yaml:"tls" help:"Enable TLS."`
+	TlsKey  string `default:"${_tls_key}" help:"Path to TLS certificate key." name:"tls-key" yaml:"tls-key"`
+	TlsCert string `default:"${_tls_cert}" help:"Path to TLS certificate." name:"tls-cert" yaml:"tls-cert"`
+	Quic    bool   `default:"${_quic}" negatable:"" name:"quic" yaml:"quic" help:"Enable QUIC."`
 
-	DNS        bool   `default:"${_dns}" negatable:"" name:"dns" help:"Enable DNS."`
-	NoDB       bool   `default:"${_no_db}" negatable:"" name:"db" help:"Disable database usage."`
-	DbFileName string `default:"${_db_name}" name:"db-file-name" help:"Database filename to use."`
+	DNS        bool   `default:"${_dns}" negatable:"" name:"dns" yaml:"dns" help:"Enable DNS."`
+	NoDB       bool   `default:"${_no_db}" negatable:"" name:"db" yaml:"db" help:"Disable database usage."`
+	DbFileName string `default:"${_db_name}" name:"db-file-name" yaml:"db-file-name" help:"Database filename to use."`
 
-	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ips" help:"List of IP allowed to access the /manage/ endpoint."`
-	AccessToken string   `default:"${_access_token}" name:"access-token" help:"Access token required to access the /manage/ endpoint."`
-	AdminToken  string   `default:"${_admin_token}" name:"admin-token" help:"Access token required to access the /manage/ endpoint."`
+	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ips" yaml:"allowed-ips" help:"List of IP allowed to access the /manage/ endpoint."`
+	AccessToken string   `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required to access the /manage/ endpoint."`
+	AdminToken  string   `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Access token required to access the /manage/ endpoint."`
 
-	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
-	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
+	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" yaml:"binaries-basic-auth" help:"HTTP Basic Auth used to access the binaries endpoint."`
+	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" yaml:"binaries-path-location" help:"Path where are stored binaries on the filesystem."`
 
-	Version        bool   `default:"${_version}" name:"version" short:"V" help:"Show version information"`
-	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `default:"${_config_file}" name:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
+	Version        bool   `default:"${_version}" name:"version" yaml:"version" short:"V" help:"Show version information"`
+	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" yaml:"generate-config" help:"Generate configuration file based on the current options."`
+	ConfigFile     string `default:"${_config_file}" name:"config-file" yaml:"config-file" optionnal:"" short:"c" help:"Configuration file to use."`
 }
 
 // InitServer initialize the application configuration

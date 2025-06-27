@@ -119,21 +119,21 @@ var (
 )
 
 type ClientConfig struct {
-	Server    string `default:"${_server}" short:"s" name:"server" optional:"" help:"HTTP Server to connect to."`
-	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" optional:"" help:"SSH Server to connect to."`
+	Server    string `default:"${_server}" short:"s" name:"server" yaml:"server"  optional:"" help:"HTTP Server to connect to."`
+	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH Server to connect to."`
 
-	AccessToken string `default:"${_access_token}" name:"access-token" help:"Access token required to access the /manage/ endpoint."`
-	AdminToken  string `default:"${_admin_token}" name:"admin-token" help:"Admin token required to access the /admin/ endpoint."`
+	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required to access the /manage/ endpoint."`
+	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token required to access the /admin/ endpoint."`
 
-	Verbose  int  `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
-	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
+	Verbose  int  `default:"${_verbosity}" name:"verbose" yaml:"verbose"  short:"v" type:"counter" help:"Verbosity. Repeat to increase" `
+	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" yaml:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
-	Version        bool   `default:"${_version}" name:"version" short:"V" help:"Show version information"`
-	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `default:"${_config_file}" name:"config-file" optional:"" short:"c" help:"Configuration file to use."`
+	Version        bool   `default:"${_version}" name:"version" yaml:"version" short:"V" help:"Show version information"`
+	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" yaml:"generate-config" help:"Generate configuration file based on the current options."`
+	ConfigFile     string `default:"${_config_file}" name:"config-file" yaml:"config-file" optional:"" short:"c" help:"Configuration file to use."`
 
-	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" hidden:"true" name:"agent-password" help:"Agent password map."`
-	PrivatePassword string            `default:"" name:"password" short:"P" help:"Agent password."`
+	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" hidden:"true" name:"agent-password" yaml:"agent-password" help:"Agent password map."`
+	PrivatePassword string            `default:"" name:"password" yaml:"password" short:"P" help:"Agent password."`
 
 	Ssh     Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
 	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`

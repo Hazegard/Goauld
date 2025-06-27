@@ -9,7 +9,7 @@ import (
 	"Goauld/server/router/midleware"
 	"Goauld/server/store"
 	"encoding/json"
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 	"net/http"
 
 	"github.com/rs/zerolog"

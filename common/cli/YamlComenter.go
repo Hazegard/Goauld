@@ -1,13 +1,14 @@
 package cli
 
+/*
 import (
+	"gopkg.in/yaml.v3"
 	"net/url"
 	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/maruel/natural"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -291,3 +292,4 @@ func addComment(node *yaml.Node, cm *comment) {
 	node.LineComment = cm.LineComment
 	node.FootComment = cm.FootComment
 }
+*/

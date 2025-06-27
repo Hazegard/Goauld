@@ -18,5 +18,5 @@ type DbAgent struct {
 	UpdatedAt time.Time      `yaml:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" yaml:"deleted_at"`
 	SocketId  string         `yaml:"socket_id"`
-	Agent
+	Agent     `yaml:",omitempty,inline,alias"`
 }

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 	"io"
 	"net/http"
 	"net/url"

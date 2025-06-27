@@ -31,7 +31,6 @@ require (
 	github.com/xtaci/kcp-go/v5 v5.6.18
 	github.com/xtaci/smux v1.5.34
 	golang.org/x/crypto v0.36.0
-	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/gorm v1.25.12
 	nhooyr.io/websocket v1.8.11
 	www.bamsoftware.com/git/champa.git v0.20220703.0
