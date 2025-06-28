@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Goauld/client/tui"
 	"Goauld/common/log"
 	"bufio"
 	"errors"
@@ -56,8 +55,22 @@ func (c *Command) String() string {
 	return fmt.Sprintf("%s%s %s", cmd, c.Executable, strings.Join(c.Args, " "))
 }
 
+func (c *Command) Execute(cfg ClientConfig, target string) error {
+	return c.execute(cfg, target, 0)
+}
+
+func (c *Command) UpdatePwd(newPwd string) {
+	for i := range c.Env {
+		if strings.HasPrefix(c.Env[i], prefixEnv("PASSWORD", "")) {
+			c.Env[i] = prefixEnv("PASSWORD", newPwd)
+			return
+		}
+	}
+	c.Env = append([]string{prefixEnv("PASSWORD", newPwd)}, c.Env...)
+}
+
 // Execute executes the command and adds the environment variables if needed
-func (c *Command) Execute(cfg ClientConfig) error {
+func (c *Command) execute(cfg ClientConfig, target string, counter int) error {
 	cmd := exec.Command(c.Executable, c.Args...)
 	if len(c.Env) > 0 {
 		cmd.Env = append(os.Environ(), c.Env...)
@@ -67,88 +80,96 @@ func (c *Command) Execute(cfg ClientConfig) error {
 	wg := sync.WaitGroup{}
 	//cmdDone := make(chan struct{})
 
-	if cfg.PrivatePassword != "" && cfg.PromptPassword && cfg.SavePassword {
+	//if cfg.PrivatePassword != "" && cfg.SavePassword {
 
-		stdoutPipe, err := cmd.StdoutPipe()
-		if err != nil {
-			return err
-		}
-		stderrPipe, err := cmd.StderrPipe()
-		if err != nil {
-			return err
-		}
-
-		// Tee stdout
-		prOut, pwOut := io.Pipe()
-		teeOut := io.TeeReader(stdoutPipe, pwOut)
-
-		// Tee stderr
-		prErr, pwErr := io.Pipe()
-		teeErr := io.TeeReader(stderrPipe, pwErr)
-
-		// Let output go to terminal
-		go func() {
-			defer pwOut.Close()
-			_, _ = io.Copy(os.Stdout, teeOut)
-		}()
-
-		go func() {
-			defer pwErr.Close()
-			_, _ = io.Copy(os.Stderr, teeErr)
-		}()
-
-		// Scanner for stderr to detect failure
-		wg.Add(1)
-		shouldSaveMu := sync.Mutex{}
-		shouldSave := true
-		go func() {
-			defer wg.Done()
-			scanner := bufio.NewScanner(prErr)
-			for scanner.Scan() {
-				line := scanner.Text()
-				if strings.Contains(line, "Permission denied, please try again.") {
-					shouldSaveMu.Lock()
-					shouldSave = false
-					shouldSaveMu.Unlock()
-					break
-				}
-			}
-			_, _ = io.Copy(io.Discard, prErr)
-		}()
-
-		// Scanner for stdout (if you want to inspect success messages etc.)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			scanner := bufio.NewScanner(prOut)
-			for scanner.Scan() {
-				shouldSaveMu.Lock()
-				if shouldSave {
-					err = cfg.UpdatePassConfigFile()
-					if err != nil {
-						log.Warn().Err(err).Msg("Failed to update config file")
-					}
-					shouldSaveMu.Unlock()
-					break
-				}
-				shouldSaveMu.Unlock()
-			}
-			_, _ = io.Copy(io.Discard, prOut)
-		}()
-
-	} else {
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
 	}
-	err := cmd.Start()
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return err
+	}
+
+	// Tee stdout
+	prOut, pwOut := io.Pipe()
+	teeOut := io.TeeReader(stdoutPipe, pwOut)
+
+	// Tee stderr
+	prErr, pwErr := io.Pipe()
+	teeErr := io.TeeReader(stderrPipe, pwErr)
+
+	// Let output go to terminal
+	go func() {
+		defer pwOut.Close()
+		_, _ = io.Copy(os.Stdout, teeOut)
+	}()
+
+	go func() {
+		defer pwErr.Close()
+		_, _ = io.Copy(os.Stderr, teeErr)
+	}()
+
+	// Scanner for stderr to detect failure
+	wg.Add(1)
+	hasFailedMu := sync.Mutex{}
+	hasFailed := false
+	go func() {
+		defer wg.Done()
+		scanner := bufio.NewScanner(prErr)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.Contains(line, "Permission denied, please try again.") {
+				hasFailedMu.Lock()
+				hasFailed = true
+				hasFailedMu.Unlock()
+				break
+			}
+		}
+		_, _ = io.Copy(io.Discard, prErr)
+	}()
+
+	// Scanner for stdout (if you want to inspect success messages etc.)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		scanner := bufio.NewScanner(prOut)
+		for scanner.Scan() {
+			hasFailedMu.Lock()
+			if !hasFailed && cfg.SavePassword {
+				err = cfg.UpdatePassConfigFile()
+				if err != nil {
+					log.Warn().Err(err).Msg("Failed to update config file")
+				}
+				hasFailedMu.Unlock()
+				break
+			}
+			hasFailedMu.Unlock()
+		}
+		_, _ = io.Copy(io.Discard, prOut)
+	}()
+
+	//} else {
+	//	cmd.Stderr = os.Stderr
+	//	cmd.Stdout = os.Stdout
+	//}
+	err = cmd.Start()
 	if err != nil {
 		return err
 	}
 
 	err = cmd.Wait()
 
-	if cfg.PrivatePassword != "" {
-		wg.Wait()
+	//if cfg.PrivatePassword != "" {
+	wg.Wait()
+	//}
+	if hasFailed && counter <= 3 {
+		err = cfg.Prompt(target)
+		if err != nil {
+			log.Warn().Err(err).Msg("error while retrieving password from command line, ignoring...")
+		}
+		c.UpdatePwd(cfg.PrivatePassword)
+		return c.execute(cfg, target, counter+1)
 	}
 
 	return err
@@ -195,12 +216,10 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 		return err
 	}
 
-	if cfg.PromptPassword {
-		pass, err := tui.Prompt(cfg.Ssh.Target)
+	if cfg.ShouldPrompt(agent) {
+		err = cfg.Prompt(agent.Name)
 		if err != nil {
 			log.Warn().Err(err).Msg("error while retrieving password from command line, ignoring...")
-		} else {
-			cfg.PrivatePassword = pass
 		}
 	}
 
@@ -210,10 +229,10 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 		return nil
 	}
 	if e.Proxy {
-		return cmd.InlineEnv().Execute(cfg)
+		return cmd.InlineEnv().Execute(cfg, agent.Name)
 	}
 
-	err = cmd.Execute(cfg)
+	err = cmd.Execute(cfg, agent.Name)
 	if err != nil {
 		var exitError *exec.ExitError
 		ok := errors.As(err, &exitError)
@@ -305,7 +324,7 @@ func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target
 		prefixEnv("TYPE", typePass),
 		prefixEnv("CONFIG_FILE", cfg.ConfigFile),
 	}
-	if cfg.IsFlagInCommandLine("--private-password", "-P") || cfg.IsFlagInCommandLine("--prompt", "--prompt") {
+	if cfg.PrivatePassword != "" {
 		envs = append(envs, prefixEnv("PASSWORD", cfg.PrivatePassword))
 	}
 	if cfg.IsFlagInCommandLine("--access-token", "") {

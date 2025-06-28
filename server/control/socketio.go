@@ -230,8 +230,9 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.Hostname = agentData.Hostname
 			agent.Path = agentData.Path
 			agent.IPs = agentData.IPs
+			agent.HasStaticPassword = agentData.HasStaticPwd
 
-			err = sio.db.UpdateAgentField(agent, "SshPasswd", "Platform", "Architecture", "Username", "Hostname", "Path", "IPs")
+			err = sio.db.UpdateAgentField(agent, "SshPasswd", "Platform", "Architecture", "Username", "Hostname", "Path", "IPs", "HasStaticPassword")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.Id", agent.Id).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}

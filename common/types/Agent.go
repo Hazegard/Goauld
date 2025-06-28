@@ -22,6 +22,7 @@ type Agent struct {
 	LastUpdated          time.Time                  `gorm:"type:datetime" json:"lastUpdated" yaml:"lastUpdated"`
 	LastPing             time.Time                  `gorm:"type:datetime" json:"lastPing" yaml:"lastPing"`
 	RemoteAddr           string                     `gorm:"type:text" json:"remoteAddr" yaml:"remoteAddr"`
+	HasStaticPassword    bool                       `gorm:"type:boolean" json:"hasStaticPassword" yaml:"hasStaticPassword"`
 
 	Platform     string `gorm:"type:text" yaml:"platform"`
 	Architecture string `gorm:"type:text" yaml:"architecture"`

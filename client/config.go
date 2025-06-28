@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Goauld/client/types"
 	common2 "Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/yaml"
@@ -290,5 +291,29 @@ func (cfg *ClientConfig) Target() string {
 }
 
 func (cfg *ClientConfig) UpdatePassConfigFile() error {
-	return yaml.UpdateAgentPasswordConfig(cfg.SearchConfigDir, cfg.Target(), cfg.PrivatePassword)
+	if cfg.SavePassword {
+		return yaml.UpdateAgentPasswordConfig(cfg.SearchConfigDir, cfg.Target(), cfg.PrivatePassword)
+	}
+	return nil
+}
+
+func (cfg *ClientConfig) ShouldPrompt(agent types.Agent) bool {
+	if cfg.PromptPassword {
+		return true
+	}
+	_, ok := cfg.AgentPassword[cfg.Target()]
+	if ok {
+		return false
+	}
+	return agent.HasStaticPassword
+}
+
+func (cfg *ClientConfig) Prompt(agent string) error {
+	pass, err := tui.Prompt(agent)
+	if err != nil {
+		return err
+	}
+	cfg.PromptPassword = true
+	cfg.PrivatePassword = pass
+	return nil
 }

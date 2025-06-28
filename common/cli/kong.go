@@ -99,9 +99,6 @@ func CustomUrlP(u *url.URL) ([]byte, error) {
 	if u.String() == "" {
 		return []byte(EMPTUYRL), nil
 	}
-	fmt.Printf("a%+vb\n", u)
-
-	panic("a")
 	return []byte((*u).String()), nil
 }
 

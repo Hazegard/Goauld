@@ -83,7 +83,7 @@ func (s *Scp) Execute(api *api.API, cfg ClientConfig) error {
 		return nil
 	}
 
-	return cmd.Execute(cfg)
+	return cmd.Execute(cfg, agent.Name)
 }
 
 // buildScpCommand build the outer SSH command. This SSH command will be executed in second

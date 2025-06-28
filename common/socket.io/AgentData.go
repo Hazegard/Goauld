@@ -23,6 +23,7 @@ type AgentData struct {
 	Hostname         string `json:"hostname"`
 	IPs              string `json:"ips"`
 	Path             string `json:"path"`
+	HasStaticPwd     bool   `json:"has_static_pwd"`
 }
 
 func newAgentSshPasswordMessage() *AgentData {
@@ -47,6 +48,7 @@ func NewEncryptedAgentSshPasswordMessage(a *config.Agent, cryptor *crypto.SymCry
 		Hostname:         a.Hostname,
 		IPs:              strings.Join(a.IPs, ","),
 		Path:             a.Path,
+		HasStaticPwd:     a.PrivateSshdPassword() != "",
 	}
 	return EncryptAgentSshPasswordMessage(message, cryptor)
 }
