@@ -142,7 +142,7 @@ type ClientConfig struct {
 	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" hidden:"true" name:"agent-password" yaml:"agent-password" help:"Agent password map."`
 	PrivatePassword string            `default:"" name:"password" yaml:"password" short:"P" help:"Agent password."`
 	PromptPassword  bool              `default:"${_prompt_static_password}" name:"prompt" yaml:"prompt" short:"Q" help:"Prompt for the agent private password."`
-	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" help:"Save the prompted password in the config file."`
+	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" negatable:"" help:"Save the prompted password in the config file."`
 
 	Ssh     Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
 	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
