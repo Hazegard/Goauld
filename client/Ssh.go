@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"Goauld/client/api"
 	"Goauld/client/common"
@@ -56,7 +57,23 @@ func (c *Command) String() string {
 }
 
 func (c *Command) Execute(cfg ClientConfig, target string) error {
-	return c.execute(cfg, target, 0)
+	var err error
+	for attempt := 0; attempt <= 3; attempt++ {
+		hasFailed := false
+		err, hasFailed = c.execute(cfg, target)
+		if !hasFailed {
+			return err
+		}
+		if attempt < 3 {
+			err = cfg.Prompt(target)
+			if err != nil {
+				log.Warn().Err(err).Msg("error while retrieving password from command line, ignoring...")
+				break
+			}
+			c.UpdatePwd(cfg.PrivatePassword)
+		}
+	}
+	return err
 }
 
 func (c *Command) UpdatePwd(newPwd string) {
@@ -70,25 +87,21 @@ func (c *Command) UpdatePwd(newPwd string) {
 }
 
 // Execute executes the command and adds the environment variables if needed
-func (c *Command) execute(cfg ClientConfig, target string, counter int) error {
+func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 	cmd := exec.Command(c.Executable, c.Args...)
 	if len(c.Env) > 0 {
 		cmd.Env = append(os.Environ(), c.Env...)
 	}
 
 	cmd.Stdin = os.Stdin
-	wg := sync.WaitGroup{}
-	//cmdDone := make(chan struct{})
-
-	//if cfg.PrivatePassword != "" && cfg.SavePassword {
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		return err
+		return err, false
 	}
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return err
+		return err, false
 	}
 
 	// Tee stdout
@@ -110,19 +123,27 @@ func (c *Command) execute(cfg ClientConfig, target string, counter int) error {
 		_, _ = io.Copy(os.Stderr, teeErr)
 	}()
 
+	defer func() {
+		_ = pwOut.Close()
+		_ = pwErr.Close()
+		_ = prErr.Close()
+		_ = prOut.Close()
+		_ = stderrPipe.Close()
+		_ = stdoutPipe.Close()
+	}()
+
 	// Scanner for stderr to detect failure
+	wg := sync.WaitGroup{}
+	var hasAuthentFailed int32 = 0 // atomic
+
 	wg.Add(1)
-	hasFailedMu := sync.Mutex{}
-	hasFailed := false
 	go func() {
 		defer wg.Done()
 		scanner := bufio.NewScanner(prErr)
 		for scanner.Scan() {
 			line := scanner.Text()
 			if strings.Contains(line, "Permission denied, please try again.") {
-				hasFailedMu.Lock()
-				hasFailed = true
-				hasFailedMu.Unlock()
+				atomic.StoreInt32(&hasAuthentFailed, 1)
 				break
 			}
 		}
@@ -135,44 +156,26 @@ func (c *Command) execute(cfg ClientConfig, target string, counter int) error {
 		defer wg.Done()
 		scanner := bufio.NewScanner(prOut)
 		for scanner.Scan() {
-			hasFailedMu.Lock()
-			if !hasFailed && cfg.SavePassword {
+			if atomic.LoadInt32(&hasAuthentFailed) == 0 && cfg.SavePassword {
 				err = cfg.UpdatePassConfigFile()
 				if err != nil {
 					log.Warn().Err(err).Msg("Failed to update config file")
 				}
-				hasFailedMu.Unlock()
 				break
 			}
-			hasFailedMu.Unlock()
 		}
 		_, _ = io.Copy(io.Discard, prOut)
 	}()
 
-	//} else {
-	//	cmd.Stderr = os.Stderr
-	//	cmd.Stdout = os.Stdout
-	//}
 	err = cmd.Start()
 	if err != nil {
-		return err
+		return err, atomic.LoadInt32(&hasAuthentFailed) == 1
 	}
 
 	err = cmd.Wait()
 
-	//if cfg.PrivatePassword != "" {
 	wg.Wait()
-	//}
-	if hasFailed && counter <= 3 {
-		err = cfg.Prompt(target)
-		if err != nil {
-			log.Warn().Err(err).Msg("error while retrieving password from command line, ignoring...")
-		}
-		c.UpdatePwd(cfg.PrivatePassword)
-		return c.execute(cfg, target, counter+1)
-	}
-
-	return err
+	return err, atomic.LoadInt32(&hasAuthentFailed) == 1
 }
 
 // Run execute the ssh subcommand
