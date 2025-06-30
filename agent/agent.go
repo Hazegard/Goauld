@@ -134,6 +134,12 @@ func run() utils.CancelReason {
 
 	// Define the different strategies to initialize the control socket
 	//  Currently, all strategies are tried in order.
+	socketOrder := []string{
+		"Websocket",
+		"Upgrade",
+		"Polling",
+		"DNS",
+	}
 	controlInitStrategy := map[string]control.InitStrategy{
 		"Websocket": {
 			Name: "Websocket",
@@ -141,16 +147,16 @@ func run() utils.CancelReason {
 				return client.InitWs(success, chanErr)
 			},
 		},
-		"Polling": {
-			Name: "Polling",
-			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
-				return client.InitPolling(success, chanErr)
-			},
-		},
 		"Upgrade": {
 			Name: "Upgrade",
 			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
 				return client.InitWsUpgrade(success, chanErr)
+			},
+		},
+		"Polling": {
+			Name: "Polling",
+			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+				return client.InitPolling(success, chanErr)
 			},
 		},
 		"DNS": {
@@ -169,26 +175,24 @@ func run() utils.CancelReason {
 	order := config.Get().GetRsshOrder()
 	if len(order) == 1 {
 		if order[0] == "dns" {
-			controlInitStrategy = map[string]control.InitStrategy{
-				"DNS": controlInitStrategy["DNS"],
-			}
+			socketOrder = []string{"DNS"}
 		}
 		if order[0] == "http" {
-			controlInitStrategy = map[string]control.InitStrategy{
-				"Polling": controlInitStrategy["Polling"],
-			}
+			socketOrder = []string{"HTTP"}
 		}
 		if order[0] == "ws" {
-			controlInitStrategy = map[string]control.InitStrategy{
-				"Websocket": controlInitStrategy["Websocket"],
-			}
+			socketOrder = []string{"Websocket"}
 		}
 	}
 
 	success := false
 	// We iterate over the different strategies to initialize the control socket
 	// If the initialization is successful, we stop the loop
-	for _, initializer := range controlInitStrategy {
+	for _, socket := range socketOrder {
+		initializer, ok := controlInitStrategy[socket]
+		if !ok {
+			continue
+		}
 		log.Info().Str("ControlMode", initializer.Name).Msg("Trying to connect to the control socket")
 		err, cpc := control.Init(ctx, globalCanceler, configDone, controlErr, initializer.InitFunc)
 		if err == nil {
