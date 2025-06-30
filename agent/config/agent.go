@@ -59,6 +59,9 @@ func InitAgent() (*kong.Context, error, []error) {
 		}
 		return ctx, nil, warnings
 	}
+	if cfg.AgePubKey == "" {
+		return nil, fmt.Errorf("AgePubKey is required"), nil
+	}
 	sharedSecret, err := crypto.GeneratePassword(crypto.PasswordLength)
 	if err != nil {
 		return nil, fmt.Errorf("error generating ssh password: %v", err), nil
