@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"Goauld/common/utils"
 	"bytes"
 	"errors"
 	"fmt"
@@ -37,19 +38,21 @@ const EMPTUYRL = "THISISANEMPTYURL"
 // YAMLKeepEnvVar resolve the YAML configuration file.
 // It does not override values found in the environment variables
 func YAMLKeepEnvVar(r io.Reader) (kong.Resolver, error) {
-	return YAML(r, true)
+	return YAML(r, true, []string{})
 }
 
 // YAMLOverwriteEnvVar resolve the YAML configuration file.
 // Values found in the file are overwriting the value found in the environment variable
-func YAMLOverwriteEnvVar(r io.Reader) (kong.Resolver, error) {
-	return YAML(r, false)
+func YAMLOverwriteEnvVar(ignoreOverwrite []string) func(r io.Reader) (kong.Resolver, error) {
+	return func(r io.Reader) (kong.Resolver, error) {
+		return YAML(r, false, ignoreOverwrite)
+	}
 }
 
 // YAML returns a kong resolver to load YAML configuration file
 // overwriteEnvVar should be set to true if we want the values in the YAML file to take precedence over
 // the environment variable. If not, the value should be set to false
-func YAML(r io.Reader, overwriteEnvVar bool) (kong.Resolver, error) {
+func YAML(r io.Reader, overwriteEnvVar bool, ignoreOverwrite []string) (kong.Resolver, error) {
 	decoder := yaml.NewDecoder(r)
 	config := map[string]interface{}{}
 	err := decoder.Decode(&config)
@@ -57,7 +60,7 @@ func YAML(r io.Reader, overwriteEnvVar bool) (kong.Resolver, error) {
 		return nil, fmt.Errorf("YAML agent decode error: %w", err)
 	}
 	return kong.ResolverFunc(func(context *kong.Context, parent *kong.Path, flag *kong.Flag) (interface{}, error) {
-		if overwriteEnvVar {
+		if overwriteEnvVar || utils.Contains(ignoreOverwrite, flag.Name) {
 			for _, env := range flag.Envs {
 				_, ok := os.LookupEnv(env)
 				if ok {
@@ -71,7 +74,6 @@ func YAML(r io.Reader, overwriteEnvVar bool) (kong.Resolver, error) {
 			path = append([]string{n.Name}, path...)
 		}
 		path = append(path, flag.Name)
-		//path = strings.Split(strings.Join(path, "-"), "-")
 		return find(config, path), nil
 	}), nil
 }

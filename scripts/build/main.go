@@ -110,7 +110,7 @@ func parse() (*kong.Context, *BuildConfig, error) {
 		kong.Name(common.AppName()),
 		kong.Description(common.Title("Build script")),
 		kong.UsageOnError(),
-		kong.Configuration(cli.YAMLOverwriteEnvVar, filepath.Join(dir, strings.ToLower(common.AppName())+".yaml")),
+		kong.Configuration(cli.YAMLOverwriteEnvVar([]string{}), filepath.Join(dir, strings.ToLower(common.AppName())+".yaml")),
 		kong.DefaultEnvars(strings.ToUpper(common.AppName())),
 		// defaultValues,
 	)

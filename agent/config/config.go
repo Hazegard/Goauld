@@ -254,7 +254,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	_ = kong.Parse(cfgTmp, kongOptions...)
 
 	if cfgTmp.ConfigFile != "" {
-		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar, cfgTmp.ConfigFile))
+		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar([]string{}), cfgTmp.ConfigFile))
 	}
 	cfg := &AgentConfig{}
 	app := kong.Parse(cfg, kongOptions...)

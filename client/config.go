@@ -265,7 +265,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	}
 	_ = kong.Parse(cfgTmp, kongOptions...)
 	if cfgTmp.ConfigFile != "" {
-		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar, cfgTmp.ConfigFile))
+		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar([]string{"password"}), cfgTmp.ConfigFile))
 		configSearchDir = append([]string{cfgTmp.ConfigFile}, configSearchDir...)
 	}
 	cfg := &ClientConfig{}
