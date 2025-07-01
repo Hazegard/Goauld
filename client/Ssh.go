@@ -242,7 +242,7 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 		if ok {
 			// Get the exit status
 			exitStatus := exitError.ExitCode()
-			if exitStatus == 255 {
+			if exitStatus == 255 || exitStatus == 4294967295 {
 				return nil
 			}
 			return err

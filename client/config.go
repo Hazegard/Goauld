@@ -155,7 +155,7 @@ type ClientConfig struct {
 	SearchConfigDir string `hidden:""`
 }
 
-func (c *ClientConfig) Validate() error {
+func (c *ClientConfig) ValidateConfig() error {
 	if c.GenerateConfig {
 		// we do not validate the current config as we might want to have the access token or server empty
 		return nil
@@ -274,7 +274,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
 
 	log.SetLogLevel(cfg.Verbose)
-	return app, cfg, nil
+	return app, cfg, cfg.ValidateConfig()
 }
 
 func (cfg *ClientConfig) Target() string {

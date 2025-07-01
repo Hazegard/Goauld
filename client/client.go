@@ -57,8 +57,7 @@ func main() {
 	err = kong.Run(httpclient, cfg)
 	if err != nil {
 		if len(os.Args) > 1 {
-			mode := os.Args[1]
-			log.Error().Err(err).Str("Mode", mode).Msg("error running " + common.APP_NAME)
+			log.Error().Err(err).Str("Mode", kong.Command()).Msg("error running " + common.APP_NAME)
 			return
 		}
 		log.Error().Err(err).Msg("error running " + common.APP_NAME)
