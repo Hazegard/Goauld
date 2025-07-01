@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"Goauld/common/utils"
+	"bytes"
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
@@ -18,12 +19,23 @@ func UpdateAgentPasswordConfig(file string, name, pass string) error {
 	if err != nil {
 		return err
 	}
-	doc := content.Docs[0]
-	root := doc.Body
 	node, err := yaml.PathString("$.agent-password")
 	if err != nil {
 		return err
 	}
+
+	curMap := make(map[string]string)
+	err = node.Read(bytes.NewReader(data), &curMap)
+	if err != nil {
+		return err
+	}
+	if curMap[name] == pass {
+		return nil
+	}
+
+	doc := content.Docs[0]
+	root := doc.Body
+
 	agentPassword := make(map[string]string)
 
 	agentPassword[name] = pass
