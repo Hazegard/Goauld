@@ -106,7 +106,7 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 	if s.Print {
 		sep = "'"
 	}
-	proxyScpCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, proxyCmd.InlineEnv().String(), sep)
+	proxyScpCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, proxyCmd.String(), sep)
 	cmd.Args = append(cmd.Args, proxyScpCmd)
 	cmd.Args = append(cmd.Args, cfg.Scp.ScpArgs...)
 	cmd.Args = append(cmd.Args, s.Source)

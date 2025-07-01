@@ -4,6 +4,7 @@ import (
 	"Goauld/client/api"
 	"Goauld/common/log"
 	"fmt"
+	"strings"
 )
 
 type Password struct {
@@ -22,6 +23,25 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 	if err != nil {
 		return err
 	}
+
+	if len(cfg.Pass.Args) >= 1 {
+		input := cfg.Pass.Args[0]
+		// fmt.Fprintf(os.Stderr, "%s\n", input)
+		serverString := fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost())
+		// fmt.Fprintf(os.Stderr, "%s\n", serverString)
+		agentString := fmt.Sprintf("%s@%s", agent.Name, agent.Id)
+		// fmt.Fprintf(os.Stderr, "%s\n", agentString)
+		if strings.Contains(input, agentString) {
+			fmt.Println(p.GetStaticPassword(cfg) + agent.SshPasswd)
+			// fmt.Fprintf(os.Stderr, "%s\n", p.GetStaticPassword(cfg)+agent.SshPasswd)
+			return nil
+		} else if strings.Contains(input, serverString) {
+			// fmt.Fprintf(os.Stderr, "%s\n", agent.OneTimePassword)
+			fmt.Println(agent.OneTimePassword)
+			return nil
+		}
+	}
+
 	switch cfg.Pass.Type {
 	case "otp":
 		fmt.Println(agent.OneTimePassword)

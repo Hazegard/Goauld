@@ -50,9 +50,9 @@ func (c *Command) InlineEnv() *Command {
 // String returns the command as a string
 func (c *Command) String() string {
 	cmd := ""
-	if len(c.Env) > 0 {
-		cmd = fmt.Sprintf("%s ", strings.Join(c.Env, " "))
-	}
+	// if len(c.Env) > 0 {
+	// 	cmd = fmt.Sprintf("%s ", strings.Join(c.Env, " "))
+	// }
 	return fmt.Sprintf("%s%s %s", cmd, c.Executable, strings.Join(c.Args, " "))
 }
 
@@ -232,7 +232,7 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 		return nil
 	}
 	if e.Proxy {
-		return cmd.InlineEnv().Execute(cfg, agent.Name)
+		return cmd.Execute(cfg, agent.Name)
 	}
 
 	err = cmd.Execute(cfg, agent.Name)
@@ -284,7 +284,12 @@ func (e *Ssh) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath 
 	if e.Print {
 		sep = "'"
 	}
-	proxyCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.InlineEnv().String(), sep)
+	proxyCmd := ""
+	if e.Print {
+		proxyCmd = fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.InlineEnv().String(), sep)
+	} else {
+		proxyCmd = fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.String(), sep)
+	}
 	cmd.Args = append(cmd.Args, proxyCmd)
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.Id))
 	cmd.Args = append(cmd.Args, cfg.Ssh.SshArgs...)
