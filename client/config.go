@@ -291,7 +291,7 @@ func (cfg *ClientConfig) Target() string {
 }
 
 func (cfg *ClientConfig) UpdatePassConfigFile() error {
-	if cfg.SavePassword {
+	if cfg.SavePassword && cfg.PrivatePassword != "" {
 		return yaml.UpdateAgentPasswordConfig(cfg.SearchConfigDir, cfg.Target(), cfg.PrivatePassword)
 	}
 	return nil

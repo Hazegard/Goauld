@@ -134,7 +134,7 @@ func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 
 	// Scanner for stderr to detect failure
 	wg := sync.WaitGroup{}
-	var hasAuthentFailed int32 = 0 // atomic
+	var hasAuthFailed atomic.Bool
 
 	wg.Add(1)
 	go func() {
@@ -143,7 +143,7 @@ func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 		for scanner.Scan() {
 			line := scanner.Text()
 			if strings.Contains(line, "Permission denied, please try again.") {
-				atomic.StoreInt32(&hasAuthentFailed, 1)
+				hasAuthFailed.Store(true)
 				break
 			}
 		}
@@ -156,7 +156,7 @@ func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 		defer wg.Done()
 		scanner := bufio.NewScanner(prOut)
 		for scanner.Scan() {
-			if atomic.LoadInt32(&hasAuthentFailed) == 0 && cfg.SavePassword {
+			if !hasAuthFailed.Load() && cfg.SavePassword {
 				err = cfg.UpdatePassConfigFile()
 				if err != nil {
 					log.Warn().Err(err).Msg("Failed to update config file")
@@ -169,13 +169,13 @@ func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 
 	err = cmd.Start()
 	if err != nil {
-		return err, atomic.LoadInt32(&hasAuthentFailed) == 1
+		return err, hasAuthFailed.Load()
 	}
 
 	err = cmd.Wait()
 
 	wg.Wait()
-	return err, atomic.LoadInt32(&hasAuthentFailed) == 1
+	return err, hasAuthFailed.Load()
 }
 
 // Run execute the ssh subcommand
