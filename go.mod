@@ -22,7 +22,6 @@ require (
 	github.com/goccy/go-yaml v1.17.1
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/karagenc/socket.io-go v0.1.0
-	github.com/maruel/natural v1.1.1
 	github.com/pkg/sftp v1.13.9
 	github.com/qdm12/dns/v2 v2.0.0-rc8
 	github.com/rs/zerolog v1.34.0
@@ -48,7 +47,7 @@ require (
 	github.com/charmbracelet/colorprofile v0.2.3-0.20250311203215-f60798e515dc // indirect
 	github.com/charmbracelet/x/ansi v0.8.0 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
-	github.com/charmbracelet/x/term v0.2.1 // indirect
+	github.com/charmbracelet/x/term v0.2.1
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
