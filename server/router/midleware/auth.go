@@ -2,6 +2,7 @@ package midleware
 
 import (
 	"Goauld/common/log"
+	"Goauld/common/net"
 	"net/http"
 
 	"github.com/urfave/negroni"
@@ -15,7 +16,7 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 		// Validate the Authorization header
 		if authHeader != expectedAuthToken {
 			// If the token is not correct, return 403 Forbidden
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
 			log.Get().Trace().Str("Header", authHeader).Msg("Header not allowed")
 			return
 		}
@@ -31,18 +32,18 @@ func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 		if username == "" && password == "" {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			w.WriteHeader(http.StatusUnauthorized)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
 			return
 		}
 		u, p, ok := r.BasicAuth()
 		if !ok {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			w.WriteHeader(http.StatusUnauthorized)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
 			return
 		}
 		if u != username || p != password {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
 			return
 		}
 

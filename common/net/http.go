@@ -1,6 +1,7 @@
 package net
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 )
@@ -27,3 +28,9 @@ func Http10ToHttp11FakeUpgrader(r *http.Request) *http.Request {
 	}
 	return r
 }
+
+const Forbidden = "Forbidden"
+const Unauthorized = "Unauthorized"
+
+var ForbiddenErr = errors.New("Forbidden")
+var UnauthorizedErr = errors.New("Unauthorized")

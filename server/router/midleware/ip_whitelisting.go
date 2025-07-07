@@ -19,7 +19,7 @@ func WhitelistMiddleware(allowedIPs []string) negroni.HandlerFunc {
 		if !net.IsIPAllowed(clientIP, allowedIPs) {
 			// If not allowed, return 403 Forbidden
 			log.Get().Trace().Str("ClientIP", clientIP).Msg("ClientIP not allowed")
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			http.Error(w, net.Forbidden, http.StatusForbidden)
 			return
 		}
 

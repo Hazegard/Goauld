@@ -2,6 +2,7 @@ package api
 
 import (
 	"Goauld/common"
+	"Goauld/common/net"
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
@@ -43,6 +44,17 @@ func NewAPI(server string, accessToken string, insecure bool) *API {
 		}
 	}
 	return api
+}
+
+func HandleError(b []byte) error {
+	body := strings.TrimSpace(string(b))
+	if body == net.Forbidden {
+		return fmt.Errorf("%s: IP address not whitelisted", body)
+	}
+	if body == net.Unauthorized {
+		return fmt.Errorf("%s: Invalid access token", body)
+	}
+	return errors.New(strings.TrimSpace(body))
 }
 
 // Delete generic method to perform DELETE request with the appropriate authentication header
@@ -99,7 +111,7 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 		return nil, errors.New("Error while reading agent list: " + err.Error())
 	}
 	if res.StatusCode != http.StatusOK {
-		return nil, errors.New(strings.TrimSpace(string(body)))
+		return nil, HandleError(body)
 	}
 
 	var agents []types.Agent
@@ -126,7 +138,7 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 		return types.Agent{}, errors.New("Error while reading agent by id: " + err.Error())
 	}
 	if res.StatusCode != http.StatusOK {
-		return types.Agent{}, errors.New(strings.TrimSpace(string(body)))
+		return types.Agent{}, HandleError(body)
 	}
 
 	var agents types.Agent
@@ -153,7 +165,7 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 		return types.Agent{}, fmt.Errorf("error while reading agent by id: %v", err)
 	}
 	if res.StatusCode != http.StatusOK {
-		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %s", strings.TrimSpace(string(body)))
+		return types.Agent{}, HandleError(body)
 	}
 
 	var agents types.Agent
@@ -186,7 +198,7 @@ func (api *API) KillAgent(id string, doExit bool) error {
 		if err != nil {
 			return fmt.Errorf("error reading response (%s)", res.Status)
 		}
-		return fmt.Errorf("%s", string(body))
+		return HandleError(body)
 	}
 	return nil
 }
@@ -204,7 +216,7 @@ func (api *API) DeleteAgent(id string) error {
 		if err != nil {
 			return fmt.Errorf("error reading response (%s)", res.Status)
 		}
-		return fmt.Errorf("%s", string(body))
+		return HandleError(body)
 	}
 	return nil
 }
@@ -220,7 +232,7 @@ func (api *API) DumpAll() (error, []commontypes.State) {
 		return err, nil
 	}
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error while dumping active agents : %s", strings.TrimSpace(string(body))), nil
+		return HandleError(body), nil
 	}
 
 	var result []commontypes.State
@@ -238,11 +250,11 @@ func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
 		return err, nil
 	}
 	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error while updating log level : %s", res.Status), nil
+		return HandleError(body), nil
 	}
 	result := map[string]interface{}{}
-	body, err := io.ReadAll(res.Body)
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return err, nil
@@ -260,10 +272,14 @@ func (api *API) version(route string) (error, common.JVersion) {
 		return err, common.JVersion{}
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error while getting version : %s", res.Status), common.JVersion{}
-	}
 	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err, common.JVersion{}
+	}
+	if res.StatusCode != http.StatusOK {
+		return HandleError(body), common.JVersion{}
+	}
+
 	result := common.JVersion{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
@@ -282,12 +298,15 @@ func (api *API) GetConfig() (error, string) {
 		return err, ""
 	}
 	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err, ""
+	}
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error while getting config : %s", res.Status), ""
+		return HandleError(body), ""
 	}
 	result := httpTypes.HttpResponse{}
 
-	body, err := io.ReadAll(res.Body)
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return err, ""
@@ -305,15 +324,12 @@ func (api *API) DumpState() (error, commontypes.Status) {
 		return err, commontypes.Status{}
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error while dumping active agents : %s", res.Status), commontypes.Status{}
-	}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err, commontypes.Status{}
 	}
 	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("error while dumping active agents : %s", strings.TrimSpace(string(body))), commontypes.Status{}
+		return HandleError(body), commontypes.Status{}
 	}
 
 	var result commontypes.Status
