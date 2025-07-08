@@ -26,8 +26,7 @@ generate-config: false
 config-file: ""
 
 # Agent password map.
-agent-password:
-  mcatrice@MCAT: test
+agent-password: {}
 
 # Agent password.
 password: ""

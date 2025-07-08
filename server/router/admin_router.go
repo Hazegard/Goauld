@@ -49,6 +49,7 @@ func (ur *AdminRouter) GetRouter() *negroni.Negroni {
 	return n
 }
 
+// Version returns the server version (Version, Commit and Commit date)
 func (ur *AdminRouter) Version(w http.ResponseWriter, r *http.Request) {
 	res, err := json.Marshal(common.JsonVersion())
 	if err != nil {
@@ -95,6 +96,7 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// dumpAllAgents return all the information stored regarding all the agents
 func (ur *AdminRouter) dumpAllAgents() []types.State {
 	dump := ur.store.GetAllStates()
 	var outDump []types.State
@@ -136,6 +138,7 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// UpdateLogLevel updates the server log level
 func (ur *AdminRouter) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 	l := r.PathValue("level")
 	level, err := zerolog.ParseLevel(l)
@@ -185,6 +188,7 @@ func (ur *AdminRouter) GetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// State return all the server information (configuration, agent connected or not)
 func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
 	var errs []error
 	agents, err := ur.db.GetAllAgentsSanitized()

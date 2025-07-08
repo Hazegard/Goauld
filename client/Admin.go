@@ -25,7 +25,7 @@ type Loglevel struct {
 }
 
 func CheckAdminVersion(api *api.API) {
-	err, srvVersion := api.AdminVersion()
+	err, srvVersion := api.Version()
 	if err != nil {
 		log.Debug().Err(err).Msg("error getting version")
 		return
@@ -38,10 +38,11 @@ func CheckAdminVersion(api *api.API) {
 	}
 }
 
+// dump dumps the information regading the agents currently connected to the server
 func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
-	CheckAdminVersion(adminApi)
+	// CheckAdminVersion(adminApi)
 
 	err, res := adminApi.DumpAll()
 	if err != nil {
@@ -56,9 +57,10 @@ func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 	return nil
 }
 
+// Loglevel updates the log level on the server side
 func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
-	CheckAdminVersion(adminApi)
+	//CheckAdminVersion(adminApi)
 	err, res := adminApi.UpdateLogLevel(cfg.Admin.Loglevel.Level)
 	if err != nil {
 		return err
@@ -71,10 +73,11 @@ func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
 	return nil
 }
 
+// Config dumps the server side configuration
 func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
-	CheckAdminVersion(adminApi)
+	//CheckAdminVersion(adminApi)
 	err, res := adminApi.GetConfig()
 	if err != nil {
 		return err
@@ -84,10 +87,11 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 	return nil
 }
 
+// State dumps the information regading all the agents (connected or not)
 func (c *State) Run(_ *api.API, cfg ClientConfig) error {
 
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
-	CheckAdminVersion(adminApi)
+	//CheckAdminVersion(adminApi)
 
 	err, res := adminApi.DumpState()
 	if err != nil {

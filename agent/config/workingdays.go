@@ -13,6 +13,7 @@ type WorkingDay struct {
 	TZ    string
 }
 
+// NewWorkingDay returns a new WorkingDay
 func NewWorkingDay(start, end, tz string) *WorkingDay {
 	if tz == "" {
 		tz = time.Local.String()

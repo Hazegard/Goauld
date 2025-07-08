@@ -155,6 +155,7 @@ type ClientConfig struct {
 	SearchConfigDir string `hidden:""`
 }
 
+// ValidateConfig check the required options and returns an error if they are not set
 func (c *ClientConfig) ValidateConfig() error {
 	if c.GenerateConfig {
 		// we do not validate the current config as we might want to have the access token or server empty
@@ -205,6 +206,7 @@ func (c *ClientConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*c)
 }
 
+// IsFlagInCommandLine checks whether the flag is provided in the command line arguments
 func (c *ClientConfig) IsFlagInCommandLine(long string, short string) bool {
 	for _, field := range os.Args {
 		if (long != "" && field == long) || (short != "" && field == short) {
@@ -277,6 +279,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	return app, cfg, cfg.ValidateConfig()
 }
 
+// Target returns the target by parsing the subcommands to find which one is currently executed
 func (cfg *ClientConfig) Target() string {
 	if cfg.Ssh.Target != "" {
 		return cfg.Ssh.Target
@@ -290,6 +293,7 @@ func (cfg *ClientConfig) Target() string {
 	return ""
 }
 
+// UpdatePassConfigFile updates the configuration file to set the new static password
 func (cfg *ClientConfig) UpdatePassConfigFile() error {
 	if cfg.SavePassword && cfg.PrivatePassword != "" {
 		return yaml.UpdateAgentPasswordConfig(cfg.SearchConfigDir, cfg.Target(), cfg.PrivatePassword)
@@ -297,6 +301,7 @@ func (cfg *ClientConfig) UpdatePassConfigFile() error {
 	return nil
 }
 
+// ShouldPrompt return whether the client should display a prompt
 func (cfg *ClientConfig) ShouldPrompt(agent types.Agent) bool {
 	if cfg.PromptPassword {
 		return true
@@ -308,6 +313,7 @@ func (cfg *ClientConfig) ShouldPrompt(agent types.Agent) bool {
 	return agent.HasStaticPassword
 }
 
+// Prompt prompts the password to the user
 func (cfg *ClientConfig) Prompt(agent string) error {
 	pass, err := tui.Prompt(agent)
 	if err != nil {

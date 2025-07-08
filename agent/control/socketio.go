@@ -181,6 +181,8 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError done")
 	})
 
+	// VersionEvent sends the current server version
+	// To display a message to the user if the server and the agent version mismatch
 	socket.OnEvent(socketio.VersionEvent, func(srvVersion common.JVersion) {
 		agentVersion := common.JsonVersion()
 		if agentVersion.Compare(srvVersion) != 0 {
@@ -212,6 +214,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		log.Trace().Msg("OnEvent: SendAgentDataSuccess done")
 	})
 
+	// RegisterError fire when an error occurs on the server side when the agent registers
 	socket.OnEvent(socketio.RegisterError, func(data socketio.SioError) {
 		log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
 		log.Info().Msgf("Restarting...")

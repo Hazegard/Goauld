@@ -3,6 +3,7 @@ package net
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 // validateIpAddress verify if the provided string is a valid IP address
@@ -53,10 +54,11 @@ func IsLoopback(addr string) bool {
 	return ip.IsLoopback()
 }
 
+// ExtractIP returns the IP address from an IP:port scheme
 func ExtractIP(addr string) (string, error) {
 	ip, _, err := net.SplitHostPort(addr)
 	if err != nil {
-		return "", err
+		return strings.Split(ip, ":")[0], err
 	}
 	return ip, nil
 }

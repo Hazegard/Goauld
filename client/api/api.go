@@ -46,6 +46,8 @@ func NewAPI(server string, accessToken string, insecure bool) *API {
 	return api
 }
 
+// HandleError parses the output if it cannot be parsed as a JSON
+// to display more useful messages to users
 func HandleError(b []byte) error {
 	body := strings.TrimSpace(string(b))
 	if body == net.Forbidden {
@@ -221,6 +223,7 @@ func (api *API) DeleteAgent(id string) error {
 	return nil
 }
 
+// DumpAll return the information related to running agents connected to the server
 func (api *API) DumpAll() (error, []commontypes.State) {
 	res, err := api.get("/admin/dump/")
 	if err != nil {
@@ -244,6 +247,7 @@ func (api *API) DumpAll() (error, []commontypes.State) {
 	return nil, result
 }
 
+// UpdateLogLevel updates the server log level
 func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
 	res, err := api.post(fmt.Sprintf("/admin/loglevel/%s", url.PathEscape(level)), nil)
 	if err != nil {
@@ -262,10 +266,12 @@ func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
 	return nil, result
 }
 
-func (api *API) ManageVersion() (error, common.JVersion) {
+// Version return
+func (api *API) Version() (error, common.JVersion) {
 	return api.version("manage")
 }
 
+// version fetches the server version to check whether the client or the agent are using the same version
 func (api *API) version(route string) (error, common.JVersion) {
 	res, err := api.get(fmt.Sprintf("/%s/version/", route))
 	if err != nil {
@@ -288,10 +294,7 @@ func (api *API) version(route string) (error, common.JVersion) {
 	return nil, result
 }
 
-func (api *API) AdminVersion() (error, common.JVersion) {
-	return api.version("admin")
-}
-
+// GetConfig fetches the server side configuration
 func (api *API) GetConfig() (error, string) {
 	res, err := api.get("/admin/config/")
 	if err != nil {
@@ -318,6 +321,7 @@ func (api *API) GetConfig() (error, string) {
 	return nil, cfg
 }
 
+// DumpState fetch the whole state of the server (agent state, connected or not, server configuration, etc.)
 func (api *API) DumpState() (error, commontypes.Status) {
 	res, err := api.get("/admin/state/")
 	if err != nil {
