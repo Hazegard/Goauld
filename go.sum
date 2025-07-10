@@ -134,6 +134,7 @@ github.com/karagenc/socket.io-go v0.1.0 h1:j+5B3uuRXNil7ItuGTPp1vU4Fwi3khxcEFpfH
 github.com/karagenc/socket.io-go v0.1.0/go.mod h1:nixP20kGPH0qXJnyCL9L2TSzO4Bl3LO9XpX+x7jIDB4=
 github.com/karagenc/yeast v0.1.1 h1:Zv9gOmz7Gp+E90KRIwJVFO4GFXbE7jEqrceXFrBSvy0=
 github.com/karagenc/yeast v0.1.1/go.mod h1:rLE1GH1CTdNXp7Z5fZpOnUCcfI9iW1BShs3uij0EMZ0=
+github.com/keygen-sh/machineid v1.1.1/go.mod h1:xBhEE0H4t3N05kn+vBNlOnhTf5NMz36YmrmpdrjpgsI=
 github.com/klauspost/cpuid v1.2.4/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=
 github.com/klauspost/cpuid v1.3.1/go.mod h1:bYW4mA6ZgKPob1/Dlai2LviZJO7KGI3uoWLd42rAQw4=
 github.com/klauspost/cpuid/v2 v2.2.10 h1:tBs3QSyvjDyFTq3uoc/9xFpCuOsJQFNPiAhYdw2skhE=

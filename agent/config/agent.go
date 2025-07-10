@@ -22,7 +22,7 @@ import (
 	"Goauld/common/ssh"
 
 	"github.com/alecthomas/kong"
-	"github.com/denisbrodbeck/machineid"
+	"github.com/keygen-sh/machineid"
 )
 
 type Agent struct {

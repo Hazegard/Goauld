@@ -14,7 +14,7 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/keygen-sh/machineid v1.1.1
 	github.com/elazarl/goproxy v1.7.2
 	github.com/evertras/bubble-table v0.17.1
 	github.com/glebarez/sqlite v1.11.0
