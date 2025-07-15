@@ -14,7 +14,6 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/keygen-sh/machineid v1.1.1
 	github.com/elazarl/goproxy v1.7.2
 	github.com/evertras/bubble-table v0.17.1
 	github.com/glebarez/sqlite v1.11.0
@@ -22,6 +21,7 @@ require (
 	github.com/goccy/go-yaml v1.17.1
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/karagenc/socket.io-go v0.1.0
+	github.com/keygen-sh/machineid v1.1.1
 	github.com/pkg/sftp v1.13.9
 	github.com/qdm12/dns/v2 v2.0.0-rc8
 	github.com/rs/zerolog v1.34.0

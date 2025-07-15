@@ -112,7 +112,6 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	}()
 	go func() {
 		defer wg.Done()
-		log.Trace().Msgf("COPY UPSTREAM STREAM")
 		_, err := io.Copy(upstreamTCPConn, stream)
 		if err == io.EOF {
 			// smux Stream.WriteTo may return io.EOF.
@@ -472,14 +471,8 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 
 				// Try to load existing entry
 				existing, ok := d.clientIDIPMap.Load(clientID.String())
-				if !ok {
-					// no entry yet → store it
-					d.clientIDIPMap.Store(clientID.String(), s)
-					return
-				}
-
 				existingStr, _ := existing.(string)
-				if existingStr != s {
+				if !ok || existingStr != s {
 					// entry exists but is different → update it
 					d.clientIDIPMap.Store(clientID.String(), s)
 				}

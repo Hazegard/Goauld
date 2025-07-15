@@ -62,8 +62,6 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/deckarep/golang-set/v2 v2.7.0 h1:gIloKvD7yH2oip4VLhsv3JyLLFnC0Y2mlusgcvJYW5k=
 github.com/deckarep/golang-set/v2 v2.7.0/go.mod h1:VAky9rY/yGXJOLEDv3OMci+7wtDpOF4IN+y82NBOac4=
-github.com/denisbrodbeck/machineid v1.0.1 h1:geKr9qtkB876mXguW2X6TU4ZynleN6ezuMSRhl4D7AQ=
-github.com/denisbrodbeck/machineid v1.0.1/go.mod h1:dJUwb7PTidGDeYyUBmXZ2GphQBbjJCrnectwCyxcUSI=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
 github.com/elazarl/goproxy v1.7.2 h1:Y2o6urb7Eule09PjlhQRGNsqRfPmYI3KKQLFpCAV3+o=
@@ -134,6 +132,7 @@ github.com/karagenc/socket.io-go v0.1.0 h1:j+5B3uuRXNil7ItuGTPp1vU4Fwi3khxcEFpfH
 github.com/karagenc/socket.io-go v0.1.0/go.mod h1:nixP20kGPH0qXJnyCL9L2TSzO4Bl3LO9XpX+x7jIDB4=
 github.com/karagenc/yeast v0.1.1 h1:Zv9gOmz7Gp+E90KRIwJVFO4GFXbE7jEqrceXFrBSvy0=
 github.com/karagenc/yeast v0.1.1/go.mod h1:rLE1GH1CTdNXp7Z5fZpOnUCcfI9iW1BShs3uij0EMZ0=
+github.com/keygen-sh/machineid v1.1.1 h1:L6G3+l5/0ZgvDST1EE6L8Yfqcss7EC8xs0Q8gEQyIo0=
 github.com/keygen-sh/machineid v1.1.1/go.mod h1:xBhEE0H4t3N05kn+vBNlOnhTf5NMz36YmrmpdrjpgsI=
 github.com/klauspost/cpuid v1.2.4/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=
 github.com/klauspost/cpuid v1.3.1/go.mod h1:bYW4mA6ZgKPob1/Dlai2LviZJO7KGI3uoWLd42rAQw4=
