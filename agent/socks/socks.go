@@ -2,6 +2,7 @@ package socks
 
 import (
 	"fmt"
+	"io"
 	stdlog "log"
 	"net"
 
@@ -51,7 +52,11 @@ func (s *SocksServer) Serve(l net.Listener) (err error) {
 	}()
 	s.listener = l
 
-	return s.socksServer.Serve(l)
+	err = s.socksServer.Serve(l)
+	if err == io.EOF {
+		return nil
+	}
+	return err
 }
 
 // Close closes the socks server

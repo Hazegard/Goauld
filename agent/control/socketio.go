@@ -140,7 +140,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		cpc.ErrorPlusPlus()
 	})
 	manager.OnReconnect(func(attempt uint32) {
-		cpc.canceler.Restart()
+		cpc.canceler.Restart("Control socket disconnected")
 		log.Trace().Msg("OnReconnect")
 		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", cpc.url, attempt)
 	})
@@ -216,12 +216,18 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 
 	// RegisterError fire when an error occurs on the server side when the agent registers
 	socket.OnEvent(socketio.RegisterError, func(data socketio.SioError) {
-		log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
-		log.Info().Msgf("Restarting...")
-		socket.Disconnect()
+		if strings.Contains(data.Message, "UNIQUE constraint failed: agents.name") {
+			log.Error().Err(errors.New("Agent Name already used, either delete the corresponding agent in the TUI or rename this agent")).Msgf("RegisterError")
+			cpc.canceler.Exit("Agent Name already used")
+			cpc.Close()
+		} else {
+			log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
+			log.Info().Msgf("Restarting...")
+			socket.Disconnect()
 
-		cpc.canceler.Restart()
-		cpc.Close()
+			cpc.canceler.Restart("Error occurs on the server while registering")
+			cpc.Close()
+		}
 	})
 
 	// ExitEvent is sent by the server when the agent is requested to exit
@@ -230,9 +236,9 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		socket.Emit(socketio.ExitSuccess)
 		socket.Disconnect()
 		if doExit {
-			cpc.canceler.Exit()
+			cpc.canceler.Exit("Server requested exit")
 		}
-		cpc.canceler.Restart()
+		cpc.canceler.Restart("Server requested restart")
 		cpc.Close()
 	})
 
@@ -242,14 +248,14 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		log.Info().Msg("AlreadyConnectedEvent: Exit requested because agent is already running")
 		socket.Emit(socketio.ExitSuccess)
 		socket.Disconnect()
-		cpc.canceler.Exit()
+		cpc.canceler.Exit("The agent is already connected")
 	})
 
 	// SendRemotePortForwardingDataError is sent by the server when the forwarding ports
 	// are successfully received by the server
 	socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
 		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
-		log.OK().Msg("Agent successfully started.")
+		log.Run().Msg("Agent successfully started.")
 	})
 
 	cpc.socket = socket
@@ -329,7 +335,7 @@ func (cpc *ControlPlanClient) ErrorPlusPlus() {
 	cpc.errorCounter++
 	if cpc.errorCounter > 5 {
 		log.Warn().Msgf("Error occured %d times, restarting...", cpc.errorCounter)
-		cpc.canceler.Restart()
+		cpc.canceler.Restart(fmt.Sprintf("Control sockets crashed %d times", cpc.errorCounter))
 		cpc.Close()
 	}
 }

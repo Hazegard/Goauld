@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -14,8 +15,14 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const CustomLevelType zerolog.Level = zerolog.Level(10) // Pick an unused int > 6
-const Custom = "OK "
+const CustomLevelTypeRun zerolog.Level = zerolog.Level(10) // Pick an unused int > 6
+const CustomRun = "RUN"
+
+const CustomLevelTypeKil zerolog.Level = zerolog.Level(11) // Pick an unused int > 6
+const CustomKil = "KIL"
+
+const CustomLevelTypeRst zerolog.Level = zerolog.Level(12) // Pick an unused int > 6
+const CustomRst = "RST"
 
 var (
 	zerologger    *zerolog.Logger
@@ -26,53 +33,108 @@ var (
 	gormLogLevel = logger.Warn
 )
 
+type CustomSlog struct {
+	l *zerolog.Logger
+}
+
+func (cs CustomSlog) Write(p []byte) (n int, err error) {
+	n = len(p)
+	if n > 0 && p[n-1] == '\n' {
+		// Trim CR added by stdlog.
+		p = p[0 : n-1]
+	}
+	cs.l.Trace().CallerSkipFrame(4).Msg(string(p))
+	return
+}
+
+// colorize returns the string s wrapped in ANSI code c, unless disabled is true or c is 0.
+func colorize(s interface{}, c int, disabled bool) string {
+	e := os.Getenv("NO_COLOR")
+	if e != "" || c == 0 {
+		disabled = true
+	}
+
+	if disabled {
+		return fmt.Sprintf("%s", s)
+	}
+	return fmt.Sprintf("\x1b[%dm%v\x1b[0m", c, s)
+}
+
 func initLoggers() {
 	root := Sources.GetRoot()
 	writer := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}
 	zerolog.LevelFieldMarshalFunc = func(l zerolog.Level) string {
-		if l == CustomLevelType {
-			return Custom
+		if l == CustomLevelTypeRun {
+			return CustomRun
+		}
+		if l == CustomLevelTypeKil {
+			return CustomKil
+		}
+		if l == CustomLevelTypeRst {
+			return CustomRst
 		}
 		return l.String()
 	}
 	// fileWriter := zerolog.Writer
 	// writers := zerolog.MultiLevelWriter(writer)
 	writer.FormatLevel = func(i interface{}) string {
+		if i == nil {
+			return colorize("AAA", 34, false)
+		}
 		if level, ok := i.(string); ok {
-			if level == Custom {
-				return fmt.Sprintf("\x1b[35m%s\x1b[0m", Custom) // Purple (or whatever ANSI color you want)
+			if level == CustomRun || level == CustomKil || level == CustomRst {
+				return colorize(level, 35, false) //fmt.Sprintf("\x1b[35m%s\x1b[0m", Custom) // Purple (or whatever ANSI color you want)
 			}
 			// Optionally color built-in levels too
 			switch strings.ToUpper(level) {
 			case "TRACE":
-				return "\x1b[1;34mTRC\x1b[0m"
+				return colorize("TRC", 34, false) //"\x1b[1;34mTRC\x1b[0m"
 			case "DEBUG":
-				return "\x1b[1;37mDBG\x1b[0m"
+				return colorize("DBG", 37, false) //"\x1b[1;37mDBG\x1b[0m"
 			case "INFO":
-				return "\x1b[1;32mINF\x1b[0m"
+				return colorize("INF", 32, false) //"\x1b[1;32mINF\x1b[0m"
 			case "WARN":
-				return "\x1b[1;33mWRN\x1b[0m"
+				return colorize("WRN", 33, false) //"\x1b[1;33mWRN\x1b[0m"
 			case "ERROR":
-				return "\x1b[1;31mERR\x1b[0m"
+				return colorize("ERR", 31, false) //"\x1b[1;31mERR\x1b[0m"
 			case "FATAL":
-				return "\x1b[31;1mFAT\x1b[0m"
+				return colorize("FAT", 31, false) //"\x1b[31;1mFAT\x1b[0m"
 			case "PANIC":
-				return "\x1b[1;41mPNC\x1b[0m"
+				return colorize("PNC", 41, false) //"\x1b[1;41mPNC\x1b[0m"
 			default:
 				return level // unstyled
 			}
 		}
-		return "\x1b[1;37m???\x1b[0m"
+		return colorize(fmt.Sprintf("%s", i), 37, false) //"\x1b[1;37m???\x1b[0m"
 	}
 	writer.FormatMessage = func(i interface{}) string {
 
 		return fmt.Sprintf("%v", i)
 	}
 
+	writer.FormatFieldName = func(i interface{}) string {
+
+		switch v := i.(type) {
+		case string:
+			if strings.ToLower(v) == "reason" {
+				return colorize(fmt.Sprintf("%s=", v), 35, false)
+			}
+		}
+		return colorize(fmt.Sprintf("%s=", i), 36, false)
+	}
+
 	ml := zerolog.MultiLevelWriter(writer)
 	l := zerolog.New(ml).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
-		return fmt.Sprintf("%s:%d", strings.TrimPrefix(file, root+"/"), line)
+		if strings.HasSuffix(file, root+"/") {
+			return fmt.Sprintf("%s:%d", strings.TrimPrefix(file, root+"/"), line)
+		}
+		regex := regexp.MustCompile(`([a-zA-Z0-9\-_]+@[a-zA-Z0-9\.]+).*`)
+		m := regex.FindString(file)
+		if m == "" {
+			return fmt.Sprintf("%s:%d", file, line)
+		}
+		return fmt.Sprintf("%s:%d", m, line)
 	}
 	zerologger = &l
 
@@ -93,7 +155,7 @@ func initLoggers() {
 	negronilogger = &NegroniLogger{
 		logger: nl,
 	}
-	log.SetOutput(zerologger)
+	log.SetOutput(CustomSlog{zerologger})
 	log.SetFlags(0)
 }
 
@@ -199,9 +261,19 @@ func Info() *zerolog.Event {
 	return Get().Info()
 }
 
-func OK() *zerolog.Event {
+func Run() *zerolog.Event {
 	// Log using the custom level
-	return Get().WithLevel(CustomLevelType)
+	return Get().WithLevel(CustomLevelTypeRun)
+}
+
+func Kill() *zerolog.Event {
+	// Log using the custom level
+	return Get().WithLevel(CustomLevelTypeKil)
+}
+
+func Reset() *zerolog.Event {
+	// Log using the custom level
+	return Get().WithLevel(CustomLevelTypeRst)
 }
 
 func Warn() *zerolog.Event {

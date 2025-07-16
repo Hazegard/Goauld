@@ -2,12 +2,17 @@ package utils
 
 import "context"
 
-type CancelReason int
+type CancelStatus int
 
 const (
-	Restart CancelReason = iota
+	Restart CancelStatus = iota
 	Exit
 )
+
+type CancelReason struct {
+	Status CancelStatus
+	Msg    string
+}
 
 // GlobalCanceler is a cancelFunc that holds the information whether the cancellation requires a restart or an exit
 type GlobalCanceler struct {
@@ -16,13 +21,13 @@ type GlobalCanceler struct {
 }
 
 // Exit triggers the cancellation and requires to exit
-func (cg *GlobalCanceler) Exit() {
+func (cg *GlobalCanceler) Exit(msg string) {
 	cg.Cancel()
-	cg.CancelReason <- Exit
+	cg.CancelReason <- CancelReason{Exit, msg}
 }
 
 // Restart triggers the cancellation and requires to restart
-func (cg *GlobalCanceler) Restart() {
+func (cg *GlobalCanceler) Restart(msg string) {
 	cg.Cancel()
-	cg.CancelReason <- Restart
+	cg.CancelReason <- CancelReason{Restart, msg}
 }

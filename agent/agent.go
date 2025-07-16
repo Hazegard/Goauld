@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -84,13 +85,14 @@ func main() {
 			return nil, errors.New("agent started out of working day")
 		}
 		cancelReason := run()
-		if cancelReason == utils.Exit {
-			log.Info().Msg("Agent stopped")
+		if cancelReason.Status == utils.Exit {
+
+			log.Kill().Str("Reason", cancelReason.Msg).Msg("Agent stopped")
 			cancel()
 			time.Sleep(time.Second)
 			return nil, nil
 		}
-		log.Info().Msg("Agent restarting")
+		log.Reset().Str("Reason", cancelReason.Msg).Msg("Agent restarting")
 		return nil, errors.New("")
 	}
 
@@ -206,7 +208,10 @@ func run() utils.CancelReason {
 
 	// If no strategy was successful, we restart the agent
 	if !success {
-		return utils.Restart
+		return utils.CancelReason{
+			Status: utils.Restart,
+			Msg:    "unable to init the control plan",
+		}
 	}
 
 	if dnsTransport != nil {
@@ -232,7 +237,7 @@ func run() utils.CancelReason {
 		err = sshAgent.Init(ctx, dnsTransport)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
-			globalCanceler.Restart()
+			globalCanceler.Restart("unable to init the SSH connection")
 			return
 		}
 
@@ -294,12 +299,12 @@ func run() utils.CancelReason {
 						log.Error().Err(err).Msg("socks server error")
 					}
 					err := socks5.Close()
-					if err != nil {
+					if err != nil && err != io.EOF {
 						log.Warn().Err(err).Msg("socks close error")
 					}
 				case <-ctx.Done():
 					err := socks5.Close()
-					if err != nil {
+					if err != nil && err != io.EOF {
 						log.Warn().Err(err).Msg("socks close error")
 					}
 				}
@@ -402,15 +407,25 @@ func run() utils.CancelReason {
 	// Wait for errors to occur and print them
 	select {
 	case err := <-controlErr:
-		log.Error().Err(err).Msg("error starting the agent")
+		if err != nil {
+			log.Error().Err(err).Msg("error starting the agent")
+		}
 	case err := <-sshdErr:
-		log.Error().Err(err).Msg("error starting the sshd server")
+		if err != nil {
+			log.Error().Err(err).Msg("error starting the sshd server")
+		}
 	case err := <-sshErr:
-		log.Error().Err(err).Msg("error starting the ssh client")
+		if err != nil {
+			log.Error().Err(err).Msg("error starting the ssh client")
+		}
 	case err := <-socksErr:
-		log.Error().Err(err).Msg("error starting the socks server")
+		if err != nil {
+			log.Error().Err(err).Msg("error starting the socks server")
+		}
 	case err := <-httpProxyErr:
-		log.Error().Err(err).Msg("error starting the http proxy")
+		if err != nil {
+			log.Error().Err(err).Msg("error starting the http proxy")
+		}
 	case <-ctx.Done():
 		log.Error().Err(ctx.Err())
 	}
@@ -428,7 +443,7 @@ func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.G
 		for sig := range c {
 			log.Info().Str("signal", sig.String()).Msg("received signal")
 			log.Info().Msg("Shutting down control plan")
-			canceler.Exit()
+			canceler.Exit("ctrl-c signal received")
 			controlPlanClient.Close()
 		}
 	}()
@@ -445,7 +460,7 @@ func OnlyWorkingDayLoop(canceler *utils.GlobalCanceler, ctx context.Context) {
 		case <-t.C:
 			if config.Get().IsOutOfWorkingDay() {
 				log.Warn().Msg("Agent is now running out of working day")
-				canceler.Restart()
+				canceler.Restart("Agent out of working day")
 			}
 		case <-ctx.Done():
 			return

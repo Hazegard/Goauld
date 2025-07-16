@@ -2,6 +2,7 @@ package sshd
 
 import (
 	"context"
+	"io"
 	"net"
 
 	"Goauld/agent/config"
@@ -76,13 +77,17 @@ func NewSshdServer(ctx context.Context) *Sshd {
 
 func (sshd *Sshd) Serve(l net.Listener) error {
 	sshd.listener = l
-	return sshd.server.Serve(l)
+	err := sshd.server.Serve(l)
+	if err == io.EOF {
+		return nil
+	}
+	return err
 }
 
 func (sshd *Sshd) Close() error {
 	log.Warn().Msg("Shutting done the SSHD server")
 	err := sshd.listener.Close()
-	if err != nil {
+	if err != nil && err != io.EOF {
 		log.Error().Err(err).Msg("Error closing SSHD listener")
 	}
 	return sshd.server.Close()
