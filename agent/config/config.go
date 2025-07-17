@@ -158,8 +158,8 @@ type AgentConfig struct {
 	DnsServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers."`
 	DnsServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`
 
-	LocalSshPassword string `default:"${_shared_password}" short:"p" name:"password" yaml:"password" optional:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
-	PrivatePassword  string `default:"${_private_password_cli}" name:"private-password" optional:"" hidden:"" help:"-"`
+	LocalSshPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
+	PrivatePassword  string `default:"${_private_password_cli}" short:"p" name:"password" optional:"" help:"SSH password to access the agent"`
 	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`

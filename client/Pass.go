@@ -4,6 +4,7 @@ import (
 	"Goauld/client/api"
 	"Goauld/common/log"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -56,6 +57,15 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 func (p *Password) GetStaticPassword(cfg ClientConfig) string {
 	if cfg.PrivatePassword != "" {
 		return cfg.PrivatePassword
+	}
+	// If for instance a static password is set but the user currently wants to connect without a password,
+	// an empty environment variable "TEALC_PASSWORD=" will be set
+	// If we encounter it, we return an empty static password
+	empty := prefixEnv("PASSWORD", "")
+	for _, e := range os.Environ() {
+		if e == empty {
+			return ""
+		}
 	}
 	pass, ok := cfg.AgentPassword[cfg.Pass.Agent]
 	if ok {
