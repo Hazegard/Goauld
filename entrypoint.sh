@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 version="$(/app/server --version | awk -F'-' '{print $1}')"
 

@@ -13,6 +13,7 @@ FROM alpine:3.21 AS run
 
 COPY --from=build --chmod=755 /app/output/server/*_linux-amd64 /app/server
 COPY --from=build /app/output/agent/* /app/build_binaries/
+COPY --from=build /app/entrypoint.sh /app/entrypoint.sh
 
 WORKDIR /app
-CMD cp -u /app/build_binaries/* /app/binaries/ ; /app/server
+CMD /app/entrypoint.sh
