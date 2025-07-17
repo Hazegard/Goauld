@@ -196,25 +196,14 @@ func (s *ServerConfig) Decrypt(data []byte) (string, error) {
 
 // LocalSShAddr return the local SSH address
 func (s *ServerConfig) LocalSShAddr() string {
-	split := strings.Split(s.SshdAddr, ":")
-	if len(split) != 2 {
-		return s.SshdAddr
-	}
-	if split[0] == "" || split[0] == "0.0.0.0" {
-		return fmt.Sprintf("%s:%s", "127.0.0.1", split[1])
-	}
 	return s.SshdAddr
 }
 
 // UpdateSSHAddr return the local SSH address
 func (s *ServerConfig) UpdateSSHAddr(port int) {
 	split := strings.Split(s.SshdAddr, ":")
-	localAddr := split[0]
-	if localAddr == "" {
-		localAddr = "127.0.0.1"
-	}
-	if len(split) == 2 && (split[1] == "0" || split[0] == "" || split[0] == "0.0.0.0") {
-		s.SshdAddr = fmt.Sprintf("%s:%d", localAddr, port)
+	if len(split) == 2 && split[1] == "0" {
+		s.SshdAddr = fmt.Sprintf("%s:%d", split[0], port)
 	}
 }
 
