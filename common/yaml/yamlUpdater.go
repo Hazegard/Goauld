@@ -27,7 +27,7 @@ func UpdateAgentPasswordConfig(file string, name, pass string) error {
 	curMap := make(map[string]string)
 	err = node.Read(bytes.NewReader(data), &curMap)
 	if err != nil {
-		return err
+		// We skip as we wil create the nod if it does not eststs
 	}
 	if curMap[name] == pass {
 		return nil

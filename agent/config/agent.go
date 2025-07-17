@@ -167,7 +167,10 @@ func (a *Agent) LocalSSHDPassword() string {
 
 // PrivateSshdPassword return the static password
 func (a *Agent) PrivateSshdPassword() string {
-	return a.cfg.PrivatePassword
+	if a.cfg.PrivatePassword != "" {
+		return a.cfg.PrivatePassword
+	}
+	return _private_password
 }
 
 // ValidatePassword return whether the incoming password is valid.
