@@ -237,7 +237,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.ErrorMessage != "" {
 			m.statusText.SetValue(msg.ErrorMessage)
 			m.statusText.TextStyle = textWarning
-			doUpdateStatus = true
 		}
 	case TickMessage:
 		batch = append(batch, m.doUpdate(m.agents), m.doTick())
