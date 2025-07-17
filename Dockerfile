@@ -1,13 +1,22 @@
-FROM alpine:3.21 AS build
+FROM alpine:3.21 AS init
 
 RUN apk add go alpine-sdk
 RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
-
-COPY . /app
+RUN go install mvdan.cc/garble@latest
 
 WORKDIR /app
+
+COPY go.mod /app/go.mod
+COPY go.sum /app/go.sum
+RUN go mod download
+
+FROM init AS build
+COPY . /app
+WORKDIR /app
+
 ENV PATH="$PATH:/root/go/bin"
-RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id agent
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64
 
 FROM alpine:3.21 AS run
 
