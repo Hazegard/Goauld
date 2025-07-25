@@ -67,17 +67,16 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 	sshAgent.Mode = mode
 
 	go func() {
-		select {
-		case <-ctx.Done():
-			err := sshAgent.Close()
+		<-ctx.Done()
+		err := sshAgent.Close()
+		if err != nil {
+			log.Error().Err(err).Msg("ssh client close failed")
+		}
+		if closer != nil {
+			err = closer.Close()
 			if err != nil {
-				log.Error().Err(err).Msg("ssh client close failed")
-			}
-			if closer != nil {
-				err = closer.Close()
-				if err != nil {
-					log.Error().Err(err).Msg("ssh transport close failed")
-				}
+				log.Error().Err(err).Msg("ssh transport close failed")
+
 			}
 		}
 	}()
@@ -127,7 +126,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 				return
 			default:
 				if ctx.Err() != nil {
-					remoteListener.Close()
+					_ = remoteListener.Close()
 					return
 				}
 
@@ -178,8 +177,8 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 
 					// Waits for an error to occur
 					err = <-errChan
-					remoteConn.Close()
-					localConn.Close()
+					_ = remoteConn.Close()
+					_ = localConn.Close()
 					if err != nil {
 						log.Error().Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Err(err).Msg("Remote forwarding: end of forwarding")
 					}
@@ -217,7 +216,7 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 func (sshAgent *SSHAgent) Close() error {
 	log.Warn().Msg("Shutting down SSH agent...")
 	if sshAgent.conn != nil {
-		sshAgent.conn.Close()
+		_ = sshAgent.conn.Close()
 	}
 	return sshAgent.client.Close()
 }

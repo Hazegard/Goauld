@@ -28,7 +28,7 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 
 	// 3) Do the TLS handshake with context
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
-		rawConn.Close()
+		_ = rawConn.Close()
 		return nil, err
 	}
 
@@ -40,7 +40,7 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 
 	header := []byte(config.Get().Id)
 	if _, err := tlsConn.Write(header); err != nil {
-		tlsConn.Close()
+		_ = tlsConn.Close()
 		return nil, err
 	}
 	// Clear deadlines so future reads/writes aren’t affected

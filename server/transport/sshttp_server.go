@@ -51,7 +51,10 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 	}
 	id := string(rawId[:n])
 
-	s.db.SetAgentSshMode(id, "HTTP", stream.RemoteAddr().String())
+	err = s.db.SetAgentSshMode(id, "HTTP", stream.RemoteAddr().String())
+	if err != nil {
+		log.Warn().Err(err).Str("Agent.Id", id).Str("Mode", "HTTP").Msg("error setting agent connection mode")
+	}
 	s.store.SshttpAddAgent(upstreamConn, stream, id)
 
 	var wg sync.WaitGroup
@@ -66,8 +69,8 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 			log.Debug().Str("Mode", "SSHTTP").Msgf("stream %08x:%d copy stream←upstream: %v", conv, stream.ID(), err)
 		}
-		upstreamTCPConn.CloseRead()
-		stream.Close()
+		_ = upstreamTCPConn.CloseRead()
+		_ = stream.Close()
 	}()
 	go func() {
 		defer wg.Done()
@@ -79,7 +82,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 			log.Debug().Str("Mode", "SSHTTP").Msgf("stream %08x:%d copy upstream←stream: %v", conv, stream.ID(), err)
 		}
-		upstreamTCPConn.CloseWrite()
+		_ = upstreamTCPConn.CloseWrite()
 	}()
 	wg.Wait()
 
@@ -117,7 +120,7 @@ func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) err
 		go func() {
 			defer func() {
 				log.Debug().Str("Mode", "SSHTTP").Msgf("end stream %08x:%d", conn.GetConv(), stream.ID())
-				stream.Close()
+				_ = stream.Close()
 			}()
 			err := s.handleStream(stream, upstream, conn.GetConv())
 			if err != nil {
@@ -153,7 +156,7 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 		go func() {
 			defer func() {
 				log.Debug().Str("Mode", "SSHTTP").Msgf("end session %08x", conn.GetConv())
-				conn.Close()
+				_ = conn.Close()
 			}()
 			err := s.acceptStreams(conn, upstream)
 			if err != nil && !errors.Is(err, io.ErrClosedPipe) {

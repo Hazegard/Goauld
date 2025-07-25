@@ -70,18 +70,18 @@ func DirectSshConnect(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Cl
 
 	// If the context has a deadline, use it to bound the handshake
 	if dl, ok := ctx.Deadline(); ok {
-		rawConn.SetDeadline(dl)
+		_ = rawConn.SetDeadline(dl)
 	}
 
 	// 3) Upgrade to SSH (this does the SSH handshake)
 	conn, chans, reqs, err := ssh.NewClientConn(rawConn, addr, sshConfig)
 	if err != nil {
-		rawConn.Close()
+		_ = rawConn.Close()
 		return nil, fmt.Errorf("SSH handshake with %s failed: %w", addr, err)
 	}
 
 	// 4) Clear the deadline so further I/O isn’t accidentally limited
-	rawConn.SetDeadline(time.Time{})
+	_ = rawConn.SetDeadline(time.Time{})
 
 	// 5) Build the high‐level SSH client
 	return ssh.NewClient(conn, chans, reqs), nil

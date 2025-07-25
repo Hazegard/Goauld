@@ -78,7 +78,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					resultChan <- "HTTP"
 					// return client, conn, ssHTTP, nil
 				} else {
-					ssHTTP.Close()
+					_ = ssHTTP.Close()
 					cancel()
 				}
 
@@ -248,7 +248,7 @@ func tryProxySsh(conf *ssh.ClientConfig, netConn net.Conn) (*ssh.Client, error) 
 	case client := <-chanSuccess:
 		return client, nil
 	case err := <-chanErr:
-		netConn.Close()
+		_ = netConn.Close()
 		return nil, err
 	case <-time.After(config.Get().GetSshTimeout()):
 		return nil, fmt.Errorf("timeout while proxying ssh")

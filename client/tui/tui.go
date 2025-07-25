@@ -75,11 +75,11 @@ func NewTui(api *api.API) Model {
 	return m
 }
 
-func (m *Model) Run() (error, string) {
+func (m *Model) Run() (string, error) {
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		return err, ""
+		return "", err
 	}
-	return nil, m.agent
+	return m.agent, nil
 }
 
 type Model struct {
@@ -110,7 +110,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	data := selRow.Data["N"]
 	if data != nil {
 		d, ok := data.(string)
-		if ok == true {
+		if ok {
 			// We trim spaces as they might be added du to the padding (centering in the column).
 			id, err := strconv.Atoi(strings.TrimSpace(d))
 			if err == nil {
@@ -134,12 +134,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// ctrl+k: shortcut to kill the agent
 		case action_kill:
 			// if the selected agent is not empty
-			if m.confirmAction == "" {
+			switch m.confirmAction {
+			case "":
 				m.confirmAction = action_kill
 				text = fmt.Sprintf("Confirm killing %s? (%s to confirm)", selectedAgent.Name, action_kill)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
-			} else if m.confirmAction == action_kill {
+			case action_kill:
 				if selectedAgent.Id != "" {
 					m.confirmAction = ""
 					// if selectedAgent.Connected {
@@ -153,19 +154,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
-			} else {
+			default:
 				m.confirmAction = ""
 				m.statusText.SetValue("")
 			}
 			doUpdateStatus = true
 		case action_reset:
 			// if the selected agent is not empty
-			if m.confirmAction == "" {
+			switch m.confirmAction {
+			case "":
 				m.confirmAction = action_reset
 				text = fmt.Sprintf("Confirm reset %s? (%s to confirm)", selectedAgent.Name, action_reset)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
-			} else if m.confirmAction == action_reset {
+			case action_reset:
 				if selectedAgent.Id != "" {
 					m.confirmAction = ""
 					// if selectedAgent.Connected {
@@ -175,19 +177,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
-			} else {
+			default:
 				m.confirmAction = ""
 				m.statusText.SetValue("")
 			}
 			doUpdateStatus = true
 		case action_delete:
 			// if the selected agent is not empty
-			if m.confirmAction == "" {
+			switch m.confirmAction {
+			case "":
 				m.confirmAction = action_delete
 				text = fmt.Sprintf("Confirm deleting %s? (%s to confirm)", selectedAgent.Name, action_delete)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
-			} else if m.confirmAction == action_delete {
+			case action_delete:
 				if selectedAgent.Id != "" {
 					m.confirmAction = action_delete
 					text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
@@ -196,7 +199,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
-			} else {
+			default:
 				m.confirmAction = ""
 				m.statusText.SetValue("")
 			}

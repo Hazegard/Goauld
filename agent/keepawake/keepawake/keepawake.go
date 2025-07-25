@@ -88,7 +88,7 @@ func (k *Keeper) StartTimed(d time.Duration) error {
 	k.running = true
 	k.endTime = time.Now().Add(d)
 	k.timer = time.AfterFunc(d, func() {
-		k.Stop()
+		_ = k.Stop()
 	})
 
 	return nil

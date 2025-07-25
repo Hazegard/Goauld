@@ -31,7 +31,7 @@ func NewHttpProxyDialer() *ProxyDialer {
 	// LRU Cache: Memoize DialContexts for 60 minutes
 	//
 	dialerCache := ttlcache.NewCache()
-	dialerCache.SetTTL(ProxyDialerCacheTimeout)
+	_ = dialerCache.SetTTL(ProxyDialerCacheTimeout)
 	dialerCacheGroup := singleflight.Group{}
 
 	return &ProxyDialer{
@@ -137,7 +137,7 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyple
 						}
 
 						resp, err := http.ReadResponse(br, req)
-						resp.Body.Close()
+						_ = resp.Body.Close()
 						if err != nil {
 							return conn, err
 						}
@@ -147,7 +147,7 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyple
 						}
 						return conn, errors.New(resp.Status)
 					}
-					p.cache.Set(cacheKey, tunnelctx)
+					_ = p.cache.Set(cacheKey, tunnelctx)
 					return tunnelctx, nil
 				}
 			}

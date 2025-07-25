@@ -18,7 +18,6 @@ import (
 
 	"Goauld/client/types"
 	commontypes "Goauld/common/types"
-	httpTypes "Goauld/common/types"
 )
 
 type API struct {
@@ -224,123 +223,126 @@ func (api *API) DeleteAgent(id string) error {
 }
 
 // DumpAll return the information related to running agents connected to the server
-func (api *API) DumpAll() (error, []commontypes.State) {
+func (api *API) DumpAll() ([]commontypes.State, error) {
 	res, err := api.get("/admin/dump/")
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		return HandleError(body), nil
+		return nil, HandleError(body)
 	}
 
 	var result []commontypes.State
 	err = yaml.Unmarshal(body, &result)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
-	return nil, result
+	return result, nil
 }
 
 // UpdateLogLevel updates the server log level
-func (api *API) UpdateLogLevel(level string) (error, map[string]interface{}) {
+func (api *API) UpdateLogLevel(level string) (map[string]interface{}, error) {
 	res, err := api.post(fmt.Sprintf("/admin/loglevel/%s", url.PathEscape(level)), nil)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 	if res.StatusCode != http.StatusOK {
-		return HandleError(body), nil
+		return nil, HandleError(body)
 	}
 	result := map[string]interface{}{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-	return nil, result
+	return result, nil
 }
 
 // Version return
-func (api *API) Version() (error, common.JVersion) {
+func (api *API) Version() (common.JVersion, error) {
 	return api.version("manage")
 }
 
 // version fetches the server version to check whether the client or the agent are using the same version
-func (api *API) version(route string) (error, common.JVersion) {
+func (api *API) version(route string) (common.JVersion, error) {
 	res, err := api.get(fmt.Sprintf("/%s/version/", route))
 	if err != nil {
-		return err, common.JVersion{}
+		return common.JVersion{}, err
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err, common.JVersion{}
+		return common.JVersion{}, err
 	}
 	if res.StatusCode != http.StatusOK {
-		return HandleError(body), common.JVersion{}
+		return common.JVersion{}, HandleError(body)
 	}
 
 	result := common.JVersion{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return err, common.JVersion{}
+		return common.JVersion{}, err
 	}
-	return nil, result
+	return result, nil
 }
 
 // GetConfig fetches the server side configuration
-func (api *API) GetConfig() (error, string) {
+func (api *API) GetConfig() (string, error) {
 	res, err := api.get("/admin/config/")
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	if res.StatusCode != http.StatusOK {
-		return HandleError(body), ""
+		return "", HandleError(body)
 	}
-	result := httpTypes.HttpResponse{}
+	result := commontypes.HttpResponse{}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	if !result.Success {
-		return errors.New(result.Message), ""
+		return "", errors.New(result.Message)
 	}
 	cfg := result.Message
-	return nil, cfg
+	return cfg, nil
 }
 
 // DumpState fetch the whole state of the server (agent state, connected or not, server configuration, etc.)
-func (api *API) DumpState() (error, commontypes.Status) {
+func (api *API) DumpState() (commontypes.Status, error) {
 	res, err := api.get("/admin/state/")
 	if err != nil {
-		return err, commontypes.Status{}
+		return commontypes.Status{}, err
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err, commontypes.Status{}
+		return commontypes.Status{}, err
 	}
 	if res.StatusCode != http.StatusOK {
-		return HandleError(body), commontypes.Status{}
+		return commontypes.Status{}, HandleError(body)
 	}
 
 	var result commontypes.Status
 	err = yaml.Unmarshal(body, &result)
 	if err != nil {
-		return err, commontypes.Status{}
+		return commontypes.Status{}, err
 	}
 
-	return nil, result
+	return result, nil
 }

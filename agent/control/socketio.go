@@ -56,7 +56,7 @@ type CpcStarter func(*ControlPlanClient, chan<- struct{}, chan<- error) error
 
 // Init tries to connect to the control plan using the different strategies (CpcStarter)
 // A successful connection will send a signal using the configDone channel
-func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, CpcStarter CpcStarter) (error, *ControlPlanClient) {
+func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, CpcStarter CpcStarter) (*ControlPlanClient, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	controlPlanClient := NewControlPlanClient(ctx, configDone, globalCanceler)
 	chanErr := make(chan error)
@@ -64,7 +64,7 @@ func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone 
 	err := CpcStarter(controlPlanClient, chanSuccess, chanErr)
 	if err != nil {
 		cancel()
-		return err, nil
+		return nil, err
 	}
 	// Start the control socket.io
 	go func() {
@@ -79,9 +79,9 @@ func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone 
 	case e := <-chanErr:
 		controlPlanClient.Close()
 		cancel()
-		return e, nil
+		return nil, e
 	case <-chanSuccess:
-		return nil, controlPlanClient
+		return controlPlanClient, nil
 	}
 }
 
@@ -301,13 +301,11 @@ func (cpc *ControlPlanClient) Start() error {
 	log.Debug().Msgf("Connected to the control server %s", cpc.url)
 	log.Trace().Msg("Event send: RegisterEvent")
 	// Waits for an error or the end of the socket
-	select {
-	case <-cpc.ctx.Done():
-		log.Warn().Msgf("Shutting done the socketio control socket")
-		cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
-		log.Trace().Msg("Event send: Disconnect")
-		cpc.socket.Disconnect()
-	}
+	<-cpc.ctx.Done()
+	log.Warn().Msgf("Shutting done the socketio control socket")
+	cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
+	log.Trace().Msg("Event send: Disconnect")
+	cpc.socket.Disconnect()
 	return nil
 }
 

@@ -45,32 +45,32 @@ type Agent struct {
 var agent *Agent
 
 // InitAgent parses the command lines arguments and initializes the temporary values (shared secret,etc...)
-func InitAgent() (*kong.Context, error, []error) {
+func InitAgent() (*kong.Context, []error, error) {
 	var warnings []error
 	// Parse the command line arguments
 	ctx, cfg, err := parse()
 	if err != nil {
-		return nil, fmt.Errorf("parsing arguments: %v", err), nil
+		return nil, nil, fmt.Errorf("parsing arguments: %v", err)
 	}
 	// Generate the shared secret
 	if cfg.GenerateConfig {
 		agent = &Agent{
 			cfg: cfg,
 		}
-		return ctx, nil, warnings
+		return ctx, warnings, nil
 	}
 	if cfg.AgePubKey == "" {
-		return nil, fmt.Errorf("AgePubKey is required"), nil
+		return nil, nil, fmt.Errorf("AgePubKey is required")
 	}
 	sharedSecret, err := crypto.GeneratePassword(crypto.PasswordLength)
 	if err != nil {
-		return nil, fmt.Errorf("error generating ssh password: %v", err), nil
+		return nil, nil, fmt.Errorf("error generating ssh password: %v", err)
 	}
 	// Generate the local password if not provided
 	if cfg.LocalSshPassword == "" {
 		sshPassword, err := crypto.GeneratePassword(crypto.PasswordLength)
 		if err != nil {
-			return nil, fmt.Errorf("error generating ssh password: %v", err), nil
+			return nil, nil, fmt.Errorf("error generating ssh password: %v", err)
 		}
 		cfg.LocalSshPassword = sshPassword
 	}
@@ -78,7 +78,7 @@ func InitAgent() (*kong.Context, error, []error) {
 	// Generate the encryption mechanism
 	cryptor, err := crypto.NewCryptor(sharedSecret)
 	if err != nil {
-		return nil, fmt.Errorf("initializing cryptor: %v", err), nil
+		return nil, nil, fmt.Errorf("initializing cryptor: %v", err)
 	}
 
 	// Generate the agent name if not provided
@@ -86,7 +86,7 @@ func InitAgent() (*kong.Context, error, []error) {
 		name := ""
 		userName, err := user.Current()
 		if err != nil {
-			return nil, fmt.Errorf("error getting current user: %v", err), nil
+			return nil, nil, fmt.Errorf("error getting current user: %v", err)
 		}
 		if strings.Contains(userName.Username, "\\") {
 			parts := strings.Split(userName.Username, "\\")
@@ -101,7 +101,7 @@ func InitAgent() (*kong.Context, error, []error) {
 
 		hostname, err := os.Hostname()
 		if err != nil {
-			return nil, fmt.Errorf("error getting hostname: %v", err), nil
+			return nil, nil, fmt.Errorf("error getting hostname: %v", err)
 		}
 		cfg.Name = fmt.Sprintf("%s@%s", name, hostname)
 	}
@@ -147,7 +147,7 @@ func InitAgent() (*kong.Context, error, []error) {
 		Path:                     currDir,
 		WorkingDay:               *NewWorkingDay(cfg.WorkingDayStart, cfg.WorkingDayEnd, cfg.WorkingDayTimeZone),
 	}
-	return ctx, nil, warnings
+	return ctx, warnings, nil
 }
 
 // Get returns the Agent global object

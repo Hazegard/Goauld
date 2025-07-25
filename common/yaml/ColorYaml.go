@@ -84,6 +84,4 @@ func PrintColorizedYAML(input string) {
 		}
 	}
 	_, _ = writer.Write([]byte(p.PrintTokens(tokens) + "\n"))
-
-	return
 }

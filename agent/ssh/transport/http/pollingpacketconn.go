@@ -145,7 +145,7 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 			first = false
 
 			// Encapsulate the packet into the payload.
-			encapsulation.WriteData(&payload, p)
+			_, _ = encapsulation.WriteData(&payload, p)
 
 			select {
 			case p = <-outgoing:

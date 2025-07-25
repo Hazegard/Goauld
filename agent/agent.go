@@ -29,7 +29,7 @@ import (
 
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
-	_, err, warnings := config.InitAgent()
+	_, warnings, err := config.InitAgent()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the agent")
 		return
@@ -197,7 +197,7 @@ func run() utils.CancelReason {
 			continue
 		}
 		log.Info().Str("ControlMode", initializer.Name).Msg("Trying to connect to the control socket")
-		err, cpc := control.Init(ctx, globalCanceler, configDone, controlErr, initializer.InitFunc)
+		cpc, err := control.Init(ctx, globalCanceler, configDone, controlErr, initializer.InitFunc)
 		if err == nil {
 			log.Info().Str("SocketMode", initializer.Name).Msg("Control plan started")
 			success = true
@@ -395,13 +395,12 @@ func run() utils.CancelReason {
 			log.Warn().Err(err).Msg("error starting the keep awake")
 		}
 		go func() {
-			select {
-			case <-ctx.Done():
-				err = keepAwaker.Stop()
-				if err != nil {
-					log.Warn().Err(err).Msg("keep awake close error")
-				}
+			<-ctx.Done()
+			err = keepAwaker.Stop()
+			if err != nil {
+				log.Warn().Err(err).Msg("keep awake close error")
 			}
+
 		}()
 	}
 

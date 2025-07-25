@@ -105,10 +105,10 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 			err = nil
 		}
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
-			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("agent %s: stream %08x copy stream←upstream", conn.GetConv())
+			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("stream %08x copy stream←upstream", conn.GetConv())
 		}
-		upstreamTCPConn.CloseRead()
-		stream.Close()
+		_ = upstreamTCPConn.CloseRead()
+		_ = stream.Close()
 	}()
 	go func() {
 		defer wg.Done()
@@ -120,7 +120,7 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
 			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("stream %08x copy upstream←stream", conn.GetConv())
 		}
-		upstreamTCPConn.CloseWrite()
+		_ = upstreamTCPConn.CloseWrite()
 	}()
 	wg.Wait()
 
@@ -163,7 +163,7 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 			n, err := stream.Read(rawId)
 			if err != nil {
 				log.Error().Err(err).Bytes("ID", rawId).Msg("DNS read ID fail")
-				conn.Close()
+				_ = conn.Close()
 				return
 			}
 			id := string(rawId[:n])
@@ -173,8 +173,8 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 			_, err = stream.Read(tag)
 			if err != nil {
 				log.Error().Err(err).Bytes("ID", tag).Msg("error reading traffic tag")
-				conn.Close()
-				stream.Close()
+				_ = conn.Close()
+				_ = stream.Close()
 				return
 			}
 			clientId := strings.TrimSpace(stream.RemoteAddr().String())
@@ -238,13 +238,13 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 		)
 		conn.SetWindowSize(turbotunnel.QueueSize/2, turbotunnel.QueueSize/2)
 		if rc := conn.SetMtu(mtu); !rc {
-			return fmt.Errorf("SetMtu failure: %s", rc)
+			return fmt.Errorf("SetMtu failure")
 		}
 
 		go func() {
 			defer func() {
 				log.Warn().Str("Mode", "DNSSH").Uint32("ID", conn.GetConv()).Msg("end session")
-				conn.Close()
+				_ = conn.Close()
 			}()
 			err := d.acceptStreams(conn)
 			if err != nil && !errors.Is(err, io.ErrClosedPipe) {
@@ -597,7 +597,7 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 				if int(uint16(len(p))) != len(p) {
 					panic(len(p))
 				}
-				binary.Write(&payload, binary.BigEndian, uint16(len(p)))
+				_ = binary.Write(&payload, binary.BigEndian, uint16(len(p)))
 				payload.Write(p)
 			}
 			timer.Stop()

@@ -25,7 +25,7 @@ type Loglevel struct {
 }
 
 func CheckAdminVersion(api *api.API) {
-	err, srvVersion := api.Version()
+	srvVersion, err := api.Version()
 	if err != nil {
 		log.Debug().Err(err).Msg("error getting version")
 		return
@@ -44,7 +44,7 @@ func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
 	// CheckAdminVersion(adminApi)
 
-	err, res := adminApi.DumpAll()
+	res, err := adminApi.DumpAll()
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
 	//CheckAdminVersion(adminApi)
-	err, res := adminApi.UpdateLogLevel(cfg.Admin.Loglevel.Level)
+	res, err := adminApi.UpdateLogLevel(cfg.Admin.Loglevel.Level)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
 	//CheckAdminVersion(adminApi)
-	err, res := adminApi.GetConfig()
+	res, err := adminApi.GetConfig()
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (c *State) Run(_ *api.API, cfg ClientConfig) error {
 	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
 	//CheckAdminVersion(adminApi)
 
-	err, res := adminApi.DumpState()
+	res, err := adminApi.DumpState()
 	if err != nil {
 		return err
 	}

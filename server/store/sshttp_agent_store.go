@@ -46,7 +46,7 @@ func (a *AgentStore) SshttpCloseAgent(id string) error {
 	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
 	if agent != nil && agent.SshConn != nil {
-		errors.Join(agent.SshConn.Close(), agent.Stream.Close())
+		err = errors.Join(agent.SshConn.Close(), agent.Stream.Close())
 	}
 	a.SshttpRemoveAgent(id)
 	return err

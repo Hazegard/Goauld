@@ -26,7 +26,7 @@ func NewSshdServer(ctx context.Context) *Sshd {
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
 			}
-			s.Close()
+			_ = s.Close()
 		}),
 		// Allows Local Port Forwarding
 		// Note: this might be unnecessary as users should only perform reverse port forwarding

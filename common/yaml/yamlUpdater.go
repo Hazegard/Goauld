@@ -25,10 +25,10 @@ func UpdateAgentPasswordConfig(file string, name, pass string) error {
 	}
 
 	curMap := make(map[string]string)
-	err = node.Read(bytes.NewReader(data), &curMap)
-	if err != nil {
-		// We skip as we wil create the nod if it does not eststs
-	}
+	_ = node.Read(bytes.NewReader(data), &curMap)
+	// if err != nil {
+	// We skip as we wil create the nod if it does not eststs
+	// }
 	if curMap[name] == pass {
 		return nil
 	}
@@ -53,9 +53,14 @@ func UpdateAgentPasswordConfig(file string, name, pass string) error {
 		parentAghentPAssword := make(map[string]map[string]string)
 		parentAghentPAssword["agent-password"] = agentPassword
 		apBytes, err = yaml.Marshal(parentAghentPAssword)
+		if err != nil {
+			return err
+		}
 	} else {
 		apBytes, err = yaml.Marshal(agentPassword)
-
+		if err != nil {
+			return err
+		}
 	}
 	n, err := parser.ParseBytes(apBytes, 0)
 	if err != nil {

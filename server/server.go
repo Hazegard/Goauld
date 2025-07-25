@@ -100,10 +100,7 @@ func main() {
 	}
 
 	// waits for the end
-	select {
-	case <-ctx.Done():
-		log.Error().Err(ctx.Err()).Msgf("shutting down")
-		cancel()
-	}
 	<-ctx.Done()
+	log.Error().Err(ctx.Err()).Msgf("shutting down")
+	cancel()
 }

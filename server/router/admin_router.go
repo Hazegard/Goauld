@@ -190,11 +190,7 @@ func (ur *AdminRouter) GetConfig(w http.ResponseWriter, r *http.Request) {
 
 // State return all the server information (configuration, agent connected or not)
 func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
-	var errs []error
-	agents, err := ur.db.GetAllAgentsSanitized()
-	if err != nil {
-		errs = append(errs, err)
-	}
+	agents, _ := ur.db.GetAllAgentsSanitized()
 
 	var dbAgents []types.DbAgent
 	for _, a := range agents {

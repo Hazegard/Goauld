@@ -48,7 +48,7 @@ func (k *darwinKeepAlive) Start(ctx context.Context) error {
 	k.wg.Add(1)
 	go func() {
 		defer k.wg.Done()
-		k.cmd.Wait()
+		_ = k.cmd.Wait()
 	}()
 
 	// Start periodic activity assertion
@@ -64,9 +64,9 @@ func (k *darwinKeepAlive) Start(ctx context.Context) error {
 				return
 			case <-k.activityTick.C:
 				// Assert user activity using pmset
-				exec.Command("pmset", "touch").Run()
+				_ = exec.Command("pmset", "touch").Run()
 				// Additional caffeinate touch
-				exec.Command("caffeinate", "-u", "-t", "1").Run()
+				_ = exec.Command("caffeinate", "-u", "-t", "1").Run()
 			}
 		}
 	}()
@@ -87,7 +87,7 @@ func (k *darwinKeepAlive) killProcess() {
 		// Give it a short time to terminate gracefully
 		done := make(chan struct{})
 		go func() {
-			k.cmd.Process.Wait()
+			_, _ = k.cmd.Process.Wait()
 			close(done)
 		}()
 
@@ -100,13 +100,13 @@ func (k *darwinKeepAlive) killProcess() {
 	}
 
 	// Process didn't terminate with SIGTERM, try SIGKILL
-	k.cmd.Process.Kill()
+	_ = k.cmd.Process.Kill()
 
 	// Kill the process group as well
-	syscall.Kill(-pid, syscall.SIGKILL)
+	_ = syscall.Kill(-pid, syscall.SIGKILL)
 
 	// Use pkill as a last resort
-	exec.Command("pkill", "-9", "caffeinate").Run()
+	_ = exec.Command("pkill", "-9", "caffeinate").Run()
 }
 
 // Stop terminates the keep-alive functionality

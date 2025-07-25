@@ -136,6 +136,7 @@ func dnsResponsePayload(resp *dns.Message, domain dns.Name) []byte {
 // EOF occurs in the middle of an encoded packet.
 func nextPacket(r *bytes.Reader) ([]byte, error) {
 	for {
+		// TODO: check the for loop
 		var n uint16
 		err := binary.Read(r, binary.BigEndian, &n)
 		if err != nil {
@@ -204,13 +205,13 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 
 		// Pull out the packets contained in the payload.
 		r := bytes.NewReader(payload)
-		any := false
+		anyPacket := false
 		for {
 			p, err := nextPacket(r)
 			if err != nil {
 				break
 			}
-			any = true
+			anyPacket = true
 			c.QueuePacketConn.QueueIncoming(p, addr)
 		}
 
@@ -218,7 +219,7 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 		// to poll immediately. ACKs on received data will effectively
 		// serve as another stream of polls whose rate is proportional
 		// to the rate of incoming packets.
-		if any {
+		if anyPacket {
 			select {
 			case c.pollChan <- struct{}{}:
 			default:
@@ -293,7 +294,7 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 		}
 		// Padding / cache inhibition
 		buf.WriteByte(byte(224 + n))
-		io.CopyN(&buf, rand.Reader, int64(n))
+		_, _ = io.CopyN(&buf, rand.Reader, int64(n))
 		// Packet contents
 		if len(p) > 0 {
 			buf.WriteByte(byte(len(p)))
@@ -313,7 +314,7 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 	}
 
 	var id uint16
-	binary.Read(rand.Reader, binary.BigEndian, &id)
+	_ = binary.Read(rand.Reader, binary.BigEndian, &id)
 	query := &dns.Message{
 		ID:    id,
 		Flags: 0x0100, // QR = 0, RD = 1

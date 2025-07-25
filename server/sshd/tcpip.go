@@ -79,7 +79,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 			ln, ok := h.forwards[addr]
 			h.Unlock()
 			if ok {
-				ln.Close()
+				_ = ln.Close()
 			}
 		}()
 		go func() {
@@ -102,19 +102,19 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 					if err != nil {
 						// TODO: log failure to open channel
 						log.Trace().Err(err).Msg("Failed to open forwarded channel")
-						c.Close()
+						_ = c.Close()
 						return
 					}
 					go gossh.DiscardRequests(reqs)
 					go func() {
 						defer ch.Close()
 						defer c.Close()
-						io.Copy(ch, c)
+						_, _ = io.Copy(ch, c)
 					}()
 					go func() {
 						defer ch.Close()
 						defer c.Close()
-						io.Copy(c, ch)
+						_, _ = io.Copy(c, ch)
 					}()
 				}()
 			}
@@ -135,7 +135,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 		ln, ok := h.forwards[addr]
 		h.Unlock()
 		if ok {
-			ln.Close()
+			_ = ln.Close()
 		}
 		return true, nil, nil
 	default:

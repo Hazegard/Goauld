@@ -19,13 +19,13 @@ func TestKeepAlive(t *testing.T) {
 
 	// Kill any existing caffeinate processes
 	if runtime.GOOS == "darwin" {
-		exec.Command("pkill", "-9", "caffeinate").Run()
+		_ = exec.Command("pkill", "-9", "caffeinate").Run()
 	}
 
 	// Cleanup after test
 	t.Cleanup(func() {
 		if runtime.GOOS == "darwin" {
-			exec.Command("pkill", "-9", "caffeinate").Run()
+			_ = exec.Command("pkill", "-9", "caffeinate").Run()
 		}
 	})
 

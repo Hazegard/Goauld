@@ -80,7 +80,7 @@ func TestKeepAlive(t *testing.T) {
 	defer cancel()
 
 	// Try to clean up any processes we can
-	killCaffeinate()
+	_ = killCaffeinate()
 
 	// Get initial process count (some may be running that we can't kill)
 	initialPids, _ := getCaffeinateProcesses()
