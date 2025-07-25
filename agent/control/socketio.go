@@ -253,11 +253,22 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		cpc.canceler.Exit("The agent is already connected")
 	})
 
-	// SendRemotePortForwardingDataError is sent by the server when the forwarding ports
-	// are successfully received by the server
-	socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
-		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
-		log.Run().Msg("Agent successfully started.")
+	socket.OnEvent(socketio.PasswordValidationRequestEvent, func(data []byte) {
+
+		log.Trace().Msg("OnEvent: PasswordValidationRequestEvent")
+		passwordValidationReq, err := socketio.DecryptPasswordValidationRequest(data, config.Get().Cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: DecryptPasswordValidationRequest")
+			return
+		}
+		res := passwordValidationReq.Password == config.Get().PrivateSshdPassword()
+
+		response, err := socketio.NewEncryptPasswordValidationResponse(res, config.Get().Cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: EncryptPasswordValidationRequest")
+		}
+		socket.Emit(passwordValidationReq.EventId, response)
+		log.Trace().Msgf("Emit: %s", passwordValidationReq.EventId)
 	})
 
 	cpc.socket = socket

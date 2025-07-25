@@ -3,6 +3,7 @@ package main
 import (
 	"Goauld/client/api"
 	"Goauld/common/log"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
@@ -27,31 +28,31 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 
 	if len(cfg.Pass.Args) >= 1 {
 		input := cfg.Pass.Args[0]
-		// fmt.Fprintf(os.Stderr, "%s\n", input)
 		serverString := fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost())
-		// fmt.Fprintf(os.Stderr, "%s\n", serverString)
 		agentString := fmt.Sprintf("%s@%s", agent.Name, agent.Id)
-		// fmt.Fprintf(os.Stderr, "%s\n", agentString)
+
 		if strings.Contains(input, agentString) {
 			fmt.Println(p.GetStaticPassword(cfg) + agent.SshPasswd)
-			// fmt.Fprintf(os.Stderr, "%s\n", p.GetStaticPassword(cfg)+agent.SshPasswd)
 			return nil
 		} else if strings.Contains(input, serverString) {
-			// fmt.Fprintf(os.Stderr, "%s\n", agent.OneTimePassword)
-			fmt.Println(agent.OneTimePassword)
+			fmt.Println(GenerateServerPassword(p.GetStaticPassword(cfg), agent.OneTimePassword))
 			return nil
 		}
 	}
 
 	switch cfg.Pass.Type {
 	case "otp":
-		fmt.Println(agent.OneTimePassword)
+		fmt.Println(GenerateServerPassword(p.GetStaticPassword(cfg), agent.OneTimePassword))
 	case "agent":
 		fmt.Println(p.GetStaticPassword(cfg) + agent.SshPasswd)
 	default:
-		fmt.Printf("OTP:   %s\nAgent: %s\n", agent.OneTimePassword, agent.SshPasswd)
+		fmt.Printf("OTP:   %s\nAgent: %s\n", GenerateServerPassword(p.GetStaticPassword(cfg), agent.OneTimePassword), agent.SshPasswd)
 	}
 	return nil
+}
+
+func GenerateServerPassword(agentPassword string, serverPassword string) string {
+	return fmt.Sprintf("%s|%s", base64.StdEncoding.EncodeToString([]byte(agentPassword)), base64.StdEncoding.EncodeToString([]byte(serverPassword)))
 }
 
 func (p *Password) GetStaticPassword(cfg ClientConfig) string {

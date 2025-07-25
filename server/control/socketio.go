@@ -3,6 +3,7 @@ package control
 import (
 	"Goauld/common"
 	"fmt"
+	"github.com/google/uuid"
 	eio "github.com/karagenc/socket.io-go/engine.io"
 	"net/http"
 	"regexp"
@@ -334,4 +335,44 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			}
 		})
 	})
+}
+
+func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, agentPwd string) bool {
+	cryptor, err := agent.GetCryptor()
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msgf("Error getting crypto for agent (%s)", agent.Name)
+		return false
+	}
+
+	id := uuid.NewString()
+	eventId := fmt.Sprintf("%s@%s", socketio.PasswordValidationRequestResponse, id)
+	chanResponse := make(chan bool, 1)
+	socket.OnEvent(eventId, func(data []byte) {
+		log.Debug().Str("Event", eventId).Str("Agent", agent.Name).Msg("Event received")
+		response, err := socketio.DecryptPasswordValidationResponse(data, cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("Error decrypting password validation response")
+			chanResponse <- false
+			return
+		}
+		chanResponse <- response.Response
+	})
+	defer socket.OffEvent(eventId)
+
+	encryptedPasswordValidationRequest, err := socketio.NewEncryptPasswordValidationRequest(agentPwd, eventId, cryptor)
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Str("Event", eventId).Err(err).Msgf("Error encrypting password validation request")
+		return false
+	}
+
+	socket.Emit(socketio.PasswordValidationRequestEvent, encryptedPasswordValidationRequest)
+	response := false
+	select {
+	case r := <-chanResponse:
+		response = r
+	case <-time.After(5 * time.Second):
+		log.Debug().Str("Event", eventId).Str("Agent", agent.Name).Msg("Timeout waiting for response")
+		response = false
+	}
+	return response
 }

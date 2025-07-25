@@ -5,9 +5,11 @@ import (
 	_net "Goauld/common/net"
 	_ssh "Goauld/common/ssh"
 	"Goauld/server/config"
+	"Goauld/server/control"
 	"Goauld/server/persistence"
 	"Goauld/server/store"
 	"context"
+	"encoding/base64"
 	"errors"
 	"net"
 	"strconv"
@@ -138,7 +140,23 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			}
 			return true
 		},
-		PasswordHandler: func(ctx ssh.Context, password string) bool {
+		PasswordHandler: func(ctx ssh.Context, inPwd string) bool {
+			pwdSplit := strings.Split(inPwd, "|")
+			if len(pwdSplit) != 2 {
+				return false
+			}
+			passwordB, err := base64.StdEncoding.DecodeString(pwdSplit[1])
+			if err != nil {
+				log.Error().Err(err).Str("User", ctx.User()).Msg("Error decoding server password")
+				return false
+			}
+			agentPasswordB, err := base64.StdEncoding.DecodeString(pwdSplit[0])
+			if err != nil {
+				log.Error().Err(err).Str("User", ctx.User()).Msg("Error decoding agent password")
+				return false
+			}
+			password := string(passwordB)
+			agentPwd := string(agentPasswordB)
 			sourceIp := strings.Split(ctx.RemoteAddr().String(), ":")[0]
 			log.Trace().Str("User", ctx.User()).Str("IP", sourceIp).Msg("SSH Connection attempt")
 			if !_net.IsIPAllowed(sourceIp, config.Get().AllowedIPs) {
@@ -155,6 +173,12 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				log.Info().Str("Agent.Name", agent.Name).Msg("Agent not connected")
 				return false
 			}
+
+			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.Id), agentPwd)
+			if !isStaticPwdValid {
+				return false
+			}
+
 			agent.Source = sourceIp
 			err = db.ValidatePasswordAndRotateIfTrue(agent.Id, password)
 			// err = agent.ValidatePasswordAndRotateIfTrue(password)
