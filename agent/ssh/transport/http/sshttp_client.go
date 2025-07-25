@@ -25,6 +25,9 @@ type SSHTTP struct {
 
 func (s *SSHTTP) Close() error {
 	var errs []error
+	if s == nil {
+		return nil
+	}
 	errs = append(errs, s.Stream.Close())
 	errs = append(errs, s.Pconn.Close())
 	errs = append(errs, s.Session.Close())
@@ -47,6 +50,17 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	httpClient := proxy.NewHttpClientProxy(tr)
 	// httpClient.Transport.(*http.Transport).
 	// httpClient.Transport.(*http.Transport).MaxConnsPerHost = 20
+	res, err := httpClient.Get(serverURL)
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if string(body) != "OK" {
+		return nil, fmt.Errorf("SSHTTP server returns wrong response: %s", string(body))
+	}
 
 	var poller PollFunc = func(ctx context.Context, client *http.Client, p []byte) (io.ReadCloser, error) {
 		return poll(ctx, client, serverURL, p)

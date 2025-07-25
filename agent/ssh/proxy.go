@@ -19,21 +19,21 @@ import (
 // getProxiedClient return a connected SSH client
 // This client may be proxies (TLS, Websocket, HTTP), or not, depending on the egress restrictions
 // The order of the connection attempt is defined in the agent configuration
-func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn, io.Closer, error) {
+func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTransport *transport.DNSSH) (*ssh.Client, net.Conn, io.Closer, string, error) {
 	var client *ssh.Client
 	var conn net.Conn
 	var closer io.Closer
 	for _, proto := range config.Get().GetRsshOrder() {
 		log.Info().Str("Mode", proto).Dur("Timeout", config.Get().GetSshTimeout()).Msg("Connecting to ssh")
 		timeoutCtx, cancel := context.WithTimeout(ctx, config.Get().GetSshTimeout())
-		resultChan := make(chan struct{}, 1)
+		resultChan := make(chan string, 1)
 		go func() {
 			switch {
 			case strings.HasPrefix(proto, "ssh"):
 				client = directSSH(sshConfig, timeoutCtx)
 				if client != nil {
 					closer = client
-					resultChan <- struct{}{}
+					resultChan <- "SSH"
 				} else {
 					cancel()
 				}
@@ -44,7 +44,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					client = _client
 					closer = stream
 					conn = stream
-					resultChan <- struct{}{}
+					resultChan <- "QUIC"
 					// return client, stream, stream, nil
 				} else {
 					cancel()
@@ -53,7 +53,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 				client, conn = proxyTls(sshConfig, timeoutCtx)
 				if client != nil {
 					closer = conn
-					resultChan <- struct{}{}
+					resultChan <- "TLS"
 					// return client, conn, nil, nil
 				} else {
 					cancel()
@@ -63,7 +63,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 				client, conn = proxyWS(sshConfig, timeoutCtx, ctx)
 				if client != nil {
 					closer = conn
-					resultChan <- struct{}{}
+					resultChan <- "WS"
 					// return client, conn, conn, nil
 				} else {
 					cancel()
@@ -72,12 +72,13 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 			case strings.HasPrefix(proto, "http"):
 				c, ssHTTP := proxyHttp(sshConfig)
 				client = c
-				conn = ssHTTP.Stream
 				if client != nil {
+					conn = ssHTTP.Stream
 					closer = conn
-					resultChan <- struct{}{}
+					resultChan <- "HTTP"
 					// return client, conn, ssHTTP, nil
 				} else {
+					ssHTTP.Close()
 					cancel()
 				}
 
@@ -86,7 +87,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 					client, conn = proxyDns(sshConfig, dnsTransport)
 					if client != nil {
 						closer = conn
-						resultChan <- struct{}{}
+						resultChan <- "DNS"
 						// return client, conn, conn, nil
 					} else {
 						cancel()
@@ -96,9 +97,8 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 		}()
 
 		select {
-		case <-resultChan:
-			// cancel()
-			return client, conn, closer, nil
+		case mode := <-resultChan:
+			return client, conn, closer, mode, nil
 		case <-timeoutCtx.Done():
 			log.Warn().Str("Mode", proto).Msg("Connection timed out, trying next...")
 			cancel()
@@ -106,7 +106,7 @@ func getProxiedClient(sshConfig *ssh.ClientConfig, ctx context.Context, dnsTrans
 		}
 	}
 
-	return nil, nil, nil, fmt.Errorf("failed to Proxify ssh connection")
+	return nil, nil, nil, "", fmt.Errorf("failed to Proxify ssh connection")
 }
 
 // directSSH perform a direct ssh connection to the SSHD server
@@ -182,18 +182,18 @@ func proxyHttp(sshConfig *ssh.ClientConfig) (*ssh.Client, *http.SSHTTP) {
 	// err := httpConn.Connect()
 	if err != nil {
 		log.Error().Str("Mode", "SSHTTP").Err(err).Msg("failed to proxy SSH using HTTP")
-		return nil, nil
+		return nil, httpConn
 	}
 	_, err = httpConn.Stream.Write([]byte(config.Get().Id))
 	if err != nil {
 		log.Error().Str("Mode", "SSHTTP").Err(err).Msg("failed to proxy SSH using HTTP")
-		return nil, nil
+		return nil, httpConn
 	}
 	log.Debug().Str("Mode", "SSHTTP").Msg("Connection succeeded, trying to mount SSH over the HTTP connection")
 	client, err := tryProxySsh(sshConfig, httpConn.Stream)
 	if err != nil {
 		log.Error().Str("Mode", "SSHTTP").Err(err).Msg("failed to proxy ssh connection using HTTP")
-		return nil, nil
+		return nil, httpConn
 	}
 	log.Info().Str("Mode", "SSHTTP").Msg("Proxy using HTTP succeeded")
 	return client, httpConn

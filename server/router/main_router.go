@@ -56,7 +56,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	logger.ALogger = log.GetNegroniLogger()
 	// Custom middleware
 	n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		if strings.HasPrefix(r.URL.Path, "/sshttp") {
+		if strings.HasPrefix(r.URL.Path, "/sshttp") && r.Method == http.MethodPost {
 			next(w, r)
 			return
 		}

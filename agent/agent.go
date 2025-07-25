@@ -190,6 +190,7 @@ func run() utils.CancelReason {
 	success := false
 	// We iterate over the different strategies to initialize the control socket
 	// If the initialization is successful, we stop the loop
+	controlMode := ""
 	for _, socket := range socketOrder {
 		initializer, ok := controlInitStrategy[socket]
 		if !ok {
@@ -201,6 +202,7 @@ func run() utils.CancelReason {
 			log.Info().Str("SocketMode", initializer.Name).Msg("Control plan started")
 			success = true
 			controlPlanClient = cpc
+			controlMode = initializer.Name
 			break
 		}
 		log.Error().Err(err).Str("ControlMode", initializer.Name).Msg("error initializing the control plan")
@@ -381,6 +383,8 @@ func run() utils.CancelReason {
 		err := controlPlanClient.SendPorts(forwardedPorts)
 		if err != nil {
 			log.Error().Err(err).Msg("error sending the forwarded ports")
+		} else {
+			log.Run().Str("Control", controlMode).Str("Mode", sshAgent.Mode).Msg("Agent successfully started.")
 		}
 	}()
 

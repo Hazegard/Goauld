@@ -57,11 +57,13 @@ type CpcStarter func(*ControlPlanClient, chan<- struct{}, chan<- error) error
 // Init tries to connect to the control plan using the different strategies (CpcStarter)
 // A successful connection will send a signal using the configDone channel
 func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, CpcStarter CpcStarter) (error, *ControlPlanClient) {
+	ctx, cancel := context.WithCancel(ctx)
 	controlPlanClient := NewControlPlanClient(ctx, configDone, globalCanceler)
 	chanErr := make(chan error)
 	chanSuccess := make(chan struct{})
 	err := CpcStarter(controlPlanClient, chanSuccess, chanErr)
 	if err != nil {
+		cancel()
 		return err, nil
 	}
 	// Start the control socket.io
@@ -70,15 +72,15 @@ func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone 
 		case controlErr <- controlPlanClient.Start():
 		case <-ctx.Done():
 		}
+		cancel()
 		controlPlanClient.Close()
 	}()
 	select {
 	case e := <-chanErr:
-		// log.Error().Err(err).Msg("error starting the control plan")
 		controlPlanClient.Close()
+		cancel()
 		return e, nil
 	case <-chanSuccess:
-		// log.Info().Str("Mode", "Standard").Msg("Control plan started")
 		return nil, controlPlanClient
 	}
 }
@@ -304,7 +306,17 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 	if err != nil {
 		return fmt.Errorf("error encrypting remote port forwarding message: %v", err)
 	}
+
+	success := make(chan struct{}, 1)
+	// SendRemotePortForwardingDataError is sent by the server when the forwarding ports
+	// are successfully received by the server
+	cpc.socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
+		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
+		success <- struct{}{}
+	})
+	defer cpc.socket.OffEvent(socketio.SendRemotePortForwardingDataSuccess)
 	cpc.socket.Emit(socketio.SendRemotePortForwardingDataEvent, data)
+	<-success
 	return nil
 }
 

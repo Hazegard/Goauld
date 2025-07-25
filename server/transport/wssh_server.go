@@ -77,7 +77,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}(conn)
 
-	// Adds the agent to the wesocket store
+	// Adds the agent to the websocket store
 	wssh.agentStore.WsshAddAgent(id, conn, targetConn)
 	errChan := make(chan error, 1)
 

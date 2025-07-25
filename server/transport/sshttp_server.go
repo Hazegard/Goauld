@@ -186,7 +186,11 @@ func decodeRequest(req *http.Request) (turbotunnel.ClientID, []byte) {
 
 func (s *SSHHttpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
-	if req.Method != "POST" {
+	if req.Method == http.MethodGet {
+		http.Error(rw, "OK", http.StatusOK)
+		return
+	}
+	if req.Method != http.MethodPost {
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}

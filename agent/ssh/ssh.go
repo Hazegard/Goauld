@@ -22,6 +22,7 @@ type SSHAgent struct {
 	client *ssh.Client
 	ctx    context.Context
 	conn   net.Conn
+	Mode   string
 
 	remotePortMapMu sync.Mutex
 	remotePortMap   map[string]_ssh.RemotePortForwarding
@@ -51,7 +52,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 
 	// defer cancel()
 	// Get the ssh client, which may be proxied to bypass proxies
-	client, conn, closer, err := getProxiedClient(sshConfig, ctx, dnsTransport)
+	client, conn, closer, mode, err := getProxiedClient(sshConfig, ctx, dnsTransport)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
 		return err
@@ -63,6 +64,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 	sshAgent.client = client
 	sshAgent.ctx = ctx
 	sshAgent.conn = conn
+	sshAgent.Mode = mode
 
 	go func() {
 		select {
