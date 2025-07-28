@@ -1,6 +1,6 @@
 FROM alpine:3.21 AS init
 
-RUN apk add go alpine-sdk
+RUN apk add go alpine-sdk upx
 RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
 RUN go install mvdan.cc/garble@latest
 
@@ -17,6 +17,8 @@ WORKDIR /app
 ENV PATH="$PATH:/root/go/bin"
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id agent
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64
+
+RUN for binary in output/agent/*;do if [[ "$binary" == *.exe ]];then n="${binary.exe}";new="${new}_compressed.exe";else new="${binary}_compressed" ;fi; echo upx --best "$binary" -o "$new" ;done
 
 FROM alpine:3.21 AS run
 
