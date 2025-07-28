@@ -25,6 +25,7 @@ type BuildConfig struct {
 	Id             string `default:"" help:"[client|server|agent]."`
 	Goos           string `default:"" help:"[darwin|linux|windows]."`
 	Goarch         string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
+	NoSeed         bool   `default:"false" help:"don't generate seed keys."`
 }
 
 func main() {
@@ -48,6 +49,10 @@ func main() {
 		return
 	}
 
+	seed := "__generate"
+	if cfg.NoSeed {
+		seed = ""
+	}
 	cpl := compiler.Compiler{
 		Id:          cfg.Id,
 		Goos:        cfg.Goos,
@@ -55,7 +60,7 @@ func main() {
 		Source:      pwd,
 		EnvFile:     envFile,
 		Output:      "output",
-		Seed:        "__generate",
+		Seed:        seed,
 		ClientBuild: false,
 	}
 
