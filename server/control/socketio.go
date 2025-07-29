@@ -28,15 +28,15 @@ type SocketIO struct {
 
 // deprecated
 // ServeHTTP serves the socket.IO HTTP server
-func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	r = commonnet.Http10ToHttp11FakeUpgrader(r)
-	sio.Server.ServeHTTP(w, r)
-}
+// func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// 	r = commonnet.Http10ToHttp11FakeUpgrader(r)
+// 	sio.Server.ServeHTTP(w, r)
+// }
 
 var md5Re = regexp.MustCompile(`\A(?i:[a-f0-9]{32})\z`)
 
 // ServeHTTPWithId serves the socket.IO HTTP server
-func (sio *SocketIO) ServeHTTPWithId(w http.ResponseWriter, r *http.Request) {
+func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = commonnet.Http10ToHttp11FakeUpgrader(r)
 	id := r.PathValue("agentId")
 	if !md5Re.MatchString(id) {
