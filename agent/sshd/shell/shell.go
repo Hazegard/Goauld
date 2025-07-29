@@ -4,13 +4,12 @@ import (
 	"Goauld/common/log"
 	"context"
 	"fmt"
+	"github.com/aymanbagabas/go-pty"
+	"github.com/charmbracelet/ssh"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/aymanbagabas/go-pty"
-	"github.com/gliderlabs/ssh"
 )
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.
@@ -28,19 +27,37 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 	// Get pty information
 	ptyReq, winCh, isPty := s.Pty()
 	if isPty {
+		// This is an attempt to use builtin charmbracelet/ssh pty
+		// Without success (see agent/sshd/sshd.go)
+		/*
+			cmd := exec.Command(c[0], c[1:]...)
+			cmd.Env = append(os.Environ(), fmt.Sprintf("SSH_TTY=%s", ptyReq.Name()), fmt.Sprintf("TERM=%s", ptyReq.Term))
+
+			if runtime.GOOS != "windows" {
+				SetSysProcAttr(cmd)
+			}
+			err := ptyReq.Start(cmd)
+			if err != nil {
+				return err
+			}
+			if runtime.GOOS == "windows" {
+				for cmd.ProcessState != nil {
+					time.Sleep(100 * time.Millisecond)
+				}
+				s.Exit(cmd.ProcessState.ExitCode())
+			} else {
+				err := cmd.Wait()
+				if err != nil {
+					s.Exit(cmd.ProcessState.ExitCode())
+				}
+			}
+			return nil
+		*/
 		// Get new pty
 		pseudo, err := pty.New()
 		if err != nil {
 			return fmt.Errorf("error while opening pty: %s", err)
 		}
-		// Removed because windows crashing if pseudo closed twice
-		// defer func() {
-		// 	defer r("")
-		// 	err := pseudo.Close()
-		// 	if err != nil {
-		// 		log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while closing pty")
-		// 	}
-		// }()
 
 		// Resize the pty to the client window
 		w, h := ptyReq.Window.Width, ptyReq.Window.Height

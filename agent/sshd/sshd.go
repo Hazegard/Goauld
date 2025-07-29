@@ -8,7 +8,7 @@ import (
 	"Goauld/agent/config"
 	"Goauld/agent/sshd/shell"
 	"Goauld/common/log"
-	"github.com/gliderlabs/ssh"
+	"github.com/charmbracelet/ssh"
 )
 
 type Sshd struct {
@@ -72,6 +72,9 @@ func NewSshdServer(ctx context.Context) *Sshd {
 			"sftp": SftpHandler,
 		},
 	}
+	// This is an attempt to use builtin charmbracelet/ssh pty
+	// Without success (see agent/sshd/shell/shell.go)
+	// s.SetOption(ssh.AllocatePty())
 	return &Sshd{server: s}
 }
 

@@ -2,7 +2,7 @@ package sshd
 
 import (
 	"Goauld/common/log"
-	"github.com/gliderlabs/ssh"
+	"github.com/charmbracelet/ssh"
 	"io"
 	"net"
 	"strconv"
@@ -11,7 +11,7 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
-// Taken from https://github.com/gliderlabs/ssh/blob/master/tcpip.go but adapted to have control over listeners
+// Taken from https://github.com/charmbracelet/ssh/blob/master/tcpip.go but adapted to have control over listeners
 const (
 	forwardedTCPChannelType = "forwarded-tcpip"
 )

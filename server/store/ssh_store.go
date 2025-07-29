@@ -4,7 +4,7 @@ import (
 	"Goauld/common/types"
 	"encoding/hex"
 	"errors"
-	"github.com/gliderlabs/ssh"
+	"github.com/charmbracelet/ssh"
 	gossh "golang.org/x/crypto/ssh"
 	"net"
 )

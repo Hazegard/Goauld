@@ -14,10 +14,10 @@ require (
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/charmbracelet/ssh v0.0.0-20250429213052-383d50896132
 	github.com/elazarl/goproxy v1.7.2
 	github.com/evertras/bubble-table v0.17.1
 	github.com/glebarez/sqlite v1.11.0
-	github.com/gliderlabs/ssh v0.3.8
 	github.com/goccy/go-yaml v1.17.1
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/karagenc/socket.io-go v0.1.0
@@ -29,14 +29,19 @@ require (
 	github.com/urfave/negroni v1.0.0
 	github.com/xtaci/kcp-go/v5 v5.6.18
 	github.com/xtaci/smux v1.5.34
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.37.0
 	gorm.io/gorm v1.25.12
 	nhooyr.io/websocket v1.8.11
 	www.bamsoftware.com/git/champa.git v0.20220703.0
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
 
-require github.com/u-root/u-root v0.11.0 // indirect
+require (
+	github.com/charmbracelet/x/conpty v0.1.0 // indirect
+	github.com/charmbracelet/x/errors v0.0.0-20240508181413-e8d8b6e2de86 // indirect
+	github.com/charmbracelet/x/termios v0.1.0 // indirect
+	github.com/u-root/u-root v0.11.0 // indirect
+)
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
@@ -103,9 +108,9 @@ require (
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
-	golang.org/x/sync v0.12.0
-	golang.org/x/sys v0.31.0
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/sync v0.13.0
+	golang.org/x/sys v0.32.0
+	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	golang.org/x/tools v0.31.0 // indirect
 	h12.io/socks v1.0.3 // indirect
