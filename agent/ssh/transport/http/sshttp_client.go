@@ -11,6 +11,7 @@ import (
 	"github.com/xtaci/smux"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 	"www.bamsoftware.com/git/champa.git/turbotunnel"
 )
@@ -58,7 +59,7 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	if err != nil {
 		return nil, err
 	}
-	if string(body) != "OK" {
+	if strings.TrimSpace(string(body)) != "OK" {
 		return nil, fmt.Errorf("SSHTTP server returns wrong response: %s", string(body))
 	}
 

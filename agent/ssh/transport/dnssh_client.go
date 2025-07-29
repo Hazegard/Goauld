@@ -152,11 +152,11 @@ func NewDNSSH() (*DNSSH, error) {
 			ip = domain
 		}
 		log.Debug().Str("IP", ip).Str("Mode", "DNSSH").Int("Port", p).Msgf("Testing DNS server availability")
-		if TestDNSServer(ip, port, config.Get().DNSDomain()) {
+		if TestDNSServer(ip, p, config.Get().DNSDomain()) {
 			d = ip
 			port = p
 			break
-		} else if TestDNSServer(ip, port, config.Get().DNSDomain()) {
+		} else if TestDNSServer(ip, p, config.Get().DNSDomain()) {
 			d = ip
 			port = p
 			break

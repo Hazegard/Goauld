@@ -180,7 +180,7 @@ func run() utils.CancelReason {
 			socketOrder = []string{"DNS"}
 		}
 		if order[0] == "http" {
-			socketOrder = []string{"HTTP"}
+			socketOrder = []string{"Polling"}
 		}
 		if order[0] == "ws" {
 			socketOrder = []string{"Websocket"}
