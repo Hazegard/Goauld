@@ -8,12 +8,6 @@ import (
 	"Goauld/common/crypto"
 )
 
-const (
-	SendAgentDataEvent   = "Agent Data"
-	SendAgentDataError   = "Agent Data error"
-	SendAgentDataSuccess = "Agent Data success"
-)
-
 // AgentData holds the ssh password used to authenticate on the agent
 type AgentData struct {
 	AgentSshPassword string `json:"ssh_password"`

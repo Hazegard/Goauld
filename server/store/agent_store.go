@@ -129,7 +129,7 @@ func (a *AgentStore) KillAGent(id string, doKill bool) error {
 		return errors.New("socket not found")
 	}
 
-	socket.Emit(socketio.ExitEvent, doKill)
+	socket.Emit(socketio.ExitEvent.ID(), doKill)
 	return nil
 }
 

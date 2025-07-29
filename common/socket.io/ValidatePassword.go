@@ -5,11 +5,6 @@ import (
 	"Goauld/common/crypto"
 )
 
-const (
-	PasswordValidationRequestEvent    = "PasswordValidationRequestEvent"
-	PasswordValidationRequestResponse = "PasswordValidationResponseEvent"
-)
-
 type PasswordValidationRequest struct {
 	Password string `json:"password"`
 	EventId  string `json:"eventId"`

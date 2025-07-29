@@ -5,12 +5,6 @@ import (
 	"Goauld/common/crypto"
 )
 
-const (
-	SendSshPrivateKeyEvent   = "SSH Public Key"
-	SendSshHPrivateKeyError  = "SSH Public Key error"
-	SendSshPrivateKeySuccess = "SSH Public Key success"
-)
-
 type SshPrivateKeyMessage struct {
 	SshPrivateKey string `json:"ssh_public_key"`
 }

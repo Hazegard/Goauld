@@ -151,7 +151,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	// this event contains the encrypted SSH private key used by the agent to authenticate on the
 	// SSHD server.
 	// Once received, the agent sends its SSHD password to the server using the SendAgentDataEvent event
-	socket.OnEvent(socketio.SendSshPrivateKeyEvent, func(data []byte) {
+	socket.OnEvent(socketio.SendSshPrivateKeyEvent.ID(), func(data []byte) {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
 		log.Trace().Msgf("SshPrivateKeyEvent: data received")
 		// Decrypt the SSH private key
@@ -171,13 +171,13 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		}
 		log.Debug().Msgf("Local sshd password sent")
 		// Send the encrypted SSH password to the server
-		socket.Emit(socketio.SendAgentDataEvent, localSshPassword)
+		socket.Emit(socketio.SendAgentDataEvent.ID(), localSshPassword)
 
 		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent done")
 	})
 
 	// SendSshHPrivateKeyError Logs when the server returns an error
-	socket.OnEvent(socketio.SendSshHPrivateKeyError, func() {
+	socket.OnEvent(socketio.SendSshHPrivateKeyError.ID(), func() {
 		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError")
 		log.Error().Msgf("Error occured (%s) %s", "SendSshHPrivateKeyError", cpc.url)
 		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError done")
@@ -185,7 +185,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 
 	// VersionEvent sends the current server version
 	// To display a message to the user if the server and the agent version mismatch
-	socket.OnEvent(socketio.VersionEvent, func(srvVersion common.JVersion) {
+	socket.OnEvent(socketio.VersionEvent.ID(), func(srvVersion common.JVersion) {
 		agentVersion := common.JsonVersion()
 		if agentVersion.Compare(srvVersion) != 0 {
 			log.Warn().Err(fmt.Errorf("mismatch version")).Str("Server", srvVersion.Version).Str("Agent", agentVersion.Version).Msgf("Version mismatch")
@@ -195,14 +195,14 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	})
 
 	// SendSshPrivateKeySuccess Logs when the server returns no error
-	socket.OnEvent(socketio.SendSshPrivateKeySuccess, func() {
+	socket.OnEvent(socketio.SendSshPrivateKeySuccess.ID(), func() {
 		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess")
 		log.Debug().Msgf("Event SendSshPrivateKeySuccess received")
 		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess done")
 	})
 
 	// SendAgentDataError Logs when the server returns an error
-	socket.OnEvent(socketio.SendAgentDataError, func() {
+	socket.OnEvent(socketio.SendAgentDataError.ID(), func() {
 		log.Trace().Msg("OnEvent: SendAgentDataError")
 		log.Error().Msgf("Error occured (%s) %s", "SendAgentDataError", cpc.url)
 		log.Trace().Msg("OnEvent: SendAgentDataError done")
@@ -210,14 +210,14 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 
 	// SendAgentDataSuccess Logs when the server returns no error
 	// As it complete the configuration steps between the agent and the server
-	socket.OnEvent(socketio.SendAgentDataSuccess, func() {
+	socket.OnEvent(socketio.SendAgentDataSuccess.ID(), func() {
 		log.Trace().Msg("OnEvent: SendAgentDataSuccess")
 		cpc.configDone <- struct{}{}
 		log.Trace().Msg("OnEvent: SendAgentDataSuccess done")
 	})
 
 	// RegisterError fire when an error occurs on the server side when the agent registers
-	socket.OnEvent(socketio.RegisterError, func(data socketio.SioError) {
+	socket.OnEvent(socketio.RegisterError.ID(), func(data socketio.SioError) {
 		if strings.Contains(data.Message, "UNIQUE constraint failed: agents.name") {
 			log.Error().Err(errors.New("Agent Name already used, either delete the corresponding agent in the TUI or rename this agent")).Msgf("RegisterError")
 			cpc.canceler.Exit("Agent Name already used")
@@ -233,9 +233,9 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	})
 
 	// ExitEvent is sent by the server when the agent is requested to exit
-	socket.OnEvent(socketio.ExitEvent, func(doExit bool) {
+	socket.OnEvent(socketio.ExitEvent.ID(), func(doExit bool) {
 		log.Info().Msg("OnEvent: Exit requested")
-		socket.Emit(socketio.ExitSuccess)
+		socket.Emit(socketio.ExitSuccess.ID())
 		socket.Disconnect()
 		if doExit {
 			cpc.canceler.Exit("Server requested exit")
@@ -246,14 +246,14 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 
 	// AlreadyConnectedEvent is sent by the server when the agent is already running.
 	// The agent should exit
-	socket.OnEvent(socketio.AlreadyConnectedEvent, func() {
+	socket.OnEvent(socketio.AlreadyConnectedEvent.ID(), func() {
 		log.Info().Msg("AlreadyConnectedEvent: Exit requested because agent is already running")
-		socket.Emit(socketio.ExitSuccess)
+		socket.Emit(socketio.ExitSuccess.ID())
 		socket.Disconnect()
 		cpc.canceler.Exit("The agent is already connected")
 	})
 
-	socket.OnEvent(socketio.PasswordValidationRequestEvent, func(data []byte) {
+	socket.OnEvent(socketio.PasswordValidationRequestEvent.ID(), func(data []byte) {
 
 		log.Trace().Msg("OnEvent: PasswordValidationRequestEvent")
 		passwordValidationReq, err := socketio.DecryptPasswordValidationRequest(data, config.Get().Cryptor)
@@ -289,7 +289,7 @@ func (cpc *ControlPlanClient) Start() error {
 	}
 
 	// This will be emitted after the socket is connected.
-	cpc.socket.Emit(socketio.RegisterEvent, socketio.Register{
+	cpc.socket.Emit(socketio.RegisterEvent.ID(), socketio.Register{
 		Id:        config.Get().Id,
 		SharedKey: encryptedKey,
 		Name:      encryptedName,
@@ -303,7 +303,7 @@ func (cpc *ControlPlanClient) Start() error {
 	// Waits for an error or the end of the socket
 	<-cpc.ctx.Done()
 	log.Warn().Msgf("Shutting done the socketio control socket")
-	cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
+	cpc.socket.Emit(socketio.Disconnect.ID(), socketio.DisconnectMessage{})
 	log.Trace().Msg("Event send: Disconnect")
 	cpc.socket.Disconnect()
 	return nil
@@ -319,12 +319,12 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 	success := make(chan struct{}, 1)
 	// SendRemotePortForwardingDataError is sent by the server when the forwarding ports
 	// are successfully received by the server
-	cpc.socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess, func() {
+	cpc.socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess.ID(), func() {
 		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
 		success <- struct{}{}
 	})
-	defer cpc.socket.OffEvent(socketio.SendRemotePortForwardingDataSuccess)
-	cpc.socket.Emit(socketio.SendRemotePortForwardingDataEvent, data)
+	defer cpc.socket.OffEvent(socketio.SendRemotePortForwardingDataSuccess.ID())
+	cpc.socket.Emit(socketio.SendRemotePortForwardingDataEvent.ID(), data)
 	<-success
 	return nil
 }
@@ -333,7 +333,7 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 //
 // to keep alive the connection
 func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
-	cpc.socket.OnEvent(socketio.PongEvent, func(data []byte) {
+	cpc.socket.OnEvent(socketio.PongEvent.ID(), func(data []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
 	})
 	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
@@ -342,7 +342,7 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 		select {
 		case <-t.C:
 			log.Trace().Msg("OnEvent: PingEvent")
-			cpc.socket.Emit(socketio.PingEvent)
+			cpc.socket.Emit(socketio.PingEvent.ID())
 		case <-ctx.Done():
 			return
 		}
@@ -364,7 +364,7 @@ func (cpc *ControlPlanClient) ErrorPlusPlus() {
 // Close closes the socket.io connection
 func (cpc *ControlPlanClient) Close() {
 	cpc.socket.Disconnect()
-	cpc.socket.Emit(socketio.Disconnect, socketio.DisconnectMessage{})
+	cpc.socket.Emit(socketio.Disconnect.ID(), socketio.DisconnectMessage{})
 	cpc.manager.Close()
 }
 
