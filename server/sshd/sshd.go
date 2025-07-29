@@ -4,12 +4,13 @@ import (
 	"Goauld/common/log"
 	_net "Goauld/common/net"
 	_ssh "Goauld/common/ssh"
+	"Goauld/common/types"
 	"Goauld/server/config"
 	"Goauld/server/control"
 	"Goauld/server/persistence"
 	"Goauld/server/store"
 	"context"
-	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"net"
 	"strconv"
@@ -141,28 +142,20 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			return true
 		},
 		PasswordHandler: func(ctx ssh.Context, inPwd string) bool {
-			pwdSplit := strings.Split(inPwd, "|")
-			if len(pwdSplit) != 2 {
-				return false
-			}
-			passwordB, err := base64.StdEncoding.DecodeString(pwdSplit[1])
-			if err != nil {
-				log.Error().Err(err).Str("User", ctx.User()).Msg("Error decoding server password")
-				return false
-			}
-			agentPasswordB, err := base64.StdEncoding.DecodeString(pwdSplit[0])
-			if err != nil {
-				log.Error().Err(err).Str("User", ctx.User()).Msg("Error decoding agent password")
-				return false
-			}
-			password := string(passwordB)
-			agentPwd := string(agentPasswordB)
 			sourceIp := strings.Split(ctx.RemoteAddr().String(), ":")[0]
 			log.Trace().Str("User", ctx.User()).Str("IP", sourceIp).Msg("SSH Connection attempt")
 			if !_net.IsIPAllowed(sourceIp, config.Get().AllowedIPs) {
 				log.Trace().Str("Remote", sourceIp).Msg("Connection attempt from non whitelisted IP address")
 				return false
 			}
+
+			pwd := types.ServerToAGentPassword{}
+			err := json.Unmarshal([]byte(inPwd), &pwd)
+			if err != nil {
+				log.Warn().Err(err).Str("User", ctx.User()).Msg("Error parsing agent password")
+				return false
+			}
+
 			agentName := ctx.User()
 			agent, err := db.FindAgentByName(agentName)
 			if err != nil {
@@ -174,16 +167,16 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				return false
 			}
 
-			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.Id), agentPwd)
+			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.Id), pwd.AgentPassword)
 			if !isStaticPwdValid {
 				return false
 			}
 
 			agent.Source = sourceIp
-			err = db.ValidatePasswordAndRotateIfTrue(agent.Id, password)
+			err = db.ValidatePasswordAndRotateIfTrue(agent.Id, pwd.ServerPassword)
 			// err = agent.ValidatePasswordAndRotateIfTrue(password)
 			if err != nil {
-				log.Warn().Err(err).Str("Incoming", password).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
+				log.Warn().Err(err).Str("Incoming", pwd.ServerPassword).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
 				return false
 			}
 			err = db.UpdateAgentFieldShadow(agent, "OneTimePassword")

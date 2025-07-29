@@ -3,7 +3,8 @@ package main
 import (
 	"Goauld/client/api"
 	"Goauld/common/log"
-	"encoding/base64"
+	"Goauld/common/types"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -52,7 +53,11 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 }
 
 func GenerateServerPassword(agentPassword string, serverPassword string) string {
-	return fmt.Sprintf("%s|%s", base64.StdEncoding.EncodeToString([]byte(agentPassword)), base64.StdEncoding.EncodeToString([]byte(serverPassword)))
+	res, err := json.Marshal(types.NewServerToAGentPassword(agentPassword, serverPassword))
+	if err != nil {
+		return ""
+	}
+	return string(res)
 }
 
 func (p *Password) GetStaticPassword(cfg ClientConfig) string {
