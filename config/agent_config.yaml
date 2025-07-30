@@ -24,8 +24,8 @@ dns-server:
 dns-domain: t.example.com
 
 # SSH password to access the agent. If no password is provided, a random password is automatically generated.
+shared-password: ""
 password: ""
-privatepassword: ""
 
 # Nice name to identify the agent. Defaults to 'user@hostname'
 name: user@hostname
@@ -93,7 +93,7 @@ http-port: 0
 # Keep the system awake (try to prevent from sleep and lock screen).
 keep-awake: false
 
-# Seconds between two keepalive messages in seconds, reduce this value if the connection drops.
+# Seconds between two keepalive messages in seconds, reduce this value if the connection drops (0 => no keepalive).
 keepalive: 20
 
 # Verbosity of the logs. Repeat -v to increase

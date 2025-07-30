@@ -195,6 +195,9 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 //
 // is transmitted within the connection
 func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
+	if config.Get().GetKeepalive() == 0 {
+		return
+	}
 	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
 	for {
