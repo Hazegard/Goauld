@@ -149,7 +149,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				return false
 			}
 
-			pwd := types.ServerToAGentPassword{}
+			pwd := types.ServerToAgentPassword{}
 			err := json.Unmarshal([]byte(inPwd), &pwd)
 			if err != nil {
 				log.Warn().Err(err).Str("User", ctx.User()).Msg("Error parsing agent password")
@@ -167,7 +167,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				return false
 			}
 
-			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.Id), pwd.AgentPassword)
+			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.Id), pwd.HashAgentPassword)
 			if !isStaticPwdValid {
 				return false
 			}

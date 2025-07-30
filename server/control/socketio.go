@@ -337,7 +337,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 	})
 }
 
-func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, agentPwd string) bool {
+func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd string) bool {
 	cryptor, err := agent.GetCryptor()
 	if err != nil {
 		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msgf("Error getting crypto for agent (%s)", agent.Name)
@@ -345,7 +345,7 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, agent
 	}
 
 	id := uuid.NewString()
-	eventId := fmt.Sprintf("%s@%s", socketio.PasswordValidationRequestResponse, id)
+	eventId := fmt.Sprintf("%s@%s", socketio.PasswordValidationRequestResponse.ID(), id)
 	chanResponse := make(chan bool, 1)
 	socket.OnEvent(eventId, func(data []byte) {
 		log.Debug().Str("Event", eventId).Str("Agent", agent.Name).Msg("Event received")
@@ -359,7 +359,7 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, agent
 	})
 	defer socket.OffEvent(eventId)
 
-	encryptedPasswordValidationRequest, err := socketio.NewEncryptPasswordValidationRequest(agentPwd, eventId, cryptor)
+	encryptedPasswordValidationRequest, err := socketio.NewEncryptPasswordValidationRequest(hashAgentPwd, eventId, cryptor)
 	if err != nil {
 		log.Debug().Str("Agent.Name", agent.Name).Str("Event", eventId).Err(err).Msgf("Error encrypting password validation request")
 		return false

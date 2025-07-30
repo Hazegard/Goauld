@@ -1,10 +1,10 @@
 package types
 
-type ServerToAGentPassword struct {
-	AgentPassword  string `json:"ap"`
-	ServerPassword string `json:"sp"`
+type ServerToAgentPassword struct {
+	HashAgentPassword string `json:"hap"`
+	ServerPassword    string `json:"sp"`
 }
 
-func NewServerToAGentPassword(agentPassword string, serverPassword string) ServerToAGentPassword {
-	return ServerToAGentPassword{agentPassword, serverPassword}
+func NewServerToAGentPassword(agentPassword string, serverPassword string) ServerToAgentPassword {
+	return ServerToAgentPassword{agentPassword, serverPassword}
 }

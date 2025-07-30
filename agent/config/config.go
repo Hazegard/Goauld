@@ -1,7 +1,9 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -213,17 +215,21 @@ type AgentConfig struct {
 }
 
 func (c *AgentConfig) Validate() error {
+	var errs []error
 	if c.OnlyWorkingDays {
 		wd := NewWorkingDay(c.WorkingDayStart, c.WorkingDayEnd, c.WorkingDayTimeZone)
-		return wd.Validate()
+		errs = append(errs, wd.Validate())
 	}
 	if HasProto(c.TlsServer) {
-		return fmt.Errorf("the TLS server name must not contains protocol prefix")
+		errs = append(errs, fmt.Errorf("the TLS server name must not contains protocol prefix"))
 	}
 	if HasProto(c.QuicServer) {
-		return fmt.Errorf("the QUIC server name must not contains protocol prefix")
+		errs = append(errs, fmt.Errorf("the QUIC server name must not contains protocol prefix"))
 	}
-	return nil
+	if len(c.PrivatePassword) > 72 {
+		errs = append(errs, bcrypt.ErrPasswordTooLong)
+	}
+	return errors.Join(errs...)
 }
 
 // parse parses the command line arguments

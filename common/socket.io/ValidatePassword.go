@@ -6,8 +6,8 @@ import (
 )
 
 type PasswordValidationRequest struct {
-	Password string `json:"password"`
-	EventId  string `json:"eventId"`
+	HashPassword string `json:"hash_password"`
+	EventId      string `json:"eventId"`
 }
 
 func newPasswordValidationRequest() *PasswordValidationRequest {
@@ -25,8 +25,8 @@ func EncryptPasswordValidationRequest(agent *PasswordValidationRequest, c *crypt
 
 func NewEncryptPasswordValidationRequest(password string, eventId string, cryptor *crypto.SymCryptor) ([]byte, error) {
 	message := &PasswordValidationRequest{
-		Password: password,
-		EventId:  eventId,
+		HashPassword: password,
+		EventId:      eventId,
 	}
 	return EncryptPasswordValidationRequest(message, cryptor)
 }

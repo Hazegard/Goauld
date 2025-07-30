@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/xtaci/smux"
+	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"time"
 
@@ -261,7 +262,11 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 			log.Error().Err(err).Msg("OnEvent: DecryptPasswordValidationRequest")
 			return
 		}
-		res := passwordValidationReq.Password == config.Get().PrivateSshdPassword()
+		err = bcrypt.CompareHashAndPassword([]byte(passwordValidationReq.HashPassword), []byte(config.Get().PrivateSshdPassword()))
+		if err != nil {
+			log.Debug().Err(err).Msg("PasswordValidationRequestEvent: CompareHashAndPassword")
+		}
+		res := err == nil
 
 		response, err := socketio.NewEncryptPasswordValidationResponse(res, config.Get().Cryptor)
 		if err != nil {

@@ -6,6 +6,7 @@ import (
 	"Goauld/common/types"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"os"
 	"strings"
 )
@@ -27,40 +28,52 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 		return err
 	}
 
+	staticPwd, err := p.GetStaticPassword(cfg)
+	if err != nil {
+		return err
+	}
 	if len(cfg.Pass.Args) >= 1 {
 		input := cfg.Pass.Args[0]
 		serverString := fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost())
 		agentString := fmt.Sprintf("%s@%s", agent.Name, agent.Id)
 
 		if strings.Contains(input, agentString) {
-			fmt.Println(p.GetStaticPassword(cfg) + agent.SshPasswd)
+			fmt.Println(staticPwd + agent.SshPasswd)
 			return nil
 		} else if strings.Contains(input, serverString) {
-			fmt.Println(GenerateServerPassword(p.GetStaticPassword(cfg), agent.OneTimePassword))
+			fmt.Println(GenerateServerPassword(staticPwd, agent.OneTimePassword))
 			return nil
 		}
 	}
 
 	switch cfg.Pass.Type {
 	case "otp":
-		fmt.Println(GenerateServerPassword(p.GetStaticPassword(cfg), agent.OneTimePassword))
+		fmt.Println(GenerateServerPassword(staticPwd, agent.OneTimePassword))
 	case "agent":
-		fmt.Println(p.GetStaticPassword(cfg) + agent.SshPasswd)
+		fmt.Println(staticPwd + agent.SshPasswd)
 	default:
-		fmt.Printf("OTP:   %s\nAgent: %s\n", GenerateServerPassword(p.GetStaticPassword(cfg), agent.OneTimePassword), agent.SshPasswd)
+		fmt.Printf("OTP:   %s\nAgent: %s\n", GenerateServerPassword(staticPwd, agent.OneTimePassword), agent.SshPasswd)
 	}
 	return nil
 }
 
 func GenerateServerPassword(agentPassword string, serverPassword string) string {
-	res, err := json.Marshal(types.NewServerToAGentPassword(agentPassword, serverPassword))
+	hash, _ := bcrypt.GenerateFromPassword([]byte(agentPassword), bcrypt.DefaultCost)
+	res, err := json.Marshal(types.NewServerToAGentPassword(string(hash), serverPassword))
 	if err != nil {
 		return ""
 	}
 	return string(res)
 }
 
-func (p *Password) GetStaticPassword(cfg ClientConfig) string {
+func (p *Password) GetStaticPassword(cfg ClientConfig) (string, error) {
+	pwd := p.getStaticPassword(cfg)
+	if len(pwd) > 72 {
+		return "", bcrypt.ErrPasswordTooLong
+	}
+	return pwd, nil
+}
+func (p *Password) getStaticPassword(cfg ClientConfig) string {
 	if cfg.PrivatePassword != "" {
 		return cfg.PrivatePassword
 	}
