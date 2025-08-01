@@ -53,6 +53,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	// Negroni allow using middleware, such as logger and recovery mechanism
 	n := negroni.New()
 	logger := negroni.NewLogger()
+	logger.SetFormat("{{.StartTime}} | {{.Status}} | \t {{.Duration}} | {{.Hostname}} | {{.Method}} {{.Path}} | {{.Request.RemoteAddr}}")
 	logger.ALogger = log.GetNegroniLogger()
 	// Custom middleware
 	n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
