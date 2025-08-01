@@ -273,7 +273,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 			log.Error().Err(err).Msg("OnEvent: EncryptPasswordValidationRequest")
 		}
 		socket.Emit(passwordValidationReq.EventId, response)
-		log.Trace().Msgf("Emit: %s", passwordValidationReq.EventId)
+		log.Trace().Bool("Response", res).Msgf("Emit: %s", passwordValidationReq.EventId)
 	})
 
 	cpc.socket = socket

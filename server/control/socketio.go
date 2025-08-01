@@ -358,6 +358,7 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, hashA
 			chanResponse <- false
 			return
 		}
+		log.Debug().Str("Event", eventId).Str("Agent", agent.Name).Bool("Response", response.Response).Msg("Agent response")
 		chanResponse <- response.Response
 	})
 	defer socket.OffEvent(eventId)

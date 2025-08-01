@@ -32,7 +32,7 @@ func NewEncryptPasswordValidationRequest(password string, eventId string, crypto
 }
 
 type PasswordValidationResponse struct {
-	Response bool
+	Response bool `json:"response"`
 }
 
 func newPasswordValidationResponse() *PasswordValidationResponse {
@@ -50,7 +50,7 @@ func EncryptPasswordValidationResponse(agent *PasswordValidationResponse, c *cry
 
 func NewEncryptPasswordValidationResponse(response bool, cryptor *crypto.SymCryptor) ([]byte, error) {
 	message := &PasswordValidationResponse{
-		response,
+		Response: response,
 	}
 	return EncryptPasswordValidationResponse(message, cryptor)
 }
