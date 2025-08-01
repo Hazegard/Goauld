@@ -11,6 +11,8 @@ COPY go.sum /app/go.sum
 RUN go mod download
 
 FROM init AS build
+
+ARG COMPRESS=1
 COPY . /app
 WORKDIR /app
 
@@ -18,7 +20,7 @@ ENV PATH="$PATH:/root/go/bin"
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id agent
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64
 
-RUN for binary in output/agent/*;do if [[ "$binary" == *.exe ]];then n="${binary.exe}";new="${new}_compressed.exe";else new="${binary}_compressed" ;fi; echo upx --best "$binary" -o "$new" ;done
+# RUN if [[ "$COMPRESS" == 1 ]]; then for binary in output/agent/*;do n=""; if [[ "$binary" == *.exe ]];then n="${binary%.exe}";new="${n}_compressed.exe";else new="${binary}_compressed" ;fi; upx "$binary" --best -o "$new" || true ;done;fi
 
 FROM alpine:3.21 AS run
 
