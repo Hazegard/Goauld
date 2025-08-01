@@ -2,6 +2,7 @@ package transport
 
 import (
 	"Goauld/agent/config"
+	dns2 "Goauld/agent/ssh/transport/dns"
 	"Goauld/common/log"
 	common_net "Goauld/common/net"
 	"errors"
@@ -121,67 +122,78 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 }
 
 func NewDNSSH() (*DNSSH, error) {
-	// noisepubkey := config.Get().Id
-	// pubkey, err := noise.DecodeKey(noisepubkey)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "pubkey format error: %v\n", err)
-	// 	os.Exit(1)
-	// }
-	d := "127.0.0.1"
-	port := 53
-	dnsServers := config.Get().DNSServer()
-	for _, _dns := range nameserver.GetDNSServers() {
-		dnsServers = append(dnsServers, _dns.String())
-	}
+	var domain dns.Name
 
-	log.Info().Str("Mode", "DNSSH").Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")
-
-	for _, domain := range dnsServers {
-		p := 53
-		ip := ""
-		split := strings.Split(domain, ":")
-		if len(split) == 2 {
-			ip = split[0]
-			var err error
-			p, err = strconv.Atoi(split[1])
-			if err != nil {
-				log.Debug().Err(err).Str("Mode", "DNSSH").Str("Domain", domain).Str("Port", split[1]).Msg("error parsing port, using 53 as default...")
-				p = 53
-			}
-		} else {
-			ip = domain
-		}
-		log.Debug().Str("IP", ip).Str("Mode", "DNSSH").Int("Port", p).Msgf("Testing DNS server availability")
-		if TestDNSServer(ip, p, config.Get().DNSDomain()) {
-			d = ip
-			port = p
-			break
-		} else if TestDNSServer(ip, p, config.Get().DNSDomain()) {
-			d = ip
-			port = p
-			break
-		}
-	}
-	log.Debug().Str("DNS", d).Str("Mode", "DNSSH").Int("port", port).Msg("dns server")
-	domain, err := dns.ParseName(config.Get().DNSDomain())
-	if err != nil {
-		log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
-		return nil, err
-	}
-	log.Info().Str("Mode", "DNSSH").Str("Domain", config.Get().DNSDomain()).Msg("DNS tunneling")
-
-	// Iterate over the remote resolver address options and select one and
-	// only one.
 	var remoteAddr net.Addr
 	var udpConn net.PacketConn
+	d := "127.0.0.1"
+	port := 53
+	if config.Get().GetDnsCommand() == "" {
+		dnsServers := config.Get().DNSServer()
+		for _, _dns := range nameserver.GetDNSServers() {
+			dnsServers = append(dnsServers, _dns.String())
+		}
+		log.Info().Str("Mode", "DNSSH").Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")
+		for _, domain := range dnsServers {
+			p := 53
+			ip := ""
+			split := strings.Split(domain, ":")
+			if len(split) == 2 {
+				ip = split[0]
+				var err error
+				p, err = strconv.Atoi(split[1])
+				if err != nil {
+					log.Debug().Err(err).Str("Mode", "DNSSH").Str("Domain", domain).Str("Port", split[1]).Msg("error parsing port, using 53 as default...")
+					p = 53
+				}
+			} else {
+				ip = domain
+			}
+			log.Debug().Str("IP", ip).Str("Mode", "DNSSH").Int("Port", p).Msgf("Testing DNS server availability")
+			if TestDNSServer(ip, p, config.Get().DNSDomain()) {
+				d = ip
+				port = p
+				break
+			} else if TestDNSServer(ip, p, config.Get().DNSDomain()) {
+				d = ip
+				port = p
+				break
+			}
+		}
+		var err error
+		log.Debug().Str("DNS", d).Str("Mode", "DNSSH").Int("port", port).Msg("dns server")
+		domain, err = dns.ParseName(config.Get().DNSDomain())
+		if err != nil {
+			log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
+			return nil, err
+		}
+		log.Info().Str("Mode", "DNSSH").Str("Domain", config.Get().DNSDomain()).Msg("DNS tunneling")
 
-	remoteAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", d, port))
-	if err != nil {
-		return nil, fmt.Errorf("error resolving remote address: %v", err)
-	}
-	udpConn, err = net.ListenUDP("udp", nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating UDP connection: %v", err)
+		// Iterate over the remote resolver address options and select one and
+		// only one.
+
+		remoteAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", d, port))
+		if err != nil {
+			return nil, fmt.Errorf("error resolving remote address: %v", err)
+		}
+		udpConn, err = net.ListenUDP("udp", nil)
+		if err != nil {
+			return nil, fmt.Errorf("error creating UDP connection: %v", err)
+		}
+	} else {
+		// We are performing DNS request using an external system command.
+		// The net.PacketCOnn is a mock that pipes WriteTo method to ReadFrom method.
+		udpConn = dns2.NewFakePacketConn(4096 * 10)
+		var err error
+		domain, err = dns.ParseName(config.Get().DNSDomain())
+		if err != nil {
+			log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
+			return nil, err
+		}
+		remoteAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", d, port))
+		if err != nil {
+			return nil, fmt.Errorf("error resolving remote address: %v", err)
+		}
 	}
 
 	pconn := NewDNSPacketConn(udpConn, remoteAddr, domain)

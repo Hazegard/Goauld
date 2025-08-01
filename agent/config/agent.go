@@ -614,3 +614,7 @@ func (a *Agent) GenerateYAMLConfig() (string, error) {
 	c.GenerateConfig = false
 	return cli.GenerateYAMLWithComments(*c)
 }
+
+func (a *Agent) GetDnsCommand() string {
+	return a.cfg.CustomDnsCommand
+}

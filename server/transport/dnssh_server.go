@@ -152,11 +152,6 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 		}
 		log.Trace().Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("begin stream")
 		go func() {
-			// defer func() {
-			// 	log.Trace().Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("end stream")
-			// 	stream.Close()
-			// }()
-
 			// The client first sends its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
 			rawId := make([]byte, 32)

