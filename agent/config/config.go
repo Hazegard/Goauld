@@ -81,6 +81,10 @@ var (
 
 	_background = "false"
 
+	_custom_dns_command = ""
+
+	_killswitch = "7"
+
 	defaultValues = kong.Vars{
 		"_agePubKey": _agePubKey,
 
@@ -141,6 +145,10 @@ var (
 		"_config_file":     _config_file,
 
 		"_background": _background,
+
+		"_custom_dns_command": _custom_dns_command,
+
+		"_killswitch": _killswitch,
 	}
 )
 
@@ -213,7 +221,9 @@ type AgentConfig struct {
 	Background       bool `name:"background" yaml:"background" short:"B" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
 	HiddenBackground bool `name:"hidden-background" yaml:"hidden-background" hidden:""  negatable:"" optional:"" help:"Start the agent in the background."`
 
-	CustomDnsCommand string `name:"custom-dns-command" yaml:"custom-dns-command" help:"System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.\n Powershell example: \"((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '\x00' -replace '\\s+', '\x00' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )\"\n Linux example:\"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p\"."`
+	CustomDnsCommand string `default:"${_custom_dns_command}" name:"custom-dns-command" yaml:"custom-dns-command" help:"System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.\n Powershell example: \"((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '\x00' -replace '\\s+', '\x00' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )\"\n Linux example:\"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p\"."`
+
+	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"number of days to stay alive. Afterward, the agent will kill itself. (0 to disable the killswitch)"`
 }
 
 func (c *AgentConfig) Validate() error {
@@ -230,6 +240,10 @@ func (c *AgentConfig) Validate() error {
 	}
 	if len(c.PrivatePassword) > 72 {
 		errs = append(errs, bcrypt.ErrPasswordTooLong)
+	}
+
+	if c.KillSwitch < 0 {
+		errs = append(errs, fmt.Errorf("the kill-switch must not be negative"))
 	}
 	return errors.Join(errs...)
 }

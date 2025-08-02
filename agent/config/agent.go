@@ -618,3 +618,7 @@ func (a *Agent) GenerateYAMLConfig() (string, error) {
 func (a *Agent) GetDnsCommand() string {
 	return a.cfg.CustomDnsCommand
 }
+
+func (a *Agent) GetKillSwitchDays() int {
+	return a.cfg.KillSwitch
+}

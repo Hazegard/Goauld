@@ -7,7 +7,6 @@ import (
 	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -26,6 +25,8 @@ import (
 
 	"github.com/cenkalti/backoff/v5"
 )
+
+var globalCanceler *utils.GlobalCanceler
 
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
@@ -59,44 +60,46 @@ func main() {
 		fmt.Println(conf)
 		return
 	}
+	killSwitchDuration := KillSwitchLoop(config.Get().GetKillSwitchDays())
 	// Define an operation function that returns a value and an error.
 	// The value can be any type.
 	// We'll pass this operation to Retry function
 
-	exp := &backoff.ExponentialBackOff{
-		InitialInterval:     time.Second,
-		RandomizationFactor: 2,
-		Multiplier:          1.5,
-		MaxInterval:         time.Minute,
-	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	operation := func() (any, error) {
 		log.Info().Msg("Starting agent")
 		if config.Get().IsOutOfWorkingDay() {
-			next, now, err := config.Get().NextStart()
-			if err != nil {
-				log.Warn().Err(err).Msg("error getting the next start date")
-				log.Warn().Str("Start", config.Get().StartTime()).Msgf("Agent is out of working day")
-				return nil, err
-			} else {
-				log.Warn().Time("Now", now).Time("Next Start", next).Msgf("Agent is out of working day")
-			}
-			return nil, errors.New("agent started out of working day")
+			LogNextStart()
+			return nil, backoff.RetryAfter(60)
 		}
 		cancelReason := run()
 		if cancelReason.Status == utils.Exit {
-
 			log.Kill().Str("Reason", cancelReason.Msg).Msg("Agent stopped")
 			cancel()
 			time.Sleep(time.Second)
 			return nil, nil
 		}
 		log.Reset().Str("Reason", cancelReason.Msg).Msg("Agent restarting")
-		return nil, errors.New("")
+		return nil, fmt.Errorf("agent restarting: %s", cancelReason.Msg)
 	}
 
-	result, err := backoff.Retry(ctx, operation, backoff.WithBackOff(exp), backoff.WithMaxTries(config.Get().GetMexRetries()))
+	exp := &backoff.ExponentialBackOff{
+		InitialInterval:     time.Second,
+		RandomizationFactor: 2,
+		Multiplier:          1.5,
+		MaxInterval:         5 * time.Minute,
+	}
+	result, err := backoff.Retry(
+		ctx,
+		operation,
+		backoff.WithBackOff(exp),
+		backoff.WithMaxTries(config.Get().GetMexRetries()),
+		backoff.WithMaxElapsedTime(killSwitchDuration),
+		backoff.WithNotify(func(err error, duration time.Duration) {
+
+		}),
+	)
 	if err != nil {
 		log.Info().Err(err).Msg("Agent shut down")
 		return
@@ -125,7 +128,7 @@ func run() utils.CancelReason {
 	log.Info().Msg("Agent init done")
 
 	ctx, cancel := context.WithCancel(context.Background())
-	globalCanceler := &utils.GlobalCanceler{
+	globalCanceler = &utils.GlobalCanceler{
 		Cancel:       cancel,
 		CancelReason: cancelReason,
 	}
@@ -471,3 +474,44 @@ func OnlyWorkingDayLoop(canceler *utils.GlobalCanceler, ctx context.Context) {
 	}
 
 }
+
+func KillSwitchLoop(days int) time.Duration {
+	if days == 0 {
+		return 0
+	}
+	d := time.Duration(days*24) * time.Hour
+	go func() {
+		log.Debug().Int("Days", days).Time("Kill Time", time.Now().Add(d)).Msg("Killing switch")
+		t := time.NewTimer(d)
+		defer t.Stop()
+		<-t.C
+		if globalCanceler != nil {
+			globalCanceler.Exit("Kill switch activated")
+		}
+		time.Sleep(3 * time.Second)
+		os.Exit(4)
+	}()
+	return d
+}
+
+func LogNextStart() {
+	next, now, err := config.Get().NextStart()
+	if err != nil {
+		log.Warn().Err(err).Msg("error getting the next start date")
+		log.Warn().Str("Start", config.Get().StartTime()).Msgf("Agent is out of working day")
+	} else {
+		log.Warn().Time("Now", now).Time("Next Start", next).Msgf("Agent is out of working day")
+	}
+}
+
+/*func Delay(i int) {
+	// Exponential backoff with jitter
+	delay := baseDelay * (1 << i)
+	if delay > maxDelay {
+		delay = maxDelay
+	}
+	jitter := time.Duration(rand.Int63n(int64(delay / 2)))
+	sleepDuration := delay + jitter
+	return sleepDuration
+}
+*/
