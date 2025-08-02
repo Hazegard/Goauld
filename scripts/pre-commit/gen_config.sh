@@ -5,7 +5,7 @@ function gen(){
   target="$1"
   echo Generating "$target" configuration file...
   mkdir -p ./config
-  go run ./"$target" --generate-config > ./config/"$target"_config.yaml
+  go run ./"$target" --generate-config | tr -d '\000' > ./config/"$target"_config.yaml
   echo "Done"
 }
 

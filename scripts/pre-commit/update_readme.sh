@@ -75,29 +75,29 @@ function UpdateBlocCode(){
 # shellcheck disable=SC2016
 echo 'Agent (`goauld`)'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'Agent (`goauld`)' <(echo '$ goauld --help'; COLUMNS=10000 go run ./agent --help | cat | sed -n '/^Usage:/,$p')
+UpdateBlocCode Readme.md 'Agent (`goauld`)' <(echo '$ goauld --help'; COLUMNS=10000 go run ./agent --help | cat | sed -n '/^Usage:/,$p' | tr -d '\000')
 
 # shellcheck disable=SC2016
 echo 'Client (`tealc`)'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'Client (`tealc`)' <(echo '$ tealc --help'; COLUMNS=10000 go run ./client --help | cat| sed -n '/^Usage:/,$p')
+UpdateBlocCode Readme.md 'Client (`tealc`)' <(echo '$ tealc --help'; COLUMNS=10000 go run ./client --help | cat| sed -n '/^Usage:/,$p' | tr -d '\000')
 
 echo 'TUI'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'TUI' <(echo '$ tealc tui --help'; COLUMNS=10000 go run ./client tui --help | cat| sed -n '/^Usage:/,$p')
+UpdateBlocCode Readme.md 'TUI' <(echo '$ tealc tui --help'; COLUMNS=10000 go run ./client tui --help | cat| sed -n '/^Usage:/,$p' | tr -d '\000')
 
 echo 'SSH (exec)'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'SSH (exec)' <(echo '$ tealc ssh --help'; COLUMNS=10000 go run ./client ssh --help | cat| sed -n '/^Usage:/,$p')
+UpdateBlocCode Readme.md 'SSH (exec)' <(echo '$ tealc ssh --help'; COLUMNS=10000 go run ./client ssh --help | cat| sed -n '/^Usage:/,$p' | tr -d '\000')
 
 echo 'SCP'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'SCP' <(echo '$ tealc scp --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p')
+UpdateBlocCode Readme.md 'SCP' <(echo '$ tealc scp --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | tr -d '\000')
 
 echo 'Compile'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'Compile' <(echo '$ tealc compile --help'; COLUMNS=10000 go run ./client compile --help | cat| sed -n '/^Usage:/,$p' | sed 's/Usage: tealc \[flags\]/Usage: tealc compile [flags]/g')
+UpdateBlocCode Readme.md 'Compile' <(echo '$ tealc compile --help'; COLUMNS=10000 go run ./client compile --help | cat| sed -n '/^Usage:/,$p' | sed 's/Usage: tealc \[flags\]/Usage: tealc compile [flags]/g' | tr -d '\000')
 
 echo 'Server'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'Server' <(echo '$ goauld_server --help'; COLUMNS=10000 go run ./server --help | cat | sed -n '/^Usage:/,$p')
+UpdateBlocCode Readme.md 'Server' <(echo '$ goauld_server --help'; COLUMNS=10000 go run ./server --help | cat | sed -n '/^Usage:/,$p' | tr -d '\000')

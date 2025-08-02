@@ -120,11 +120,11 @@ type ServerConfig struct {
 	DnsAddr   string `default:"${_dns_listen_addr}"  name:"dns-listen-addr" yaml:"dns-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 	QuicAddr  string `default:"${_quic_listen_addr}"  name:"quic-listen-addr" yaml:"quic-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 
-	Verbose int `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" yaml:"verbose" short:"v" type:"counter"`
+	Verbose int `default:"${_verbosity}" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
 
 	Tls     bool   `default:"${_tls}" negatable:"" name:"tls" yaml:"tls" help:"Enable TLS."`
-	TlsKey  string `default:"${_tls_key}" help:"Path to TLS certificate key." name:"tls-key" yaml:"tls-key"`
-	TlsCert string `default:"${_tls_cert}" help:"Path to TLS certificate." name:"tls-cert" yaml:"tls-cert"`
+	TlsKey  string `default:"${_tls_key}" name:"tls-key" yaml:"tls-key" help:"Path to TLS certificate key."`
+	TlsCert string `default:"${_tls_cert}" name:"tls-cert" yaml:"tls-cert"  help:"Path to TLS certificate."`
 	Quic    bool   `default:"${_quic}" negatable:"" name:"quic" yaml:"quic" help:"Enable QUIC."`
 
 	DNS        bool   `default:"${_dns}" negatable:"" name:"dns" yaml:"dns" help:"Enable DNS."`

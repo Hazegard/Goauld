@@ -132,7 +132,7 @@ type ClientConfig struct {
 	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required to access the /manage/ endpoint."`
 	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token required to access the /admin/ endpoint."`
 
-	Verbose  int  `default:"${_verbosity}" name:"verbose" yaml:"verbose"  short:"v" type:"counter" help:"Verbosity. Repeat to increase" `
+	Verbose  int  `default:"${_verbosity}" name:"verbose" yaml:"verbose"  short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" yaml:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
 	Version        bool   `default:"${_version}" name:"version" yaml:"version" short:"V" help:"Show version information"`

@@ -64,6 +64,7 @@ env:
   - AGENT__DNS_DOMAIN={{ .Env.AGENT__DNS_DOMAIN }}
 
   - AGENT__SHARED_PASSWORD={{ .Env.AGENT__SHARED_PASSWORD }}
+  - AGENT__PRIVATE_PASSWORD_CLI={{ .Env.AGENT__PRIVATE_PASSWORD_CLI }}
   - AGENT__NAME={{ .Env.AGENT__NAME }}
 
   - AGENT__SSHD_ENABLED={{ .Env.AGENT__SSHD_ENABLED }}
@@ -113,6 +114,11 @@ env:
   - AGENT__CONFIG_FILE={{ .Env.AGENT__CONFIG_FILE }}
 
   - AGENT__BACKGROUND={{ .Env.AGENT__BACKGROUND }}
+  - AGENT__HIDDEN_BACKGROUND={{ .Env.AGENT__HIDDEN_BACKGROUND }}
+
+  - AGENT__CUSTOM_DNS_COMMAND={{ .Env.AGENT__CUSTOM_DNS_COMMAND }}
+
+  - AGENT__KILLSWITCH={{ .Env.AGENT__KILLSWITCH }}
   - CLIENT__SERVER={{ .Env.CLIENT__SERVER }}
   - CLIENT__SSH_SERVER={{ .Env.CLIENT__SSH_SERVER }}
 
@@ -287,6 +293,7 @@ builds:
       - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__PRIVATE_PASSWORD_CLI") }} -X Goauld/agent/config._private_password_cli={{ .Env.AGENT__PRIVATE_PASSWORD_CLI }}{{end}}'
       - '{{ if (index .Env "AGENT__NAME") }} -X Goauld/agent/config._name={{ .Env.AGENT__NAME }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
@@ -336,6 +343,11 @@ builds:
       - '{{ if (index .Env "AGENT__CONFIG_FILE") }} -X Goauld/agent/config._config_file={{ .Env.AGENT__CONFIG_FILE }}{{end}}'
 
       - '{{ if (index .Env "AGENT__BACKGROUND") }} -X Goauld/agent/config._background={{ .Env.AGENT__BACKGROUND }}{{end}}'
+      - '{{ if (index .Env "AGENT__HIDDEN_BACKGROUND") }} -X Goauld/agent/config._hidden_background={{ .Env.AGENT__HIDDEN_BACKGROUND }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__CUSTOM_DNS_COMMAND") }} -X Goauld/agent/config._custom_dns_command={{ .Env.AGENT__CUSTOM_DNS_COMMAND }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__KILLSWITCH") }} -X Goauld/agent/config._killswitch={{ .Env.AGENT__KILLSWITCH }}{{end}}'
 
 # END Dynamic AGENT
   - id: "client"

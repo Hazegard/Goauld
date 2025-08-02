@@ -33,12 +33,13 @@ function GenConfig(){
     PREFIX="$(echo "$ID" | tr '[:lower:]' '[:upper:]')"
     ENV_VAR="${PREFIX}_$(echo "$var" | tr '[:lower:]' '[:upper:]')"
 
-    help="$(rg -o "default:\"\\$\{$var}\".*help:\"(.*?)\"" -r '$1' "$source_file"  )"
+    help="$(rg -ao "default:\"\\$\{$var}\".*help:\"(.*?)\"\`" -r '$1' "$source_file"  | tr -d '\000' )"
     if [[ "$help" == "-" ]];then
       continue
     fi
 
-    echo "# $help" >> "$ENV_FILE"
+
+    echo -e "$help" | sed 's/^/# /' >> "$ENV_FILE"
     echo "$ENV_VAR=" >> "$ENV_FILE"
     echo "  - $ENV_VAR={{ .Env.$ENV_VAR }}" >> "$GORELEASER_ENV"
 

@@ -26,7 +26,7 @@ type Compiler struct {
 	Source        string `default:"${_compile_source}" short:"s" help:"Source goauld directory."`
 	EnvFile       string `default:"${_compile_env_file}" name:"env" help:"File containing environment variables."`
 	Output        string `default:"${_compile_output}" short:"o" help:"Folder containing compiled compiled agents."`
-	Verbose       int    `default:"${_verbosity}" help:"Verbosity. Repeat to increase" name:"verbose" short:"v" type:"counter"`
+	Verbose       int    `default:"${_verbosity}" name:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
 	Seed          string `default:"${_compile_seed}" name:"seed" short:"S" help:"Seed to use to obfuscate agent."`
 	AgentPassword string `default:"${_compile_private_password}" short:"p" help:"Static agent password."`
