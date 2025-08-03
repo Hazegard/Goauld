@@ -33,6 +33,9 @@ func (j JVersion) Compare(jj JVersion) int {
 	return strings.Compare(j.Version, jj.Version)
 }
 
+func (j JVersion) String() string {
+	return fmt.Sprintf("%s-%.8s (%s)", j.Version, j.Commit, j.Date)
+}
 func AppName() string {
 	out := strings.Map(func(r rune) rune {
 		if unicode.IsLetter(r) {

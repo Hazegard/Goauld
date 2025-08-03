@@ -1,6 +1,7 @@
 package types
 
 import (
+	"Goauld/common"
 	"time"
 
 	"Goauld/common/ssh"
@@ -24,10 +25,11 @@ type Agent struct {
 	RemoteAddr           string                     `gorm:"type:text" json:"remoteAddr" yaml:"remoteAddr"`
 	HasStaticPassword    bool                       `gorm:"type:boolean" json:"hasStaticPassword" yaml:"hasStaticPassword"`
 
-	Platform     string `gorm:"type:text" yaml:"platform"`
-	Architecture string `gorm:"type:text" yaml:"architecture"`
-	Username     string `gorm:"type:text" yaml:"username"`
-	Hostname     string `gorm:"type:text" yaml:"hostname"`
-	IPs          string `gorm:"type:text" yaml:"ips"`
-	Path         string `gorm:"type:text" yaml:"path"`
+	Platform     string          `gorm:"type:text" yaml:"platform"`
+	Architecture string          `gorm:"type:text" yaml:"architecture"`
+	Username     string          `gorm:"type:text" yaml:"username"`
+	Hostname     string          `gorm:"type:text" yaml:"hostname"`
+	IPs          string          `gorm:"type:text" yaml:"ips"`
+	Path         string          `gorm:"type:text" yaml:"path"`
+	Version      common.JVersion `gorm:"serializer:json" json:"version" yaml:"version"`
 }

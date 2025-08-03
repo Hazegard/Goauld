@@ -316,6 +316,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 
 	rows := []teatable.Row{
 		{"Id", agent.Id},
+		{"Version", agent.Version.String()},
 		{"OS", agent.Platform},
 		{"Archi", agent.Architecture},
 		{"Username", agent.Username},
@@ -336,6 +337,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 	length := 0
 	lines := []string{
 		agent.Id,
+		agent.Version.String(),
 		agent.Platform,
 		agent.Architecture,
 		agent.RemoteAddr,

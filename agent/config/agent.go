@@ -1,6 +1,7 @@
 package config
 
 import (
+	"Goauld/common"
 	"Goauld/common/log"
 	"Goauld/common/utils"
 	"crypto/md5"
@@ -621,4 +622,8 @@ func (a *Agent) GetDnsCommand() string {
 
 func (a *Agent) GetKillSwitchDays() int {
 	return a.cfg.KillSwitch
+}
+
+func (a *Agent) Version() common.JVersion {
+	return common.JsonVersion()
 }

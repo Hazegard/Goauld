@@ -1,6 +1,7 @@
 package socket_io
 
 import (
+	"fmt"
 	"strings"
 
 	"Goauld/agent/config"
@@ -10,14 +11,15 @@ import (
 
 // AgentData holds the ssh password used to authenticate on the agent
 type AgentData struct {
-	AgentSshPassword string `json:"ssh_password"`
-	Platform         string `json:"platform"`
-	Architecture     string `json:"architecture"`
-	Username         string `json:"username"`
-	Hostname         string `json:"hostname"`
-	IPs              string `json:"ips"`
-	Path             string `json:"path"`
-	HasStaticPwd     bool   `json:"has_static_pwd"`
+	AgentSshPassword string          `json:"ssh_password"`
+	Platform         string          `json:"platform"`
+	Architecture     string          `json:"architecture"`
+	Username         string          `json:"username"`
+	Hostname         string          `json:"hostname"`
+	IPs              string          `json:"ips"`
+	Path             string          `json:"path"`
+	HasStaticPwd     bool            `json:"has_static_pwd"`
+	AgentVersion     common.JVersion `json:"agent_version"` // TODO: add in socket.io agent/server + tuidata information
 }
 
 func newAgentSshPasswordMessage() *AgentData {
@@ -26,6 +28,7 @@ func newAgentSshPasswordMessage() *AgentData {
 
 func DecryptAgentSshPasswordMessage(data []byte, c *crypto.SymCryptor) (*AgentData, error) {
 	a, err := common.Decryptor[AgentData]{}.Decrypt(data, c, newAgentSshPasswordMessage)
+	fmt.Printf("%+v\n", a)
 	return a, err
 }
 
@@ -43,6 +46,7 @@ func NewEncryptedAgentSshPasswordMessage(a *config.Agent, cryptor *crypto.SymCry
 		IPs:              strings.Join(a.IPs, ","),
 		Path:             a.Path,
 		HasStaticPwd:     a.PrivateSshdPassword() != "",
+		AgentVersion:     a.Version(),
 	}
 	return EncryptAgentSshPasswordMessage(message, cryptor)
 }
