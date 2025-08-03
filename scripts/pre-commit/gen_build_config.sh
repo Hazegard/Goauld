@@ -39,12 +39,13 @@ function GenConfig(){
     fi
 
 
-    echo -e "$help" | sed 's/^/# /' >> "$ENV_FILE"
-    echo "$ENV_VAR=" >> "$ENV_FILE"
-    echo "  - $ENV_VAR={{ .Env.$ENV_VAR }}" >> "$GORELEASER_ENV"
+    if [[ "$ENV_VAR" != *_CLI ]]; then
+      echo -e "$help" | sed 's/^/# /' >> "$ENV_FILE"
+      echo "$ENV_VAR=" >> "$ENV_FILE"
+      echo "  - $ENV_VAR={{ .Env.$ENV_VAR }}" >> "$GORELEASER_ENV"
+      echo "      - '{{ if (index .Env \"$ENV_VAR\") }} -X $module.$var={{ .Env.$ENV_VAR }}{{end}}'" >> "$GORELEASER_FLAGS"
+    fi
 
-
-    echo "      - '{{ if (index .Env \"$ENV_VAR\") }} -X $module.$var={{ .Env.$ENV_VAR }}{{end}}'" >> "$GORELEASER_FLAGS"
   done < <(cat "$source_file" | rg -A 1 'default:"(\$\{(.*)\})?"' -oa -r '$2' | sed '$d')
 }
 

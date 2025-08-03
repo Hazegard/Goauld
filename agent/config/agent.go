@@ -171,7 +171,7 @@ func (a *Agent) PrivateSshdPassword() string {
 	if a.cfg.PrivatePassword != "" {
 		return a.cfg.PrivatePassword
 	}
-	return _private_password
+	return _password
 }
 
 // ValidatePassword return whether the incoming password is valid.

@@ -20,10 +20,10 @@ import (
 var (
 	_agePubKey = "age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p"
 
-	_private_password     = ""
-	_private_password_cli = ""
-	_shared_password      = ""
-	_name                 = "user@hostname"
+	_password        = ""
+	_password_cli    = ""
+	_shared_password = ""
+	_name            = "user@hostname"
 
 	_server      = "www.example.com"
 	_ssh_server  = "www.example.com:22222"
@@ -89,9 +89,9 @@ var (
 	defaultValues = kong.Vars{
 		"_agePubKey": _agePubKey,
 
-		"_private_password_cli": _private_password_cli,
-		"_shared_password":      _shared_password,
-		"_name":                 _name,
+		"_password_cli":    _password_cli,
+		"_shared_password": _shared_password,
+		"_name":            _name,
 
 		"_sshd_enabled":           _sshd_enabled,
 		"_socks_enabled":          _socks_enabled,
@@ -171,7 +171,7 @@ type AgentConfig struct {
 	DnsServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`
 
 	LocalSshPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
-	PrivatePassword  string `default:"${_private_password_cli}" short:"p" name:"password" optional:"" help:"SSH password to access the agent"`
+	PrivatePassword  string `default:"${_password_cli}" short:"p" name:"password" optional:"" help:"SSH password to access the agent"`
 	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
