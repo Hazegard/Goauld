@@ -105,7 +105,8 @@ func NewHttpRouter(controlServer *control.SocketIO,
 			tlsC := &tls.Config{
 				NextProtos:   []string{"http/1.1"},
 				Certificates: []tls.Certificate{cert},
-				MinVersion:   tls.VersionSSL30,
+				//nolint:staticcheck // SA1019
+				MinVersion: tls.VersionSSL30,
 			}
 			httprouter.tlsConfig = tlsC
 			quicTls := &tls.Config{
@@ -126,6 +127,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 				return nil, err
 			}
 			tlsConfig.NextProtos = []string{"http/1.1"}
+			//nolint:staticcheck // SA1019
 			tlsConfig.MinVersion = tls.VersionSSL30
 			httprouter.tlsConfig = tlsConfig
 

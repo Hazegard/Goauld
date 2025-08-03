@@ -81,12 +81,15 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	dialer := net.Dialer{
 		Timeout: upstreamDialTimeout,
 	}
+	//nolint:errcheck
 	defer stream.Close()
+	//nolint:errcheck
 	defer conn.Close()
 	upstreamConn, err := dialer.Dial("tcp", upstream)
 	if err != nil {
 		return fmt.Errorf("agent %s: stream %08x:%d connect upstream: %v", id, conn.GetConv(), stream.ID(), err)
 	}
+	//nolint:errcheck
 	defer upstreamConn.Close()
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
 	err = d.db.SetAgentSshMode(id, "DNS", stream.RemoteAddr().String())
@@ -140,11 +143,13 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer sess.Close()
 
 	for {
 		stream, err := sess.AcceptStream()
 		if err != nil {
+			//nolint:staticcheck // SA1019
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				continue
 			}
@@ -215,6 +220,7 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 	for {
 		conn, err := ln.AcceptKCP()
 		if err != nil {
+			//nolint:staticcheck // SA1019
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				continue
 			}
@@ -222,6 +228,7 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 		}
 		log.Trace().Str("Mode", "DNSSH").Uint32("Conv", conn.GetConv()).Msg("accepted connection")
 		// Permit coalescing the payloads of consecutive sends.
+		//nolint:staticcheck // SA1019
 		conn.SetStreamMode(true)
 		// Disable the dynamic congestion window (limit only by the
 		// maximum of local and remote static windows).
@@ -438,6 +445,7 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 		var buf [4096]byte
 		n, addr, err := dnsConn.ReadFrom(buf[:])
 		if err != nil {
+			//nolint:staticcheck // SA1019
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				log.Trace().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
 				continue
@@ -616,6 +624,7 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 		// Now we actually send the message as a UDP packet.
 		_, err = dnsConn.WriteTo(buf, rec.Addr)
 		if err != nil {
+			//nolint:staticcheck // SA1019
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				log.Trace().Str("Mode", "DNSSH").Msgf("WriteTo temporary error: %v", err)
 				continue
@@ -749,6 +758,7 @@ func (d *DNSSHServer) Run() error {
 		return fmt.Errorf("opening KCP listener: %v", err)
 	}
 	d.kcpAddr = ln.Addr().String()
+	//nolint:errcheck
 	defer ln.Close()
 	go func() {
 		err := d.acceptSessions(ln, mtu)

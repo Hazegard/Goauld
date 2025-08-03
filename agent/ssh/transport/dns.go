@@ -138,22 +138,20 @@ func dnsResponsePayload(resp *dns.Message, domain dns.Name) []byte {
 // were 0 bytes remaining to read from r. It returns io.ErrUnexpectedEOF when
 // EOF occurs in the middle of an encoded packet.
 func nextPacket(r *bytes.Reader) ([]byte, error) {
-	for {
-		// TODO: check the for loop
-		var n uint16
-		err := binary.Read(r, binary.BigEndian, &n)
-		if err != nil {
-			// We may return a real io.EOF only here.
-			return nil, err
-		}
-		p := make([]byte, n)
-		_, err = io.ReadFull(r, p)
-		// Here we must change io.EOF to io.ErrUnexpectedEOF.
-		if err == io.EOF {
-			err = io.ErrUnexpectedEOF
-		}
-		return p, err
+	var n uint16
+	err := binary.Read(r, binary.BigEndian, &n)
+	if err != nil {
+		// We may return a real io.EOF only here.
+		return nil, err
 	}
+	p := make([]byte, n)
+	_, err = io.ReadFull(r, p)
+	// Here we must change io.EOF to io.ErrUnexpectedEOF.
+	if err == io.EOF {
+		err = io.ErrUnexpectedEOF
+	}
+	return p, err
+
 }
 
 // recvLoop repeatedly calls transport.ReadFrom to receive a DNS message,
@@ -198,6 +196,7 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 			}
 		} else {
 			if err != nil {
+				//nolint:staticcheck // SA1019
 				if err, ok := err.(net.Error); ok && err.Temporary() {
 					log.Debug().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
 					continue
@@ -222,7 +221,7 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 				break
 			}
 			anyPacket = true
-			c.QueuePacketConn.QueueIncoming(p, addr)
+			c.QueueIncoming(p, addr)
 		}
 
 		// If the payload contained one or more packets, permit sendLoop
@@ -393,7 +392,7 @@ func (c *DNSPacketConn) sendLoop(transport net.PacketConn, addr net.Addr) error 
 	pollTimer := time.NewTimer(pollDelay)
 	for {
 		var p []byte
-		outgoing := c.QueuePacketConn.OutgoingQueue(addr)
+		outgoing := c.OutgoingQueue(addr)
 		pollTimerExpired := false
 		// Prioritize sending an actual data packet from outgoing. Only
 		// consider a poll when outgoing is empty.

@@ -39,6 +39,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 	if err != nil {
 		return fmt.Errorf("stream %08x:%d connect upstream: %v", conv, stream.ID(), err)
 	}
+	//nolint:errcheck
 	defer upstreamConn.Close()
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
 
@@ -102,11 +103,13 @@ func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) err
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer sess.Close()
 
 	for {
 		stream, err := sess.AcceptStream()
 		if err != nil {
+			//nolint:staticcheck // SA1019
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				continue
 			}
@@ -136,6 +139,7 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 	for {
 		conn, err := ln.AcceptKCP()
 		if err != nil {
+			//nolint:staticcheck // SA1019
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				continue
 			}
@@ -143,6 +147,7 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 		}
 		log.Debug().Str("Mode", "SSHTTP").Msgf("begin session %08x", conn.GetConv())
 		// Permit coalescing the payloads of consecutive sending.
+		//nolint:staticcheck // SA1019
 		conn.SetStreamMode(true)
 		// Disable the dynamic congestion window (limit only by the
 		// maximum of local and remote static windows).
@@ -176,6 +181,7 @@ func decodeRequest(req *http.Request) (turbotunnel.ClientID, []byte) {
 	if err != nil {
 		return turbotunnel.ClientID{}, nil
 	}
+	//nolint:errcheck
 	defer req.Body.Close()
 
 	var clientID turbotunnel.ClientID

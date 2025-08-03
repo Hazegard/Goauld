@@ -17,6 +17,7 @@ func (router *MainRouter) ServeTLS() {
 		log.Error().Err(err).Msg("Failed to start TLS listener")
 		return
 	}
+	//nolint:errcheck
 	defer listener.Close()
 	config.Get().UpdateHTTPSAddr(listener.Addr().(*net.TCPAddr).Port)
 	log.Info().Str("Address", config.Get().LocalHttpsAddr()).Msgf("HTTPS server listening")
@@ -35,6 +36,7 @@ func (router *MainRouter) ServeTLS() {
 // If the request matched the HTTP domain, forward this request to the HTTP router
 // If the request matches the TLS domain, forward this TLS traffic to the SSH over TLS
 func (router *MainRouter) HandleTls(c net.Conn) {
+	//nolint:errcheck
 	defer c.Close()
 	// Check if the connection is a TLS connection
 	if tlsConn, ok := c.(*tls.Conn); ok {

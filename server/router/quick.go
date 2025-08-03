@@ -19,6 +19,7 @@ func (router *MainRouter) ServeQUIC() {
 		log.Error().Err(err).Msg("Failed to start QUIC listener")
 		return
 	}
+	//nolint:errcheck
 	defer listener.Close()
 	config.Get().UpdateQUICAddr(listener.Addr().(*net.UDPAddr).Port)
 	log.Info().Str("Address", config.Get().QuicAddr).Msgf("QUIC server listening")

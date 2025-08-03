@@ -31,6 +31,7 @@ func CopyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer sourceFile.Close()
 
 	// Create the destination file for writing.
@@ -38,6 +39,7 @@ func CopyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
+	//nolint:errcheck
 	defer destinationFile.Close()
 
 	// Copy the contents using io.Copy.

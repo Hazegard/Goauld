@@ -92,8 +92,8 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 		payload.Write(c.clientID[:])
 
 		var p []byte
-		unstash := c.QueuePacketConn.Unstash(c.remoteAddr)
-		outgoing := c.QueuePacketConn.OutgoingQueue(c.remoteAddr)
+		unstash := c.Unstash(c.remoteAddr)
+		outgoing := c.OutgoingQueue(c.remoteAddr)
 		pollTimerExpired := false
 		// Block, waiting for one packet or a demand to poll. Prioritize
 		// taking a packet from the stash, then taking one from the
@@ -157,7 +157,7 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 			// We read an actual packet, but it didn't fit under the
 			// limit. Stash it so that it will be first in line for
 			// the next poll.
-			c.QueuePacketConn.Stash(p, c.remoteAddr)
+			c.Stash(p, c.remoteAddr)
 		}
 
 		go func() {
@@ -169,6 +169,7 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 				// TODO: perhaps self-throttle when this happens.
 				return
 			}
+			//nolint:errcheck
 			defer body.Close()
 			err = c.processIncoming(body)
 			if err != nil {
@@ -199,6 +200,6 @@ func (c *PollingPacketConn) processIncoming(body io.Reader) error {
 			return err
 		}
 
-		c.QueuePacketConn.QueueIncoming(p, c.remoteAddr)
+		c.QueueIncoming(p, c.remoteAddr)
 	}
 }

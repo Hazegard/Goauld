@@ -27,6 +27,7 @@ func OverwriteFile(path string, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to open file for overwrite: %w", err)
 	}
+	//nolint:errcheck
 	defer file.Close()
 
 	// Write new content

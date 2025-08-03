@@ -107,12 +107,16 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 					}
 					go gossh.DiscardRequests(reqs)
 					go func() {
+						//nolint:errcheck
 						defer ch.Close()
+						//nolint:errcheck
 						defer c.Close()
 						_, _ = io.Copy(ch, c)
 					}()
 					go func() {
+						//nolint:errcheck
 						defer ch.Close()
+						//nolint:errcheck
 						defer c.Close()
 						_, _ = io.Copy(c, ch)
 					}()

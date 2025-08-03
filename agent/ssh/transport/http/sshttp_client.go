@@ -75,6 +75,7 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 
 	log.Trace().Str("Mode", "SSHTTP").Str("ID", fmt.Sprintf("%08x", conn.GetConv())).Msg("begin session")
 	// Permit coalescing the payloads of consecutive sends.
+	//nolint:staticcheck // SA1019
 	conn.SetStreamMode(true)
 	// Disable the dynamic congestion window (limit only by the maximum of
 	// local and remote static windows).
@@ -134,6 +135,7 @@ func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []by
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("server returned status %v", resp.Status)

@@ -41,6 +41,7 @@ func ParseArtifacts(filePath string) ([]Artifact, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %v", err)
 	}
+	//nolint:errcheck
 	defer file.Close()
 
 	// Read the file's content

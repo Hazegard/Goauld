@@ -106,6 +106,7 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 	if err != nil {
 		return nil, errors.New("Error while requesting agent list: " + err.Error())
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -133,6 +134,7 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 	if err != nil {
 		return types.Agent{}, errors.New("Error while requesting agent by id: " + err.Error())
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -160,6 +162,7 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	if err != nil {
 		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %v", err)
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -194,6 +197,7 @@ func (api *API) KillAgent(id string, doExit bool) error {
 		return err
 	}
 	if res.StatusCode != http.StatusNoContent {
+		//nolint:errcheck
 		defer res.Body.Close()
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
@@ -212,6 +216,7 @@ func (api *API) DeleteAgent(id string) error {
 		return err
 	}
 	if res.StatusCode != http.StatusNoContent {
+		//nolint:errcheck
 		defer res.Body.Close()
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
@@ -228,6 +233,7 @@ func (api *API) DumpAll() ([]commontypes.State, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -252,6 +258,7 @@ func (api *API) UpdateLogLevel(level string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -279,6 +286,7 @@ func (api *API) version(route string) (common.JVersion, error) {
 	if err != nil {
 		return common.JVersion{}, err
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -302,6 +310,7 @@ func (api *API) GetConfig() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -329,6 +338,7 @@ func (api *API) DumpState() (commontypes.Status, error) {
 	if err != nil {
 		return commontypes.Status{}, err
 	}
+	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {

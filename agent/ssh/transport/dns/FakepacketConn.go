@@ -19,11 +19,10 @@ func (m MockAddr) String() string  { return string(m) }
 
 // FakePacketConn simulates a PacketConn using an internal channel
 type FakePacketConn struct {
-	closed        bool
-	packets       chan packet
-	localAddr     net.Addr
-	deadline      time.Time
-	currentPacket packet
+	closed    bool
+	packets   chan packet
+	localAddr net.Addr
+	deadline  time.Time
 }
 
 func NewFakePacketConn(bufferSize int) *FakePacketConn {

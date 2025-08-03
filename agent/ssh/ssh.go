@@ -117,7 +117,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 			delete(sshAgent.remotePortMap, rpf.String())
 			sshAgent.remotePortMapMu.Unlock()
 		}()
-
+		//nolint:errcheck
 		defer remoteListener.Close()
 		errCounter := 0
 		for {
@@ -153,6 +153,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 						log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to connect to local service")
 						return
 					}
+					//nolint:errcheck
 					defer localConn.Close()
 
 					errChan := make(chan error, 1)

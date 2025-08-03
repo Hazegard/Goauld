@@ -182,19 +182,20 @@ func SetLogLevel(verbosity int) {
 	}
 }
 
-func zerologLevelToGormLogLevel(level zerolog.Level) logger.LogLevel {
-	switch level {
-	case zerolog.ErrorLevel:
-		return logger.Error
-	case zerolog.WarnLevel:
-		return logger.Warn
-	case zerolog.InfoLevel:
-		return logger.Info
-	default:
-		return logger.Info
+/*
+	func zerologLevelToGormLogLevel(level zerolog.Level) logger.LogLevel {
+		switch level {
+		case zerolog.ErrorLevel:
+			return logger.Error
+		case zerolog.WarnLevel:
+			return logger.Warn
+		case zerolog.InfoLevel:
+			return logger.Info
+		default:
+			return logger.Info
+		}
 	}
-}
-
+*/
 func verbosityToGormLogLevel(verbosity int) logger.LogLevel {
 	switch verbosity {
 	case 0:

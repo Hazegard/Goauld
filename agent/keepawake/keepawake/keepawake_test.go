@@ -31,6 +31,7 @@ func TestKeepAlive(t *testing.T) {
 
 	t.Run("Basic Operations", func(t *testing.T) {
 		k := &Keeper{}
+		//nolint:errcheck
 		defer k.Stop() // Ensure cleanup even if test fails
 
 		if k.IsRunning() {
@@ -68,6 +69,7 @@ func TestKeepAlive(t *testing.T) {
 
 	t.Run("Timed Operation", func(t *testing.T) {
 		k := &Keeper{}
+		//nolint:errcheck
 		defer k.Stop() // Ensure cleanup even if test fails
 
 		// Start timed

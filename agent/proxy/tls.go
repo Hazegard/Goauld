@@ -10,7 +10,7 @@ import (
 func NewTlsConfig() *tls.Config {
 	return &tls.Config{
 		InsecureSkipVerify: true,
-		//nolint:staticcheck
+		//nolint:staticcheck // SA1019
 		MinVersion: tls.VersionSSL30,
 		NextProtos: []string{"http/1.1"},
 	}

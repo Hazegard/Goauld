@@ -117,7 +117,8 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
 		}()
 
 		if err := cmd.Wait(); err != nil {
-			// return fmt.Errorf("error while waiting for command (%s): %s", c, err)
+			log.Debug().Err(err).Msgf("error while waiting for command to finish (%s)", strings.Join(c, " "))
+			return nil
 		}
 	} else {
 		// If no pty is requested, we execute the command directly

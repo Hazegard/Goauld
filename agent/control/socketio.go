@@ -220,7 +220,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	// RegisterError fire when an error occurs on the server side when the agent registers
 	socket.OnEvent(socketio.RegisterError.ID(), func(data socketio.SioError) {
 		if strings.Contains(data.Message, "UNIQUE constraint failed: agents.name") {
-			log.Error().Err(errors.New("Agent Name already used, either delete the corresponding agent in the TUI or rename this agent")).Msgf("RegisterError")
+			log.Error().Err(errors.New("agent Name already used, either delete the corresponding agent in the TUI or rename this agent")).Msgf("RegisterError")
 			cpc.canceler.Exit("Agent Name already used")
 			cpc.Close()
 		} else {

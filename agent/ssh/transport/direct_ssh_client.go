@@ -23,6 +23,7 @@ func CheckDirectSshAccess(address string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to %s: %w", address, err)
 	}
+	//nolint:errcheck
 	defer conn.Close()
 
 	// Set a deadline for the read operation

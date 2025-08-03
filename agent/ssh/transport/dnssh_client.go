@@ -70,6 +70,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 
 	log.Trace().Str("Mode", "DNSSH").Msgf("opening session %08x", conn.GetConv())
 	// Permit coalescing the payloads of consecutive sending.
+	//nolint:staticcheck // SA1019
 	conn.SetStreamMode(true)
 	// Disable the dynamic congestion window (limit only by the maximum of
 	// local and remote static windows).

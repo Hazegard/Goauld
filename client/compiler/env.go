@@ -31,6 +31,7 @@ func parseAndResolveEnvFile(filePath string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer file.Close()
 
 	envMap := make(map[string]string)

@@ -114,11 +114,13 @@ func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 
 	// Let output go to terminal
 	go func() {
+		//nolint:errcheck
 		defer pwOut.Close()
 		_, _ = io.Copy(os.Stdout, teeOut)
 	}()
 
 	go func() {
+		//nolint:errcheck
 		defer pwErr.Close()
 		_, _ = io.Copy(os.Stderr, teeErr)
 	}()
