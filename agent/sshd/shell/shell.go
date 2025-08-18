@@ -4,19 +4,26 @@ import (
 	"Goauld/common/log"
 	"context"
 	"fmt"
-	"github.com/aymanbagabas/go-pty"
-	"github.com/charmbracelet/ssh"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/aymanbagabas/go-pty"
+	"github.com/charmbracelet/ssh"
 )
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.
 // It enables interaction with a shell (e.g., bash) through the session.
 // If the session is not interactive, it directly executes the command, without
 // wrapping it in a pty.
-func GivePty(s ssh.Session, c []string, globalCtx context.Context) error {
+func GivePty(s ssh.Session, c []string, globalCtx context.Context) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().Err(err).Msg("panic recovered in GivePty")
+			err = r.(error)
+		}
+	}()
 	// Extract the PTY request and check if the session requested a PTY.
 	if len(c) == 0 {
 		cmd := getShell()
