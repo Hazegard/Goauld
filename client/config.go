@@ -170,7 +170,9 @@ func (c *ClientConfig) ValidateConfig() error {
 	return nil
 }
 
-type Compiler struct{}
+type Compiler struct {
+	Args []string `hidden:"true" arg:"" passthrough:""`
+}
 
 // GetSshdHost returns the configured sshd host
 func (c *ClientConfig) GetSshdHost() string {
@@ -233,13 +235,13 @@ func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 }
 
 // InitConfig return the configuration depending on the command line arguments as well as the configuration files
-func InitConfig() (*kong.Context, *ClientConfig, error) {
+func InitConfig() (*kong.Context, *ClientConfig, error, *kong.Context) {
 	cfgTmp := &ClientConfig{
 		PrivatePassword: _private_password,
 	}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
-		return nil, cfgTmp, err
+		return nil, cfgTmp, err, nil
 	}
 	configSearchDir := []string{
 		filepath.Join(dir, fmt.Sprintf("%s.yaml", APP_NAME)),
@@ -265,7 +267,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 		}),
 		defaultValues,
 	}
-	_ = kong.Parse(cfgTmp, kongOptions...)
+	ctx := kong.Parse(cfgTmp, kongOptions...)
 	if cfgTmp.ConfigFile != "" {
 		kongOptions = append(kongOptions, kong.Configuration(cli.YAMLOverwriteEnvVar([]string{"password"}), cfgTmp.ConfigFile))
 		configSearchDir = append([]string{cfgTmp.ConfigFile}, configSearchDir...)
@@ -276,7 +278,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error) {
 	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
 
 	log.SetLogLevel(cfg.Verbose)
-	return app, cfg, cfg.ValidateConfig()
+	return app, cfg, cfg.ValidateConfig(), ctx
 }
 
 // Target returns the target by parsing the subcommands to find which one is currently executed

@@ -5,6 +5,7 @@ import (
 	"Goauld/client/compiler"
 	"fmt"
 	"os"
+	"strings"
 
 	"Goauld/client/api"
 	_common "Goauld/common"
@@ -17,8 +18,12 @@ func main() {
 		//
 		os.Args = append(os.Args, "--help")
 	}
-	if len(os.Args) > 1 && os.Args[1] == "compile" {
-		os.Args = os.Args[1:]
+
+	kong, cfg, err, ctx := InitConfig()
+
+	if strings.Fields(ctx.Command())[0] == "compile" {
+		os.Args = append([]string{"compile"}, cfg.Compile.Args...)
+		//os.Args = os.Args[1:]
 		kong, cfg, err := compiler.InitCompilerConfig(APP_NAME, defaultValues)
 		if err != nil {
 			fmt.Println(err)
@@ -31,7 +36,7 @@ func main() {
 		}
 		return
 	}
-	kong, cfg, err := InitConfig()
+
 	if err != nil {
 		fmt.Println(err)
 		return

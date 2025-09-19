@@ -7,7 +7,6 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/qdm12/dns/v2/pkg/nameserver"
 	"net"
 	"net/url"
 	"os"
@@ -16,6 +15,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/qdm12/dns/v2/pkg/nameserver"
 
 	"Goauld/common/cli"
 
@@ -171,7 +172,7 @@ func (a *Agent) PrivateSshdPassword() string {
 	if a.cfg.PrivatePassword != "" {
 		return a.cfg.PrivatePassword
 	}
-	return _password
+	return _private_password
 }
 
 // ValidatePassword return whether the incoming password is valid.

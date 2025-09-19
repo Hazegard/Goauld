@@ -22,10 +22,10 @@ import (
 var (
 	_agePubKey = "age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p"
 
-	_password        = ""
-	_password_cli    = ""
-	_shared_password = ""
-	_name            = "user@hostname"
+	_private_password = ""
+	_password_cli     = ""
+	_shared_password  = ""
+	_name             = "user@hostname"
 
 	_server      = "www.example.com"
 	_ssh_server  = "www.example.com:22222"

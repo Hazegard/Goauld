@@ -44,7 +44,7 @@ func Goreleaser(cfg Compiler) error {
 	if err != nil {
 		return err
 	}
-	cmd.Env = append(cmd.Environ(), env...)
+	cmd.Env = append(env, cmd.Environ()...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Dir = cfg.Source
