@@ -2,11 +2,12 @@ package yaml
 
 import (
 	"fmt"
+	"io"
+	"os"
+
 	"github.com/fatih/color"
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
-	"io"
-	"os"
 
 	"github.com/goccy/go-yaml/lexer"
 	"github.com/goccy/go-yaml/printer"

@@ -163,7 +163,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 		m.ti, cmd = m.ti.Update(msg)
-		return m, nil
+		return m, cmd
 	}
 
 	switch msg := msg.(type) {

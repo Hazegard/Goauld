@@ -235,13 +235,13 @@ func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 }
 
 // InitConfig return the configuration depending on the command line arguments as well as the configuration files
-func InitConfig() (*kong.Context, *ClientConfig, error, *kong.Context) {
+func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 	cfgTmp := &ClientConfig{
 		PrivatePassword: _private_password,
 	}
 	dir, err := utils.GetCurrentDirectory()
 	if err != nil {
-		return nil, cfgTmp, err, nil
+		return nil, cfgTmp, nil, err
 	}
 	configSearchDir := []string{
 		filepath.Join(dir, fmt.Sprintf("%s.yaml", APP_NAME)),
@@ -278,7 +278,7 @@ func InitConfig() (*kong.Context, *ClientConfig, error, *kong.Context) {
 	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
 
 	log.SetLogLevel(cfg.Verbose)
-	return app, cfg, cfg.ValidateConfig(), ctx
+	return app, cfg, ctx, cfg.ValidateConfig()
 }
 
 // Target returns the target by parsing the subcommands to find which one is currently executed

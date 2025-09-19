@@ -2,8 +2,9 @@ package tui
 
 import (
 	"fmt"
-	"github.com/charmbracelet/x/term"
 	"os"
+
+	"github.com/charmbracelet/x/term"
 )
 
 // Prompt displays an SSH-like prompt to fetch from the command line the static agent password

@@ -3,16 +3,18 @@ package router
 import (
 	"crypto/tls"
 	"errors"
-	"github.com/quic-go/quic-go/http3"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/quic-go/quic-go/http3"
+
 	"Goauld/common/log"
 	"Goauld/server/config"
 	"Goauld/server/control"
 	"Goauld/server/transport"
+
 	"github.com/caddyserver/certmagic"
 
 	sio "github.com/karagenc/socket.io-go"

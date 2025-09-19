@@ -4,9 +4,10 @@ import (
 	"Goauld/common/types"
 	"encoding/hex"
 	"errors"
+	"net"
+
 	"github.com/charmbracelet/ssh"
 	gossh "golang.org/x/crypto/ssh"
-	"net"
 )
 
 type SSHSession struct {

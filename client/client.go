@@ -19,7 +19,11 @@ func main() {
 		os.Args = append(os.Args, "--help")
 	}
 
-	kong, cfg, err, ctx := InitConfig()
+	kong, cfg, ctx, err := InitConfig()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	if strings.Fields(ctx.Command())[0] == "compile" {
 		os.Args = append([]string{"compile"}, cfg.Compile.Args...)
@@ -37,10 +41,6 @@ func main() {
 		return
 	}
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	if cfg.Version {
 		fmt.Println(_common.GetVersion())
 		return

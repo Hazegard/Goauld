@@ -2,8 +2,9 @@ package types
 
 import (
 	"Goauld/server/config"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Status struct {

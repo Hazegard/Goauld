@@ -2,9 +2,10 @@ package transport
 
 import (
 	"errors"
-	"github.com/quic-go/quic-go"
 	"io"
 	"net"
+
+	"github.com/quic-go/quic-go"
 
 	"Goauld/common/log"
 	"Goauld/server/config"

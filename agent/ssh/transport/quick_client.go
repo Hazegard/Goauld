@@ -6,9 +6,10 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/quic-go/quic-go"
 	"net"
 	"time"
+
+	"github.com/quic-go/quic-go"
 )
 
 type StreamConn struct {

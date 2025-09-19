@@ -3,8 +3,9 @@ package store
 import (
 	"Goauld/common/types"
 	"errors"
-	"github.com/xtaci/smux"
 	"net"
+
+	"github.com/xtaci/smux"
 )
 
 type DNSSHAgent struct {

@@ -153,6 +153,8 @@ var (
 		"_custom_dns_command": _custom_dns_command,
 
 		"_killswitch": _killswitch,
+
+		"version": common.GetVersion(),
 	}
 )
 

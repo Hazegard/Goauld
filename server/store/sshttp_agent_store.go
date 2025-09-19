@@ -2,8 +2,9 @@ package store
 
 import (
 	"errors"
-	"github.com/xtaci/smux"
 	"net"
+
+	"github.com/xtaci/smux"
 
 	"Goauld/common/types"
 )

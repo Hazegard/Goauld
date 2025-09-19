@@ -5,13 +5,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/alecthomas/kong"
-	"github.com/goccy/go-yaml"
 	"io"
 	"net/url"
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/alecthomas/kong"
+	"github.com/goccy/go-yaml"
 )
 
 func GetConfigFile(paths ...string) string {

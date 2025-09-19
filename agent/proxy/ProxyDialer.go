@@ -6,14 +6,15 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"github.com/aus/proxyplease"
-	"github.com/jellydator/ttlcache/v2"
-	"golang.org/x/sync/singleflight"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/aus/proxyplease"
+	"github.com/jellydator/ttlcache/v2"
+	"golang.org/x/sync/singleflight"
 )
 
 var ProxyDialerCacheTimeout = 60 * time.Minute

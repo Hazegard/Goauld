@@ -7,11 +7,12 @@ import (
 	common_net "Goauld/common/net"
 	"errors"
 	"fmt"
-	"github.com/qdm12/dns/v2/pkg/nameserver"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/qdm12/dns/v2/pkg/nameserver"
 
 	miekgDns "github.com/miekg/dns"
 

@@ -10,6 +10,7 @@ import (
 
 	"Goauld/agent/config"
 	"Goauld/agent/proxy"
+
 	"github.com/things-go/go-socks5"
 )
 

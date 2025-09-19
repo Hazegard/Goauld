@@ -11,11 +11,12 @@ import (
 	"embed"
 	"encoding/base64"
 	"fmt"
-	"github.com/alecthomas/kong"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/alecthomas/kong"
 )
 
 // Compiler holds the information used to compile the binaries

@@ -3,11 +3,12 @@ package yaml
 import (
 	"Goauld/common/utils"
 	"bytes"
+	"os"
+
 	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/parser"
 	"github.com/goccy/go-yaml/printer"
-	"os"
 )
 
 func UpdateAgentPasswordConfig(file string, name, pass string) error {

@@ -9,8 +9,9 @@ import (
 	"Goauld/server/router/midleware"
 	"Goauld/server/store"
 	"encoding/json"
-	"github.com/goccy/go-yaml"
 	"net/http"
+
+	"github.com/goccy/go-yaml"
 
 	"github.com/rs/zerolog"
 	"github.com/urfave/negroni"

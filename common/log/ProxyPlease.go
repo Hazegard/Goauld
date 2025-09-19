@@ -1,9 +1,10 @@
 package log
 
 import (
-	"github.com/rs/zerolog"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 var initPPLog sync.Once
