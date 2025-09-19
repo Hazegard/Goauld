@@ -3,17 +3,19 @@ package config
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/log"
 	"Goauld/common/ssh"
 	"Goauld/common/utils"
+
 	"github.com/alecthomas/kong"
 )
 

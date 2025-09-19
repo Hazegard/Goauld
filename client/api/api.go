@@ -8,11 +8,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/goccy/go-yaml"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/goccy/go-yaml"
+	"golang.org/x/crypto/bcrypt"
 
 	socketio "Goauld/common/socket.io"
 
@@ -25,15 +27,17 @@ type API struct {
 	server      string
 	accessToken string
 	insecure    bool
+	adminToken  string
 }
 
 // NewAPI return a new API
-func NewAPI(server string, accessToken string, insecure bool) *API {
+func NewAPI(server string, accessToken string, insecure bool, adminToken string) *API {
 	api := &API{
 		client:      &http.Client{},
 		server:      server,
 		accessToken: accessToken,
 		insecure:    insecure,
+		adminToken:  adminToken,
 	}
 	if insecure {
 		api.client.Transport = &http.Transport{
@@ -68,8 +72,15 @@ func (api *API) delete(p string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", api.accessToken)
+	req.Header.Set("Authorization", api.genToken())
 	return api.client.Do(req)
+}
+
+func (api *API) genToken() string {
+	if api.adminToken == "" {
+		return api.accessToken
+	}
+	return fmt.Sprintf("%s:%s", api.accessToken, api.adminToken)
 }
 
 // get is generic method to perform GET request with the appropriate authentication header
@@ -82,7 +93,7 @@ func (api *API) get(p string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", api.accessToken)
+	req.Header.Set("Authorization", api.genToken())
 	return api.client.Do(req)
 }
 
@@ -96,7 +107,7 @@ func (api *API) post(p string, body io.Reader) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", api.accessToken)
+	req.Header.Set("Authorization", api.genToken())
 	return api.client.Do(req)
 }
 
@@ -184,10 +195,19 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 }
 
 // KillAgent kills the agent
-func (api *API) KillAgent(id string, doExit bool) error {
+func (api *API) KillAgent(id string, doExit bool, delete bool, password string) error {
 	id = url.PathEscape(id)
 	u := fmt.Sprintf("/manage/agent/%s/kill", id)
-	body := socketio.ExitData{Kill: doExit}
+
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	body := socketio.ExitRequest{
+		Kill:           doExit,
+		Delete:         delete,
+		HashedPassword: hashedPwd,
+	}
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err

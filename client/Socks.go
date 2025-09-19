@@ -1,6 +1,8 @@
 package main
 
-import "Goauld/client/api"
+import (
+	"Goauld/client/api"
+)
 
 type Socks struct {
 	Target         string   `arg:"" help:"The target agent."`

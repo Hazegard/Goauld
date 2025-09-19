@@ -220,7 +220,7 @@ type Tui struct{}
 
 // Run executes the tui subcommand
 func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
-	tt := tui.NewTui(api)
+	tt := tui.NewTui(api, cfg.AgentPassword)
 	sshAgent, err := tt.Run()
 	if err != nil {
 		return err

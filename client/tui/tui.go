@@ -23,7 +23,8 @@ const (
 	action_delete = "ctrl+d"
 	action_kill   = "ctrl+k"
 	action_reset  = "ctrl+r"
-	action_ssh    = "enter"
+	action_enter  = "enter"
+	action_plus   = "+"
 )
 
 var (
@@ -46,11 +47,13 @@ type UpdateMessage struct {
 	ErrorMessage string
 }
 
+type PromptPassword struct{}
+
 var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 // NewTui returns the Model holding the TUI
-func NewTui(api *api.API) Model {
+func NewTui(api *api.API, agentPwd map[string]string) Model {
 	ti := textinput.New()
 	ti.Width = 100
 
@@ -61,10 +64,11 @@ func NewTui(api *api.API) Model {
 		return Model{}
 	}
 	m := Model{
-		agentsTable: GenerateAgentTable().WithRows(AgentsToRow(agents)),
-		agents:      agents,
-		statusText:  ti,
-		api:         api,
+		agentsTable:    GenerateAgentTable().WithRows(AgentsToRow(agents)),
+		agents:         agents,
+		statusText:     ti,
+		api:            api,
+		_agentPassword: agentPwd,
 	}
 	if len(m.agents) == 0 {
 		m.agentInfoTable = m.GenerateInfoTable(types.Agent{})
@@ -83,13 +87,19 @@ func (m *Model) Run() (string, error) {
 }
 
 type Model struct {
-	api            *api.API
-	agentsTable    table.Model
-	agents         []types.Agent
-	agentInfoTable teatable.Model
-	statusText     textinput.Model
-	confirmAction  string
-	agent          string
+	api             *api.API
+	agentsTable     table.Model
+	agents          []types.Agent
+	agentInfoTable  teatable.Model
+	statusText      textinput.Model
+	confirmAction   string
+	agent           string
+	_agentPassword  map[string]string
+	ti              textinput.Model
+	askingPwd       bool
+	password        string
+	promptedAction  string
+	extendedDetails bool
 }
 
 func (m *Model) Init() tea.Cmd { return m.doTick() }
@@ -122,15 +132,43 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+	}
 
+	if m.askingPwd {
+		var cmd tea.Cmd
+
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "ctrl+c":
+				m.promptedAction = ""
+				m.ti.Placeholder = ""
+				m.askingPwd = false
+				return m, nil
+			case action_enter:
+				m.password = m.ti.Value()
+				m.askingPwd = false
+				switch m.promptedAction {
+				case action_kill:
+					return m, m.Kill(selectedAgent, true, false, m.password)
+				case action_reset:
+					return m, m.Kill(selectedAgent, false, false, m.password)
+				case action_delete:
+					return m, m.Kill(selectedAgent, true, true, m.password)
+				}
+
+			}
+		default:
+			m.ti, cmd = m.ti.Update(msg)
+			return m, cmd
+		}
+		m.ti, cmd = m.ti.Update(msg)
+		return m, nil
 	}
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "ctrl+c":
-			return m, tea.Quit
-
 		// ctrl+k: shortcut to kill the agent
 		case action_kill:
 			// if the selected agent is not empty
@@ -146,11 +184,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// if selectedAgent.Connected {
 					text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.Id)
 					m.statusText.TextStyle = textError
-					batch = append(batch, m.Kill(selectedAgent, true))
-					// } else {
-					// 	text = fmt.Sprintf("Already killed %s (%s)", selectedAgent.Name, selectedAgent.Id)
-					// 	m.statusText.TextStyle = textWarning
-					// }
+					if selectedAgent.HasStaticPassword {
+						pwd, ok := m._agentPassword[selectedAgent.Name]
+						if ok {
+							batch = append(batch, m.Kill(selectedAgent, true, false, pwd))
+						} else {
+							m.promptedAction = action_kill
+							batch = append(batch, func() tea.Msg {
+								return PromptPassword{}
+							})
+						}
+					} else {
+						batch = append(batch, m.Kill(selectedAgent, true, false, ""))
+					}
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
@@ -169,11 +215,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.SetValue(text)
 			case action_reset:
 				if selectedAgent.Id != "" {
-					m.confirmAction = ""
+					m.confirmAction = action_reset
 					// if selectedAgent.Connected {
 					text = fmt.Sprintf("Resetting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
 					m.statusText.TextStyle = textError
-					batch = append(batch, m.Kill(selectedAgent, false))
+					if selectedAgent.HasStaticPassword {
+						pwd, ok := m._agentPassword[selectedAgent.Name]
+						if ok {
+							batch = append(batch, m.Kill(selectedAgent, false, false, pwd))
+						} else {
+							m.promptedAction = action_reset
+							batch = append(batch, func() tea.Msg {
+								return PromptPassword{}
+							})
+						}
+					} else {
+						batch = append(batch, m.Kill(selectedAgent, false, false, ""))
+					}
+
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
@@ -195,7 +254,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.confirmAction = action_delete
 					text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
 					m.statusText.TextStyle = textError
-					batch = append(batch, m.Delete(selectedAgent))
+					if selectedAgent.HasStaticPassword && selectedAgent.Connected {
+						pwd, ok := m._agentPassword[selectedAgent.Name]
+						if ok {
+							batch = append(batch, m.Kill(selectedAgent, true, true, pwd))
+						} else {
+							m.promptedAction = action_delete
+							batch = append(batch, func() tea.Msg {
+								return PromptPassword{}
+							})
+						}
+					} else {
+						batch = append(batch, m.Kill(selectedAgent, true, true, ""))
+					}
+
 					m.statusText.SetValue(text)
 				}
 				m.confirmAction = ""
@@ -204,14 +276,32 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.SetValue("")
 			}
 			doUpdateStatus = true
-		case action_ssh:
-			m.agent = selectedAgent.Name
-			return m, tea.Quit
+		case action_enter:
+			if m.askingPwd {
+				m.password = m.ti.Value()
+				m.askingPwd = false
+				switch m.promptedAction {
+				case action_kill:
+					batch = append(batch, m.Kill(selectedAgent, true, false, m.password))
+				case action_reset:
+					batch = append(batch, m.Kill(selectedAgent, false, false, m.password))
+				case action_delete:
+					batch = append(batch, m.Kill(selectedAgent, true, true, m.password))
+				}
+
+			} else {
+				m.agent = selectedAgent.Name
+				return m, tea.Quit
+			}
 
 		// r: shortcut to update the agent list
 		case "r":
 			batch = append(batch, m.doUpdate(m.agents))
 			// return m, m.UpdateAgents(m.agents)
+		case action_plus:
+			m.extendedDetails = !m.extendedDetails
+		case "q", "ctrl+c":
+			return m, tea.Quit
 		default:
 			m.confirmAction = ""
 			m.statusText.SetValue("")
@@ -243,6 +333,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case TickMessage:
 		batch = append(batch, m.doUpdate(m.agents), m.doTick())
+	case PromptPassword:
+		ti := textinput.New()
+		ti.Prompt = fmt.Sprintf("(%s) Password: ", selectedAgent.Name)
+		ti.Placeholder = ""
+		//ti.EchoMode = textinput.EchoPassword
+		ti.PromptStyle = textWarning
+		m.ti = ti
+		m.askingPwd = true
+		return m, m.ti.Focus()
 	}
 
 	// Finalize the update mechanism
@@ -299,8 +398,8 @@ func (m *Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
 
 func (m *Model) Help() string {
 	return textHelp.SetString(
-		"    [ctrl+r]:Reset agent      [ctrl+d]:Delete agent      [↑]:Up        [←]:Previous      [r]:Refresh view" +
-			"\n    [ctrl+k]:Kill agent       [Enter]: SSH agent         [↓]:Down      [→]:Next          [q]/[ctrl+c]:Quit").String()
+		"    [ctrl+r]:Reset agent     [ctrl+d]:Delete agent     [↑]:Up       [←]:Previous     [r]:Refresh view" +
+			"\n    [ctrl+k]:Kill agent      [Enter]: SSH agent        [↓]:Down     [→]:Next         [q]/[ctrl+c]:Quit     [+]Details").String()
 
 }
 
@@ -313,24 +412,30 @@ func (m *Model) doTick() tea.Cmd {
 
 // GenerateInfoTable populate the info table to show the details of the currently selected agent
 func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
-
 	rows := []teatable.Row{
 		{"Id", agent.Id},
+		{"Username", agent.Username},
+		{"Hostname", agent.Hostname},
+		{"Path", agent.Path},
 		{"Version", agent.Version.String()},
 		{"OS", agent.Platform},
 		{"Archi", agent.Architecture},
-		{"Username", agent.Username},
-		{"Hostname", agent.Hostname},
 		{"Public Ip", agent.RemoteAddr},
-		{"Last Updated", timeAgo(agent.LastUpdated)},
-		{"Last Ping", timeAgo(agent.LastPing)},
 		{"IPs", agent.IPs},
-		{"Path", agent.Path},
-		{"Ssh Mode", agent.SshMode},
-		{"SSHD Port", agent.GetSSHPort()},
-		{"Socks Port", agent.GetSocksPort()},
-		{"HTTP Port", agent.GetHttpPort()},
-		{"Other Port", agent.GetOtherPort()},
+	}
+	height := len(rows)
+	if m.extendedDetails {
+		details := []teatable.Row{
+			{"Last Updated", timeAgo(agent.LastUpdated)},
+			{"Last Ping", timeAgo(agent.LastPing)},
+			{"Ssh Mode", agent.SshMode},
+			{"SSHD Port", agent.GetSSHPort()},
+			{"Socks Port", agent.GetSocksPort()},
+			{"HTTP Port", agent.GetHttpPort()},
+			{"Other Port", agent.GetOtherPort()},
+		}
+		rows = append(rows, details...)
+		height += len(details)
 	}
 
 	// Compute the longest field that will be shown on the table
@@ -371,7 +476,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		teatable.WithColumns(columns),
 		teatable.WithRows(rows),
 		teatable.WithFocused(false),
-		teatable.WithHeight(len(lines)),
+		teatable.WithHeight(height),
 	)
 
 	t.SetStyles(s)
@@ -379,7 +484,11 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 }
 
 func (m *Model) View() string {
-	return baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.Help() + "\n"
+	res := baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.Help() + "\n"
+	if m.askingPwd {
+		res += m.ti.View()
+	}
+	return res
 }
 
 // centerString adds left padding to center the string in the column given the column length
@@ -473,7 +582,7 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 }
 
 // Kill performs a call to the API to kill the selected agent
-func (m *Model) Kill(agent types.Agent, doExit bool) tea.Cmd {
+func (m *Model) Kill(agent types.Agent, doExit bool, doDelete bool, password string) tea.Cmd {
 	killing := "resetting"
 	reset := "Reset"
 	if doExit {
@@ -481,7 +590,7 @@ func (m *Model) Kill(agent types.Agent, doExit bool) tea.Cmd {
 		reset = "Killed"
 	}
 	return func() tea.Msg {
-		err := m.api.KillAgent(agent.Id, doExit)
+		err := m.api.KillAgent(agent.Id, doExit, doDelete, password)
 		if err != nil {
 			return CmdResponse{
 				Success: false,

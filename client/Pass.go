@@ -6,9 +6,10 @@ import (
 	"Goauld/common/types"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"os"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Password struct {

@@ -2,19 +2,21 @@ package router
 
 import (
 	"Goauld/common"
+	"Goauld/server/control"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
-
-	socket_io "Goauld/common/socket.io"
+	"strings"
 
 	"Goauld/common/log"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
 	"Goauld/server/router/midleware"
 	"Goauld/server/store"
+
+	socket_io "Goauld/common/socket.io"
 
 	"github.com/urfave/negroni"
 )
@@ -248,21 +250,65 @@ func (mr *ManageRouter) KillAgent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	jsonBody := socket_io.ExitData{}
+	jsonBody := socket_io.ExitRequest{}
 	err = json.Unmarshal(body, &jsonBody)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error unmarshalling json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err = mr.store.KillAGent(id, jsonBody.Kill)
-	if err != nil {
-		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
+	doRequest := HasAdminToken(r)
+
+	if !doRequest {
+		socket := mr.store.SioGetSocket(id)
+		agent := mr.store.SioGetAgent(socket)
+
+		checkPwd := agent.HasStaticPassword
+
+		if jsonBody.Delete && !agent.Connected {
+			checkPwd = false
+		}
+
+		if checkPwd {
+			isStaticPwdValid := control.ValidateStaticPassword(agent, socket, string(jsonBody.HashedPassword))
+			if isStaticPwdValid {
+				doRequest = true
+			}
+		} else {
+			doRequest = true
+		}
 	}
-	err = mr.store.CloseAgentConnections(id)
-	if err != nil {
-		// http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
+	if doRequest {
+		err = mr.store.KillAGent(id, jsonBody.Kill)
+		if err != nil {
+			log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
+		}
+		err = mr.store.CloseAgentConnections(id)
+		if err != nil {
+			//http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
+			//return
+		}
+		if jsonBody.Delete {
+			err = mr.db.DeleteAgentById(id)
+			if err != nil {
+				log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("delete agent failed")
+				//http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
 	}
-	w.WriteHeader(http.StatusNoContent)
+	http.Error(w, "Invalid password", http.StatusBadRequest)
+}
+
+func HasAdminToken(r *http.Request) bool {
+	// Extract the Authorization header
+	authHeader := r.Header.Get("Authorization")
+	// Validate the Authorization header
+	if len(authHeader) < 2 {
+		return false
+	}
+	authHeader = strings.Split(authHeader, ":")[1]
+	return authHeader == config.Get().AdminToken
 }

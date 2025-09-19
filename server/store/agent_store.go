@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"sync"
 
-	socketio "Goauld/common/socket.io"
 	"Goauld/common/types"
 	"Goauld/common/utils"
 	"Goauld/server/persistence"
 
+	socketio "Goauld/common/socket.io"
 	sio "github.com/karagenc/socket.io-go"
 )
 
@@ -115,6 +115,73 @@ func (a *AgentStore) CloseAgentConnections(id string) error {
 		a.SshttpCloseAgent(id),
 		a.DnsshCloseAgent(id),
 	)
+}
+
+func (a *AgentStore) IsAgentConnected(id string) bool {
+	a.sioSocketMapMu.Lock()
+	socket, ok := a.sioSocketMap[id]
+	a.sioSocketMapMu.Unlock()
+	fmt.Println("socket:", socket)
+	if socket == nil || !ok {
+		return false
+	}
+	a.sioAgentMapMu.Lock()
+	agent, ok := a.sioAgentMap[socket]
+	a.sioAgentMapMu.Unlock()
+	if agent == nil || !ok {
+		return false
+	}
+	fmt.Println("agent:", agent)
+
+	a.dnsshAgentMapMu.Lock()
+	dnsAgent := a.dnsshAgentMap[id]
+	a.dnsshAgentMapMu.Unlock()
+	if dnsAgent != nil {
+		return true
+	}
+	fmt.Println("dnsAgent:", dnsAgent)
+
+	a.sshAgentMapMu.Lock()
+	sshAgent := a.sshAgentMap[id]
+	a.sshAgentMapMu.Unlock()
+	if sshAgent != nil {
+		return true
+	}
+	fmt.Println("sshAgent:", sshAgent)
+
+	a.sshttpAgentMapMu.Lock()
+	sshttpAgent := a.sshttpAgentMap[id]
+	a.sshttpAgentMapMu.Unlock()
+	if sshttpAgent != nil {
+		return true
+	}
+	fmt.Println("sshttpAgent:", sshttpAgent)
+
+	a.wsshAgentMapMu.Lock()
+	wsshAgent := a.sshttpAgentMap[id]
+	a.wsshAgentMapMu.Unlock()
+	if wsshAgent != nil {
+		return true
+	}
+	fmt.Println("wsshAgent:", wsshAgent)
+
+	a.tlsshAgentMapMu.Lock()
+	tlsshAgent := a.sshttpAgentMap[id]
+	a.tlsshAgentMapMu.Unlock()
+	if tlsshAgent != nil {
+		return true
+	}
+	fmt.Println("tlsshAgent:", tlsshAgent)
+
+	a.quicAgentMapMu.Lock()
+	quickAgent := a.sshttpAgentMap[id]
+	a.quicAgentMapMu.Unlock()
+	if quickAgent != nil {
+		return true
+	}
+	fmt.Println("quickAgent:", quickAgent)
+
+	return false
 }
 
 // KillAGent kills the agent, if doKill is true, the agent does not restart

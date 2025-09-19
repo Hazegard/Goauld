@@ -5,6 +5,7 @@ import (
 	"Goauld/common"
 	"Goauld/common/log"
 	colorYaml "Goauld/common/yaml"
+
 	"github.com/goccy/go-yaml"
 )
 
@@ -41,7 +42,7 @@ func CheckAdminVersion(api *api.API) {
 // dump dumps the information regading the agents currently connected to the server
 func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
+	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
 	// CheckAdminVersion(adminApi)
 
 	res, err := adminApi.DumpAll()
@@ -59,7 +60,7 @@ func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 
 // Loglevel updates the log level on the server side
 func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
+	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
 	//CheckAdminVersion(adminApi)
 	res, err := adminApi.UpdateLogLevel(cfg.Admin.Loglevel.Level)
 	if err != nil {
@@ -76,7 +77,7 @@ func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
 // Config dumps the server side configuration
 func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
+	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
 	//CheckAdminVersion(adminApi)
 	res, err := adminApi.GetConfig()
 	if err != nil {
@@ -90,7 +91,7 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 // State dumps the information regading all the agents (connected or not)
 func (c *State) Run(_ *api.API, cfg ClientConfig) error {
 
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure)
+	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
 	//CheckAdminVersion(adminApi)
 
 	res, err := adminApi.DumpState()

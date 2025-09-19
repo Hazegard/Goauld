@@ -4,6 +4,7 @@ import (
 	"Goauld/common/log"
 	"Goauld/common/net"
 	"net/http"
+	"strings"
 
 	"github.com/urfave/negroni"
 )
@@ -14,6 +15,7 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 		// Extract the Authorization header
 		authHeader := r.Header.Get("Authorization")
 		// Validate the Authorization header
+		authHeader = strings.Split(authHeader, ":")[0]
 		if authHeader != expectedAuthToken {
 			// If the token is not correct, return 403 Forbidden
 			http.Error(w, net.Unauthorized, http.StatusUnauthorized)

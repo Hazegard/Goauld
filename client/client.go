@@ -50,7 +50,7 @@ func main() {
 		fmt.Println(c)
 		return
 	}
-	httpclient := api.NewAPI(cfg.ServerUrl(), cfg.AccessToken, cfg.Insecure)
+	httpclient := api.NewAPI(cfg.ServerUrl(), cfg.AccessToken, cfg.Insecure, cfg.AdminToken)
 	CheckApiVersion(httpclient)
 	kong.Bind(*cfg, httpclient)
 

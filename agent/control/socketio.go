@@ -6,17 +6,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/xtaci/smux"
-	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"time"
+
+	"github.com/xtaci/smux"
+	"golang.org/x/crypto/bcrypt"
 
 	"Goauld/agent/config"
 	"Goauld/agent/proxy"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
-	socketio "Goauld/common/socket.io"
 	"Goauld/common/ssh"
+
+	socketio "Goauld/common/socket.io"
 	sio "github.com/karagenc/socket.io-go"
 	eio "github.com/karagenc/socket.io-go/engine.io"
 	"github.com/quic-go/webtransport-go"
