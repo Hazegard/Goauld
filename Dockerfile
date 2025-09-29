@@ -1,4 +1,4 @@
-FROM alpine:3.21 AS init
+FROM golang:1.25.1-alpine3.22 AS init
 
 RUN apk add go alpine-sdk upx
 RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
@@ -21,8 +21,8 @@ RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id ag
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64
 
 RUN if [[ "$COMPRESS" == 1 ]]; then for binary in output/agent/*;do n=""; if [[ "$binary" == *.exe ]];then n="${binary%.exe}";new="${n}_compressed.exe";else new="${binary}_compressed" ;fi; upx "$binary" --best -o "$new" || true ;done;fi
-
-FROM alpine:3.21 AS run
+RUN ls -lah /app/output
+FROM alpine:3.22 AS run
 
 COPY --from=build --chmod=755 /app/output/server/*_linux-amd64 /app/server
 COPY --from=build /app/output/agent/* /app/build_binaries/

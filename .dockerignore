@@ -1,0 +1,13 @@
+.idea
+.DS_Store
+*.db
+*.pem
+*.der
+scripts/build/MacOSX15*
+
+# Added by goreleaser init:
+dist/
+output
+scripts/build/MacOSX15.sdk/
+local_config
+*.bkp

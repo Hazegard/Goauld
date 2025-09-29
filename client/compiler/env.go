@@ -17,9 +17,9 @@ func ParseEnvFile(filepath string) ([]string, error) {
 	// Convert the map to a slice of "key=value"
 	var envs []string
 	for k, v := range envMap {
-		if v != "" {
-			envs = append(envs, fmt.Sprintf("%s=%s", k, v))
-		}
+		//if v != "" {
+		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
+		//}
 	}
 
 	return envs, nil

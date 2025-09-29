@@ -98,7 +98,8 @@ pass:
   args: []
 
 # Compile the agent.
-compile: {}
+compile:
+  args: []
 
 # Admin command.
 admin:
