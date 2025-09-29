@@ -337,7 +337,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		ti := textinput.New()
 		ti.Prompt = fmt.Sprintf("(%s) Password: ", selectedAgent.Name)
 		ti.Placeholder = ""
-		//ti.EchoMode = textinput.EchoPassword
+		ti.EchoMode = textinput.EchoPassword
 		ti.PromptStyle = textWarning
 		m.ti = ti
 		m.askingPwd = true
