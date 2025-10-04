@@ -4,6 +4,7 @@
 *.pem
 *.der
 scripts/build/MacOSX15*
+agent/sshd/shell/shim_embed/sshd_shim/*.exe
 
 # Added by goreleaser init:
 dist/

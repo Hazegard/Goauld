@@ -169,6 +169,10 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
+    - GOOS=windows GOARCH=386 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_386.exe ./agent/sshd/shell/shim_windows/
+    - GOOS=windows GOARCH=arm go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
+    - GOOS=windows GOARCH=arm64 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm64.exe ./agent/sshd/shell/shim_windows/
+    - GOOS=windows GOARCH=amd64 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_amd64.exe ./agent/sshd/shell/shim_windows/
     # you may remove this if you don't need go generate
     # - go generate ./...
 

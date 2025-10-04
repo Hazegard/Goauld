@@ -10,6 +10,8 @@ import (
 
 const SHELL_PARAM = "-c"
 
+var SHELL_LOGIN = []string{"-l"}
+
 // getShell return the first shell found on the system
 func getShell() Command {
 	commands := []Command{

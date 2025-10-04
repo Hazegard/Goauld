@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"Goauld/agent/sshd/shell/shim_embed"
 	"Goauld/common/log"
 	"context"
 	"fmt"
@@ -132,11 +133,36 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 	} else {
 		// If no pty is requested, we execute the command directly
 		shell := getShell()
-		params := []string{}
-		if rawCommand != "" {
-			params = []string{SHELL_PARAM, rawCommand}
+		params := shell.Args
+		if runtime.GOOS == "windows" {
+			if rawCommand != "" {
+				params = []string{SHELL_PARAM, rawCommand}
+			} else {
+				exe, err := shim_embed.DropShimSSHD()
+				defer func() {
+					// ignore error on cleanup; on Windows, file may be locked until process exits
+					_ = os.RemoveAll(exe)
+				}()
+				if err != nil {
+					log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while dropping sshd shim")
+					return err
+				}
+				if shell.Executable == "powershell" {
+					params = append(params, SHELL_LOGIN...)
+				}
+				if shell.Executable == "cmd" {
+					params = append(params, "/K")
+				}
+
+				params = []string{shell.Executable}
+				shell.Executable = exe
+			}
 		} else {
-			params = []string{"-l"}
+			if rawCommand != "" {
+				params = []string{SHELL_PARAM, rawCommand}
+			} else {
+				params = SHELL_LOGIN
+			}
 		}
 		cmd := exec.Command(shell.Executable, params...)
 		cmd.Stderr = s.Stderr()
@@ -144,7 +170,7 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 		if rawCommand == "" {
 			cmd.Stdin = s
 		}
-		
+
 		cmd.Env = append(os.Environ(),
 			fmt.Sprintf("PLATFORM=%s", strings.ToLower(runtime.GOOS)),
 			fmt.Sprintf("USER=%s", s.User()),
