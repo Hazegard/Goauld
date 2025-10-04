@@ -2,6 +2,8 @@
 
 package shell
 
+const SHELL_PARAM = "/c"
+
 // getShell return the first shell found on the system
 func getShell() Command {
 	commands := []Command{

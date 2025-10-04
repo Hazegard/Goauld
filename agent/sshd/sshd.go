@@ -23,7 +23,7 @@ func NewSshdServer(ctx context.Context) *Sshd {
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
 			log.Info().Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
-			err := shell.GivePty(s, s.Command(), ctx)
+			err := shell.GivePty(s, s.Command(), s.RawCommand(), ctx)
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
 			}

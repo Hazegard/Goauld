@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/aymanbagabas/go-pty"
@@ -17,23 +18,24 @@ import (
 // It enables interaction with a shell (e.g., bash) through the session.
 // If the session is not interactive, it directly executes the command, without
 // wrapping it in a pty.
-func GivePty(s ssh.Session, c []string, globalCtx context.Context) (err error) {
+func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Context) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error().Err(err).Msg("panic recovered in GivePty")
 			err = r.(error)
 		}
 	}()
-	// Extract the PTY request and check if the session requested a PTY.
-	if len(c) == 0 {
-		cmd := getShell()
-		c = cmd.Cli()
-	}
+
 	log.Debug().Msgf("Receving shell command [%s] (User: %s, RemoteAddr: %s)", strings.Join(c, " "), s.User(), s.RemoteAddr())
 
 	// Get pty information
 	ptyReq, winCh, isPty := s.Pty()
 	if isPty {
+		// Extract the PTY request and check if the session requested a PTY.
+		if len(c) == 0 {
+			cmd := getShell()
+			c = cmd.Cli()
+		}
 		// This is an attempt to use builtin charmbracelet/ssh pty
 		// Without success (see agent/sshd/sshd.go)
 		/*
@@ -129,8 +131,25 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) (err error) {
 		}
 	} else {
 		// If no pty is requested, we execute the command directly
-		cmd := exec.Command(c[0], c[1:]...)
-		cmd.Stdout = s.Stderr()
+		shell := getShell()
+		params := []string{}
+		if rawCommand != "" {
+			params = []string{SHELL_PARAM, rawCommand}
+		} else {
+			params = []string{"-l"}
+		}
+		cmd := exec.Command(shell.Executable, params...)
+		cmd.Stderr = s.Stderr()
+		cmd.Stdout = s
+		if rawCommand == "" {
+			cmd.Stdin = s
+		}
+		
+		cmd.Env = append(os.Environ(),
+			fmt.Sprintf("PLATFORM=%s", strings.ToLower(runtime.GOOS)),
+			fmt.Sprintf("USER=%s", s.User()),
+			"LANG=en_US.UTF-8",
+		)
 
 		go func() {
 			select {
@@ -144,21 +163,31 @@ func GivePty(s ssh.Session, c []string, globalCtx context.Context) (err error) {
 			}
 		}()
 
-		go func() {
-			_, err := io.Copy(io.MultiWriter(cmd.Stdout, cmd.Stderr), s)
-			if err != nil {
-				log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while copying pty to client")
+		/*go func() {
+			if cmd.Stderr != nil {
+				_, err := io.Copy(io.MultiWriter(cmd.Stdout, cmd.Stderr), s)
+				if err != nil {
+					log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while copying pty to client")
+				}
+			} else {
+				if cmd.Stdout != nil {
+					_, err := io.Copy(cmd.Stdout, s)
+					if err != nil {
+						log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while copying pty to client")
+					}
+				}
 			}
-		}()
 
-		go func() {
+		}()*/
+
+		/*go func() {
 			if cmd.Stdin != nil {
 				_, err := io.Copy(s, cmd.Stdin)
 				if err != nil {
 					log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while copying input to pty")
 				}
 			}
-		}()
+		}()*/
 		err := cmd.Start()
 		if err != nil {
 			log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while starting command")
