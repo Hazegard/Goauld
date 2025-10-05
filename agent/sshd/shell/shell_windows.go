@@ -2,6 +2,12 @@
 
 package shell
 
+import (
+	"Goauld/agent/sshd/shell/shim_embed"
+	"Goauld/common/log"
+	"fmt"
+)
+
 const SHELL_PARAM = "/c"
 
 var SHELL_LOGIN = []string{"-NoLogo", "-NoExit"} //[]string{"-l"}
@@ -18,6 +24,30 @@ func getShell() Command {
 		},
 	}
 	return getShellCmd(commands)
+}
+
+func UpdateShell(shell Command, rawCommand string) (Command, func() error, error) {
+	if rawCommand != "" {
+		shell.Args = []string{SHELL_PARAM, rawCommand}
+		return shell, func() error { return nil }, nil
+	} else {
+		exe, cleanup, err := shim_embed.DropShimSSHD()
+
+		if err != nil {
+			return Command{}, cleanup, fmt.Errorf("error while dropping sshd shim: %s", err)
+		}
+		log.Debug().Str("Path", exe).Msg("SSHD shim dropped")
+		if shell.Executable == "powershell" {
+			shell.Args = append(shell.Args, SHELL_LOGIN...)
+		}
+		if shell.Executable == "cmd" {
+			shell.Args = append(shell.Args, "/K")
+		}
+
+		shell.Args = []string{shell.Executable}
+		shell.Executable = exe
+		return shell, cleanup, nil
+	}
 }
 
 // This is an attempt to use builtin charmbracelet/ssh pty

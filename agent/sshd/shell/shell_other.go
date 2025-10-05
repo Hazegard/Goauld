@@ -38,6 +38,15 @@ func getShell() Command {
 	}
 }
 
+func UpdateShell(shell Command, rawCommand string) (Command, func() error, error) {
+	if rawCommand != "" {
+		shell.Args = []string{SHELL_PARAM, rawCommand}
+	} else {
+		shell.Args = SHELL_LOGIN
+	}
+	return shell, func() error { return nil }, nil
+}
+
 var defaultPaths = []string{
 	"/bin",
 	"/usr/bin",

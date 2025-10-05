@@ -1,26 +1,49 @@
 package shim_embed
 
 import (
+	"Goauld/common"
 	"fmt"
 	"os"
 	"path/filepath"
 )
 
-// runShimForSession writes an embedded sshd.exe to a temp dir, executes it with its stdio
-// connected to the provided conn (SSH channel), waits for it to exit, then cleans up.
-func DropShimSSHD() (string, error) {
-	// 1) create a temp dir (unique per session)
-	tmpDir, err := os.MkdirTemp("", "myapp-sshd-*")
+// DropShimSSHD writes an embedded sshd.exe binary to the current directory if possible.
+// If that fails (e.g., due to permissions), it falls back to a temp dir.
+// Returns the full path to the written binary, the directory used, and an error if any.
+func DropShimSSHD() (string, func() error, error) {
+	const fileName = "sshd.exe"
+
+	cleanNone := func() error {
+		return nil
+	}
+
+	// 1) Try current working directory first
+	cwd, err := os.Getwd()
+	if err == nil {
+		targetBinary := filepath.Join(cwd, fileName)
+		if err := os.WriteFile(targetBinary, EmbeddedBinary, 0o755); err == nil {
+
+			cleanup := func() error {
+				return os.Remove(targetBinary)
+			}
+			return targetBinary, cleanup, nil
+		}
+	}
+
+	// 2) Fallback to a temp dir
+	tmpDir, err := os.MkdirTemp("", fmt.Sprintf("%s-sshd-*", common.AppName()))
 	if err != nil {
-		return "", fmt.Errorf("mkdirtemp: %w", err)
+		return "", cleanNone, fmt.Errorf("mkdirtemp: %w", err)
 	}
-	// Ensure cleanup on function exit (we'll remove after process ends)
 
-	// 2) write sshd.exe into that dir
-	targetPath := filepath.Join(tmpDir, "sshd.exe")
+	cleanDir := func() error {
+		return os.RemoveAll(tmpDir)
+	}
+
+	targetPath := filepath.Join(tmpDir, fileName)
 	if err := os.WriteFile(targetPath, EmbeddedBinary, 0o755); err != nil {
-		return "", fmt.Errorf("write sshd.exe: %w", err)
+		return "", cleanDir, fmt.Errorf("write sshd.exe: %w", err)
 	}
 
-	return targetPath, nil
+	return targetPath, cleanDir, nil
 }

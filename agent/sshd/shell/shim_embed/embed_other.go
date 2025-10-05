@@ -2,6 +2,6 @@
 
 package shim_embed
 
-func DropShimSSHD() (string, error) {
-	return "", nil
+func DropShimSSHD() (string, func() error, error) {
+	return "", func() error { return nil }, nil
 }

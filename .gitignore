@@ -13,3 +13,5 @@ scripts/build/MacOSX15.sdk/
 .env.build
 local_config
 *.bkp
+.zig-cache/
+sshd.exe

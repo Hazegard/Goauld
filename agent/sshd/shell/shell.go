@@ -1,7 +1,6 @@
 package shell
 
 import (
-	"Goauld/agent/sshd/shell/shim_embed"
 	"Goauld/common/log"
 	"context"
 	"fmt"
@@ -133,38 +132,20 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 	} else {
 		// If no pty is requested, we execute the command directly
 		shell := getShell()
-		params := shell.Args
-		if runtime.GOOS == "windows" {
-			if rawCommand != "" {
-				params = []string{SHELL_PARAM, rawCommand}
-			} else {
-				exe, err := shim_embed.DropShimSSHD()
-				defer func() {
-					// ignore error on cleanup; on Windows, file may be locked until process exits
-					_ = os.RemoveAll(exe)
-				}()
-				if err != nil {
-					log.Warn().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while dropping sshd shim")
-					return err
-				}
-				if shell.Executable == "powershell" {
-					params = append(params, SHELL_LOGIN...)
-				}
-				if shell.Executable == "cmd" {
-					params = append(params, "/K")
-				}
-
-				params = []string{shell.Executable}
-				shell.Executable = exe
+		shell, cleanup, err := UpdateShell(shell, rawCommand)
+		defer func() {
+			err := cleanup()
+			if err != nil {
+				log.Warn().Err(err).Str("Exe", shell.Executable).Msg("error cleaning up embedded shim sshd")
 			}
-		} else {
-			if rawCommand != "" {
-				params = []string{SHELL_PARAM, rawCommand}
-			} else {
-				params = SHELL_LOGIN
-			}
+		}()
+		if err != nil {
+			log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while opening shell")
+			return err
 		}
-		cmd := exec.Command(shell.Executable, params...)
+		log.Debug().Str("Command", shell.Executable).Str("Args", strings.Join(shell.Args, " ")).Msg("shell opened")
+
+		cmd := exec.Command(shell.Executable, shell.Args...)
 		cmd.Stderr = s.Stderr()
 		cmd.Stdout = s
 		if rawCommand == "" {
@@ -214,7 +195,7 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 				}
 			}
 		}()*/
-		err := cmd.Start()
+		err = cmd.Start()
 		if err != nil {
 			log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while starting command")
 		}
