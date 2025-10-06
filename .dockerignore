@@ -4,10 +4,13 @@
 *.pem
 *.der
 scripts/build/MacOSX15*
-Dockerfile
+agent/sshd/shell/shim_embed/sshd_shim/*.exe
+
 # Added by goreleaser init:
 dist/
 output
 scripts/build/MacOSX15.sdk/
 local_config
 *.bkp
+.zig-cache/
+sshd.exe

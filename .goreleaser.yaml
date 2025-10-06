@@ -169,7 +169,7 @@ before:
   hooks:
     - go mod tidy
     - |
-      if command -v zig >/dev/null 2>&1; then
+      sh -c "if command -v zig >/dev/null 2>&1; then
         zig build-exe agent/sshd/shell/shim_windows/sshd_shim.zig -target x86_64-windows -O ReleaseSafe -femit-bin=agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_amd64.exe
         zig build-exe agent/sshd/shell/shim_windows/sshd_shim.zig -target aarch64-windows -O ReleaseSafe -femit-bin=agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm64.exe
         zig build-exe agent/sshd/shell/shim_windows/sshd_shim.zig -target x86-windows -O ReleaseSafe -femit-bin=agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_386.exe
@@ -178,8 +178,8 @@ before:
         env GOOS=windows GOARCH=amd64 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_amd64.exe ./agent/sshd/shell/shim_windows/
         env GOOS=windows GOARCH=arm64 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm64.exe ./agent/sshd/shell/shim_windows/
         env GOOS=windows GOARCH=386 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_386.exe ./agent/sshd/shell/shim_windows/
-      fi
-    - GOOS=windows GOARCH=arm go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
+      fi"
+    - env GOOS=windows GOARCH=arm go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
 
     # you may remove this if you don't need go generate
     # - go generate ./...
