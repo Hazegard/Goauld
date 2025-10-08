@@ -264,6 +264,9 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 	if err != nil {
 		log.Warn().Err(err).Str("target", cfg.Ssh.Target).Msg("Failed to get agent")
 		cfg.Ssh.Target, err = GetFromSSHConfig(cfg.Ssh.SshConfFile, cfg.Ssh.Target)
+		if err != nil {
+			log.Warn().Err(err).Str("SSH Config file", cfg.Ssh.SshConfFile).Str("target", cfg.Ssh.Target).Msg("Failed to get agent")
+		}
 
 		log.Debug().Str("Target", cfg.Ssh.Target).Msg("Trying using ssh_config file")
 

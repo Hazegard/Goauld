@@ -27,12 +27,6 @@ func GetFromSSHConfig(sourceFile string, target string) (string, error) {
 		log.Error().Str("Agent", target).Err(err).Str("SourceFile", sourceFile).Msg("Failed to get user from ssh config")
 		return "", fmt.Errorf("failed to get user from SSH config file : %w", err)
 	}
-	fmt.Println(target)
-	fmt.Println(target)
-	fmt.Println(target)
-	fmt.Println(target)
-	fmt.Println(target)
-	fmt.Println(target)
 	name, err := cfg.Get(target, "Hostname")
 	if err != nil {
 		log.Error().Str("Agent", target).Err(err).Str("SourceFile", sourceFile).Msg("Failed to get hostname from ssh config")

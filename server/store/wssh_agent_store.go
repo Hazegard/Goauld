@@ -1,11 +1,9 @@
 package store
 
 import (
+	"Goauld/common/types"
 	"errors"
 	"net"
-	"strings"
-
-	"Goauld/common/types"
 )
 
 type WsshAgent struct {
@@ -26,21 +24,21 @@ func (a *AgentStore) WsshCloseAgent(id string) error {
 	agent := a.wsshAgentMap[id]
 	a.wsshAgentMapMu.Unlock()
 	a.WsshRemoveAgent(id)
-	errs := []string{}
+	errs := []error{}
 	if agent != nil && agent.srcConn != nil {
 		err1 := agent.srcConn.Close()
 		if err1 != nil {
-			errs = append(errs, err1.Error())
+			errs = append(errs, err1)
 		}
 	}
 	if agent != nil && agent.dstConn != nil {
 		err2 := agent.dstConn.Close()
 		if err2 != nil {
-			errs = append(errs, err2.Error())
+			errs = append(errs, err2)
 		}
 	}
 
-	return errors.New(strings.Join(errs, " / "))
+	return errors.Join(errs...)
 }
 
 // WsshRemoveAgent remove the agent of the store
