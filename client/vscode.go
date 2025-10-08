@@ -156,7 +156,6 @@ type VsCodeSettings struct {
 
 func GenVscodeSettings(sshConfigFile string, agent types.Agent, binPath string) VsCodeSettings {
 
-	//installPath := strings.Join([]string{agent.Path, "tealc-vscode-server"}, "/")
 	settings := VsCodeSettings{
 		RemoteSSHConfigFile:            sshConfigFile,
 		RemoteSSHPath:                  binPath,

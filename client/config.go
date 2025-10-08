@@ -224,13 +224,21 @@ type Tui struct{}
 // Run executes the tui subcommand
 func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 	tt := tui.NewTui(api, cfg.AgentPassword)
-	sshAgent, err := tt.Run()
+	agent, mode, err := tt.Run()
+
 	if err != nil {
 		return err
 	}
-	if sshAgent != "" {
-		cfg.Ssh.Target = sshAgent
+	if agent == "" {
+		return nil
+	}
+	switch mode {
+	case "ssh":
+		cfg.Ssh.Target = agent
 		return cfg.Ssh.Run(api, cfg)
+	case "vscode":
+		cfg.VsCode.Target = agent
+		return cfg.VsCode.Run(api, cfg)
 	}
 	return nil
 }

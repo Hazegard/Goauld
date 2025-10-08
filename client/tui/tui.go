@@ -23,6 +23,7 @@ const (
 	action_delete = "ctrl+d"
 	action_kill   = "ctrl+k"
 	action_reset  = "ctrl+r"
+	action_vscode = "ctrl+e"
 	action_enter  = "enter"
 	action_plus   = "+"
 )
@@ -79,11 +80,11 @@ func NewTui(api *api.API, agentPwd map[string]string) Model {
 	return m
 }
 
-func (m *Model) Run() (string, error) {
+func (m *Model) Run() (string, string, error) {
 	if _, err := tea.NewProgram(m).Run(); err != nil {
-		return "", err
+		return "", "", err
 	}
-	return m.agent, nil
+	return m.agent, m.execMode, nil
 }
 
 type Model struct {
@@ -100,6 +101,7 @@ type Model struct {
 	password        string
 	promptedAction  string
 	extendedDetails bool
+	execMode        string
 }
 
 func (m *Model) Init() tea.Cmd { return m.doTick() }
@@ -290,10 +292,34 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 			} else {
+				m.execMode = "ssh"
 				m.agent = selectedAgent.Name
 				return m, tea.Quit
 			}
 
+		case action_vscode:
+			// if the selected agent is not empty
+			switch m.confirmAction {
+			case "":
+				m.confirmAction = action_vscode
+				text = fmt.Sprintf("Confirm launching remote VSCode on %s? (%s to confirm)", selectedAgent.Name, action_vscode)
+				m.statusText.TextStyle = textWarning
+				m.statusText.SetValue(text)
+			case action_vscode:
+				if selectedAgent.Id != "" {
+					m.confirmAction = action_vscode
+					text = fmt.Sprintf("Starting remote VSCode on %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+					m.statusText.TextStyle = textOk
+					m.execMode = "vscode"
+					m.agent = selectedAgent.Name
+					m.statusText.SetValue(text)
+					return m, tea.Quit
+				}
+				m.confirmAction = ""
+			default:
+				m.confirmAction = ""
+				m.statusText.SetValue("")
+			}
 		// r: shortcut to update the agent list
 		case "r":
 			batch = append(batch, m.doUpdate(m.agents))
@@ -398,8 +424,8 @@ func (m *Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
 
 func (m *Model) Help() string {
 	return textHelp.SetString(
-		"    [ctrl+r]:Reset agent     [ctrl+d]:Delete agent     [↑]:Up       [←]:Previous     [r]:Refresh view" +
-			"\n    [ctrl+k]:Kill agent      [Enter]: SSH agent        [↓]:Down     [→]:Next         [q]/[ctrl+c]:Quit     [+]Details").String()
+		"   [ctrl+r]:Reset agent    [ctrl+d]:Delete agent    [↑]:Up      [←]:Previous    [r]:Refresh view    [q]/[ctrl+c]:Quit" +
+			"\n   [ctrl+k]:Kill agent     [Enter]: SSH agent       [↓]:Down    [→]:Next        [ctrl+e] VsCode     [+]Details").String()
 
 }
 
