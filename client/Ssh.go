@@ -1,6 +1,9 @@
 package main
 
 import (
+	"Goauld/client/api"
+	"Goauld/client/common"
+	"Goauld/client/types"
 	"Goauld/common/log"
 	"bufio"
 	"errors"
@@ -13,13 +16,11 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"Goauld/client/api"
-	"Goauld/client/common"
-	"Goauld/client/types"
+	"github.com/aymanbagabas/go-pty"
 )
 
 type Ssh struct {
-	Target         string   `arg:"" help:"The target agent."`
+	Target         string   `arg:"" help:"The target agent." optional:""`
 	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
 	Http           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:""  optional:"" help:"Forward the HTTP proxy ports on the local host."`
 	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
@@ -27,6 +28,8 @@ type Ssh struct {
 	Ssh            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
+	SshOpts        []string `short:"o"`
+	SshConfFile    string   `short:"F"`
 	SshArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
 }
 
@@ -49,18 +52,23 @@ func (c *Command) InlineEnv() *Command {
 
 // String returns the command as a string
 func (c *Command) String() string {
-	cmd := ""
-	// if len(c.Env) > 0 {
-	// 	cmd = fmt.Sprintf("%s ", strings.Join(c.Env, " "))
-	// }
-	return fmt.Sprintf("%s%s %s", cmd, c.Executable, strings.Join(c.Args, " "))
+	return fmt.Sprintf("%s %s", c.Executable, strings.Join(c.Args, " "))
 }
 
-func (c *Command) Execute(cfg ClientConfig, target string) error {
+// StringShell returns the command as a string, each parameter escaped by quotes
+func (c *Command) StringShell() string {
+	args := []string{}
+	for _, arg := range c.Args {
+		args = append(args, fmt.Sprintf("'%s'", arg))
+	}
+	return fmt.Sprintf("%s %s", c.Executable, strings.Join(args, " "))
+}
+
+func (c *Command) Execute(cfg ClientConfig, target string, inPty bool) error {
 	var err error
 	for attempt := 0; attempt <= 3; attempt++ {
 		hasFailed := false
-		err, hasFailed = c.execute(cfg, target)
+		err, hasFailed = c.execute(cfg, inPty)
 		if !hasFailed {
 			return err
 		}
@@ -87,21 +95,58 @@ func (c *Command) UpdatePwd(newPwd string) {
 }
 
 // Execute executes the command and adds the environment variables if needed
-func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
-	cmd := exec.Command(c.Executable, c.Args...)
-	if len(c.Env) > 0 {
-		cmd.Env = append(os.Environ(), c.Env...)
-	}
+func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
+	var err error
+	var stdoutPipe io.ReadCloser
+	var stderrPipe io.ReadCloser
 
-	cmd.Stdin = os.Stdin
+	var run func() error
+	var wait func() error
+	if inPty {
+		var ptyFile pty.Pty
+		ptyFile, err = pty.New()
+		if err != nil {
+			return err, false
+		}
+		cmd := ptyFile.Command(c.Executable, c.Args...)
+		if len(c.Env) > 0 {
+			cmd.Env = append(os.Environ(), c.Env...)
+		}
 
-	stdoutPipe, err := cmd.StdoutPipe()
-	if err != nil {
-		return err, false
-	}
-	stderrPipe, err := cmd.StderrPipe()
-	if err != nil {
-		return err, false
+		//nolint:errcheck
+		defer ptyFile.Close()
+
+		// Capture stdout and stderr from the PTY
+		stdoutPipe = ptyFile
+		stderrPipe = ptyFile
+		run = func() error {
+			return cmd.Start()
+		}
+		wait = func() error {
+			return cmd.Wait()
+		}
+	} else {
+		cmd := exec.Command(c.Executable, c.Args...)
+		if len(c.Env) > 0 {
+			cmd.Env = append(os.Environ(), c.Env...)
+		}
+
+		cmd.Stdin = os.Stdin
+		stdoutPipe, err = cmd.StdoutPipe()
+		if err != nil {
+			return err, false
+		}
+		stderrPipe, err = cmd.StderrPipe()
+		if err != nil {
+			return err, false
+		}
+		run = func() error {
+			return cmd.Start()
+		}
+		wait = func() error {
+			return cmd.Wait()
+		}
+
 	}
 
 	// Tee stdout
@@ -169,12 +214,12 @@ func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 		_, _ = io.Copy(io.Discard, prOut)
 	}()
 
-	err = cmd.Start()
+	err = run()
 	if err != nil {
 		return err, hasAuthFailed.Load()
 	}
 
-	err = cmd.Wait()
+	err = wait()
 
 	wg.Wait()
 	return err, hasAuthFailed.Load()
@@ -182,6 +227,12 @@ func (c *Command) execute(cfg ClientConfig, target string) (error, bool) {
 
 // Run execute the ssh subcommand
 func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
+
+	for i := range e.SshArgs {
+		if cfg.Ssh.SshArgs[i] == "-F" {
+			cfg.Ssh.SshConfFile = cfg.Ssh.SshArgs[i+1]
+		}
+	}
 	if cfg.Socks.Target != "" {
 		// we are in socks mode, so apply the socks option to the ssh
 		cfg.Ssh = Ssh{
@@ -194,6 +245,7 @@ func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
 			Print:          cfg.Ssh.Print,
 			Proxy:          false,
 			SshArgs:        cfg.Socks.SshArgs,
+			SshConfFile:    cfg.ConfigFile,
 		}
 	}
 	if e.Proxy {
@@ -210,7 +262,15 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 	}
 	agent, err := api.GetAgentByName(cfg.Ssh.Target)
 	if err != nil {
-		return err
+		log.Warn().Err(err).Str("target", cfg.Ssh.Target).Msg("Failed to get agent")
+		cfg.Ssh.Target, err = GetFromSSHConfig(cfg.Ssh.SshConfFile, cfg.Ssh.Target)
+
+		log.Debug().Str("Target", cfg.Ssh.Target).Msg("Trying using ssh_config file")
+
+		agent, err = api.GetAgentByName(cfg.Ssh.Target)
+		if err != nil {
+			return fmt.Errorf("failed to get agent by name (%s): %s", cfg.Ssh.Target, err)
+		}
 	}
 	if !agent.Connected {
 		return fmt.Errorf("unable to connect, agent %s (%s) not connected", agent.Name, agent.Id)
@@ -234,10 +294,10 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 		return nil
 	}
 	if e.Proxy {
-		return cmd.Execute(cfg, agent.Name)
+		return cmd.Execute(cfg, agent.Name, false)
 	}
 
-	err = cmd.Execute(cfg, agent.Name)
+	err = cmd.Execute(cfg, agent.Name, false)
 	if err != nil {
 		var exitError *exec.ExitError
 		ok := errors.As(err, &exitError)
@@ -396,4 +456,16 @@ func getPath() (string, error) {
 	}
 
 	return resolvedPath, nil
+}
+
+func ExecuteSystemSSH(args ...string) {
+	cmd := exec.Command("ssh", args...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Env = os.Environ()
+	err := cmd.Run()
+	if err != nil {
+		log.Error().Err(err).Msg("error running ssh")
+		return
+	}
 }

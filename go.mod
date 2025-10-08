@@ -21,6 +21,7 @@ require (
 	github.com/goccy/go-yaml v1.17.1
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/karagenc/socket.io-go v0.1.0
+	github.com/kevinburke/ssh_config v1.1.0
 	github.com/keygen-sh/machineid v1.1.1
 	github.com/pkg/sftp v1.13.9
 	github.com/qdm12/dns/v2 v2.0.0-rc8

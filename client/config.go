@@ -151,6 +151,7 @@ type ClientConfig struct {
 	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
 	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
 	Admin   Admin    `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
+	VsCode  VsCode   `cmd:"" name:"vscode" help:"Start vsCode in remote mode."`
 
 	SearchConfigDir string `hidden:""`
 }

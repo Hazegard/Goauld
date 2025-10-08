@@ -138,6 +138,8 @@ github.com/karagenc/socket.io-go v0.1.0 h1:j+5B3uuRXNil7ItuGTPp1vU4Fwi3khxcEFpfH
 github.com/karagenc/socket.io-go v0.1.0/go.mod h1:nixP20kGPH0qXJnyCL9L2TSzO4Bl3LO9XpX+x7jIDB4=
 github.com/karagenc/yeast v0.1.1 h1:Zv9gOmz7Gp+E90KRIwJVFO4GFXbE7jEqrceXFrBSvy0=
 github.com/karagenc/yeast v0.1.1/go.mod h1:rLE1GH1CTdNXp7Z5fZpOnUCcfI9iW1BShs3uij0EMZ0=
+github.com/kevinburke/ssh_config v1.1.0 h1:pH/t1WS9NzT8go394IqZeJTMHVm6Cr6ZJ6AQ+mdNo/o=
+github.com/kevinburke/ssh_config v1.1.0/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/keygen-sh/machineid v1.1.1 h1:L6G3+l5/0ZgvDST1EE6L8Yfqcss7EC8xs0Q8gEQyIo0=
 github.com/keygen-sh/machineid v1.1.1/go.mod h1:xBhEE0H4t3N05kn+vBNlOnhTf5NMz36YmrmpdrjpgsI=
 github.com/klauspost/cpuid v1.2.4/go.mod h1:Pj4uuM528wm8OyEC2QMXAi2YiTZ96dNQPGgoMS4s3ek=

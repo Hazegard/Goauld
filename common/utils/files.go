@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"runtime"
 )
 
 // GetCurrentDirectory returns the current directory from where the execution is started
@@ -12,6 +13,23 @@ func GetCurrentDirectory() (string, error) {
 		return "", err
 	}
 	return exe, nil
+}
+
+func closeFile(file *os.File) {
+	_ = file.Close()
+}
+
+func WriteToFile(content string, outputFile string) error {
+	f, err := os.Create(outputFile)
+	if err != nil {
+		return fmt.Errorf("error writing to file %s: %s", outputFile, err)
+	}
+	_, err = f.WriteString(content)
+	if err != nil {
+		return fmt.Errorf("error writing to file %s: %s", outputFile, err)
+	}
+	defer closeFile(f)
+	return nil
 }
 
 func OverwriteFile(path string, data []byte) error {
@@ -37,4 +55,32 @@ func OverwriteFile(path string, data []byte) error {
 	}
 
 	return nil
+}
+
+// CreateOrReplaceFileSymlink creates a symbolic link to a file.
+// If the destination exists, it is removed first.
+// On Windows, if symlink creation fails, falls back to a hard link.
+func CreateOrReplaceFileSymlink(target, linkName string) error {
+	// Remove existing file/link if it exists
+	if _, err := os.Lstat(linkName); err == nil {
+		if removeErr := os.Remove(linkName); removeErr != nil {
+			return fmt.Errorf("failed to remove existing file/link: %w", removeErr)
+		}
+	}
+
+	// Try to create the symlink
+	err := os.Symlink(target, linkName)
+	if err == nil {
+		return nil
+	}
+
+	// On Windows, fall back to hard link if symlink fails
+	if runtime.GOOS == "windows" {
+		if linkErr := os.Link(target, linkName); linkErr == nil {
+			fmt.Println("Symlink not allowed; created a hard link instead.")
+			return nil
+		}
+	}
+
+	return fmt.Errorf("failed to create symlink: %w", err)
 }

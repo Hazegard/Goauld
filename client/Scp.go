@@ -2,20 +2,28 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 
 	"Goauld/client/api"
 	"Goauld/client/types"
+
+	"github.com/mattn/go-isatty"
 )
 
 // Scp wraps the scp command to copy files between the host and the agent
 type Scp struct {
-	Target      string
-	Print       bool     `default:"${_scp_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
-	Destination string   `default:"${_scp_destination}" arg:"" name:"destination" yaml:"destination" help:"Destination to copy."`
-	ScpArgs     []string `arg:"" passthrough:"" optional:""`
+	Target string `kong:"-"`
+	Print  bool   `default:"${_scp_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
+	//Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
+	//Destination string   `default:"${_scp_destination}" arg:"" name:"destination" yaml:"destination" help:"Destination to copy."`
+	SshOpts     []string `short:"o"`
+	SshConfFile string   `short:"F"`
+	Paths       []string `arg:"" name:"paths" help:"List of paths to scp" passthrough:""`
+
+	//ScpArgs     []string `arg:"" passthrough:"" optional:""`
 }
 
 // Run execute the scp command
@@ -26,16 +34,23 @@ func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
 // GetTarget parses the input and fetches the target agent, whether it is in the source or destination of the scp command
 func (s *Scp) GetTarget() (string, error) {
 
-	isRemote, target := ExtractRemote(s.Source)
-	if isRemote {
-		return target, nil
+	for _, p := range s.Paths {
+		isRemote, target := ExtractRemote(p)
+		if isRemote {
+			return target, nil
+		}
 	}
 
-	isRemote, target = ExtractRemote(s.Destination)
-	if isRemote {
-		return target, nil
-	}
-	return "", fmt.Errorf("SCP target not found in %s or %s", s.Source, s.Destination)
+	// isRemote, target := ExtractRemote(s.Source)
+	// if isRemote {
+	// return target, nil
+	// }
+
+	// isRemote, target = ExtractRemote(s.Destination)
+	// if isRemote {
+	// return target, nil
+	// }
+	return "", fmt.Errorf("SCP target not found in [%s]", strings.Join(s.Paths, ", "))
 }
 
 // ExtractRemote tries to find the remote agent, whether located in the source or in the destination of the command
@@ -79,11 +94,12 @@ func (s *Scp) Execute(api *api.API, cfg ClientConfig) error {
 
 	cmd := s.buildScpCommand(cfg, agent, exePath)
 	if s.Print {
-		fmt.Println(cmd.InlineEnv().String())
+		fmt.Println(cmd.InlineEnv().StringShell())
 		return nil
 	}
+	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
-	return cmd.Execute(cfg, agent.Name)
+	return cmd.Execute(cfg, agent.Name, isTerminal)
 }
 
 // buildScpCommand build the outer SSH command. This SSH command will be executed in second
@@ -108,9 +124,15 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 	}
 	proxyScpCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, proxyCmd.String(), sep)
 	cmd.Args = append(cmd.Args, proxyScpCmd)
-	cmd.Args = append(cmd.Args, cfg.Scp.ScpArgs...)
-	cmd.Args = append(cmd.Args, s.Source)
-	cmd.Args = append(cmd.Args, s.Destination)
+	//cmd.Args = append(cmd.Args, cfg.Scp.ScpArgs...)
+	for _, opt := range s.SshOpts {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("-o%s", opt))
+	}
+	if s.SshConfFile != "" {
+		cmd.Args = append(cmd.Args, "-F", s.SshConfFile)
+	}
+	cmd.Args = append(cmd.Args, s.Paths...)
+	//	cmd.Args = append(cmd.Args, s.Destination)
 	// cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.Id))
 	return cmd
 }
@@ -132,4 +154,12 @@ func (s *Scp) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath
 
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
 	return cmd
+}
+
+func ExecSCp(args ...string) error {
+	cmd := exec.Command("scp")
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Env = os.Environ()
+	return cmd.Run()
 }
