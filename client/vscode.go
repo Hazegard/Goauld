@@ -101,6 +101,17 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	log.Trace().Str("Agent", cfg.VsCode.Target).Str("Path", settingsPath).Msg("VSCode settings written")
 
 	cmd := exec.Command("code", "--user-data-dir", configDir, "--remote", fmt.Sprintf("ssh-remote+%s", cfg.VsCode.Target), cfg.VsCode.RemotePath)
+
+	cmd.Env = os.Environ()
+	if agent.HasStaticPassword {
+		err = cfg.Prompt(agent.Name)
+		if err != nil {
+			log.Error().Err(err).Str("Agent", agent.Name).Msg("Failed to prompt for static password")
+			return err
+		}
+		cmd.Env = append(cmd.Env, prefixEnv("PASSWORD", cfg.PrivatePassword))
+	}
+
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("Remote Path", cfg.VsCode.RemotePath).Str("Command", strings.Join(cmd.Args, " ")).Msg("Running vscode command")
 	_, err = cmd.Output()
 	if err != nil {
