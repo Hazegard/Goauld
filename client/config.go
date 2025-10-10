@@ -284,6 +284,12 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 	cfg := &ClientConfig{}
 	app := kong.Parse(cfg, kongOptions...)
 
+	abs, err := filepath.Abs(cfgTmp.ConfigFile)
+	if err != nil {
+		cfg.ConfigFile = cfgTmp.ConfigFile
+	} else {
+		cfg.ConfigFile = abs
+	}
 	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
 
 	log.SetLogLevel(cfg.Verbose)
@@ -316,6 +322,9 @@ func (cfg *ClientConfig) UpdatePassConfigFile() error {
 func (cfg *ClientConfig) ShouldPrompt(agent types.Agent) bool {
 	if cfg.PromptPassword {
 		return true
+	}
+	if cfg.PrivatePassword != "" {
+		return false
 	}
 	_, ok := cfg.AgentPassword[cfg.Target()]
 	if ok {
