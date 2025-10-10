@@ -6,15 +6,6 @@ import (
 	"runtime"
 )
 
-// GetCurrentDirectory returns the current directory from where the execution is started
-func GetCurrentDirectory() (string, error) {
-	exe, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	return exe, nil
-}
-
 func closeFile(file *os.File) {
 	_ = file.Close()
 }
@@ -83,4 +74,17 @@ func CreateOrReplaceFileSymlink(target, linkName string) error {
 	}
 
 	return fmt.Errorf("failed to create symlink: %w", err)
+}
+
+// IsDir takes a path as input and returns true if the path exists and is a directory, false otherwise.
+func IsDir(path string) bool {
+	// Get the file info for the given path
+	info, err := os.Stat(path)
+	if err != nil {
+		// If there's an error (e.g., the file doesn't exist), return false
+		return false
+	}
+
+	// Return true if it's a directory, false otherwise
+	return info.IsDir()
 }

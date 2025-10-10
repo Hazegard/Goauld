@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -82,9 +83,9 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", cfg.VsCode.Target).Msg("Failed to get agent")
 		return err
 	}
-	vsCodeSettings := GenVscodeSettings(sshConfigFile, agent, sshPath)
+	vsCodeSettings := GenVSCodeSettings(sshConfigFile, agent, sshPath)
 
-	log.Debug().Str("Agent", cfg.VsCode.Target).Str("SSH config Path", vsCodeSettings.RemoteSSHConfigFile).Str("SSH bin Path", vsCodeSettings.RemoteSSHPath).Str("Remote install path", vsCodeSettings.RemoteSSHServerInstallPath[agent.Name]).Msg("Generate vscode config")
+	log.Debug().Str("Agent", cfg.VsCode.Target).Str("SSH config Path", vsCodeSettings.RemoteSSHConfigFile).Str("SSH bin Path", vsCodeSettings.RemoteSSHPath).Str("Remote install path", vsCodeSettings.InstallPath).Msg("Generate vscode config")
 
 	vsCodeSettingsJson, err := json.MarshalIndent(vsCodeSettings, "", "  ")
 	if err != nil {
@@ -118,6 +119,8 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	if err == nil {
 		cmd.Dir = cwd
 	}
+
+	log.Warn().Str("Path", vsCodeSettings.InstallPath).Msgf("Remember to delete the VSCode server temporary directory: %s", vsCodeSettings.InstallPath)
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("Remote Path", cfg.VsCode.RemotePath).Str("Command", strings.Join(cmd.Args, " ")).Msg("Running vscode command")
 	_, err = cmd.Output()
 	if err != nil {
@@ -131,7 +134,7 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 func GetConfigDir() string {
 	dir, err := os.UserCacheDir()
 	if err != nil {
-		dir, err = utils.GetCurrentDirectory()
+		dir, err = os.Getwd()
 		if err != nil {
 			dir = os.TempDir()
 		}
@@ -169,10 +172,18 @@ type VsCodeSettings struct {
 	RemoteSSHLocalServerDownload   string            `json:"remote.SSH.localServerDownload"`
 	RemoteSSHEnableAgentForwarding bool              `json:"remote.SSH.enableAgentForwarding"`
 	RemoteSSHServerInstallPath     map[string]string `json:"remote.SSH.serverInstallPath"`
+	InstallPath                    string            `json:"-"`
 }
 
-func GenVscodeSettings(sshConfigFile string, agent types.Agent, binPath string) VsCodeSettings {
+func GenVSCodeSettings(sshConfigFile string, agent types.Agent, binPath string) VsCodeSettings {
 
+	sep := ""
+	if runtime.GOOS == "windows" {
+		sep = "\\"
+	} else {
+		sep = "/"
+	}
+	targetPath := fmt.Sprintf("%s%s%s", agent.Path, sep, "tealc-VSServer")
 	settings := VsCodeSettings{
 		RemoteSSHConfigFile:            sshConfigFile,
 		RemoteSSHPath:                  binPath,
@@ -181,8 +192,9 @@ func GenVscodeSettings(sshConfigFile string, agent types.Agent, binPath string) 
 		RemoteSSHLocalServerDownload:   "always",
 		RemoteSSHEnableAgentForwarding: false,
 		RemoteSSHServerInstallPath: map[string]string{
-			agent.Name: agent.Path,
+			agent.Name: targetPath,
 		},
+		InstallPath: targetPath,
 	}
 	return settings
 }

@@ -4,6 +4,7 @@ import (
 	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
 	"Goauld/agent/ssh/transport"
+	"Goauld/agent/vscode"
 	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
@@ -77,6 +78,10 @@ func main() {
 		if cancelReason.Status == utils.Exit {
 			log.Kill().Str("Reason", cancelReason.Msg).Msg("Agent stopped")
 			cancel()
+			err := vscode.Cleanup()
+			if err != nil {
+				log.Warn().Err(err).Msg("error cleaning up VSCode after agent exit")
+			}
 			time.Sleep(time.Second)
 			return nil, nil
 		}

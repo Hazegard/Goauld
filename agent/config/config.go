@@ -257,7 +257,7 @@ func (c *AgentConfig) Validate() error {
 // parse parses the command line arguments
 func parse() (*kong.Context, *AgentConfig, error) {
 	cfgTmp := &AgentConfig{}
-	dir, err := utils.GetCurrentDirectory()
+	dir, err := os.Getwd()
 	if err != nil {
 		return nil, cfgTmp, err
 	}

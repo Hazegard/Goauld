@@ -248,7 +248,7 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 	cfgTmp := &ClientConfig{
 		PrivatePassword: _private_password,
 	}
-	dir, err := utils.GetCurrentDirectory()
+	dir, err := os.Getwd()
 	if err != nil {
 		return nil, cfgTmp, nil, err
 	}

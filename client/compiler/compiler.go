@@ -145,7 +145,7 @@ func HandleDropEnv(source embed.FS) error {
 // as configuration files
 func InitCompilerConfig(appName string, defaultValues kong.Vars) (*kong.Context, *Compiler, error) {
 	cfg := &Compiler{}
-	dir, err := utils.GetCurrentDirectory()
+	dir, err := os.Getwd()
 	if err != nil {
 		return nil, cfg, err
 	}

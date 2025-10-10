@@ -146,7 +146,7 @@ type ServerConfig struct {
 // InitServer initialize the application configuration
 func InitServer() (*kong.Context, *ServerConfig, error) {
 	cfgTmp := &ServerConfig{}
-	dir, err := utils.GetCurrentDirectory()
+	dir, err := os.Getwd()
 	if err != nil {
 		return nil, cfgTmp, err
 	}

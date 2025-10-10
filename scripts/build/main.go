@@ -107,7 +107,7 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 // parse parses the command line arguments
 func parse() (*kong.Context, *BuildConfig, error) {
 	cfg := &BuildConfig{}
-	dir, err := utils.GetCurrentDirectory()
+	dir, err := os.Getwd()
 	if err != nil {
 		return nil, cfg, err
 	}
