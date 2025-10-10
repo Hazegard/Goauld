@@ -1,4 +1,4 @@
-FROM golang:1.25.1-alpine3.22 AS init
+FROM golang:1.25.2-alpine3.22 AS init
 
 RUN apk add go alpine-sdk upx
 RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
@@ -8,6 +8,7 @@ WORKDIR /app
 
 COPY go.mod /app/go.mod
 COPY go.sum /app/go.sum
+COPY vendored /app/vendored
 RUN go mod download
 
 FROM init AS build
@@ -36,7 +37,7 @@ RUN if [[ "$COMPRESS" == 1 ]]; then \
       done; \
     fi
 
-FROM alpine:3.22 AS run
+FROM alpine:3.22.2 AS run
 
 COPY --from=build --chmod=755 /app/output/server/*_linux-amd64 /app/server
 COPY --from=build /app/output/agent/* /app/build_binaries/

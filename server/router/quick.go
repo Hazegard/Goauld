@@ -38,7 +38,7 @@ func (router *MainRouter) ServeQUIC() {
 // HandleQUIC handle the incoming TLS request
 // If the request matched the HTTP domain, forward this request to the HTTP router
 // If the request matches the TLS domain, forward this TLS traffic to the SSH over TLS
-func (router *MainRouter) HandleQUIC(c quic.Connection) {
+func (router *MainRouter) HandleQUIC(c *quic.Conn) {
 
 	alpn := c.ConnectionState().TLS.NegotiatedProtocol
 

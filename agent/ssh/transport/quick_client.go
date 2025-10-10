@@ -13,7 +13,7 @@ import (
 )
 
 type StreamConn struct {
-	quic.Stream
+	*quic.Stream
 	lAddr net.Addr
 	rAddr net.Addr
 }

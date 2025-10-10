@@ -17,7 +17,7 @@ import (
 
 	"github.com/caddyserver/certmagic"
 
-	sio "github.com/karagenc/socket.io-go"
+	sio "github.com/hazegard/socket.io-go"
 	"github.com/urfave/negroni"
 )
 

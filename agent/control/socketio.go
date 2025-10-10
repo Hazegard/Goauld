@@ -19,10 +19,10 @@ import (
 	"Goauld/common/ssh"
 
 	socketio "Goauld/common/socket.io"
-	sio "github.com/karagenc/socket.io-go"
-	eio "github.com/karagenc/socket.io-go/engine.io"
+	sio "github.com/hazegard/socket.io-go"
+	eio "github.com/hazegard/socket.io-go/engine.io"
+	"github.com/coder/websocket"
 	"github.com/quic-go/webtransport-go"
-	"nhooyr.io/websocket"
 )
 
 // ControlPlanClient Handle the socket.io interaction regarding the management of the agent

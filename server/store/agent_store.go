@@ -11,7 +11,7 @@ import (
 	"Goauld/server/persistence"
 
 	socketio "Goauld/common/socket.io"
-	sio "github.com/karagenc/socket.io-go"
+	sio "github.com/hazegard/socket.io-go"
 )
 
 var (

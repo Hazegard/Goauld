@@ -9,7 +9,7 @@ import (
 )
 
 type QUICAgent struct {
-	QUICStream quic.Stream
+	QUICStream *quic.Stream
 	SSHConn    net.Conn
 }
 

@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"time"
 
+	eio "github.com/hazegard/socket.io-go/engine.io"
 	"github.com/google/uuid"
-	eio "github.com/karagenc/socket.io-go/engine.io"
 
 	commonnet "Goauld/common/net"
 
@@ -19,7 +19,7 @@ import (
 
 	socketio "Goauld/common/socket.io"
 
-	gosio "github.com/karagenc/socket.io-go"
+	gosio "github.com/hazegard/socket.io-go"
 )
 
 type SocketIO struct {

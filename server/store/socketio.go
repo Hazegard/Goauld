@@ -4,7 +4,7 @@ import (
 	"Goauld/common/types"
 	"Goauld/server/persistence"
 
-	sio "github.com/karagenc/socket.io-go"
+	sio "github.com/hazegard/socket.io-go"
 )
 
 // SioAddAgent adds the agent to the associated socket

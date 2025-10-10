@@ -31,7 +31,7 @@ func NewQUICServer(store *store.AgentStore, db *persistence.DB) *QUICServer {
 // It initializes a connection to the SSH server
 // and start bidirectional communication between the QUIC connection
 // and the SSH connection
-func (qssh *QUICServer) HandleQuic(quicConn quic.Stream, id string, remote string) {
+func (qssh *QUICServer) HandleQuic(quicConn *quic.Stream, id string, remote string) {
 	// Initializes a connection to the SSH server
 	sshConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
 	if err != nil {
