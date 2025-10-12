@@ -15,7 +15,6 @@ import (
 	"Goauld/client/common"
 	"Goauld/client/tui"
 	"Goauld/common/log"
-	"Goauld/common/utils"
 
 	"github.com/alecthomas/kong"
 )

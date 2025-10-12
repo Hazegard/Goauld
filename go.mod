@@ -54,17 +54,17 @@ require (
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
-	github.com/deckarep/golang-set/v2 v2.8.0
+	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fatih/color v1.18.0
-	github.com/fatih/structs v1.1.0
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/karagenc/yeast v0.1.1
+	github.com/karagenc/yeast v0.1.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/reedsolomon v1.12.5 // indirect
 	github.com/kr/fs v0.1.0 // indirect
@@ -85,16 +85,15 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/qdm12/gosettings v0.4.4 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	// Cannot upgrade quic-go as it breaks socket.io
 	github.com/quic-go/quic-go v0.55.0
 	github.com/quic-go/webtransport-go v0.9.0
 	github.com/rapid7/go-get-proxied v0.0.0-20250207205329-09112877ac70 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/sasha-s/go-deadlock v0.3.6
+	github.com/sasha-s/go-deadlock v0.3.6 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/u-root/u-root v0.15.0 // indirect
-	github.com/xiegeo/coloredgoroutine v0.1.1
+	github.com/xiegeo/coloredgoroutine v0.1.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/zeebo/blake3 v0.2.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

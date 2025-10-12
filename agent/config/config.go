@@ -14,7 +14,6 @@ import (
 	"Goauld/common/cli"
 	"Goauld/common/log"
 	"Goauld/common/ssh"
-	"Goauld/common/utils"
 
 	"github.com/alecthomas/kong"
 )

@@ -6,7 +6,6 @@ import (
 	goauldcommon "Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/log"
-	"Goauld/common/utils"
 	"crypto/rand"
 	"embed"
 	"encoding/base64"

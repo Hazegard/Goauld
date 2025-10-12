@@ -30,7 +30,15 @@ const (
 	// including reading the response body.
 	pollTimeout = 30 * time.Second
 
-	maxPayloadLength = 64 * 1024
+	requestsPerSecondMax   = 5.0
+	requestsPerSecondBurst = requestsPerSecondMax * 2
+	// How quickly the limit on requests per second grows linearly per
+	// second.
+	requestsPerSecondRateOfIncrease = 1.0 / 10.0
+	// How much the rate limit decreases when a response contains an
+	// unexpected error.
+	maxPayloadLength                        = 64 * 1024
+	requestsPerSecondMultiplicativeDecrease = 0.5
 )
 
 // PollingPacketConn implements the net.PacketConn interface over an abstract
@@ -84,13 +92,15 @@ func (c *PollingPacketConn) Close() error {
 func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 	// TODO: compute this dynamically, considering URL length and encoding
 	// overhead.
-
+	rateLimit := NewRateLimiter(
+		time.Now(),
+		requestsPerSecondMax,
+		requestsPerSecondBurst,
+		requestsPerSecondRateOfIncrease,
+	)
 	pollDelay := initPollDelay
 	pollTimer := time.NewTimer(pollDelay)
 	for {
-		var payload bytes.Buffer
-		payload.Write(c.clientID[:])
-
 		var p []byte
 		unstash := c.Unstash(c.remoteAddr)
 		outgoing := c.OutgoingQueue(c.remoteAddr)
@@ -101,21 +111,26 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 		select {
 		case <-c.ctx.Done():
 			return nil
-		case p = <-unstash:
 		default:
 			select {
 			case <-c.ctx.Done():
 				return nil
 			case p = <-unstash:
-			case p = <-outgoing:
 			default:
 				select {
 				case <-c.ctx.Done():
 					return nil
 				case p = <-unstash:
 				case p = <-outgoing:
-				case <-pollTimer.C:
-					pollTimerExpired = true
+				default:
+					select {
+					case <-c.ctx.Done():
+						return nil
+					case p = <-unstash:
+					case p = <-outgoing:
+					case <-pollTimer.C:
+						pollTimerExpired = true
+					}
 				}
 			}
 		}
@@ -136,6 +151,9 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 			pollDelay = initPollDelay
 		}
 		pollTimer.Reset(pollDelay)
+
+		var payload bytes.Buffer
+		payload.Write(c.clientID[:])
 
 		// Grab as many more packets as are immediately available and
 		// fit in maxPayloadLength. Always include the first packet,
@@ -160,22 +178,32 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 			c.Stash(p, c.remoteAddr)
 		}
 
-		go func() {
-			ctx, cancel := context.WithTimeout(c.ctx, pollTimeout)
-			defer cancel()
-			body, err := poll(ctx, c.client, payload.Bytes())
-			if err != nil {
-				log.Trace().Err(err).Str("Mode", "SSHTTP").Msg("Poll error")
-				// TODO: perhaps self-throttle when this happens.
-				return
-			}
-			//nolint:errcheck
-			defer body.Close()
-			err = c.processIncoming(body)
-			if err != nil {
-				log.Trace().Err(err).Str("Mode", "SSHTTP").Msg("processIncoming error")
-			}
-		}()
+		now := time.Now()
+		if limited, _ := rateLimit.IsLimited(now); limited {
+			// Drop packets while rate limited. We drop packets,
+			// rather than indefinitely delay them, to prevent
+			// excessive buffering of old packets.
+		} else {
+			// Deplete the rate limiter by 1 unit.
+			rateLimit.Take(now, 1.0)
+
+			go func() {
+				ctx, cancel := context.WithTimeout(c.ctx, pollTimeout)
+				defer cancel()
+				body, err := poll(ctx, c.client, payload.Bytes())
+				if err != nil {
+					log.Trace().Err(err).Str("Mode", "SSHTTP").Msgf("poll error, reducing request rate from %.3f/s", rateLimit.rate)
+					rateLimit.MultiplicativeDecrease(now, requestsPerSecondMultiplicativeDecrease)
+					return
+				}
+				//nolint:errcheck
+				defer body.Close()
+				err = c.processIncoming(body)
+				if err != nil {
+					log.Trace().Err(err).Str("Mode", "SSHTTP").Msg("processIncoming error")
+				}
+			}()
+		}
 	}
 }
 

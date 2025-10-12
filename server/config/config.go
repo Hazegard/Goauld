@@ -11,7 +11,6 @@ import (
 	"Goauld/common/crypto"
 	"Goauld/common/log"
 	"Goauld/common/net"
-	"Goauld/common/utils"
 
 	"github.com/alecthomas/kong"
 )
