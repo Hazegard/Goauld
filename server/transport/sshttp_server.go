@@ -23,6 +23,7 @@ import (
 
 const maxPayloadLength = 64 * 1024
 
+// SSHHttpServer handle the SSH over HTTP.
 type SSHHttpServer struct {
 	pconn   *turbotunnel.QueuePacketConn
 	kcpConn *kcp.Listener
@@ -38,33 +39,34 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 	}
 	upstreamConn, err := dialer.Dial("tcp", upstream)
 	if err != nil {
-		return fmt.Errorf("stream %08x:%d connect upstream: %v", conv, stream.ID(), err)
+		return fmt.Errorf("stream %08x:%d connect upstream: %w", conv, stream.ID(), err)
 	}
 	//nolint:errcheck
 	defer upstreamConn.Close()
+	//nolint:forcetypeassert
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
 
 	// The client first sends its ID before transferring the conn to the SSH client
 	// The ID is a MD5 hash
-	rawId := make([]byte, 32)
-	n, err := stream.Read(rawId)
+	rawID := make([]byte, 32)
+	n, err := stream.Read(rawID)
 	if err != nil {
 		return fmt.Errorf("stream %08x:%d read ID fail", conv, stream.ID())
 	}
-	id := string(rawId[:n])
+	id := string(rawID[:n])
 
-	err = s.db.SetAgentSshMode(id, "HTTP", stream.RemoteAddr().String())
+	err = s.db.SetAgentSSHMode(id, "HTTP", stream.RemoteAddr().String())
 	if err != nil {
-		log.Warn().Err(err).Str("Agent.Id", id).Str("Mode", "HTTP").Msg("error setting agent connection mode")
+		log.Warn().Err(err).Str("Agent.ID", id).Str("Mode", "HTTP").Msg("error setting agent connection mode")
 	}
-	s.store.SshttpAddAgent(upstreamConn, stream, id)
+	s.store.SSHTTPAddAgent(upstreamConn, stream, id)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		_, err := io.Copy(stream, upstreamTCPConn)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// smux Stream.Write may return io.EOF.
 			err = nil
 		}
@@ -77,7 +79,7 @@ func (s *SSHHttpServer) handleStream(stream *smux.Stream, upstream string, conv 
 	go func() {
 		defer wg.Done()
 		_, err := io.Copy(upstreamTCPConn, stream)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// smux Stream.WriteTo may return io.EOF.
 			err = nil
 		}
@@ -110,14 +112,15 @@ func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) err
 	for {
 		stream, err := sess.AcceptStream()
 		if err != nil {
-			//nolint:staticcheck // SA1019
-			if err, ok := err.(net.Error); ok && err.Temporary() {
+			var err net.Error
+			if errors.As(err, &err) {
 				continue
 			}
 			if errors.Is(err, io.ErrClosedPipe) {
 				// We don't want to report this error.
 				err = nil
 			}
+
 			return err
 		}
 		log.Debug().Str("Mode", "SSHTTP").Msgf("begin stream %08x:%d", conn.GetConv(), stream.ID())
@@ -140,10 +143,11 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 	for {
 		conn, err := ln.AcceptKCP()
 		if err != nil {
-			//nolint:staticcheck // SA1019
-			if err, ok := err.(net.Error); ok && err.Temporary() {
+			var err net.Error
+			if errors.As(err, &err) {
 				continue
 			}
+
 			return err
 		}
 		log.Debug().Str("Mode", "SSHTTP").Msgf("begin session %08x", conn.GetConv())
@@ -191,17 +195,20 @@ func decodeRequest(req *http.Request) (turbotunnel.ClientID, []byte) {
 		return turbotunnel.ClientID{}, nil
 	}
 	payload := body[n:]
+
 	return clientID, payload
 }
 
+// ServeHTTP serve the endpoint used to perform SSH over HTTP.
 func (s *SSHHttpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-
 	if req.Method == http.MethodGet {
 		http.Error(rw, "OK", http.StatusOK)
+
 		return
 	}
 	if req.Method != http.MethodPost {
 		http.Error(rw, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+
 		return
 	}
 
@@ -274,6 +281,7 @@ func (s *SSHHttpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			// Stash it so that it will be first in line for the
 			// next response.
 			s.pconn.Stash(p, clientID)
+
 			break
 		}
 		first = false
@@ -282,16 +290,18 @@ func (s *SSHHttpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		_, err := encapsulation.WriteData(rw, p)
 		if err != nil {
 			log.Get().Debug().Msgf("encapsulation.WriteData: %v", err)
+
 			break
 		}
+
 		if rw, ok := rw.(http.Flusher); ok {
 			rw.Flush()
 		}
 	}
 }
 
+// NewSSHHttpServer creates an SSHHttpServer using turbotunnel.
 func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) (*SSHHttpServer, error) {
-
 	// noiseConn is the packet interface that communicates with the AMP/HTTP
 	// Handler; it deals in encrypted Noise messages. plainConn is the
 	// packet interface that communicates with KCP. noiseLoop sits in the
@@ -301,7 +311,7 @@ func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) (*SSHHttpServ
 
 	ln, err := kcp.ServeConn(nil, 0, 0, plainConn)
 	if err != nil {
-		return nil, fmt.Errorf("opening KCP listener: %v", err)
+		return nil, fmt.Errorf("opening KCP listener: %w", err)
 	}
 
 	server := &SSHHttpServer{
@@ -312,13 +322,14 @@ func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) (*SSHHttpServ
 	}
 
 	go func() {
-		err := server.acceptSessions(ln, config.Get().LocalSShAddr())
+		err := server.acceptSessions(ln, config.Get().LocalSSHAddr())
 		log.Info().Str("Mode", "SSHTTP").Err(err).Msg("ssh http server accept sessions")
 	}()
 
 	return server, nil
 }
 
+// Close closes both the underlying turbotunnel conn and the KCP conn.
 func (s *SSHHttpServer) Close() error {
 	return errors.Join(
 		s.pconn.Close(),

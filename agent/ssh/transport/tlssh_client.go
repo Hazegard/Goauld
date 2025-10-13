@@ -10,18 +10,18 @@ import (
 	"time"
 )
 
-// GetTlsConn returns a TLS connection and will abort dialing,
+// GetTLSConn returns a TLS connection and will abort dialing,
 // handshake or header write if ctx is cancelled.
-func GetTlsConn(ctx context.Context) (net.Conn, error) {
+func GetTLSConn(ctx context.Context) (net.Conn, error) {
 	// 1) Dial the TCP connection with context
 	dialer := &net.Dialer{}
-	rawConn, err := dialer.DialContext(ctx, "tcp", config.Get().TlsUrl())
+	rawConn, err := dialer.DialContext(ctx, "tcp", config.Get().TLSURL())
 	if err != nil {
 		return nil, err
 	}
 
-	tlsConf := proxy.NewTlsConfig()
-	hostPort := strings.Split(config.Get().TlsUrl(), ":")
+	tlsConf := proxy.NewTLSConfig()
+	hostPort := strings.Split(config.Get().TLSURL(), ":")
 	tlsConf.ServerName = hostPort[0]
 	// 2) Wrap in TLS
 	tlsConn := tls.Client(rawConn, tlsConf)
@@ -29,6 +29,7 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 	// 3) Do the TLS handshake with context
 	if err := tlsConn.HandshakeContext(ctx); err != nil {
 		_ = rawConn.Close()
+
 		return nil, err
 	}
 
@@ -38,9 +39,10 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 		_ = tlsConn.SetWriteDeadline(dl)
 	}
 
-	header := []byte(config.Get().Id)
+	header := []byte(config.Get().ID)
 	if _, err := tlsConn.Write(header); err != nil {
 		_ = tlsConn.Close()
+
 		return nil, err
 	}
 	// Clear deadlines so future reads/writes aren’t affected
@@ -49,19 +51,22 @@ func GetTlsConn(ctx context.Context) (net.Conn, error) {
 	return tlsConn, nil
 }
 
-// GetTlsConn returns a TLS connection
-func GoodGetTlsConn(ctx context.Context) (net.Conn, error) {
+/*
+// GoodGetTLSConn returns a TLS connection.
+func GoodGetTLSConn(ctx context.Context) (net.Conn, error) {
 	// Initializes a TLS connection to the server
-	conn, err := tls.Dial("tcp", config.Get().TlsUrl(), proxy.NewTlsConfig())
+	conn, err := tls.Dial("tcp", config.Get().TLSURL(), proxy.NewTLSConfig())
 	if err != nil {
 		return nil, err
 	}
 	// Write the agent ID as a header to allow the server to identify which agent
 	// Write the agent ID as a header to allow the server to identify which agent
 	// is currently connecting
-	_, err = conn.Write([]byte(config.Get().Id))
+	_, err = conn.Write([]byte(config.Get().ID))
 	if err != nil {
 		return nil, err
 	}
+
 	return conn, err
 }
+*/

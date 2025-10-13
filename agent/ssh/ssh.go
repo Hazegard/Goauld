@@ -18,6 +18,9 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// SSHAgent holds the agent information
+//
+//nolint:revive
 type SSHAgent struct {
 	client *ssh.Client
 	ctx    context.Context
@@ -28,33 +31,35 @@ type SSHAgent struct {
 	remotePortMap   map[string]_ssh.RemotePortForwarding
 }
 
-// NewSSHAgent returns a new Agent
+// NewSSHAgent returns a new Agent.
 func NewSSHAgent() *SSHAgent {
 	return &SSHAgent{
 		remotePortMap: make(map[string]_ssh.RemotePortForwarding),
 	}
 }
 
-// Init initializes the ssh client using the configuration
+// Init initializes the ssh client using the configuration.
 func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSSH) error {
 	log.Info().Msg("Connecting to the ssh server...")
 	// Get the private key used to authenticate to the server
-	privateKey, err := ssh.ParsePrivateKey([]byte(config.Get().SShPrivateKey))
+	privateKey, err := ssh.ParsePrivateKey([]byte(config.Get().SSHPrivateKey))
 	if err != nil {
 		return err
 	}
 	sshConfig := &ssh.ClientConfig{
-		User:            config.Get().Id,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
+		User: config.Get().ID,
+		Auth: []ssh.AuthMethod{ssh.PublicKeys(privateKey)},
+		//nolint:gosec
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		ClientVersion:   "SSH-2.0-Goauld-" + common.Version,
 	}
 
 	// defer cancel()
 	// Get the ssh client, which may be proxied to bypass proxies
-	client, conn, closer, mode, err := getProxiedClient(sshConfig, ctx, dnsTransport)
+	client, conn, closer, mode, err := getProxiedClient(ctx, sshConfig, dnsTransport)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
+
 		return err
 	}
 
@@ -76,7 +81,6 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 			err = closer.Close()
 			if err != nil {
 				log.Error().Err(err).Msg("ssh transport close failed")
-
 			}
 		}
 	}()
@@ -84,24 +88,27 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 	return nil
 }
 
-// GetRemoteConn returns a net.Listener listening on the ssh server host, as well as the port used by the remote listener
+// GetRemoteConn returns a net.Listener listening on the ssh server host, as well as the port used by the remote listener.
 func (sshAgent *SSHAgent) GetRemoteConn(remote string) (net.Listener, int, error) {
 	l, err := sshAgent.client.Listen("tcp", remote)
 	if err != nil {
 		return nil, 0, err
 	}
+	//nolint:forcetypeassert
 	port := l.Addr().(*net.TCPAddr).Port
+
 	return l, port, err
 }
 
-// RemoteForward starts the remote port forwarded in the background. It returns the remote listening port
-func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx context.Context) (int, error) {
+// RemoteForward starts the remote port forwarded in the background. It returns the remote listening port.
+func (sshAgent *SSHAgent) RemoteForward(ctx context.Context, rpf _ssh.RemotePortForwarding) (int, error) {
 	// start the remote forwarding to remotely expose the local sshd server
 	remoteListener, err := sshAgent.client.Listen("tcp", rpf.GetRemote())
 	if err != nil {
 		return 0, fmt.Errorf("failed to start remote listener: %w", err)
 	}
 
+	//nolint:forcetypeassert
 	remotePort := remoteListener.Addr().(*net.TCPAddr).Port
 	rpf.ServerPort = remotePort
 
@@ -127,14 +134,16 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 			default:
 				if ctx.Err() != nil {
 					_ = remoteListener.Close()
+
 					return
 				}
 
 				// Waits for a connection
 				remoteConn, err := remoteListener.Accept()
-				if err != nil {
-					if errCounter > 5 {
+				if err != nil && !errors.Is(err, io.EOF) {
+					if errCounter > 50 {
 						log.Warn().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg(fmt.Sprintf("%d attempts failed to accept remote connection", errCounter))
+
 						return
 					}
 					errCounter++
@@ -142,6 +151,10 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 					log.Warn().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to accept remote connection")
 					// Pseudo throttle en attendant
 					time.Sleep(1 * time.Second)
+
+					continue
+				}
+				if errors.Is(err, io.EOF) {
 					continue
 				}
 
@@ -151,6 +164,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 					localConn, err := net.Dial("tcp", rpf.GetLocal())
 					if err != nil {
 						log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msg("failed to connect to local service")
+
 						return
 					}
 					//nolint:errcheck
@@ -187,6 +201,7 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 			}
 		}
 	}()
+
 	return remotePort, nil
 }
 
@@ -194,11 +209,12 @@ func (sshAgent *SSHAgent) RemoteForward(rpf _ssh.RemotePortForwarding, ctx conte
 //
 // to perform a keepalive to ensure that the connection is kept active even if no traffic
 //
-// is transmitted within the connection
+// is transmitted within the connection.
 func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 	if config.Get().GetKeepalive() == 0 {
 		return
 	}
+	//nolint:durationcheck
 	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
 	for {
@@ -216,11 +232,12 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 	}
 }
 
-// Close closes the ssh connection
+// Close closes the ssh connection.
 func (sshAgent *SSHAgent) Close() error {
 	log.Warn().Msg("Shutting down SSH agent...")
 	if sshAgent.conn != nil {
 		_ = sshAgent.conn.Close()
 	}
+
 	return sshAgent.client.Close()
 }

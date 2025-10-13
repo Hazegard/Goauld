@@ -1,13 +1,16 @@
-package socket_io
+package socketio
 
 import "strconv"
 
+// EventType holds the representation of a socket.IO event.
 type EventType int
 
+// ID returns the ID of an event.
 func (e EventType) ID() string {
 	return strconv.Itoa(int(e))
 }
 
+// All events used to communicate between the agent and the server.
 const (
 	SendAgentDataEvent EventType = iota
 	SendAgentDataError
@@ -40,9 +43,9 @@ const (
 	SendRemotePortForwardingDataEvent
 	SendRemotePortForwardingDataError
 	SendRemotePortForwardingDataSuccess
-	SendSshPrivateKeyEvent
-	SendSshHPrivateKeyError
-	SendSshPrivateKeySuccess
+	SendSSHPrivateKeyEvent
+	SendSSHHPrivateKeyError
+	SendSSHPrivateKeySuccess
 	PasswordValidationRequestEvent
 	PasswordValidationRequestResponse
 )

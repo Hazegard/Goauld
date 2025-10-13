@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -21,69 +20,68 @@ import (
 var (
 	_agePubKey = "age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p"
 
-	_private_password = ""
-	_password_cli     = ""
-	_shared_password  = ""
-	_name             = "user@hostname"
+	_private_password = ""              //nolint:revive
+	_password_cli     = ""              //nolint:revive
+	_shared_password  = ""              //nolint:revive
+	_name             = "user@hostname" //nolint:revive
 
 	_server      = "www.example.com"
-	_ssh_server  = "www.example.com:22222"
-	_tls_server  = "app.example.com"
-	_quic_domain = "app.example.com"
-	_dns_server  = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9"
-	_dns_domain  = "t.example.com"
+	_ssh_server  = "www.example.com:22222"      //nolint:revive
+	_tls_server  = "app.example.com"            //nolint:revive
+	_quic_domain = "app.example.com"            //nolint:revive
+	_dns_server  = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9" //nolint:revive
+	_dns_domain  = "t.example.com"                           //nolint:revive
 
-	_sshd_enabled           = "true"
-	_socks_enabled          = "true"
-	_http_proxy_enabled     = "true"
-	_socks_use_system_proxy = "true"
+	_sshd_enabled           = "true" //nolint:revive
+	_socks_enabled          = "true" //nolint:revive
+	_http_proxy_enabled     = "true" //nolint:revive
+	_socks_use_system_proxy = "true" //nolint:revive
 
 	_proxy          = ""
-	_proxy_username = ""
-	_proxy_password = ""
-	_proxy_domain   = ""
+	_proxy_username = "" //nolint:revive
+	_proxy_password = "" //nolint:revive
+	_proxy_domain   = "" //nolint:revive
 
-	_socks_custom_proxy   = ""
-	_socks_proxy_username = ""
-	_socks_proxy_password = ""
-	_socks_proxy_domain   = ""
+	_socks_custom_proxy   = "" //nolint:revive
+	_socks_proxy_username = "" //nolint:revive
+	_socks_proxy_password = "" //nolint:revive
+	_socks_proxy_domain   = "" //nolint:revive
 
-	_http_custom_proxy   = ""
-	_http_proxy_username = ""
-	_http_proxy_password = ""
-	_http_proxy_domain   = ""
+	_http_custom_proxy   = "" //nolint:revive
+	_http_proxy_username = "" //nolint:revive
+	_http_proxy_password = "" //nolint:revive
+	_http_proxy_domain   = "" //nolint:revive
 
-	_no_proxy = "false"
+	_no_proxy = "false" //nolint:revive
 
-	// _sshd_port  = "0"
-	_rssh_port  = "0"
-	_socks_port = "0"
-	_http_port  = "0"
+	_rssh_port  = "0" //nolint:revive
+	_socks_port = "0" //nolint:revive
+	_http_port  = "0" //nolint:revive
 
 	_keepawake = "false"
 	_keepalive = "20"
 	_verbosity = "0"
 
-	_only_working_days    = "false"
-	_working_day_start    = "8:00"
-	_working_day_end      = "19:30"
-	_working_day_timezone = "Europe/Paris"
+	_only_working_days    = "false"        //nolint:revive
+	_working_day_start    = "8:00"         //nolint:revive
+	_working_day_end      = "19:30"        //nolint:revive
+	_working_day_timezone = "Europe/Paris" //nolint:revive
 
-	_rssh_order   = "SSH,TLS,WS,HTTP,DNS"
-	_rssh_timeout = "60"
+	_rssh_order   = "SSH,TLS,WS,HTTP,DNS" //nolint:revive
+	_rssh_timeout = "60"                  //nolint:revive
 
-	_remote_port_forwarding = ""
+	_remote_port_forwarding = "" //nolint:revive
 
-	_max_retries = "0"
+	_max_retries = "0" //nolint:revive
 
 	_version         = "false"
-	_generate_config = "false"
-	_config_file     = ""
+	_generate_config = "false" //nolint:revive
+	_config_file     = ""      //nolint:revive
 
 	_background        = "false"
-	_hidden_background = "false"
+	_hidden_background = "false" //nolint:revive
 
-	_custom_dns_command = ""
+	_custom_dns_command = "" //nolint:revive
 
 	_killswitch = "7"
 
@@ -163,23 +161,24 @@ var (
 		"\nAs well as goauld_agent.yaml on the current directory."
 )
 
+// AgentConfig the agent configuration.
 type AgentConfig struct {
 	AgePubKey string `default:"${_agePubKey}" name:"age-pubkey" yaml:"age-pubkey" short:"A" help:"Age public key associated to the server. The provided public key should match the server public key"`
 
 	Server          string   `default:"${_server}" short:"s" name:"server" yaml:"server" optional:"" help:"The control HTTP server to connect to."`
-	SshServer       string   `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
+	SSHServer       string   `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"The SSH server to connect to when using direct SSH connections."`
 	QuicServer      string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" yaml:"quic-domain" optional:"" help:"The QUIC domain used to tunnel the traffic."`
-	TlsServer       string   `default:"${_tls_server}" short:"T" name:"tls-server" yaml:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
-	DnsServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers."`
-	DnsServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`
+	TLSServer       string   `default:"${_tls_server}" short:"T" name:"tls-server" yaml:"tls-server" optional:"" help:"The TLS server to connect to when using SSH over TLS connections."`
+	DNSServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers."`
+	DNSServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"The DNS domain used to tunnel the traffic."`
 
-	LocalSshPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
+	LocalSSHPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"SSH password to access the agent. If no password is provided, a random password is automatically generated."`
 	PrivatePassword  string `default:"${_password_cli}" short:"p" name:"password" optional:"" help:"SSH password to access the agent"`
 	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Nice name to identify the agent. Defaults to 'user@hostname'"`
 
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
 	Socks bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Start the Socks proxy server."`
-	Http  bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Start the Http proxy server."`
+	HTTP  bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Start the HTTP proxy server."`
 
 	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username to use with the proxy"`
@@ -192,16 +191,16 @@ type AgentConfig struct {
 	SocksProxyPassword  string   `default:"${_socks_proxy_password}" name:"socks-proxy-password" yaml:"socks-proxy-password" optional:"" help:"Password to use with the socks http upstream proxy"`
 	SocksProxyDomain    string   `default:"${_socks_proxy_domain}" name:"socks-proxy-domain" yaml:"socks-proxy-domain" optional:"" help:"Domain to use with the socks http upstream proxy"`
 
-	HttpCustomProxy   *url.URL `default:"${_http_custom_proxy}" name:"http-custom-proxy" yaml:"http-custom-proxy" optional:"" help:"Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
-	HttpProxyUsername string   `default:"${_http_proxy_username}" name:"http-proxy-username" yaml:"http-proxy-username" optional:"" help:"Username to use with the http upstream proxy"`
-	HttpProxyPassword string   `default:"${_http_proxy_password}" name:"http-proxy-password" yaml:"http-proxy-password" optional:"" help:"Password to use with the http upstream proxy"`
-	HttpProxyDomain   string   `default:"${_http_proxy_domain}" name:"http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain to use with the http upstream proxy"`
+	HTTPCustomProxy   *url.URL `default:"${_http_custom_proxy}" name:"http-custom-proxy" yaml:"http-custom-proxy" optional:"" help:"Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
+	HTTPProxyUsername string   `default:"${_http_proxy_username}" name:"http-proxy-username" yaml:"http-proxy-username" optional:"" help:"Username to use with the http upstream proxy"`
+	HTTPProxyPassword string   `default:"${_http_proxy_password}" name:"http-proxy-password" yaml:"http-proxy-password" optional:"" help:"Password to use with the http upstream proxy"`
+	HTTPProxyDomain   string   `default:"${_http_proxy_domain}" name:"http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain to use with the http upstream proxy"`
 
 	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" yaml:"no-proxy" optional:"" help:"Do not use the system proxy."`
 
-	RsshPort      int `default:"${_rssh_port}"  name:"rssh-port" yaml:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
+	RSSHPort      int `default:"${_rssh_port}" name:"rssh-port" yaml:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
 	SocksPort     int `default:"${_socks_port}"  name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
-	HttpProxyPort int `default:"${_http_port}"  name:"http-port" yaml:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
+	HTTPProxyPort int `default:"${_http_port}" name:"http-port" yaml:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
 
 	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
 	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" yaml:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops (0 => no keepalive)."`
@@ -212,8 +211,8 @@ type AgentConfig struct {
 	WorkingDayEnd      string `default:"${_working_day_end}" name:"working-day-end" yaml:"working-day-end" help:"End time of working day in days."`
 	WorkingDayTimeZone string `default:"${_working_day_timezone}" name:"working-day-timezone" yaml:"working-day-timezone" help:"Timezone of working day."`
 
-	RsshOrder  []string `default:"${_rssh_order}" short:"O" name:"rssh-order" yaml:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
-	SshTimeout int      `default:"${_rssh_timeout}" name:"ssh-timeout" yaml:"ssh-timeout" help:"Timeout in second to wait for the SSH tunnel to become available (independent for each protocol attempt), 0 means wait indefinitely."`
+	RSSHOrder  []string `default:"${_rssh_order}" short:"O" name:"rssh-order" yaml:"rssh-order" optional:"" help:"Order the SSH tunnels connection attempts."`
+	SSHTimeout int      `default:"${_rssh_timeout}" name:"ssh-timeout" yaml:"ssh-timeout" help:"Timeout in second to wait for the SSH tunnel to become available (independent for each protocol attempt), 0 means wait indefinitely."`
 
 	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" name:"rpf" yaml:"rpf"  short:"R" optional:"" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server"`
 
@@ -226,34 +225,36 @@ type AgentConfig struct {
 	Background       bool `name:"background" yaml:"background" short:"B" default:"${_background}" negatable:"" optional:"" help:"Start the agent in the background."`
 	HiddenBackground bool `name:"hidden-background" yaml:"hidden-background" default:"${_hidden_background}" hidden:""  negatable:"" optional:"" help:"Start the agent in the background."`
 
-	CustomDnsCommand string `default:"${_custom_dns_command}" name:"custom-dns-command" yaml:"custom-dns-command" help:"System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.\n Powershell example: \"((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '\x00' -replace '\\s+', '\x00' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )\"\n Linux example:\"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p\"."`
+	CustomDNSCommand string `default:"${_custom_dns_command}" name:"custom-dns-command" yaml:"custom-dns-command" help:"System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.\n Powershell example: \"((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '\x00' -replace '\\s+', '\x00' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )\"\n Linux example:\"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p\"."`
 
 	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"Number of days to stay alive. Afterward, the agent will kill itself. (0 to disable the killswitch)"`
 }
 
+// Validate validates the configuration.
 func (c *AgentConfig) Validate() error {
 	var errs []error
 	if c.OnlyWorkingDays {
 		wd := NewWorkingDay(c.WorkingDayStart, c.WorkingDayEnd, c.WorkingDayTimeZone)
 		errs = append(errs, wd.Validate())
 	}
-	if HasProto(c.TlsServer) {
-		errs = append(errs, fmt.Errorf("the TLS server name must not contains protocol prefix"))
+	if HasProto(c.TLSServer) {
+		errs = append(errs, errors.New("the TLS server name must not contains protocol prefix"))
 	}
 	if HasProto(c.QuicServer) {
-		errs = append(errs, fmt.Errorf("the QUIC server name must not contains protocol prefix"))
+		errs = append(errs, errors.New("the QUIC server name must not contains protocol prefix"))
 	}
 	if len(c.PrivatePassword) > 72 {
 		errs = append(errs, bcrypt.ErrPasswordTooLong)
 	}
 
 	if c.KillSwitch < 0 {
-		errs = append(errs, fmt.Errorf("the kill-switch must not be negative"))
+		errs = append(errs, errors.New("the kill-switch must not be negative"))
 	}
+
 	return errors.Join(errs...)
 }
 
-// parse parses the command line arguments
+// parse parses the command line arguments.
 func parse() (*kong.Context, *AgentConfig, error) {
 	cfgTmp := &AgentConfig{}
 	dir, err := os.Getwd()
@@ -273,7 +274,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	}
 	kongOptions := []kong.Option{
 		kong.Name(common.AppName()),
-		kong.Description(common.Title(common.App_Name) + "\n" + description),
+		kong.Description(common.Title(common.Appname) + "\n" + description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(common.AppName())),
@@ -288,11 +289,13 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	app := kong.Parse(cfg, kongOptions...)
 
 	log.SetLogLevel(cfg.Verbose)
+
 	return app, cfg, nil
 }
 
-// HasProto returns true if the url contains a protocol prefix
+// HasProto returns true if the url contains a protocol prefix.
 func HasProto(u string) bool {
 	split := strings.Split(u, "://")
+
 	return len(split) > 1
 }

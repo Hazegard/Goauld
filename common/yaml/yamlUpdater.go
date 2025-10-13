@@ -11,7 +11,9 @@ import (
 	"github.com/goccy/go-yaml/printer"
 )
 
+// UpdateAgentPasswordConfig Updates the configuration file with the agent password.
 func UpdateAgentPasswordConfig(file string, name, pass string) error {
+	//nolint:gosec
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return err
@@ -51,9 +53,9 @@ func UpdateAgentPasswordConfig(file string, name, pass string) error {
 			return err
 		}
 		node = nodeParent
-		parentAghentPAssword := make(map[string]map[string]string)
-		parentAghentPAssword["agent-password"] = agentPassword
-		apBytes, err = yaml.Marshal(parentAghentPAssword)
+		parentAgentPassword := make(map[string]map[string]string)
+		parentAgentPassword["agent-password"] = agentPassword
+		apBytes, err = yaml.Marshal(parentAgentPassword)
 		if err != nil {
 			return err
 		}

@@ -11,11 +11,11 @@ import (
 	"github.com/coder/websocket"
 )
 
-// GetWebsocketConn returns a net.Conn wrapping a websocket connection
+// GetWebsocketConn returns a net.Conn wrapping a websocket connection.
 func GetWebsocketConn(localCtx context.Context, globalCtx context.Context) (net.Conn, error) {
-	url := config.Get().WSshUrl()
+	url := config.Get().WSshURL()
 
-	httpclient := proxy.NewHttpClientProxy(nil)
+	httpclient := proxy.NewHTTPClientProxy(nil)
 
 	// Attempt to connect to the websocket server
 	wsConn, resp, err := websocket.Dial(localCtx, url, &websocket.DialOptions{
@@ -28,9 +28,11 @@ func GetWebsocketConn(localCtx context.Context, globalCtx context.Context) (net.
 		if resp != nil && resp.Body != nil {
 			body, _ := io.ReadAll(resp.Body)
 			_ = resp.Body.Close()
-			return nil, fmt.Errorf("websocket dial error, got response: %s: %s", body, err)
+
+			return nil, fmt.Errorf("websocket dial error, got response: %s: %w", body, err)
 		}
-		return nil, fmt.Errorf("websocket dial error: %v", err)
+
+		return nil, fmt.Errorf("websocket dial error: %w", err)
 	}
 
 	// Wraps the websocket connection to expose it as a raw net.Conn connection

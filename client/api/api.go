@@ -1,3 +1,4 @@
+// Package api holds the client API
 package api
 
 import (
@@ -22,6 +23,7 @@ import (
 	commontypes "Goauld/common/types"
 )
 
+// API holds the CLI API information.
 type API struct {
 	client      *http.Client
 	server      string
@@ -30,7 +32,7 @@ type API struct {
 	adminToken  string
 }
 
-// NewAPI return a new API
+// NewAPI return a new API.
 func NewAPI(server string, accessToken string, insecure bool, adminToken string) *API {
 	api := &API{
 		client:      &http.Client{},
@@ -42,15 +44,17 @@ func NewAPI(server string, accessToken string, insecure bool, adminToken string)
 	if insecure {
 		api.client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
+				//nolint:gosec
 				InsecureSkipVerify: true,
 			},
 		}
 	}
+
 	return api
 }
 
 // HandleError parses the output if it cannot be parsed as a JSON
-// to display more useful messages to users
+// to display more useful messages to users.
 func HandleError(b []byte) error {
 	body := strings.TrimSpace(string(b))
 	if body == net.Forbidden {
@@ -59,10 +63,11 @@ func HandleError(b []byte) error {
 	if body == net.Unauthorized {
 		return fmt.Errorf("%s: Invalid access token", body)
 	}
+
 	return errors.New(strings.TrimSpace(body))
 }
 
-// Delete generic method to perform DELETE request with the appropriate authentication header
+// Delete generic method to perform DELETE request with the appropriate authentication header.
 func (api *API) delete(p string) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
@@ -73,6 +78,7 @@ func (api *API) delete(p string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", api.genToken())
+
 	return api.client.Do(req)
 }
 
@@ -80,10 +86,11 @@ func (api *API) genToken() string {
 	if api.adminToken == "" {
 		return api.accessToken
 	}
+
 	return fmt.Sprintf("%s:%s", api.accessToken, api.adminToken)
 }
 
-// get is generic method to perform GET request with the appropriate authentication header
+// get is generic method to perform GET request with the appropriate authentication header.
 func (api *API) get(p string) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
@@ -94,10 +101,11 @@ func (api *API) get(p string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", api.genToken())
+
 	return api.client.Do(req)
 }
 
-// Post generic method to perform POST request with the appropriate authentication header
+// Post generic method to perform POST request with the appropriate authentication header.
 func (api *API) post(p string, body io.Reader) (*http.Response, error) {
 	u, err := url.JoinPath(api.server, p)
 	if err != nil {
@@ -108,10 +116,11 @@ func (api *API) post(p string, body io.Reader) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", api.genToken())
+
 	return api.client.Do(req)
 }
 
-// GetAgents fetch a list of the agents
+// GetAgents fetch a list of the agents.
 func (api *API) GetAgents() ([]types.Agent, error) {
 	res, err := api.get("/manage/agent/")
 	if err != nil {
@@ -138,8 +147,8 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 	return agents, nil
 }
 
-// GetAgentById fetch the agent associated with the id
-func (api *API) GetAgentById(id string) (types.Agent, error) {
+// GetAgentByID fetch the agent associated with the id.
+func (api *API) GetAgentByID(id string) (types.Agent, error) {
 	id = url.PathEscape(id)
 	res, err := api.get("/manage/agent/" + id)
 	if err != nil {
@@ -166,18 +175,18 @@ func (api *API) GetAgentById(id string) (types.Agent, error) {
 	return agents, nil
 }
 
-// GetAgentByName fetch the agent associated with the name
+// GetAgentByName fetch the agent associated with the name.
 func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	name = url.PathEscape(name)
 	res, err := api.get("/manage/agent/by_name/" + name)
 	if err != nil {
-		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %v", err)
+		return types.Agent{}, fmt.Errorf("error while requesting agent by id: %w", err)
 	}
 	//nolint:errcheck
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return types.Agent{}, fmt.Errorf("error while reading agent by id: %v", err)
+		return types.Agent{}, fmt.Errorf("error while reading agent by id: %w", err)
 	}
 	if res.StatusCode != http.StatusOK {
 		return types.Agent{}, HandleError(body)
@@ -186,7 +195,7 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	var agents types.Agent
 	err = json.Unmarshal(body, &agents)
 	if err != nil {
-		return types.Agent{}, fmt.Errorf("%v: %s", err, string(body))
+		return types.Agent{}, fmt.Errorf("%w: %s", err, string(body))
 	}
 	// for i := range agents {
 	// 	agents[i].ParseFPR()
@@ -194,8 +203,8 @@ func (api *API) GetAgentByName(name string) (types.Agent, error) {
 	return agents, nil
 }
 
-// KillAgent kills the agent
-func (api *API) KillAgent(id string, doExit bool, delete bool, password string) error {
+// KillAgent kills the agent.
+func (api *API) KillAgent(id string, doExit bool, doDelete bool, password string) error {
 	id = url.PathEscape(id)
 	u := fmt.Sprintf("/manage/agent/%s/kill", id)
 
@@ -205,7 +214,7 @@ func (api *API) KillAgent(id string, doExit bool, delete bool, password string) 
 	}
 	body := socketio.ExitRequest{
 		Kill:           doExit,
-		Delete:         delete,
+		Delete:         doDelete,
 		HashedPassword: hashedPwd,
 	}
 	b, err := json.Marshal(body)
@@ -223,12 +232,14 @@ func (api *API) KillAgent(id string, doExit bool, delete bool, password string) 
 		if err != nil {
 			return fmt.Errorf("error reading response (%s)", res.Status)
 		}
+
 		return HandleError(body)
 	}
+
 	return nil
 }
 
-// DeleteAgent kills the agent
+// DeleteAgent kills the agent.
 func (api *API) DeleteAgent(id string) error {
 	id = url.PathEscape(id)
 	res, err := api.delete("/manage/agent/" + id)
@@ -242,12 +253,14 @@ func (api *API) DeleteAgent(id string) error {
 		if err != nil {
 			return fmt.Errorf("error reading response (%s)", res.Status)
 		}
+
 		return HandleError(body)
 	}
+
 	return nil
 }
 
-// DumpAll return the information related to running agents connected to the server
+// DumpAll return the information related to running agents connected to the server.
 func (api *API) DumpAll() ([]commontypes.State, error) {
 	res, err := api.get("/admin/dump/")
 	if err != nil {
@@ -272,9 +285,9 @@ func (api *API) DumpAll() ([]commontypes.State, error) {
 	return result, nil
 }
 
-// UpdateLogLevel updates the server log level
+// UpdateLogLevel updates the server log level.
 func (api *API) UpdateLogLevel(level string) (map[string]interface{}, error) {
-	res, err := api.post(fmt.Sprintf("/admin/loglevel/%s", url.PathEscape(level)), nil)
+	res, err := api.post("/admin/loglevel/"+url.PathEscape(level), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -292,15 +305,16 @@ func (api *API) UpdateLogLevel(level string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
-// Version return
+// Version return.
 func (api *API) Version() (common.JVersion, error) {
 	return api.version("manage")
 }
 
-// version fetches the server version to check whether the client or the agent are using the same version
+// version fetches the server version to check whether the client or the agent are using the same version.
 func (api *API) version(route string) (common.JVersion, error) {
 	res, err := api.get(fmt.Sprintf("/%s/version/", route))
 	if err != nil {
@@ -321,10 +335,11 @@ func (api *API) version(route string) (common.JVersion, error) {
 	if err != nil {
 		return common.JVersion{}, err
 	}
+
 	return result, nil
 }
 
-// GetConfig fetches the server side configuration
+// GetConfig fetches the server side configuration.
 func (api *API) GetConfig() (string, error) {
 	res, err := api.get("/admin/config/")
 	if err != nil {
@@ -339,7 +354,7 @@ func (api *API) GetConfig() (string, error) {
 	if res.StatusCode != http.StatusOK {
 		return "", HandleError(body)
 	}
-	result := commontypes.HttpResponse{}
+	result := commontypes.HTTPResponse{}
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
@@ -349,6 +364,7 @@ func (api *API) GetConfig() (string, error) {
 		return "", errors.New(result.Message)
 	}
 	cfg := result.Message
+
 	return cfg, nil
 }
 

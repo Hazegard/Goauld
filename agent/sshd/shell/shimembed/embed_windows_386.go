@@ -1,6 +1,6 @@
 //go:build windows && 386
 
-package shim_embed
+package shimembed
 
 import _ "embed"
 

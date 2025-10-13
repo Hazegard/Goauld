@@ -25,7 +25,9 @@ import (
 	"github.com/quic-go/webtransport-go"
 )
 
-// ControlPlanClient Handle the socket.io interaction regarding the management of the agent
+// ControlPlanClient Handle the socket.io interaction regarding the management of the agent.
+//
+//nolint:revive
 type ControlPlanClient struct {
 	manager      *sio.Manager
 	socket       sio.ClientSocket
@@ -36,37 +38,38 @@ type ControlPlanClient struct {
 	errorCounter int
 }
 
-// NewControlPlanClient returns a new ControlPlanClient
+// NewControlPlanClient returns a new ControlPlanClient.
 func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, canceler *utils.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
-		url:        config.Get().SocketIoUrl(),
+		url:        config.Get().SocketIoURL(),
 		configDone: configDone,
 		canceler:   canceler,
 	}
 }
 
 // InitStrategy is a struc holding the name of the transport as well
-// as the function that will be used to initialize the socket.io connection
+// as the function that will be used to initialize the socket.io connection.
 type InitStrategy struct {
 	Name     string
 	InitFunc CpcStarter
 }
 
 // CpcStarter is a function that will be used to initialize the socket.io connection
-// It returns an error if the connection failed
+// It returns an error if the connection failed.
 type CpcStarter func(*ControlPlanClient, chan<- struct{}, chan<- error) error
 
 // Init tries to connect to the control plan using the different strategies (CpcStarter)
-// A successful connection will send a signal using the configDone channel
-func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, CpcStarter CpcStarter) (*ControlPlanClient, error) {
+// A successful connection will send a signal using the configDone channel.
+func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, cpcStarter CpcStarter) (*ControlPlanClient, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	controlPlanClient := NewControlPlanClient(ctx, configDone, globalCanceler)
 	chanErr := make(chan error)
 	chanSuccess := make(chan struct{})
-	err := CpcStarter(controlPlanClient, chanSuccess, chanErr)
+	err := cpcStarter(controlPlanClient, chanSuccess, chanErr)
 	if err != nil {
 		cancel()
+
 		return nil, err
 	}
 	// Start the control socket.io
@@ -82,48 +85,53 @@ func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone 
 	case e := <-chanErr:
 		controlPlanClient.Close()
 		cancel()
+
 		return nil, e
 	case <-chanSuccess:
 		return controlPlanClient, nil
 	}
 }
 
-// InitWs tries to connect to the control plan using the websocket transport
+// InitWs tries to connect to the control plan using the websocket transport.
 func (cpc *ControlPlanClient) InitWs(success chan<- struct{}, chanErr chan<- error) error {
 	cfg := getEioConfig([]string{"websocket"})
+
 	return cpc.init(cfg, success, chanErr)
 }
 
-// InitWsUpgrade tries to connect to the control plan using the http to websocket upgrade transport
+// InitWsUpgrade tries to connect to the control plan using the http to websocket upgrade transport.
 func (cpc *ControlPlanClient) InitWsUpgrade(success chan<- struct{}, chanErr chan<- error) error {
 	cfg := getEioConfig([]string{"polling", "websocket"})
+
 	return cpc.init(cfg, success, chanErr)
 }
 
-// InitPolling tries to connect to the control plan using the HTTP long polling transport
+// InitPolling tries to connect to the control plan using the HTTP long polling transport.
 func (cpc *ControlPlanClient) InitPolling(success chan<- struct{}, chanErr chan<- error) error {
 	cfg := getEioConfig([]string{"polling"})
+
 	return cpc.init(cfg, success, chanErr)
 }
 
-// InitOverDns tries to connect to the control plan using the DNS transport
-func (cpc *ControlPlanClient) InitOverDns(session *smux.Stream, success chan<- struct{}, chanErr chan<- error) error {
-	_, err := session.Write([]byte(config.Get().Id))
+// InitOverDNS tries to connect to the control plan using the DNS transport.
+func (cpc *ControlPlanClient) InitOverDNS(session *smux.Stream, success chan<- struct{}, chanErr chan<- error) error {
+	_, err := session.Write([]byte(config.Get().ID))
 	// DNS MODE means we are using http to simplify the exchanges
-	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoUrl(), "https://"), "http://")
-	cpc.url = fmt.Sprintf("http://%s", u)
+	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoURL(), "https://"), "http://")
+	cpc.url = "http://" + u
 	if err != nil {
-		return fmt.Errorf("error writing id to DNS tunnelled session: %v", err)
+		return fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
 	}
 	_, err = session.Write([]byte{'C'})
 	if err != nil {
-		return fmt.Errorf("error writing id to DNS tunnelled session: %v", err)
+		return fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
 	}
-	cfg := getDnsEioConfig(session)
+	cfg := getDNSEioConfig(session)
+
 	return cpc.init(cfg, success, chanErr)
 }
 
-// Init initializes the socket.io handlers
+// Init initializes the socket.io handlers.
 func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct{}, chanErr chan<- error) error {
 	manager := sio.NewManager(cpc.url, cfg)
 	socket := manager.Socket("/", nil)
@@ -135,13 +143,13 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	})
 	socket.OnConnectError(func(err any) {
 		log.Trace().Msg("OnConnectError")
-		log.Error().Msgf("Error occured connecting to %s (%v)", cpc.url, err)
+		log.Error().Msgf("Error occurred connecting to %s (%v)", cpc.url, err)
 		chanErr <- fmt.Errorf("error connecting to %s (%v)", cpc.url, err)
 	})
 
 	manager.OnError(func(err error) {
 		log.Trace().Msg("OnError")
-		log.Error().Err(err).Msgf("Error occured  %s", cpc.url)
+		log.Error().Err(err).Msgf("Error occurred  %s", cpc.url)
 		cpc.ErrorPlusPlus()
 	})
 	manager.OnReconnect(func(attempt uint32) {
@@ -150,64 +158,64 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", cpc.url, attempt)
 	})
 
-	// SendSshPrivateKeyEvent is sent by the server after the client sends the RegisterEvent event
+	// SendSSHPrivateKeyEvent is sent by the server after the client sends the RegisterEvent event
 	// this event contains the encrypted SSH private key used by the agent to authenticate on the
 	// SSHD server.
 	// Once received, the agent sends its SSHD password to the server using the SendAgentDataEvent event
-	socket.OnEvent(socketio.SendSshPrivateKeyEvent.ID(), func(data []byte) {
-		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent")
+	socket.OnEvent(socketio.SendSSHPrivateKeyEvent.ID(), func(data []byte) {
+		log.Trace().Msg("OnEvent: SendSSHPrivateKeyEvent")
 		log.Trace().Msgf("SshPrivateKeyEvent: data received")
 		// Decrypt the SSH private key
-		privateKey, err := socketio.DecryptSshPrivateKeyMessage(data, config.Get().Cryptor)
+		privateKey, err := socketio.DecryptSSHPrivateKeyMessage(data, config.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error decrypting private key")
 		}
 
 		// Add the decrypted SSH private key to the agent configuration
-		config.Get().SShPrivateKey = privateKey.SshPrivateKey
-		log.Debug().Msgf("Ssh private key received and successfully decrypted")
+		config.Get().SSHPrivateKey = privateKey.SSHPrivateKey
+		log.Debug().Msgf("SSH private key received and successfully decrypted")
 		log.Debug().Msgf("Sending local sshd password")
 		// Encrypt the SSH password used by the client to authenticate to the agent SSHD server
-		localSshPassword, err := socketio.NewEncryptedAgentSshPasswordMessage(config.Get(), config.Get().Cryptor)
+		localSSHPassword, err := socketio.NewEncryptedAgentSSHPasswordMessage(config.Get(), config.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error encrypting local sshd password")
 		}
 		log.Debug().Msgf("Local sshd password sent")
 		// Send the encrypted SSH password to the server
-		socket.Emit(socketio.SendAgentDataEvent.ID(), localSshPassword)
+		socket.Emit(socketio.SendAgentDataEvent.ID(), localSSHPassword)
 
-		log.Trace().Msg("OnEvent: SendSshPrivateKeyEvent done")
+		log.Trace().Msg("OnEvent: SendSSHPrivateKeyEvent done")
 	})
 
-	// SendSshHPrivateKeyError Logs when the server returns an error
-	socket.OnEvent(socketio.SendSshHPrivateKeyError.ID(), func() {
-		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError")
-		log.Error().Msgf("Error occured (%s) %s", "SendSshHPrivateKeyError", cpc.url)
-		log.Trace().Msg("OnEvent: SendSshHPrivateKeyError done")
+	// SendSSHHPrivateKeyError Logs when the server returns an error
+	socket.OnEvent(socketio.SendSSHHPrivateKeyError.ID(), func() {
+		log.Trace().Msg("OnEvent: SendSSHHPrivateKeyError")
+		log.Error().Msgf("Error occurred (%s) %s", "SendSSHHPrivateKeyError", cpc.url)
+		log.Trace().Msg("OnEvent: SendSSHHPrivateKeyError done")
 	})
 
 	// VersionEvent sends the current server version
 	// To display a message to the user if the server and the agent version mismatch
 	socket.OnEvent(socketio.VersionEvent.ID(), func(srvVersion common.JVersion) {
-		agentVersion := common.JsonVersion()
+		agentVersion := common.JSONVersion()
 		if agentVersion.Compare(srvVersion) != 0 {
-			log.Warn().Err(fmt.Errorf("mismatch version")).Str("Server", srvVersion.Version).Str("Agent", agentVersion.Version).Msgf("Version mismatch")
+			log.Warn().Err(errors.New("mismatch version")).Str("Server", srvVersion.Version).Str("Agent", agentVersion.Version).Msgf("Version mismatch")
 			log.Trace().Str("ServerCommit", srvVersion.Commit).Str("AgentCommit", agentVersion.Commit).Msgf("Version mismatch")
 			log.Trace().Str("ServerDate", srvVersion.Date).Str("AgentDate", agentVersion.Date).Msgf("Version mismatchs")
 		}
 	})
 
-	// SendSshPrivateKeySuccess Logs when the server returns no error
-	socket.OnEvent(socketio.SendSshPrivateKeySuccess.ID(), func() {
-		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess")
-		log.Debug().Msgf("Event SendSshPrivateKeySuccess received")
-		log.Trace().Msg("OnEvent: SendSshPrivateKeySuccess done")
+	// SendSSHPrivateKeySuccess Logs when the server returns no error
+	socket.OnEvent(socketio.SendSSHPrivateKeySuccess.ID(), func() {
+		log.Trace().Msg("OnEvent: SendSSHPrivateKeySuccess")
+		log.Debug().Msgf("Event SendSSHPrivateKeySuccess received")
+		log.Trace().Msg("OnEvent: SendSSHPrivateKeySuccess done")
 	})
 
 	// SendAgentDataError Logs when the server returns an error
 	socket.OnEvent(socketio.SendAgentDataError.ID(), func() {
 		log.Trace().Msg("OnEvent: SendAgentDataError")
-		log.Error().Msgf("Error occured (%s) %s", "SendAgentDataError", cpc.url)
+		log.Error().Msgf("Error occurred (%s) %s", "SendAgentDataError", cpc.url)
 		log.Trace().Msg("OnEvent: SendAgentDataError done")
 	})
 
@@ -226,7 +234,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 			cpc.canceler.Exit("Agent Name already used")
 			cpc.Close()
 		} else {
-			log.Error().Err(errors.New(data.Message)).Msgf("Error occured %s", "RegisterError")
+			log.Error().Err(errors.New(data.Message)).Msgf("Error occurred %s", "RegisterError")
 			log.Info().Msgf("Restarting...")
 			socket.Disconnect()
 
@@ -257,11 +265,11 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	})
 
 	socket.OnEvent(socketio.PasswordValidationRequestEvent.ID(), func(data []byte) {
-
 		log.Trace().Msg("OnEvent: PasswordValidationRequestEvent")
 		passwordValidationReq, err := socketio.DecryptPasswordValidationRequest(data, config.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msg("OnEvent: DecryptPasswordValidationRequest")
+
 			return
 		}
 		err = bcrypt.CompareHashAndPassword([]byte(passwordValidationReq.HashPassword), []byte(config.Get().PrivateSshdPassword()))
@@ -274,30 +282,31 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		if err != nil {
 			log.Error().Err(err).Msg("OnEvent: EncryptPasswordValidationRequest")
 		}
-		socket.Emit(passwordValidationReq.EventId, response)
-		log.Trace().Bool("Response", res).Msgf("Emit: %s", passwordValidationReq.EventId)
+		socket.Emit(passwordValidationReq.EventID, response)
+		log.Trace().Bool("Response", res).Msgf("Emit: %s", passwordValidationReq.EventID)
 	})
 
 	cpc.socket = socket
 	cpc.manager = manager
+
 	return nil
 }
 
-// Start starts the socket and initiates the configuration exchange with the server
+// Start starts the socket and initiates the configuration exchange with the server.
 func (cpc *ControlPlanClient) Start() error {
 	encryptedKey, err := crypto.AsymEncrypt(config.Get().AgePubKey(), config.Get().SharedSecret)
 	if err != nil {
-		return fmt.Errorf("error encrypting shared secret: %v", err)
+		return fmt.Errorf("error encrypting shared secret: %w", err)
 	}
 
 	encryptedName, err := crypto.AsymEncrypt(config.Get().AgePubKey(), config.Get().Name())
 	if err != nil {
-		return fmt.Errorf("error encrypting shared secret: %v", err)
+		return fmt.Errorf("error encrypting shared secret: %w", err)
 	}
 
 	// This will be emitted after the socket is connected.
 	cpc.socket.Emit(socketio.RegisterEvent.ID(), socketio.Register{
-		Id:        config.Get().Id,
+		ID:        config.Get().ID,
 		SharedKey: encryptedKey,
 		Name:      encryptedName,
 	})
@@ -313,14 +322,15 @@ func (cpc *ControlPlanClient) Start() error {
 	cpc.socket.Emit(socketio.Disconnect.ID(), socketio.DisconnectMessage{})
 	log.Trace().Msg("Event send: Disconnect")
 	cpc.socket.Disconnect()
+
 	return nil
 }
 
-// SendPorts sends the remote ports used by the agent
+// SendPorts sends the remote ports used by the agent.
 func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 	data, err := socketio.EncryptRemotePortForwardingMessage(rpf, config.Get().Cryptor)
 	if err != nil {
-		return fmt.Errorf("error encrypting remote port forwarding message: %v", err)
+		return fmt.Errorf("error encrypting remote port forwarding message: %w", err)
 	}
 
 	success := make(chan struct{}, 1)
@@ -333,19 +343,21 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 	defer cpc.socket.OffEvent(socketio.SendRemotePortForwardingDataSuccess.ID())
 	cpc.socket.Emit(socketio.SendRemotePortForwardingDataEvent.ID(), data)
 	<-success
+
 	return nil
 }
 
 // KeepAliveLoop starts a keepalive loop that will periodically send ping
 //
-// to keep alive the connection
+// to keep alive the connection.
 func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
-	cpc.socket.OnEvent(socketio.PongEvent.ID(), func(data []byte) {
+	cpc.socket.OnEvent(socketio.PongEvent.ID(), func(_ []byte) {
 		log.Trace().Msg("OnEvent: PongEvent")
 	})
 	if config.Get().GetKeepalive() == 0 {
 		return
 	}
+	//nolint:durationcheck
 	t := time.NewTicker(config.Get().GetKeepalive() * time.Second)
 	defer t.Stop()
 	for {
@@ -361,37 +373,37 @@ func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 
 // ErrorPlusPlus handle when an error occurs on the socket.io side
 // If more than 5 errors occur, the agent will automatically restart
-// See to check the errors in a given time, reset the counter after some time
+// See to check the errors in a given time, reset the counter after some time.
 func (cpc *ControlPlanClient) ErrorPlusPlus() {
 	cpc.errorCounter++
 	if cpc.errorCounter > 5 {
-		log.Warn().Msgf("Error occured %d times, restarting...", cpc.errorCounter)
+		log.Warn().Msgf("Error occurred %d times, restarting...", cpc.errorCounter)
 		cpc.canceler.Restart(fmt.Sprintf("Control sockets crashed %d times", cpc.errorCounter))
 		cpc.Close()
 	}
 }
 
-// Close closes the socket.io connection
+// Close closes the socket.io connection.
 func (cpc *ControlPlanClient) Close() {
 	cpc.socket.Disconnect()
 	cpc.socket.Emit(socketio.Disconnect.ID(), socketio.DisconnectMessage{})
 	cpc.manager.Close()
 }
 
-// getEioConfig return the socket.io underlying configuration
+// getEioConfig return the socket.io underlying configuration.
 func getEioConfig(transport []string) *sio.ManagerConfig {
 	return &sio.ManagerConfig{
 		EIO: eio.ClientConfig{
 			UpgradeDone: func(transportName string) {
-				log.Trace().Msg("Client transport upgrade done")
+				log.Trace().Str("Transport", transportName).Msg("Client transport upgrade done")
 			},
 			HTTPTransport: proxy.NewTransportProxy(),
 			WebSocketDialOptions: &websocket.DialOptions{
-				HTTPClient: proxy.NewHttpClientProxy(nil),
+				HTTPClient: proxy.NewHTTPClientProxy(nil),
 				HTTPHeader: proxy.NewHeaderMap(),
 			},
 			WebTransportDialer: &webtransport.Dialer{
-				TLSClientConfig: proxy.NewTlsConfig(),
+				TLSClientConfig: proxy.NewTLSConfig(),
 			},
 			Transports: transport, // []string{"polling"}, //, "websocket", "webtransport"},
 			// Debugger:   sio.NewPrintDebugger(),
@@ -399,13 +411,12 @@ func getEioConfig(transport []string) *sio.ManagerConfig {
 	}
 }
 
-// getEioConfig return the socket.io underlying configuration
-func getDnsEioConfig(session *smux.Stream) *sio.ManagerConfig {
-
+// getEioConfig return the socket.io underlying configuration.
+func getDNSEioConfig(session *smux.Stream) *sio.ManagerConfig {
 	return &sio.ManagerConfig{
 		EIO: eio.ClientConfig{
 			UpgradeDone: func(transportName string) {
-				log.Trace().Msg("Client transport upgrade done")
+				log.Trace().Str("Transport", transportName).Msg("Client transport upgrade done")
 			},
 			HTTPTransport: NewSmuxTransport(session),
 			WebSocketDialOptions: &websocket.DialOptions{
@@ -415,7 +426,7 @@ func getDnsEioConfig(session *smux.Stream) *sio.ManagerConfig {
 			// The tunnel fails to establish properly as the server responds to unwanted content to the open HTTP socket.
 			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
 			// On the client side
-			Transports: []string{"websocket"}, //, "websocket"},
+			Transports: []string{"websocket"}, // , "websocket"},
 			// Debugger:   sio.NewPrintDebugger(),
 		},
 	}

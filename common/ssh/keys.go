@@ -26,11 +26,11 @@ func ParseSSHPublicKey(publicKeyStr string) (ssh.PublicKey, error) {
 }
 
 // GenKey generates an Ed25519 SSH key pair and returns the private and public keys as strings.
-func GenKey() (privateKeyPEM string, publicKeySSH string, err error) {
+func GenKey() (string, string, error) {
 	// Generate an Ed25519 key pair
 	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to generate Ed25519 key: %v", err)
+		return "", "", fmt.Errorf("failed to generate Ed25519 key: %w", err)
 	}
 	p, err := ssh.MarshalPrivateKey(crypto.PrivateKey(privateKey), "")
 	if err != nil {
@@ -41,9 +41,9 @@ func GenKey() (privateKeyPEM string, publicKeySSH string, err error) {
 	// Generate the corresponding public key in OpenSSH format
 	publicKey, err := ssh.NewPublicKey(privateKey.Public())
 	if err != nil {
-		return "", "", fmt.Errorf("failed to generate public key: %v", err)
+		return "", "", fmt.Errorf("failed to generate public key: %w", err)
 	}
-	publicKeySSH = string(ssh.MarshalAuthorizedKey(publicKey))
+	publicKeySSH := string(ssh.MarshalAuthorizedKey(publicKey))
 
 	return privateKeyString, publicKeySSH, nil
 }

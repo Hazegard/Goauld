@@ -1,3 +1,4 @@
+// Package transport is responsible for handling the SSH over DNS tunneling
 package transport
 
 import (
@@ -22,7 +23,7 @@ import (
 	"www.bamsoftware.com/git/dnstt.git/turbotunnel"
 )
 
-// DNSSHServer is the server allowing to perform SSH over HTTP
+// DNSSHServer is the server allowing to perform SSH over HTTP.
 type DNSSHServer struct {
 	store         *store.AgentStore
 	db            *persistence.DB
@@ -87,12 +88,13 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	defer conn.Close()
 	upstreamConn, err := dialer.Dial("tcp", upstream)
 	if err != nil {
-		return fmt.Errorf("agent %s: stream %08x:%d connect upstream: %v", id, conn.GetConv(), stream.ID(), err)
+		return fmt.Errorf("agent %s: stream %08x:%d connect upstream: %w", id, conn.GetConv(), stream.ID(), err)
 	}
 	//nolint:errcheck
 	defer upstreamConn.Close()
+	//nolint:forcetypeassert
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
-	err = d.db.SetAgentSshMode(id, "DNS", stream.RemoteAddr().String())
+	err = d.db.SetAgentSSHMode(id, "DNS", stream.RemoteAddr().String())
 	if err != nil {
 		log.Warn().Str("Mode", "DNSSH").Err(err).Str("ID", id).Msg("failed to set agent SSH mode")
 	}
@@ -103,7 +105,7 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	go func() {
 		defer wg.Done()
 		_, err := io.Copy(stream, upstreamTCPConn)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// smux Stream.Write may return io.EOF.
 			err = nil
 		}
@@ -116,7 +118,7 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	go func() {
 		defer wg.Done()
 		_, err := io.Copy(upstreamTCPConn, stream)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// smux Stream.WriteTo may return io.EOF.
 			err = nil
 		}
@@ -133,7 +135,6 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 // acceptStreams wraps a KCP session in a Noise channel and an smux.Session,
 // then awaits smux streams. It passes each stream to handleStream.
 func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
-
 	// Put an smux session on top of the encrypted Noise channel.
 	smuxConfig := smux.DefaultConfig()
 	smuxConfig.Version = 2
@@ -149,24 +150,26 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 	for {
 		stream, err := sess.AcceptStream()
 		if err != nil {
-			//nolint:staticcheck // SA1019
-			if err, ok := err.(net.Error); ok && err.Temporary() {
+			var err net.Error
+			if errors.As(err, &err) {
 				continue
 			}
+
 			return err
 		}
 		log.Trace().Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("begin stream")
 		go func() {
 			// The client first sends its ID before transferring the conn to the SSH client
 			// The ID is a MD5 hash
-			rawId := make([]byte, 32)
-			n, err := stream.Read(rawId)
+			rawID := make([]byte, 32)
+			n, err := stream.Read(rawID)
 			if err != nil {
-				log.Error().Err(err).Bytes("ID", rawId).Msg("DNS read ID fail")
+				log.Error().Err(err).Bytes("ID", rawID).Msg("DNS read ID fail")
 				_ = conn.Close()
+
 				return
 			}
-			id := string(rawId[:n])
+			id := string(rawID[:n])
 
 			log.Info().Str("Mode", "DNSSH").Uint32("StreamID", stream.ID()).Str("ID", id).Msg("start DNS tunneling")
 			tag := make([]byte, 1)
@@ -175,40 +178,39 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 				log.Error().Err(err).Bytes("ID", tag).Msg("error reading traffic tag")
 				_ = conn.Close()
 				_ = stream.Close()
+
 				return
 			}
-			clientId := strings.TrimSpace(stream.RemoteAddr().String())
-			sourceIp, ok := d.clientIDIPMap.Load(clientId)
-			sourceIpStr := ""
+			clientID := strings.TrimSpace(stream.RemoteAddr().String())
+			sourceIP, ok := d.clientIDIPMap.Load(clientID)
+			sourceIPStr := ""
 			if ok {
-				sourceIpStr = sourceIp.(string)
+				//nolint:forcetypeassert
+				sourceIPStr = sourceIP.(string)
 			}
 			switch tag[0] {
 			// SSH mode
 			case 'S':
 				log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling ssh connection")
-				d.handleSSHStream(stream, conn, id, sourceIpStr)
+				d.handleSSHStream(stream, conn, id, sourceIPStr)
 			// Control mode
 			case 'C':
 				log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling control plan connection")
-				d.handleHTTPStream(stream, conn, id, sourceIpStr)
+				d.handleHTTPStream(stream, conn, id, sourceIPStr)
 			}
-
 		}()
 	}
 }
 
 func (d *DNSSHServer) handleSSHStream(stream *smux.Stream, conn *kcp.UDPSession, id string, publicRemoteAddr string) {
-
 	err := d.handleStream(stream, d.sshUpstream, conn, id, publicRemoteAddr)
 	if err != nil {
 		log.Warn().Err(err).Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("handleStream")
 	}
 }
 
-func (d *DNSSHServer) handleHTTPStream(stream *smux.Stream, conn *kcp.UDPSession, id string, sourceIp string) {
-
-	err := d.handleStream(stream, d.httpUpstream, conn, id, sourceIp)
+func (d *DNSSHServer) handleHTTPStream(stream *smux.Stream, conn *kcp.UDPSession, id string, sourceIP string) {
+	err := d.handleStream(stream, d.httpUpstream, conn, id, sourceIP)
 	if err != nil {
 		log.Warn().Err(err).Str("Mode", "DNSSH").Uint32("ID", stream.ID()).Msg("handleStream")
 	}
@@ -220,10 +222,11 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 	for {
 		conn, err := ln.AcceptKCP()
 		if err != nil {
-			//nolint:staticcheck // SA1019
-			if err, ok := err.(net.Error); ok && err.Temporary() {
+			var err net.Error
+			if errors.As(err, &err) {
 				continue
 			}
+
 			return err
 		}
 		log.Trace().Str("Mode", "DNSSH").Uint32("Conv", conn.GetConv()).Msg("accepted connection")
@@ -240,7 +243,7 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 		)
 		conn.SetWindowSize(turbotunnel.QueueSize/2, turbotunnel.QueueSize/2)
 		if rc := conn.SetMtu(mtu); !rc {
-			return fmt.Errorf("SetMtu failure")
+			return errors.New("SetMtu failure")
 		}
 
 		go func() {
@@ -267,9 +270,10 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 func nextPacket(r *bytes.Reader) ([]byte, error) {
 	// Convert io.EOF to io.ErrUnexpectedEOF.
 	eof := func(err error) error {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
+
 		return err
 	}
 
@@ -288,6 +292,7 @@ func nextPacket(r *bytes.Reader) ([]byte, error) {
 		} else {
 			p := make([]byte, int(prefix))
 			_, err = io.ReadFull(r, p)
+
 			return p, eof(err)
 		}
 	}
@@ -297,7 +302,7 @@ func nextPacket(r *bytes.Reader) ([]byte, error) {
 // Along with the dns.Message, it returns the query's decoded data payload. If
 // the returned dns.Message is nil, it means that there should be no response to
 // this query. If the returned dns.Message has an Rcode() of dns.RcodeNoError,
-// the message is a candidate for for carrying downstream data in a TXT record.
+// the message is a candidate for carrying downstream data in a TXT record.
 func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 	resp := &dns.Message{
 		ID:       query.ID,
@@ -328,6 +333,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 			// received, a FORMERR (RCODE=1) MUST be returned."
 			resp.Flags |= dns.RcodeFormatError
 			log.Warn().Str("Mode", "DNSSH").Msgf("FORMERR: more than one OPT RR")
+
 			return resp, nil
 		}
 		resp.Additional = append(resp.Additional, dns.RR{
@@ -348,6 +354,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 			resp.Flags |= dns.ExtendedRcodeBadVers & 0xf
 			additional.TTL = (dns.ExtendedRcodeBadVers >> 4) << 24
 			log.Warn().Str("Mode", "DNSSH").Msgf("FORMERR: bad vers %d != 0", version)
+
 			return resp, nil
 		}
 
@@ -365,6 +372,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 	if len(query.Question) != 1 {
 		resp.Flags |= dns.RcodeFormatError
 		log.Trace().Str("Mode", "DNSSH").Msgf("FORMERR: too few or too many questions (%d)", len(query.Question))
+
 		return resp, nil
 	}
 	question := query.Question[0]
@@ -377,6 +385,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 		// Not a name we are authoritative for.
 		resp.Flags |= dns.RcodeNameError
 		log.Trace().Str("Mode", "DNSSH").Msgf("NXDOMAIN: not authoritative for %q", question.Name)
+
 		return resp, nil
 	}
 	resp.Flags |= 0x0400 // AA = 1
@@ -385,6 +394,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 		// We don't support OPCODE != QUERY.
 		resp.Flags |= dns.RcodeNotImplemented
 		log.Trace().Str("Mode", "DNSSH").Msgf("NOTIMPL: unrecognized OPCODE %d", query.Opcode())
+
 		return resp, nil
 	}
 
@@ -406,6 +416,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 		// Base32 error, make like the name doesn't exist.
 		resp.Flags |= dns.RcodeNameError
 		log.Trace().Str("Mode", "DNSSH").Msgf("NXDOMAIN: error decoding payload: %v", err)
+
 		return resp, nil
 	}
 	payload = payload[:n]
@@ -419,6 +430,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 	if payloadSize < maxUDPPayload {
 		resp.Flags |= dns.RcodeFormatError
 		log.Trace().Str("Mode", "DNSSH").Msgf("FORMERR: requester payload size %d is too small (minimum %d)", payloadSize, maxUDPPayload)
+
 		return resp, nil
 	}
 
@@ -445,11 +457,13 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 		var buf [4096]byte
 		n, addr, err := dnsConn.ReadFrom(buf[:])
 		if err != nil {
-			//nolint:staticcheck // SA1019
-			if err, ok := err.(net.Error); ok && err.Temporary() {
+			var err net.Error
+			if errors.As(err, &err) {
 				log.Trace().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
+
 				continue
 			}
+
 			return err
 		}
 
@@ -457,6 +471,7 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 		query, err := dns.MessageFromWireFormat(buf[:n])
 		if err != nil {
 			log.Trace().Str("Mode", "DNSSH").Msgf("Error parsing query: %v", err)
+
 			continue
 		}
 
@@ -466,7 +481,6 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 		n = copy(clientID[:], payload)
 		payload = payload[n:]
 		if n == len(clientID) {
-
 			// retrieve the source IP address and store it in the clientIDIPMap
 			// to be able to map agent connection with the source IP address
 			go func() {
@@ -474,6 +488,7 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 
 				// Try to load existing entry
 				existing, ok := d.clientIDIPMap.Load(clientID.String())
+
 				existingStr, _ := existing.(string)
 				if !ok || existingStr != s {
 					// entry exists but is different → update it
@@ -491,13 +506,12 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 				// Feed the incoming packet to KCP.
 				ttConn.QueueIncoming(p, clientID)
 			}
-		} else {
+		} else if resp != nil && resp.Rcode() == dns.RcodeNoError {
 			// Payload is not long enough to contain a ClientID.
-			if resp != nil && resp.Rcode() == dns.RcodeNoError {
-				resp.Flags |= dns.RcodeNameError
-				log.Trace().Str("Mode", "DNSSH").Msgf("NXDOMAIN: %d bytes are too short to contain a ClientID", n)
-			}
+			resp.Flags |= dns.RcodeNameError
+			log.Trace().Str("Mode", "DNSSH").Msgf("NXDOMAIN: %d bytes are too short to contain a ClientID", n)
 		}
+
 		// If a response is called for, pass it to sendLoop via the channel.
 		if resp != nil {
 			select {
@@ -586,6 +600,7 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 				}
 
 				limit -= 2 + len(p)
+				//nolint:revive
 				if payload.Len() == 0 {
 					// No packet length check for the first
 					// packet; if it's too large, we allow
@@ -595,11 +610,14 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 					// Stash this packet to send in the next
 					// response.
 					ttConn.Stash(p, rec.ClientID)
+
 					break
 				}
+				//nolint:gosec
 				if int(uint16(len(p))) != len(p) {
 					panic(len(p))
 				}
+				//nolint:gosec
 				_ = binary.Write(&payload, binary.BigEndian, uint16(len(p)))
 				payload.Write(p)
 			}
@@ -611,6 +629,7 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 		buf, err := rec.Resp.WireFormat()
 		if err != nil {
 			log.Trace().Str("Mode", "DNSSH").Msgf("Error encoding response: %v", err)
+
 			continue
 		}
 		// Truncate if necessary.
@@ -624,14 +643,17 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 		// Now we actually send the message as a UDP packet.
 		_, err = dnsConn.WriteTo(buf, rec.Addr)
 		if err != nil {
-			//nolint:staticcheck // SA1019
-			if err, ok := err.(net.Error); ok && err.Temporary() {
+			var err net.Error
+			if errors.As(err, &err) {
 				log.Trace().Str("Mode", "DNSSH").Msgf("WriteTo temporary error: %v", err)
+
 				continue
 			}
+
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -652,7 +674,7 @@ func computeMaxEncodedPayload(limit int) (int, error) {
 		[]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
 	})
 	if err != nil {
-		return 0, fmt.Errorf("error creating max encoded payload: %v", err)
+		return 0, fmt.Errorf("error creating max encoded payload: %w", err)
 	}
 	{
 		// Compute the encoded length of maxLengthName and that its
@@ -661,12 +683,13 @@ func computeMaxEncodedPayload(limit int) (int, error) {
 		for _, label := range maxLengthName {
 			n += len(label) + 1
 		}
-		n += 1 // For the terminating null label.
+		n++ // For the terminating null label.
 		if n != 255 {
 			return 0, fmt.Errorf("max-length name is %d octets, should be %d %s", n, 255, maxLengthName)
 		}
 	}
 
+	//nolint:gosec
 	queryLimit := uint16(limit)
 	if int(queryLimit) != limit {
 		queryLimit = 0xffff
@@ -690,7 +713,7 @@ func computeMaxEncodedPayload(limit int) (int, error) {
 			},
 		},
 	}
-	resp, _ := responseFor(query, dns.Name([][]byte{}))
+	resp, _ := responseFor(query, [][]byte{})
 	// As in sendLoop.
 	resp.Answer = []dns.RR{
 		{
@@ -723,12 +746,13 @@ func computeMaxEncodedPayload(limit int) (int, error) {
 	return low, nil
 }
 
+// Close closes the underlying DNS packet conn.
 func (d *DNSSHServer) Close() error {
 	return d.dnsConn.Close()
 }
 
+// Run starts the DNS server €.
 func (d *DNSSHServer) Run() error {
-
 	// We have a variable amount of room in which to encode downstream
 	// packets in each response, because each response must contain the
 	// query's Question section, which is of variable length. But we cannot
@@ -747,6 +771,7 @@ func (d *DNSSHServer) Run() error {
 		if mtu < 0 {
 			mtu = 0
 		}
+
 		return fmt.Errorf("maximum UDP payload size of %d leaves only %d bytes for payload", maxUDPPayload, mtu)
 	}
 	log.Debug().Str("Mode", "DNSSH").Int("mtu", mtu).Msg("DNS")
@@ -755,7 +780,7 @@ func (d *DNSSHServer) Run() error {
 	ttConn := turbotunnel.NewQueuePacketConn(turbotunnel.DummyAddr{}, idleTimeout*2)
 	ln, err := kcp.ServeConn(nil, 0, 0, ttConn)
 	if err != nil {
-		return fmt.Errorf("opening KCP listener: %v", err)
+		return fmt.Errorf("opening KCP listener: %w", err)
 	}
 	d.kcpAddr = ln.Addr().String()
 	//nolint:errcheck
@@ -783,15 +808,17 @@ func (d *DNSSHServer) Run() error {
 	return d.recvLoop(d.domain, d.dnsConn, ttConn, ch)
 }
 
+// NewDNSSHServer returns a DNSSHServer
+// It errors if the DNS domain in the config is invalid.
 func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, error) {
-	//var udpAddr string
+	// var udpAddr string
 
 	// flag.IntVar(&maxUDPPayload, "mtu", maxUDPPayload, "maximum size of DNS responses")
-	//flag.StringVar(&udpAddr, "udp", "", "UDP address to listen on (required)")
+	// flag.StringVar(&udpAddr, "udp", "", "UDP address to listen on (required)")
 
-	domain, err := dns.ParseName(config.Get().DnsDomain)
+	domain, err := dns.ParseName(config.Get().DNSDomain)
 	if err != nil {
-		return nil, fmt.Errorf("invalid domain %s: %v", config.Get().DnsDomain, err)
+		return nil, fmt.Errorf("invalid domain %s: %w", config.Get().DNSDomain, err)
 	}
 	// We keep upstream as a string in order to eventually pass it
 	// to net.Dial in handleStream. But for the sake of displaying
@@ -799,22 +826,22 @@ func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, 
 	// first stream occurs, we apply some parsing and name
 	// resolution checks here.
 
-	dnsConn, err := net.ListenPacket("udp", config.Get().DnsAddr)
+	dnsConn, err := net.ListenPacket("udp", config.Get().DNSAddr)
 	if err != nil {
-		return nil, fmt.Errorf("cannot listen for DNS packets: %v", err)
+		return nil, fmt.Errorf("cannot listen for DNS packets: %w", err)
 	}
 
+	//nolint:forcetypeassert
 	config.Get().UpdateDNSAddr(dnsConn.LocalAddr().(*net.UDPAddr).Port)
-	log.Info().Str("Address", config.Get().DnsAddr).Msgf("DNS server listening")
+	log.Info().Str("Address", config.Get().DNSAddr).Msgf("DNS server listening")
 
 	return &DNSSHServer{
 		store:         store,
 		db:            db,
 		domain:        domain,
-		sshUpstream:   config.Get().LocalSShAddr(),
-		httpUpstream:  config.Get().LocalHttpAddr(),
+		sshUpstream:   config.Get().LocalSSHAddr(),
+		httpUpstream:  config.Get().LocalHTTPAddr(),
 		dnsConn:       dnsConn,
 		clientIDIPMap: &sync.Map{},
 	}, nil
-
 }

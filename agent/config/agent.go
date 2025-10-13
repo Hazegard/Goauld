@@ -1,9 +1,11 @@
+// Package config holds the agent configuration
 package config
 
 import (
 	"Goauld/common"
 	"Goauld/common/log"
 	"Goauld/common/utils"
+	//nolint:gosec
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -27,9 +29,10 @@ import (
 	"github.com/keygen-sh/machineid"
 )
 
+// Agent the dynamic agent configuration.
 type Agent struct {
-	Id                       string
-	SShPrivateKey            string
+	ID                       string
+	SSHPrivateKey            string
 	SharedSecret             string
 	Cryptor                  *crypto.SymCryptor
 	cfg                      *AgentConfig
@@ -52,43 +55,44 @@ func InitAgent() (*kong.Context, []error, error) {
 	// Parse the command line arguments
 	ctx, cfg, err := parse()
 	if err != nil {
-		return nil, nil, fmt.Errorf("parsing arguments: %v", err)
+		return nil, nil, fmt.Errorf("parsing arguments: %w", err)
 	}
 	// Generate the shared secret
 	if cfg.GenerateConfig {
 		agent = &Agent{
 			cfg: cfg,
 		}
+
 		return ctx, warnings, nil
 	}
 	if cfg.AgePubKey == "" {
-		return nil, nil, fmt.Errorf("AgePubKey is required")
+		return nil, nil, errors.New("AgePubKey is required")
 	}
 	sharedSecret, err := crypto.GeneratePassword(crypto.PasswordLength)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating ssh password: %v", err)
+		return nil, nil, fmt.Errorf("error generating ssh password: %w", err)
 	}
 	// Generate the local password if not provided
-	if cfg.LocalSshPassword == "" {
+	if cfg.LocalSSHPassword == "" {
 		sshPassword, err := crypto.GeneratePassword(crypto.PasswordLength)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error generating ssh password: %v", err)
+			return nil, nil, fmt.Errorf("error generating ssh password: %w", err)
 		}
-		cfg.LocalSshPassword = sshPassword
+		cfg.LocalSSHPassword = sshPassword
 	}
 
 	// Generate the encryption mechanism
 	cryptor, err := crypto.NewCryptor(sharedSecret)
 	if err != nil {
-		return nil, nil, fmt.Errorf("initializing cryptor: %v", err)
+		return nil, nil, fmt.Errorf("initializing cryptor: %w", err)
 	}
 
 	// Generate the agent name if not provided
 	if cfg.Name == "user@hostname" {
-		name := ""
+		var name string
 		userName, err := user.Current()
 		if err != nil {
-			return nil, nil, fmt.Errorf("error getting current user: %v", err)
+			return nil, nil, fmt.Errorf("error getting current user: %w", err)
 		}
 		if strings.Contains(userName.Username, "\\") {
 			parts := strings.Split(userName.Username, "\\")
@@ -103,7 +107,7 @@ func InitAgent() (*kong.Context, []error, error) {
 
 		hostname, err := os.Hostname()
 		if err != nil {
-			return nil, nil, fmt.Errorf("error getting hostname: %v", err)
+			return nil, nil, fmt.Errorf("error getting hostname: %w", err)
 		}
 		cfg.Name = fmt.Sprintf("%s@%s", name, hostname)
 	}
@@ -114,28 +118,29 @@ func InitAgent() (*kong.Context, []error, error) {
 		log.Warn().Err(err).Msg("Multiple agents might run in parallel on the same host")
 		mid = cfg.Name
 	}
+	//nolint:gosec
 	id := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s-%s", mid, cfg.Name))))
 
 	host, err := os.Hostname()
 	if err != nil {
-		warnings = append(warnings, fmt.Errorf("error getting hostname: %v", err))
+		warnings = append(warnings, fmt.Errorf("error getting hostname: %w", err))
 	}
 
 	u, err := user.Current()
 	if err != nil {
-		warnings = append(warnings, fmt.Errorf("error getting user: %v", err))
+		warnings = append(warnings, fmt.Errorf("error getting user: %w", err))
 	}
-	ips, errs := getIps()
+	ips, errs := getIPs()
 	if len(errs) > 0 {
-		warnings = append(warnings, fmt.Errorf("error getting ips: %v", errors.Join(errs...)))
+		warnings = append(warnings, fmt.Errorf("error getting ips: %w", errors.Join(errs...)))
 	}
 
 	currDir, err := os.Getwd()
 	if err != nil {
-		warnings = append(warnings, fmt.Errorf("error getting current directory: %v", err))
+		warnings = append(warnings, fmt.Errorf("error getting current directory: %w", err))
 	}
 	agent = &Agent{
-		Id:                       id,
+		ID:                       id,
 		SharedSecret:             sharedSecret,
 		Cryptor:                  cryptor,
 		cfg:                      cfg,
@@ -149,132 +154,137 @@ func InitAgent() (*kong.Context, []error, error) {
 		Path:                     currDir,
 		WorkingDay:               *NewWorkingDay(cfg.WorkingDayStart, cfg.WorkingDayEnd, cfg.WorkingDayTimeZone),
 	}
+
 	return ctx, warnings, nil
 }
 
-// Get returns the Agent global object
+// Get returns the Agent global object.
 func Get() *Agent {
 	return agent
 }
 
-// Verbosity returns the current log verbosity
+// Verbosity returns the current log verbosity.
 func (a *Agent) Verbosity() int {
 	return a.cfg.Verbose
 }
 
-// LocalSSHDPassword returns the current ssh password allowing to connect
+// LocalSSHDPassword returns the current ssh password allowing to connect.
 func (a *Agent) LocalSSHDPassword() string {
-	return a.cfg.LocalSshPassword
+	return a.cfg.LocalSSHPassword
 }
 
-// PrivateSshdPassword return the static password
+// PrivateSshdPassword return the static password.
 func (a *Agent) PrivateSshdPassword() string {
 	if a.cfg.PrivatePassword != "" {
 		return a.cfg.PrivatePassword
 	}
+
 	return _private_password
 }
 
 // ValidatePassword return whether the incoming password is valid.
 // The password is concatenated using the dynamic password, and the compiled-time-defined password
-// (private sshd password)
+// (private sshd password).
 func (a *Agent) ValidatePassword(in string) bool {
 	return in == a.PrivateSshdPassword()+a.LocalSSHDPassword()
 }
 
-// DNSServer returns the DNS servers that will be used to tunnel the connection
+// DNSServer returns the DNS servers that will be used to tunnel the connection.
 func (a *Agent) DNSServer() []string {
 	var servers []string
-	for _, srv := range a.cfg.DnsServer {
+	for _, srv := range a.cfg.DNSServer {
 		if strings.ToLower(srv) == "system" {
-			for _, systemDnsServer := range nameserver.GetDNSServers() {
-				servers = append(servers, systemDnsServer.String())
+			for _, systemDNSServer := range nameserver.GetDNSServers() {
+				servers = append(servers, systemDNSServer.String())
 			}
 		} else {
 			servers = append(servers, srv)
 		}
 	}
+
 	return servers
 }
 
-// DNSDomain returns the DNS domain that will be used to query the DNS server
+// DNSDomain returns the DNS domain that will be used to query the DNS server.
 func (a *Agent) DNSDomain() string {
-	return a.cfg.DnsServerDomain
+	return a.cfg.DNSServerDomain
 }
 
-// ControlSshServer returns the SSHD server
-func (a *Agent) ControlSshServer() string {
-	return a.cfg.SshServer
+// ControlSSHServer returns the SSHD server.
+func (a *Agent) ControlSSHServer() string {
+	return a.cfg.SSHServer
 }
 
-// IsRemoteForwardedSshdPortRandom returns whether the remote forwarded SSHD port is random
+// IsRemoteForwardedSshdPortRandom returns whether the remote forwarded SSHD port is random.
 func (a *Agent) IsRemoteForwardedSshdPortRandom() bool {
-	return a.cfg.RsshPort == 0
+	return a.cfg.RSSHPort == 0
 }
 
-// RsshPort returns the remote forwarded SSHD port
+// RsshPort returns the remote forwarded SSHD port.
 func (a *Agent) RsshPort() int {
-	return a.cfg.RsshPort
+	return a.cfg.RSSHPort
 }
 
-// RemoteForwardedSshdAddress returns the remote forwarded SSHD address
+// RemoteForwardedSshdAddress returns the remote forwarded SSHD address.
 func (a *Agent) RemoteForwardedSshdAddress() string {
-	return fmt.Sprintf("127.0.0.1:%d", a.cfg.RsshPort)
+	return fmt.Sprintf("127.0.0.1:%d", a.cfg.RSSHPort)
 }
 
-// RemoteForwardedSocksAddress returns the remote forwarded Socks address
+// RemoteForwardedSocksAddress returns the remote forwarded Socks address.
 func (a *Agent) RemoteForwardedSocksAddress() string {
 	return fmt.Sprintf("127.0.0.1:%d", a.cfg.SocksPort)
 }
 
-// RemoteForwardedHttpProxyAddress returns the remote forwarded Socks address
-func (a *Agent) RemoteForwardedHttpProxyAddress() string {
-	return fmt.Sprintf("127.0.0.1:%d", a.cfg.HttpProxyPort)
+// RemoteForwardedHTTPProxyAddress returns the remote forwarded Socks address.
+func (a *Agent) RemoteForwardedHTTPProxyAddress() string {
+	return fmt.Sprintf("127.0.0.1:%d", a.cfg.HTTPProxyPort)
 }
 
-// RemoteForwardedHttpProxyPort returns the remote forwarded HTTP port
-func (a *Agent) RemoteForwardedHttpProxyPort() int {
-	return a.cfg.HttpProxyPort
+// RemoteForwardedHTTPProxyPort returns the remote forwarded HTTP port.
+func (a *Agent) RemoteForwardedHTTPProxyPort() int {
+	return a.cfg.HTTPProxyPort
 }
 
-// RemoteForwardedSocksPort returns the remote forwarded Socks port
+// RemoteForwardedSocksPort returns the remote forwarded Socks port.
 func (a *Agent) RemoteForwardedSocksPort() int {
 	return a.cfg.SocksPort
 }
 
-// RemoteForwardedSshdPort returns the remote forwarded SSHD port
+// RemoteForwardedSshdPort returns the remote forwarded SSHD port.
 func (a *Agent) RemoteForwardedSshdPort() int {
-	return a.cfg.RsshPort
+	return a.cfg.RSSHPort
 }
 
-// UpdateSocksPort set the new socks port
+// UpdateSocksPort set the new socks port.
 func (a *Agent) UpdateSocksPort(port int) {
 	a.cfg.SocksPort = port
 }
 
-// UpdateHttpProxyPort set the new socks port
-func (a *Agent) UpdateHttpProxyPort(port int) {
-	a.cfg.HttpProxyPort = port
+// UpdateHTTPProxyPort set the new socks port.
+func (a *Agent) UpdateHTTPProxyPort(port int) {
+	a.cfg.HTTPProxyPort = port
 }
 
-// UpdateSshdPort set the new socks port
+// UpdateSshdPort set the new socks port.
 func (a *Agent) UpdateSshdPort(port int) {
-	a.cfg.RsshPort = port
+	a.cfg.RSSHPort = port
 }
 
-// ServerUrl return the HTTP control server URL
-func (a *Agent) ServerUrl() string {
+// ServerURL return the HTTP control server URL.
+func (a *Agent) ServerURL() string {
 	u := normalizeAddr(a.cfg.Server)
 	if u != "" {
 		return u
 	}
-	if strings.HasPrefix(a.cfg.Server, "http://") {
+	switch {
+	case strings.HasPrefix(a.cfg.Server, "http://"):
 		u = a.cfg.Server
-	} else if strings.HasPrefix(a.cfg.Server, "https://") {
+	case strings.HasPrefix(a.cfg.Server, "https://"):
 		u = a.cfg.Server
-	} else {
+	default:
 		u = "http://" + a.cfg.Server
 	}
+
 	return u
 }
 
@@ -322,121 +332,125 @@ func normalizeAddr(input string) string {
 	return fmt.Sprintf("%s://%s:%s", scheme, host, port)
 }
 
-// WSshUrl return the SSH over Websocket connection URL
-func (a *Agent) WSshUrl() string {
-	return fmt.Sprintf("%s/wssh/%s", a.ServerUrl(), a.Id)
+// WSshURL return the SSH over Websocket connection URL.
+func (a *Agent) WSshURL() string {
+	return fmt.Sprintf("%s/wssh/%s", a.ServerURL(), a.ID)
 }
 
-// SocketIoUrl return the control connection URL
-func (a *Agent) SocketIoUrl() string {
-	return fmt.Sprintf("%s/live/%s/", a.ServerUrl(), a.Id)
+// SocketIoURL return the control connection URL.
+func (a *Agent) SocketIoURL() string {
+	return fmt.Sprintf("%s/live/%s/", a.ServerURL(), a.ID)
 }
 
-// SSHTTPUrl return the SSH over HTTP connection URL
-func (a *Agent) SSHTTPUrl() string {
-	return fmt.Sprintf("%s/sshttp/%s", a.ServerUrl(), a.Id)
+// SSHTTPURL return the SSH over HTTP connection URL.
+func (a *Agent) SSHTTPURL() string {
+	return fmt.Sprintf("%s/sshttp/%s", a.ServerURL(), a.ID)
 }
 
-// TlsUrl return the SSH over TLS connection URL
-func (a *Agent) TlsUrl() string {
-	u := strings.Split(a.cfg.TlsServer, ":")
+// TLSURL return the SSH over TLS connection URL.
+func (a *Agent) TLSURL() string {
+	u := strings.Split(a.cfg.TLSServer, ":")
 	if len(u) == 1 {
-		return fmt.Sprintf("%s:443", a.cfg.TlsServer)
+		return a.cfg.TLSServer + ":443"
 	}
-	return a.cfg.TlsServer
+
+	return a.cfg.TLSServer
 }
 
-// QuicUrl return the SSH over TLS connection URL
-func (a *Agent) QuicUrl() string {
-
+// QuicURL return the SSH over TLS connection URL.
+func (a *Agent) QuicURL() string {
 	u := strings.Split(a.cfg.QuicServer, ":")
 	if len(u) == 1 {
-		return fmt.Sprintf("%s:443", a.cfg.QuicServer)
+		return a.cfg.QuicServer + ":443"
 	}
-	return a.cfg.TlsServer
+
+	return a.cfg.TLSServer
 }
 
-// Name returns the agent name
+// Name returns the agent name.
 func (a *Agent) Name() string {
 	return a.cfg.Name
 }
 
-// KeepAwake returns whether the agent should try to keep the underlying system awake
+// KeepAwake returns whether the agent should try to keep the underlying system awake.
 func (a *Agent) KeepAwake() bool {
 	return a.cfg.KeepAwake
 }
 
-// GetKeepalive returns the duration between two keepalive pings
+// GetKeepalive returns the duration between two keepalive pings.
 func (a *Agent) GetKeepalive() time.Duration {
 	return time.Duration(a.cfg.KeepAlive)
 }
 
-// OnlyWorkingDays return whether the OnlyWorkingDay option is enabled
+// OnlyWorkingDays return whether the OnlyWorkingDay option is enabled.
 func (a *Agent) OnlyWorkingDays() bool {
 	return a.cfg.OnlyWorkingDays
 }
 
 // IsOutOfWorkingDay returns whether the agent is configured to run only on working days
-// AND if the current time is out of working day
+// AND if the current time is out of working day.
 func (a *Agent) IsOutOfWorkingDay() bool {
 	if !a.cfg.OnlyWorkingDays {
 		return false
 	}
+
 	return a.cfg.OnlyWorkingDays && !a.WorkingDay.IsWorkingPeriod()
 }
 
-// NextStart return the next date when the agent will be allowed to start
+// NextStart return the next date when the agent will be allowed to start.
 func (a *Agent) NextStart() (time.Time, time.Time, error) {
 	return a.WorkingDay.NextStartAndNow()
 }
 
+// StartTime returns the start working day.
 func (a *Agent) StartTime() string {
 	return a.WorkingDay.Start
 }
 
 // GetRsshOrder returns the order that the agent should follow to attempt to connect
-// to the SSHD server
+// to the SSHD server.
 func (a *Agent) GetRsshOrder() []string {
-	return utils.ToLower(utils.Unique(a.cfg.RsshOrder))
+	return utils.ToLower(utils.Unique(a.cfg.RSSHOrder))
 }
 
-// GetSshTimeout return the SSH timeout used when setting up the ssh connection
-func (a *Agent) GetSshTimeout() time.Duration {
-	if a.cfg.SshTimeout == 0 {
+// GetSSHTimeout return the SSH timeout used when setting up the ssh connection.
+func (a *Agent) GetSSHTimeout() time.Duration {
+	if a.cfg.SSHTimeout == 0 {
 		return time.Duration(1<<63 - 1)
 	}
-	return time.Duration(a.cfg.SshTimeout) * time.Second
+
+	return time.Duration(a.cfg.SSHTimeout) * time.Second
 }
 
-// AgePubKey returns the age public key used to asymmetrically encrypt data
+// AgePubKey returns the age public key used to asymmetrically encrypt data.
 func (a *Agent) AgePubKey() string {
 	return a.cfg.AgePubKey
 }
 
-// SshdEnabled returns whether the sshd server is enabled
+// SshdEnabled returns whether the sshd server is enabled.
 func (a *Agent) SshdEnabled() bool {
 	return a.cfg.Sshd
 }
 
-// HttpProxyEnabled returns whether the http proxy server is enabled
-func (a *Agent) HttpProxyEnabled() bool {
-	return a.cfg.Http
+// HTTPProxyEnabled returns whether the http proxy server is enabled.
+func (a *Agent) HTTPProxyEnabled() bool {
+	return a.cfg.HTTP
 }
 
-// SocksEnabled returns whether the socks server is enabled
+// SocksEnabled returns whether the socks server is enabled.
 func (a *Agent) SocksEnabled() bool {
 	return a.cfg.Socks || a.cfg.SocksPort != 0
 }
 
-// SocksUseSystemProxy returns whether the agent Socks proxy should use the system proxy (if applicable)
+// SocksUseSystemProxy returns whether the agent Socks proxy should use the system proxy (if applicable).
 func (a *Agent) SocksUseSystemProxy() bool {
 	return a.cfg.SocksUseSystemProxy
 }
 
-// AddSshdToRpf adds the SSHD conf to the Remote port forwarding list
+// AddSshdToRpf adds the SSHD conf to the Remote port forwarding list.
 func (a *Agent) AddSshdToRpf() {
 	sshdRpf := ssh.RemotePortForwarding{
-		ServerPort: a.cfg.RsshPort,
+		ServerPort: a.cfg.RSSHPort,
 		AgentPort:  -1,
 		AgentIP:    "0.0.0.0",
 		Tag:        "sshd",
@@ -444,96 +458,104 @@ func (a *Agent) AddSshdToRpf() {
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
 }
 
-// NoProxy return whether the agent should ignore the potential system proxy
+// NoProxy return whether the agent should ignore the potential system proxy.
 func (a *Agent) NoProxy() bool {
 	return a.cfg.NoProxy
 }
 
-// Proxy returns the proxy provided by the configuration
+// Proxy returns the proxy provided by the configuration.
 func (a *Agent) Proxy() *url.URL {
 	return a.cfg.Proxy
 }
 
-// ProxyUsername returns the username used by the proxy
+// ProxyUsername returns the username used by the proxy.
 func (a *Agent) ProxyUsername() string {
 	return a.cfg.ProxyUsername
 }
 
-// ProxyPassword returns the password used by the proxy
+// ProxyPassword returns the password used by the proxy.
 func (a *Agent) ProxyPassword() string {
 	return a.cfg.ProxyPassword
 }
 
-// ProxyDomain returns the domain used by the proxy
+// ProxyDomain returns the domain used by the proxy.
 func (a *Agent) ProxyDomain() string {
 	return a.cfg.ProxyPassword
 }
 
-// SocksProxy returns the proxy provided by the configuration
+// SocksProxy returns the proxy provided by the configuration.
 func (a *Agent) SocksProxy() *url.URL {
 	if a.cfg.SocksCustomProxy != nil {
 		return a.cfg.SocksCustomProxy
 	}
+
 	return a.cfg.Proxy
 }
 
-// SocksProxyUsername returns the username used by the upstream proxy of the socks proxy
+// SocksProxyUsername returns the username used by the upstream proxy of the socks proxy.
 func (a *Agent) SocksProxyUsername() string {
 	if a.cfg.SocksProxyUsername != "" {
 		return a.cfg.SocksProxyUsername
 	}
+
 	return a.cfg.ProxyUsername
 }
 
-// SocksProxyPassword returns the username used by the upstream proxy of the socks proxy
+// SocksProxyPassword returns the username used by the upstream proxy of the socks proxy.
 func (a *Agent) SocksProxyPassword() string {
 	if a.cfg.SocksProxyPassword != "" {
 		return a.cfg.SocksProxyPassword
 	}
+
 	return a.cfg.ProxyPassword
 }
 
-// SocksProxyDomain returns the username used by the upstream proxy of the socks proxy
+// SocksProxyDomain returns the username used by the upstream proxy of the socks proxy.
 func (a *Agent) SocksProxyDomain() string {
 	if a.cfg.SocksProxyDomain != "" {
 		return a.cfg.SocksProxyDomain
 	}
+
 	return a.cfg.ProxyDomain
 }
 
-// HttpProxy returns the proxy provided by the configuration
-func (a *Agent) HttpProxy() *url.URL {
+// HTTPProxy returns the proxy provided by the configuration.
+func (a *Agent) HTTPProxy() *url.URL {
 	if a.cfg.SocksCustomProxy != nil {
 		return a.cfg.SocksCustomProxy
 	}
+
 	return a.cfg.Proxy
 }
 
-// HttpProxyUsername returns the username used by the upstream proxy of the socks proxy
-func (a *Agent) HttpProxyUsername() string {
+// HTTPProxyUsername returns the username used by the upstream proxy of the socks proxy.
+func (a *Agent) HTTPProxyUsername() string {
 	if a.cfg.SocksProxyUsername != "" {
 		return a.cfg.SocksProxyUsername
 	}
+
 	return a.cfg.ProxyUsername
 }
 
-// HttpProxyPassword returns the username used by the upstream proxy of the socks proxy
-func (a *Agent) HttpProxyPassword() string {
+// HTTPProxyPassword returns the username used by the upstream proxy of the socks proxy.
+func (a *Agent) HTTPProxyPassword() string {
 	if a.cfg.SocksProxyPassword != "" {
 		return a.cfg.SocksProxyPassword
 	}
+
 	return a.cfg.ProxyPassword
 }
 
-// HttpProxyDomain returns the username used by the upstream proxy of the socks proxy
-func (a *Agent) HttpProxyDomain() string {
+// HTTPProxyDomain returns the username used by the upstream proxy of the socks proxy.
+func (a *Agent) HTTPProxyDomain() string {
 	if a.cfg.SocksProxyDomain != "" {
 		return a.cfg.SocksProxyDomain
 	}
+
 	return a.cfg.ProxyDomain
 }
 
-// AddSocksToRpf adds the SSHD conf to the Remote port forwarding list
+// AddSocksToRpf adds the SSHD conf to the Remote port forwarding list.
 func (a *Agent) AddSocksToRpf() {
 	sshdRpf := ssh.RemotePortForwarding{
 		ServerPort: a.cfg.SocksPort,
@@ -544,13 +566,13 @@ func (a *Agent) AddSocksToRpf() {
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
 }
 
-// GetRemotePortForwarding returns the configured remote port forwarding
+// GetRemotePortForwarding returns the configured remote port forwarding.
 func (a *Agent) GetRemotePortForwarding() []ssh.RemotePortForwarding {
 	return a.cfg.RemotePortForwarding
 }
 
-// getIps returns the IP on the hosts, excluding local network addresses
-func getIps() ([]string, []error) {
+// getIPs returns the IP on the hosts, excluding local network addresses.
+func getIPs() ([]string, []error) {
 	IPS := make([]string, 0)
 
 	errs := make([]error, 0)
@@ -573,58 +595,68 @@ func getIps() ([]string, []error) {
 			}
 		}
 	}
+
 	return IPS, errs
 }
 
-// GetMexRetries returns the configured max retries before killing the agent
+// GetMexRetries returns the configured max retries before killing the agent.
 func (a *Agent) GetMexRetries() uint {
+	//nolint:gosec
 	return uint(a.cfg.MaxRetries)
 }
 
+// DoPrintVersion return whether the version must be printed.
 func (a *Agent) DoPrintVersion() bool {
 	return a.cfg.Version
 }
 
-// DoGenerateConfig return whether the configuration generation should be enabled
+// DoGenerateConfig return whether the configuration generation should be enabled.
 func (a *Agent) DoGenerateConfig() bool {
 	return a.cfg.GenerateConfig
 }
 
-// ShouldRunInBackground returns whether the agent should be run in the background
+// ShouldRunInBackground returns whether the agent should be run in the background.
 func (a *Agent) ShouldRunInBackground() bool {
 	return a.cfg.Background && !a.cfg.HiddenBackground
 }
 
 // StartInBackground re-execute the agent in the background.
 // A hidden flag is appended to the command line
-// to notify the child process that is already running in the background
+// to notify the child process that is already running in the background.
 func (a *Agent) StartInBackground() error {
-	args := append(os.Args, "--hidden-background")
+	args := os.Args[1:]
+	args = append(args, "--hidden-background")
+	//nolint:gosec
 	c := exec.Command(args[0], args[1:]...)
 	err := c.Start()
 	if err != nil {
-		return fmt.Errorf("failed to start agent: %s", err)
+		return fmt.Errorf("failed to start agent: %w", err)
 	}
+
 	return nil
 }
 
-// GenerateYAMLConfig returns the YAML configuration file corresponding to the currently running configuration
+// GenerateYAMLConfig returns the YAML configuration file corresponding to the currently running configuration.
 func (a *Agent) GenerateYAMLConfig() (string, error) {
 	c := a.cfg
-	c.LocalSshPassword = ""
+	c.LocalSSHPassword = ""
 	c.AgePubKey = ""
 	c.GenerateConfig = false
+
 	return cli.GenerateYAMLWithComments(*c)
 }
 
-func (a *Agent) GetDnsCommand() string {
-	return a.cfg.CustomDnsCommand
+// GetDNSCommand return the DNS command to perform SSH over DNS using a custom DNS.
+func (a *Agent) GetDNSCommand() string {
+	return a.cfg.CustomDNSCommand
 }
 
+// GetKillSwitchDays returns the configured killswitch.
 func (a *Agent) GetKillSwitchDays() int {
 	return a.cfg.KillSwitch
 }
 
+// Version returns the agent version.
 func (a *Agent) Version() common.JVersion {
-	return common.JsonVersion()
+	return common.JSONVersion()
 }

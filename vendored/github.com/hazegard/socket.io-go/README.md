@@ -12,7 +12,7 @@ This is a [Socket.IO](https://socket.io) library for Go.
 The least supported Socket.IO version is 3.0. If you have an older version of Socket.IO in your other projects, please consider upgrading your dependencies.
 
 | JavaScript Socket.IO version | Socket.IO protocol revision | Engine.IO protocol revision | socket.io-go version |
-| ---------------------------- | --------------------------- | --------------------------- | -------------------- |
+|------------------------------|-----------------------------|-----------------------------|----------------------|
 | 0.9.x                        | 1, 2                        | 1, 2                        | Not supported        |
 | 1.x, 2.x                     | 3, 4                        | 3                           | Not supported        |
 | 3.x, 4.x                     | 5                           | 4                           | 0.x                  |
@@ -60,8 +60,8 @@ If you are a contributor, please see: [Developing a Transport](CONTRIBUTING.md#d
 
 JSON serialization is highly customizable. Under the `parser/json/serializer` directory there are different packages for JSON serialization:
 
-| Name                                        | Description                                               | Usage                                      |
-| ------------------------------------------- | --------------------------------------------------------- | ------------------------------------------ |
+| Name                                        | Description                                               | Usage                                                 |
+|---------------------------------------------|-----------------------------------------------------------|-------------------------------------------------------|
 | `stdjson`                                   | stdlib's `encoding/json`. This is the default serializer. | [README.md](parser/json/serializer/stdjson/README.md) |
 | [go-json](https://github.com/goccy/go-json) |                                                           | [README.md](parser/json/serializer/go-json/README.md) |
 | [sonic](https://github.com/bytedance/sonic) |                                                           | [README.md](parser/json/serializer/sonic/README.md)   |

@@ -1,4 +1,4 @@
-package socket_io
+package socketio
 
 import (
 	"Goauld/common"
@@ -6,10 +6,12 @@ import (
 	"Goauld/common/ssh"
 )
 
+// newRemotePortForwardingMessage creates a new empty slice of RemotePortForwarding messages.
 func newRemotePortForwardingMessage() *[]ssh.RemotePortForwarding {
 	return &[]ssh.RemotePortForwarding{}
 }
 
+// DecryptRemotePortForwardingMessage decrypts encrypted data into a slice of RemotePortForwarding objects.
 func DecryptRemotePortForwardingMessage(data []byte, c *crypto.SymCryptor) ([]ssh.RemotePortForwarding, error) {
 	decData, err := common.Decryptor[[]ssh.RemotePortForwarding]{}.Decrypt(data, c, newRemotePortForwardingMessage)
 	if err != nil {
@@ -19,10 +21,12 @@ func DecryptRemotePortForwardingMessage(data []byte, c *crypto.SymCryptor) ([]ss
 	return *decData, err
 }
 
+// EncryptRemotePortForwardingMessage encrypts a slice of RemotePortForwarding objects into bytes.
 func EncryptRemotePortForwardingMessage(rpf []ssh.RemotePortForwarding, c *crypto.SymCryptor) ([]byte, error) {
 	return common.Encrypt(&rpf, c)
 }
 
-func NewEncryptedRemotePortForwardingMessage(err []ssh.RemotePortForwarding, cryptor *crypto.SymCryptor) ([]byte, error) {
-	return EncryptRemotePortForwardingMessage(err, cryptor)
+// NewEncryptedRemotePortForwardingMessage creates and encrypts a new RemotePortForwarding message.
+func NewEncryptedRemotePortForwardingMessage(rpf []ssh.RemotePortForwarding, cryptor *crypto.SymCryptor) ([]byte, error) {
+	return EncryptRemotePortForwardingMessage(rpf, cryptor)
 }

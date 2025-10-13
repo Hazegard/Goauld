@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// DB database.
 type DB struct {
 	db *gorm.DB
 }
@@ -23,21 +24,22 @@ var (
 	db   *DB
 )
 
-// InitDB initialize the database, performing migrations if needed
+// InitDB initialize the database, performing migrations if needed.
 func InitDB() (*DB, error) {
 	db := get()
 	err := db.Migrate()
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
 }
 
-// get to return the database connection object
+// get to return the database connection object.
 func get() *DB {
 	var err error
 	once.Do(func() {
-		dbFileName := ""
+		var dbFileName string
 		if config.Get().NoDB {
 			dbFileName = ":memory:"
 		} else {
@@ -49,14 +51,16 @@ func get() *DB {
 		})
 		if err != nil {
 			err = _err
+
 			return
 		}
 		db = &DB{db: _db}
 	})
+
 	return db
 }
 
-// Migrate performs the database migration
+// Migrate performs the database migration.
 func (db *DB) Migrate() error {
 	for _, dbType := range dbTypes {
 		err := db.db.AutoMigrate(&dbType)
@@ -64,21 +68,24 @@ func (db *DB) Migrate() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
+// ResetAgents resets the dynamic information of all agents.
 func (db *DB) ResetAgents() error {
 	agents, err := db.GetAllAgents()
 	if err != nil {
 		return err
 	}
 	for _, agent := range agents {
-		agent.SshMode = "OFF"
+		agent.SSHMode = "OFF"
 		agent.UsedPorts = ""
 		agent.RemotePortForwarding = nil
 		agent.Connected = false
-		agent.SocketId = ""
+		agent.SocketID = ""
 		db.db.Save(agent)
 	}
+
 	return nil
 }

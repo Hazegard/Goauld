@@ -13,6 +13,7 @@ func TestBackoff(t *testing.T) {
 	testBackoffDuration(t, b)
 
 	b.reset()
+	//nolint:gosec
 	require.Equal(t, uint32(0), b.attempts())
 
 	d := b.duration()

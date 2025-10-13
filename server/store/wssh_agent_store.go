@@ -6,25 +6,26 @@ import (
 	"net"
 )
 
-type WsshAgent struct {
+// WSSHAgent handle the SSH over Websocket store.
+type WSSHAgent struct {
 	srcConn net.Conn
 	dstConn net.Conn
 }
 
-// WsshAddAgent adds the WSSH connections to the store
-func (a *AgentStore) WsshAddAgent(id string, src net.Conn, dst net.Conn) {
+// WSSHAddAgent adds the WSSH connections to the store.
+func (a *AgentStore) WSSHAddAgent(id string, src net.Conn, dst net.Conn) {
 	a.wsshAgentMapMu.Lock()
-	a.wsshAgentMap[id] = &WsshAgent{srcConn: src, dstConn: dst}
+	a.wsshAgentMap[id] = &WSSHAgent{srcConn: src, dstConn: dst}
 	a.wsshAgentMapMu.Unlock()
 }
 
-// WsshCloseAgent closes the WSSH connections
-func (a *AgentStore) WsshCloseAgent(id string) error {
+// WSSHCloseAgent closes the WSSH connections.
+func (a *AgentStore) WSSHCloseAgent(id string) error {
 	a.wsshAgentMapMu.Lock()
 	agent := a.wsshAgentMap[id]
 	a.wsshAgentMapMu.Unlock()
-	a.WsshRemoveAgent(id)
-	errs := []error{}
+	a.WSSHRemoveAgent(id)
+	var errs []error
 	if agent != nil && agent.srcConn != nil {
 		err1 := agent.srcConn.Close()
 		if err1 != nil {
@@ -41,41 +42,43 @@ func (a *AgentStore) WsshCloseAgent(id string) error {
 	return errors.Join(errs...)
 }
 
-// WsshRemoveAgent remove the agent of the store
-func (a *AgentStore) WsshRemoveAgent(id string) {
+// WSSHRemoveAgent remove the agent of the store.
+func (a *AgentStore) WSSHRemoveAgent(id string) {
 	a.wsshAgentMapMu.Lock()
 	delete(a.wsshAgentMap, id)
 	a.wsshAgentMapMu.Unlock()
 }
 
-// WsshGetAgent returns the WSSH connections of the agent
-func (a *AgentStore) WsshGetAgent(id string) *WsshAgent {
+// WSSHGetAgent returns the WSSH connections of the agent.
+func (a *AgentStore) WSSHGetAgent(id string) *WSSHAgent {
 	a.wsshAgentMapMu.Lock()
 	agent := a.wsshAgentMap[id]
 	a.wsshAgentMapMu.Unlock()
+
 	return agent
 }
 
-// DumpWSSH return the WSSH information associated to the agent
-func (a *AgentStore) DumpWSSH(id string) types.WSHState {
+// DumpWSSH return the WSSH information associated to the agent.
+func (a *AgentStore) DumpWSSH(id string) types.WSSHState {
 	a.wsshAgentMapMu.Lock()
 	agent := a.wsshAgentMap[id]
 	defer a.wsshAgentMapMu.Unlock()
 	if agent == nil {
-		return types.WSHState{
-			AgentId: id,
+		return types.WSSHState{
+			AgentID: id,
 		}
 	}
-	state := types.WSHState{
-		AgentId: id,
-		SshConn: types.Conn{
+	state := types.WSSHState{
+		AgentID: id,
+		SSHConn: types.Conn{
 			LocaleAddr: agent.dstConn.LocalAddr().String(),
 			RemoteAddr: agent.dstConn.RemoteAddr().String(),
 		},
-		WsConn: types.Conn{
+		WSConn: types.Conn{
 			LocaleAddr: agent.srcConn.LocalAddr().String(),
 			RemoteAddr: agent.srcConn.RemoteAddr().String(),
 		},
 	}
+
 	return state
 }

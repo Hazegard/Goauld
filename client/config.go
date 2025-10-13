@@ -19,58 +19,58 @@ import (
 	"github.com/alecthomas/kong"
 )
 
-const APP_NAME = "tealc"
+const AppName = "tealc"
 
 var (
 	_server     = ""
-	_ssh_server = ""
+	_ssh_server = "" //nolint:revive
 
-	_access_token = ""
-	_admin_token  = ""
+	_access_token = "" //nolint:revive
+	_admin_token  = "" //nolint:revive
 
 	_verbosity = "0"
 	_insecure  = "false"
 
 	_version         = "false"
-	_generate_config = "false"
-	_config_file     = ""
+	_generate_config = "false" //nolint:revive
+	_config_file     = ""      //nolint:revive
 
-	_static_ssh_agent_map   = ""
-	_private_password       = ""
-	_prompt_static_password = "false"
-	_save_static_password   = "false"
+	_static_ssh_agent_map   = ""      //nolint:revive
+	_private_password       = ""      //nolint:revive
+	_prompt_static_password = "false" //nolint:revive
+	_save_static_password   = "false" //nolint:revive
 
-	_ssh_http             = "true"
-	_ssh_socks            = "true"
-	_ssh_local_socks_port = "1080"
-	_ssh_local_http_port  = "3128"
-	_ssh_ssh              = "true"
-	_ssh_print            = "false"
-	_ssh_proxy            = "false"
+	_ssh_http             = "true"  //nolint:revive
+	_ssh_socks            = "true"  //nolint:revive
+	_ssh_local_socks_port = "1080"  //nolint:revive
+	_ssh_local_http_port  = "3128"  //nolint:revive
+	_ssh_ssh              = "true"  //nolint:revive
+	_ssh_print            = "false" //nolint:revive
+	_ssh_proxy            = "false" //nolint:revive
 
-	_socks_socks            = "true"
-	_socks_local_socks_port = "1080"
-	_socks_ssh              = "false"
-	_socks_print            = "false"
-	_socks_proxy            = "false"
+	_socks_socks            = "true"  //nolint:revive
+	_socks_local_socks_port = "1080"  //nolint:revive
+	_socks_ssh              = "false" //nolint:revive
+	_socks_print            = "false" //nolint:revive
+	_socks_proxy            = "false" //nolint:revive
 
-	_scp_print       = "false"
-	_scp_source      = ""
-	_scp_destination = ""
-	_scp_args        = ""
+	_scp_print       = "false" //nolint:revive
+	_scp_source      = ""      //nolint:revive
+	_scp_destination = ""      //nolint:revive
+	_scp_args        = ""      //nolint:revive
 
-	_pass_agent = ""
-	_pass_type  = ""
+	_pass_agent = "" //nolint:revive
+	_pass_type  = "" //nolint:revive
 
-	_compile_id               = "agent"
-	_compile_goos             = ""
-	_compile_goarch           = ""
-	_compile_source           = ""
-	_compile_env_file         = ""
-	_compile_output           = "output"
-	_compile_drop_env         = "false"
-	_compile_seed             = "__generate"
-	_compile_private_password = ""
+	_compile_id               = "agent"      //nolint:revive
+	_compile_goos             = ""           //nolint:revive
+	_compile_goarch           = ""           //nolint:revive
+	_compile_source           = ""           //nolint:revive
+	_compile_env_file         = ""           //nolint:revive
+	_compile_output           = "output"     //nolint:revive
+	_compile_drop_env         = "false"      //nolint:revive
+	_compile_seed             = "__generate" //nolint:revive
+	_compile_private_password = ""           //nolint:revive
 
 	defaultValues = kong.Vars{
 		"_server":       _server,
@@ -126,7 +126,7 @@ var (
 
 type ClientConfig struct {
 	Server    string `default:"${_server}" short:"s" name:"server" yaml:"server"  optional:"" help:"HTTP Server to connect to."`
-	SshServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH Server to connect to."`
+	SSHServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH Server to connect to."`
 
 	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required to access the /manage/ endpoint."`
 	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token required to access the /admin/ endpoint."`
@@ -143,10 +143,10 @@ type ClientConfig struct {
 	PromptPassword  bool              `default:"${_prompt_static_password}" name:"prompt" yaml:"prompt" short:"Q" help:"Prompt for the agent private password."`
 	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" negatable:"" help:"Save the prompted password in the config file."`
 
-	Ssh     Ssh      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
+	SSH     SSH      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
 	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
-	Scp     Scp      `cmd:"" name:"scp"  help:"Transfer files using SCP from/to the agent."`
-	Tui     Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
+	SCP     Scp      `cmd:"" name:"scp" help:"Transfer files using SCP from/to the agent."`
+	TUI     Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
 	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
 	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
 	Admin   Admin    `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
@@ -155,18 +155,19 @@ type ClientConfig struct {
 	SearchConfigDir string `hidden:""`
 }
 
-// ValidateConfig check the required options and returns an error if they are not set
-func (c *ClientConfig) ValidateConfig() error {
-	if c.GenerateConfig {
+// ValidateConfig check the required options and returns an error if they are not set.
+func (cfg *ClientConfig) ValidateConfig() error {
+	if cfg.GenerateConfig {
 		// we do not validate the current config as we might want to have the access token or server empty
 		return nil
 	}
-	if c.AccessToken == "" {
+	if cfg.AccessToken == "" {
 		return errors.New("an access token is required (configuration file, environment variable, or --access-token)")
 	}
-	if c.Server == "" {
+	if cfg.Server == "" {
 		return errors.New("a server URL is required (configuration file, environment variable, or --server)")
 	}
+
 	return nil
 }
 
@@ -174,53 +175,57 @@ type Compiler struct {
 	Args []string `hidden:"true" arg:"" passthrough:""`
 }
 
-// GetSshdHost returns the configured sshd host
-func (c *ClientConfig) GetSshdHost() string {
-	split := strings.Split(c.SshServer, ":")
+// GetSshdHost returns the configured sshd host.
+func (cfg *ClientConfig) GetSshdHost() string {
+	split := strings.Split(cfg.SSHServer, ":")
+
 	return split[0]
 }
 
-// GetSshdPort returns the configured sshd port
-func (c *ClientConfig) GetSshdPort() string {
-	split := strings.Split(c.SshServer, ":")
+// GetSshdPort returns the configured sshd port.
+func (cfg *ClientConfig) GetSshdPort() string {
+	split := strings.Split(cfg.SSHServer, ":")
 	if len(split) == 2 {
 		return split[1]
 	}
+
 	return ""
 }
 
-// ServerUrl returns control server URL
-func (c *ClientConfig) ServerUrl() string {
-	url := ""
-	if strings.HasPrefix(c.Server, "http://") {
-		url = c.Server
-	} else if strings.HasPrefix(c.Server, "https://") {
-		url = c.Server
-	} else {
-		url = "http://" + c.Server
+// ServerURL returns control server URL.
+func (cfg *ClientConfig) ServerURL() string {
+	var url string
+	switch {
+	case strings.HasPrefix(cfg.Server, "http://"):
+		url = cfg.Server
+	case strings.HasPrefix(cfg.Server, "https://"):
+		url = cfg.Server
+	default:
+		url = "http://" + cfg.Server
 	}
 
 	return url
 }
 
-// GenerateYAMLConfig generate a YAML configuration associated with the currently running configuration
-func (c *ClientConfig) GenerateYAMLConfig() (string, error) {
-	return cli.GenerateYAMLWithComments(*c)
+// GenerateYAMLConfig generate a YAML configuration associated with the currently running configuration.
+func (cfg *ClientConfig) GenerateYAMLConfig() (string, error) {
+	return cli.GenerateYAMLWithComments(*cfg)
 }
 
-// IsFlagInCommandLine checks whether the flag is provided in the command line arguments
-func (c *ClientConfig) IsFlagInCommandLine(long string, short string) bool {
+// IsFlagInCommandLine checks whether the flag is provided in the command line arguments.
+func (cfg *ClientConfig) IsFlagInCommandLine(long string, short string) bool {
 	for _, field := range os.Args {
 		if (long != "" && field == long) || (short != "" && field == short) {
 			return true
 		}
 	}
+
 	return false
 }
 
 type Tui struct{}
 
-// Run executes the tui subcommand
+// Run executes the tui subcommand.
 func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 	tt := tui.NewTui(api, cfg.AgentPassword)
 	agent, mode, err := tt.Run()
@@ -233,16 +238,19 @@ func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 	}
 	switch mode {
 	case "ssh":
-		cfg.Ssh.Target = agent
-		return cfg.Ssh.Run(api, cfg)
+		cfg.SSH.Target = agent
+
+		return cfg.SSH.Run(api, cfg)
 	case "vscode":
 		cfg.VsCode.Target = agent
+
 		return cfg.VsCode.Run(api, cfg)
 	}
+
 	return nil
 }
 
-// InitConfig return the configuration depending on the command line arguments as well as the configuration files
+// InitConfig return the configuration depending on the command line arguments as well as the configuration files.
 func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 	cfgTmp := &ClientConfig{
 		PrivatePassword: _private_password,
@@ -252,25 +260,27 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 		return nil, cfgTmp, nil, err
 	}
 	configSearchDir := []string{
-		filepath.Join(dir, fmt.Sprintf("%s.yaml", APP_NAME)),
+		filepath.Join(dir, AppName+".yaml"),
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", fmt.Sprintf("%s.yaml", APP_NAME))
+		homeConfig := filepath.Join(home, ".config", AppName+".yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
-		kong.Name(strings.ToLower(APP_NAME)),
-		kong.Description(common2.Title(APP_NAME) + "\n" + common.Description),
+		kong.Name(strings.ToLower(AppName)),
+		kong.Description(common2.Title(AppName) + "\n" + common.Description),
 		kong.UsageOnError(),
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
-		kong.DefaultEnvars(strings.ToUpper(APP_NAME)),
+		kong.DefaultEnvars(strings.ToUpper(AppName)),
 		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
-
 			if ctx.Error == nil {
+				//nolint:forbidigo
 				fmt.Println(common.GetBanner())
+				//nolint:forbidigo
 				fmt.Println()
 			}
+
 			return kong.DefaultHelpPrinter(options, ctx)
 		}),
 		defaultValues,
@@ -292,32 +302,35 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
 
 	log.SetLogLevel(cfg.Verbose)
+
 	return app, cfg, ctx, cfg.ValidateConfig()
 }
 
-// Target returns the target by parsing the subcommands to find which one is currently executed
+// Target returns the target by parsing the subcommands to find which one is currently executed.
 func (cfg *ClientConfig) Target() string {
-	if cfg.Ssh.Target != "" {
-		return cfg.Ssh.Target
+	if cfg.SSH.Target != "" {
+		return cfg.SSH.Target
 	}
-	if cfg.Scp.Target != "" {
-		return cfg.Scp.Target
+	if cfg.SCP.Target != "" {
+		return cfg.SCP.Target
 	}
 	if cfg.Socks.Target != "" {
 		return cfg.Socks.Target
 	}
+
 	return ""
 }
 
-// UpdatePassConfigFile updates the configuration file to set the new static password
+// UpdatePassConfigFile updates the configuration file to set the new static password.
 func (cfg *ClientConfig) UpdatePassConfigFile() error {
 	if cfg.SavePassword && cfg.PrivatePassword != "" {
 		return yaml.UpdateAgentPasswordConfig(cfg.SearchConfigDir, cfg.Target(), cfg.PrivatePassword)
 	}
+
 	return nil
 }
 
-// ShouldPrompt return whether the client should display a prompt
+// ShouldPrompt return whether the client should display a prompt.
 func (cfg *ClientConfig) ShouldPrompt(agent types.Agent) bool {
 	if cfg.PromptPassword {
 		return true
@@ -329,10 +342,11 @@ func (cfg *ClientConfig) ShouldPrompt(agent types.Agent) bool {
 	if ok {
 		return false
 	}
+
 	return agent.HasStaticPassword
 }
 
-// Prompt prompts the password to the user
+// Prompt prompts the password to the user.
 func (cfg *ClientConfig) Prompt(agent string) error {
 	pass, err := tui.Prompt(agent)
 	if err != nil {
@@ -340,5 +354,6 @@ func (cfg *ClientConfig) Prompt(agent string) error {
 	}
 	cfg.PromptPassword = true
 	cfg.PrivatePassword = pass
+
 	return nil
 }

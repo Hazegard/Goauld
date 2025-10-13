@@ -8,11 +8,13 @@ import (
 	"path/filepath"
 )
 
-const SHELL_PARAM = "-c"
+// ShellParam the param used to provide a shell command as a string.
+const ShellParam = "-c"
 
-var SHELL_LOGIN = []string{"-l"}
+// ShellLogin the param to start an interactive shell.
+var ShellLogin = []string{"-l"}
 
-// getShell return the first shell found on the system
+// getShell return the first shell found on the system.
 func getShell() Command {
 	commands := []Command{
 		{
@@ -33,17 +35,20 @@ func getShell() Command {
 	if cmd.Executable != "" {
 		return cmd
 	}
+
 	return Command{
 		Executable: "/bin/sh",
 	}
 }
 
+// UpdateShell updates the shell command if required.
 func UpdateShell(shell Command, rawCommand string) (Command, func() error, error) {
 	if rawCommand != "" {
-		shell.Args = []string{SHELL_PARAM, rawCommand}
+		shell.Args = []string{ShellParam, rawCommand}
 	} else {
-		shell.Args = SHELL_LOGIN
+		shell.Args = ShellLogin
 	}
+
 	return shell, func() error { return nil }, nil
 }
 
@@ -54,7 +59,7 @@ var defaultPaths = []string{
 	"/usr/sbin",
 }
 
-// lookBinaries returns the first Command found in the paths
+// lookBinaries returns the first Command found in the paths.
 func lookBinaries(commands []Command) Command {
 	for _, cmd := range commands {
 		c := lookPaths(cmd, defaultPaths)
@@ -62,10 +67,11 @@ func lookBinaries(commands []Command) Command {
 			return c
 		}
 	}
+
 	return Command{}
 }
 
-// lookPaths returns whether the provided command if found in the provided paths
+// lookPaths returns whether the provided command if found in the provided paths.
 func lookPaths(binaryName Command, paths []string) Command {
 	for _, path := range paths {
 		absCmd, err := lookPath(binaryName, path)
@@ -76,10 +82,11 @@ func lookPaths(binaryName Command, paths []string) Command {
 			return absCmd
 		}
 	}
+
 	return Command{}
 }
 
-// lookPath checks if a binary exists in the given directory path and returns its absolute path
+// lookPath checks if a binary exists in the given directory path and returns its absolute path.
 func lookPath(binaryName Command, path string) (Command, error) {
 	// Combine the given path and binary name to form the full file path
 	fullPath := filepath.Join(path, binaryName.Executable)
@@ -90,7 +97,8 @@ func lookPath(binaryName Command, path string) (Command, error) {
 		if os.IsNotExist(err) {
 			return Command{}, fmt.Errorf("binary '%s' not found in path '%s'", binaryName, path)
 		}
-		return Command{}, fmt.Errorf("error checking file: %v", err)
+
+		return Command{}, fmt.Errorf("error checking file: %w", err)
 	}
 
 	// Check if the file is executable
@@ -101,7 +109,7 @@ func lookPath(binaryName Command, path string) (Command, error) {
 	// Return the absolute path
 	absolutePath, err := filepath.Abs(fullPath)
 	if err != nil {
-		return Command{}, fmt.Errorf("error resolving absolute path: %v", err)
+		return Command{}, fmt.Errorf("error resolving absolute path: %w", err)
 	}
 
 	return Command{Executable: absolutePath}, nil

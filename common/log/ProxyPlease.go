@@ -1,3 +1,4 @@
+// Package log holds the loggers
 package log
 
 import (
@@ -10,6 +11,7 @@ import (
 var initPPLog sync.Once
 var pplogger *zerolog.Logger
 
+// ProxyPleaseLog logs the ProxyPlease infos.
 func ProxyPleaseLog() func(format string, a ...interface{}) {
 	initPPLog.Do(func() {
 		ppl := Get().Sample(
@@ -20,6 +22,7 @@ func ProxyPleaseLog() func(format string, a ...interface{}) {
 			})
 		pplogger = &ppl
 	})
+
 	return func(format string, a ...interface{}) {
 		pplogger.Trace().Str("From", "ProxyPlease").Msgf(format, a...)
 	}

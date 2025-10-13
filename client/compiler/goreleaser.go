@@ -2,7 +2,7 @@ package compiler
 
 import (
 	"Goauld/common"
-	"fmt"
+	"errors"
 	"os"
 	"os/exec"
 )
@@ -15,8 +15,8 @@ func Goreleaser(cfg Compiler) error {
 	// 	return fmt.Errorf("error building: %s", err)
 	// }
 	var env []string
-	if cfg.Id != "" && cfg.Id != "all" {
-		c = append(c, "--id", cfg.Id) //, "--single-target")
+	if cfg.ID != "" && cfg.ID != "all" {
+		c = append(c, "--id", cfg.ID)
 	}
 	if cfg.Goos != "" {
 		env = append(env, "GOOS="+cfg.Goos)
@@ -28,14 +28,15 @@ func Goreleaser(cfg Compiler) error {
 		c = append(c, "--single-target")
 	}
 	if cfg.ClientBuild {
-		env = append(env, fmt.Sprintf("COMMIT=%s", common.Commit))
-		env = append(env, fmt.Sprintf("VERSION=%s", common.Version))
-		env = append(env, fmt.Sprintf("DATE=%s", common.Date))
+		env = append(env, "COMMIT="+common.Commit)
+		env = append(env, "VERSION="+common.Version)
+		env = append(env, "DATE="+common.Date)
 	} else {
 		env = append(env, "COMMIT=")
 		env = append(env, "VERSION=")
 		env = append(env, "DATE=")
 	}
+	//nolint:gosec
 	cmd := exec.Command(c[0], c[1:]...)
 
 	_env, err := ParseEnvFile(cfg.EnvFile)
@@ -44,15 +45,17 @@ func Goreleaser(cfg Compiler) error {
 	if err != nil {
 		return err
 	}
-	cmd.Env = append(env, cmd.Environ()...)
+	cmd.Env = env
+	cmd.Env = append(cmd.Env, cmd.Environ()...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Dir = cfg.Source
+
 	return cmd.Run()
 }
 
 // CheckCommands checks whether the provided commands are found in the path
-// It returns all commands that are not found in the path
+// It returns all commands that are not found in the path.
 func CheckCommands(cmds []string) []string {
 	var notFound []string
 	for _, cmd := range cmds {
@@ -60,23 +63,23 @@ func CheckCommands(cmds []string) []string {
 		if err != nil {
 			notFound = append(notFound, cmd)
 		}
-
 	}
+
 	return notFound
 }
 
-// DoSpecificBuild returns whether a specific build should be performed
+// DoSpecificBuild returns whether a specific build should be performed.
 func DoSpecificBuild(cfg Compiler) (bool, error) {
 	// All strings empty → return false.
-	if cfg.Id == "" && cfg.Goos == "" && cfg.Goarch == "" {
+	if cfg.ID == "" && cfg.Goos == "" && cfg.Goarch == "" {
 		return false, nil
 	}
 
 	// All strings non-empty → return true.
-	if cfg.Id != "" && cfg.Goos != "" && cfg.Goarch != "" {
+	if cfg.ID != "" && cfg.Goos != "" && cfg.Goarch != "" {
 		return true, nil
 	}
 
 	// Mixed values → return an error.
-	return false, fmt.Errorf("error: mixed empty and non-empty values")
+	return false, errors.New("error: mixed empty and non-empty values")
 }

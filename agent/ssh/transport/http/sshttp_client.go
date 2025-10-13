@@ -17,6 +17,7 @@ import (
 	"www.bamsoftware.com/git/champa.git/turbotunnel"
 )
 
+// SSHTTP holds the SSH over HTTP connections.
 type SSHTTP struct {
 	Session *smux.Session
 	Pconn   *PollingPacketConn
@@ -25,6 +26,7 @@ type SSHTTP struct {
 	Client  *http.Client
 }
 
+// Close closes all the underlying conn.
 func (s *SSHTTP) Close() error {
 	var errs []error
 	if s == nil {
@@ -34,6 +36,7 @@ func (s *SSHTTP) Close() error {
 	errs = append(errs, s.Pconn.Close())
 	errs = append(errs, s.Session.Close())
 	errs = append(errs, s.KcpConn.Close())
+
 	return errors.Join(errs...)
 }
 
@@ -43,13 +46,12 @@ const (
 
 // NewSSHTTP sets up an SSHTTP instance with HTTP, KCP, and smux, returning an error if any step fails.
 func NewSSHTTP(serverURL string) (*SSHTTP, error) {
-
 	// http.DefaultTransport.(*http.Transport).MaxConnsPerHost = 20
 
 	tr := &http.Transport{
 		MaxIdleConns: 5,
 	}
-	httpClient := proxy.NewHttpClientProxy(tr)
+	httpClient := proxy.NewHTTPClientProxy(tr)
 	// httpClient.Transport.(*http.Transport).
 	// httpClient.Transport.(*http.Transport).MaxConnsPerHost = 20
 	res, err := httpClient.Get(serverURL)
@@ -60,6 +62,8 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
+	defer res.Body.Close()
 	if strings.TrimSpace(string(body)) != "OK" {
 		return nil, fmt.Errorf("SSHTTP server returns wrong response: %s", string(body))
 	}
@@ -71,7 +75,7 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 
 	conn, err := kcp.NewConn2(turbotunnel.DummyAddr{}, nil, 0, 0, pconn)
 	if err != nil {
-		return nil, fmt.Errorf("opening KCP conn: %v", err)
+		return nil, fmt.Errorf("opening KCP conn: %w", err)
 	}
 
 	log.Trace().Str("Mode", "SSHTTP").Str("ID", fmt.Sprintf("%08x", conn.GetConv())).Msg("begin session")
@@ -104,12 +108,12 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024  // default is 65 536
 	sess, err := smux.Client(conn, smuxConfig)
 	if err != nil {
-		return nil, fmt.Errorf("opening smux session: %v", err)
+		return nil, fmt.Errorf("opening smux session: %w", err)
 	}
 
 	stream, err := sess.OpenStream()
 	if err != nil {
-		return nil, fmt.Errorf("opening stream: %v", err)
+		return nil, fmt.Errorf("opening stream: %w", err)
 	}
 
 	return &SSHTTP{
@@ -125,14 +129,14 @@ func NewSSHTTP(serverURL string) (*SSHTTP, error) {
 func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []byte) (io.ReadCloser, error) {
 	// Append a cache buster and the encoded p to the path of serverURL.
 
-	req, err := http.NewRequest("POST", serverURL, bytes.NewReader(p))
+	req, err := http.NewRequest(http.MethodPost, serverURL, bytes.NewReader(p))
 	if err != nil {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
 	// req.Header.Set("User-Agent", "") // Disable default "Go-http-client/1.1".
 
-	resp, err := httpClient.Transport.RoundTrip(req) //http.DefaultTransport.RoundTrip(req)
+	resp, err := httpClient.Transport.RoundTrip(req) // http.DefaultTransport.RoundTrip(req)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +148,7 @@ func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []by
 
 	a, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
+		log.Trace().Err(err).Msg("failed to read response body")
 	}
 
 	// The caller should read from the decoder (which reads from the

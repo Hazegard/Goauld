@@ -1,7 +1,9 @@
+// Package ssh holds the common ssh functions
 package ssh
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	stdnet "net"
 	"strconv"
@@ -10,7 +12,7 @@ import (
 	"Goauld/common/net"
 )
 
-// RemotePortForwarding holds the port forwarding information
+// RemotePortForwarding holds the port forwarding information.
 type RemotePortForwarding struct {
 	ServerPort int    `json:"serverPort,omitempty" yaml:"serverPort,omitempty"`
 	AgentPort  int    `json:"agentPort,omitempty" yaml:"serverPort,omitempty"`
@@ -19,7 +21,7 @@ type RemotePortForwarding struct {
 }
 
 // internalRemotePortForwarding is a struct used to unmarshal RemotePortForwarding as JSON
-// Given that we are required to have UnmarshalText to populate the struct from the kong CLI arguments
+// Given that we are required to have UnmarshalText to populate the struct from the kong CLI arguments.
 type internalRemotePortForwarding struct {
 	ServerPort int    `json:"serverPort,omitempty"`
 	AgentPort  int    `json:"agentPort,omitempty"`
@@ -27,27 +29,27 @@ type internalRemotePortForwarding struct {
 	Tag        string `json:"tag,omitempty"`
 }
 
-// GetRemote returns the remote address
+// GetRemote returns the remote address.
 func (rpf *RemotePortForwarding) GetRemote() string {
 	return stdnet.JoinHostPort("127.0.0.1", strconv.Itoa(rpf.ServerPort))
 }
 
-// GetLocal returns the local address
+// GetLocal returns the local address.
 func (rpf *RemotePortForwarding) GetLocal() string {
 	return stdnet.JoinHostPort(rpf.AgentIP, strconv.Itoa(rpf.AgentPort))
 }
 
-// String returns the forwarding ports using the SSH -R scheme
+// String returns the forwarding ports using the SSH -R scheme.
 func (rpf *RemotePortForwarding) String() string {
 	return fmt.Sprintf("%d:%s:%d", rpf.ServerPort, rpf.AgentIP, rpf.AgentPort)
 }
 
-// Info returns the string-marshaled structure to be stored in the database
+// Info returns the string-marshaled structure to be stored in the database.
 func (rpf *RemotePortForwarding) Info() string {
 	return fmt.Sprintf("%d:%s:%d#%s", rpf.ServerPort, rpf.AgentIP, rpf.AgentPort, rpf.Tag)
 }
 
-// UnmarshalJSON unmarshal the incoming JSON to the struct
+// UnmarshalJSON unmarshal the incoming JSON to the struct.
 func (rpf *RemotePortForwarding) UnmarshalJSON(data []byte) error {
 	tmp := internalRemotePortForwarding{}
 	if string(data) == "/" {
@@ -61,10 +63,11 @@ func (rpf *RemotePortForwarding) UnmarshalJSON(data []byte) error {
 	rpf.AgentPort = tmp.AgentPort
 	rpf.AgentIP = tmp.AgentIP
 	rpf.Tag = tmp.Tag
+
 	return nil
 }
 
-// UnmarshalText returns the struct from the string representation
+// UnmarshalText returns the struct from the string representation.
 func (rpf *RemotePortForwarding) UnmarshalText(text []byte) error {
 	// Convert text (which is a byte slice) to a string
 	s := string(text)
@@ -82,13 +85,13 @@ func (rpf *RemotePortForwarding) UnmarshalText(text []byte) error {
 	}
 	parts = strings.Split(parts[0], ":")
 	if len(parts) < 2 || len(parts) > 3 {
-		return fmt.Errorf("invalid format, expected 'ServerPort:AgentIP:AgentPort' or 'ServerPort::AgentPort'")
+		return errors.New("invalid format, expected 'ServerPort:AgentIP:AgentPort' or 'ServerPort::AgentPort'")
 	}
 
 	// Parse ServerPort (int)
 	remotePort, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return fmt.Errorf("invalid ServerPort: %v", err)
+		return fmt.Errorf("invalid ServerPort: %w", err)
 	}
 
 	if !net.IsValidPort(remotePort) {
@@ -110,7 +113,7 @@ func (rpf *RemotePortForwarding) UnmarshalText(text []byte) error {
 	// Parse AgentPort (int)
 	localPort, err := strconv.Atoi(parts[len(parts)-1]) // The last part is always the AgentPort
 	if err != nil {
-		return fmt.Errorf("invalid AgentPort: %v", err)
+		return fmt.Errorf("invalid AgentPort: %w", err)
 	}
 	if !net.IsValidPort(localPort) {
 		return fmt.Errorf("invalid AgentPort: %v", localPort)

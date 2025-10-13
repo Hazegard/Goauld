@@ -1,7 +1,9 @@
 //go:build !windows
 
-package shim_embed
+// Package shimembed embed the windows sshd shim
+package shimembed
 
+// DropShimSSHD fake.
 func DropShimSSHD() (string, func() error, error) {
 	return "", func() error { return nil }, nil
 }

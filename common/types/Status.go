@@ -1,3 +1,4 @@
+//nolint:revive
 package types
 
 import (
@@ -15,9 +16,10 @@ type Status struct {
 }
 
 type DbAgent struct {
+	Agent `yaml:",omitempty,inline,alias"`
+
 	CreatedAt time.Time      `yaml:"created_at"`
 	UpdatedAt time.Time      `yaml:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" yaml:"deleted_at"`
-	SocketId  string         `yaml:"socket_id"`
-	Agent     `yaml:",omitempty,inline,alias"`
+	SocketID  string         `yaml:"socket_id"`
 }

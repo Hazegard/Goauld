@@ -9,71 +9,75 @@ import (
 	"Goauld/common/types"
 )
 
+// SSHTTPAgent handle the SSH over HTTP store.
 type SSHTTPAgent struct {
-	SshConn net.Conn
+	SSHConn net.Conn
 	Stream  *smux.Stream
 }
 
-// SshttpAddAgent adds the ssh connection of agent id to the agent store
-func (a *AgentStore) SshttpAddAgent(ssh net.Conn, stream *smux.Stream, id string) {
+// SSHTTPAddAgent adds the ssh connection of agent id to the agent store.
+func (a *AgentStore) SSHTTPAddAgent(ssh net.Conn, stream *smux.Stream, id string) {
 	a.sshttpAgentMapMu.Lock()
 	a.sshttpAgentMap[id] = &SSHTTPAgent{
-		SshConn: ssh,
+		SSHConn: ssh,
 		Stream:  stream,
 	}
 	a.sshttpAgentMapMu.Unlock()
 }
 
-// SshttpRemoveAgent removes the ssh connection of the agent id to the agent store
-func (a *AgentStore) SshttpRemoveAgent(id string) {
+// SSHTTPRemoveAgent removes the ssh connection of the agent id to the agent store.
+func (a *AgentStore) SSHTTPRemoveAgent(id string) {
 	a.sshttpAgentMapMu.Lock()
 	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
 }
 
-// SshttpGetAgent returns the ssh connection of the agent id to the agent store
-func (a *AgentStore) SshttpGetAgent(id string) *SSHTTPAgent {
+// SSHTTPGetAgent returns the ssh connection of the agent id to the agent store.
+func (a *AgentStore) SSHTTPGetAgent(id string) *SSHTTPAgent {
 	a.sshttpAgentMapMu.Lock()
 	agent := a.sshttpAgentMap[id]
 	a.sshttpAgentMapMu.Unlock()
+
 	return agent
 }
 
-// SshttpCloseAgent closes the ssh connection of the agent id to the agent store
-func (a *AgentStore) SshttpCloseAgent(id string) error {
+// SSHTTPCloseAgent closes the ssh connection of the agent id to the agent store.
+func (a *AgentStore) SSHTTPCloseAgent(id string) error {
 	var err error
 	a.sshttpAgentMapMu.Lock()
 	agent := a.sshttpAgentMap[id]
 	delete(a.sshttpAgentMap, id)
 	a.sshttpAgentMapMu.Unlock()
-	if agent != nil && agent.SshConn != nil {
-		err = errors.Join(agent.SshConn.Close(), agent.Stream.Close())
+	if agent != nil && agent.SSHConn != nil {
+		err = errors.Join(agent.SSHConn.Close(), agent.Stream.Close())
 	}
-	a.SshttpRemoveAgent(id)
+	a.SSHTTPRemoveAgent(id)
+
 	return err
 }
 
-// DumpSSHTTP return the SSHTTP information associated to the agent
-func (a *AgentStore) DumpSSHTTP(id string) types.SSHTTState {
+// DumpSSHTTP return the SSHTTP information associated to the agent.
+func (a *AgentStore) DumpSSHTTP(id string) types.SSHTTPState {
 	a.sshttpAgentMapMu.Lock()
 	agent := a.sshttpAgentMap[id]
 	defer a.sshttpAgentMapMu.Unlock()
 	if agent == nil {
-		return types.SSHTTState{
-			AgentId: id,
+		return types.SSHTTPState{
+			AgentID: id,
 		}
 	}
-	state := types.SSHTTState{
-		AgentId: id,
-		SshConn: types.Conn{
-			LocaleAddr: agent.SshConn.LocalAddr().String(),
-			RemoteAddr: agent.SshConn.RemoteAddr().String(),
+	state := types.SSHTTPState{
+		AgentID: id,
+		SSHConn: types.Conn{
+			LocaleAddr: agent.SSHConn.LocalAddr().String(),
+			RemoteAddr: agent.SSHConn.RemoteAddr().String(),
 		},
 		StreamConn: types.Conn{
 			LocaleAddr: agent.Stream.LocalAddr().String(),
 			RemoteAddr: agent.Stream.RemoteAddr().String(),
 		},
-		StreamId: agent.Stream.ID(),
+		StreamID: agent.Stream.ID(),
 	}
+
 	return state
 }

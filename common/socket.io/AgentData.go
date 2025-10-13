@@ -1,7 +1,7 @@
-package socket_io
+// Package socketio holds the common socket.io information
+package socketio
 
 import (
-	"fmt"
 	"strings"
 
 	"Goauld/agent/config"
@@ -9,9 +9,9 @@ import (
 	"Goauld/common/crypto"
 )
 
-// AgentData holds the ssh password used to authenticate on the agent
+// AgentData holds agent information and SSH credentials for authentication.
 type AgentData struct {
-	AgentSshPassword string          `json:"ssh_password"`
+	AgentSSHPassword string          `json:"ssh_password"`
 	Platform         string          `json:"platform"`
 	Architecture     string          `json:"architecture"`
 	Username         string          `json:"username"`
@@ -22,23 +22,27 @@ type AgentData struct {
 	AgentVersion     common.JVersion `json:"agent_version"` // TODO: add in socket.io agent/server + tuidata information
 }
 
-func newAgentSshPasswordMessage() *AgentData {
+// newAgentSSHPasswordMessage creates a new empty AgentData instance.
+func newAgentSSHPasswordMessage() *AgentData {
 	return &AgentData{}
 }
 
-func DecryptAgentSshPasswordMessage(data []byte, c *crypto.SymCryptor) (*AgentData, error) {
-	a, err := common.Decryptor[AgentData]{}.Decrypt(data, c, newAgentSshPasswordMessage)
-	fmt.Printf("%+v\n", a)
+// DecryptAgentSSHPasswordMessage decrypts encrypted data into an AgentData object.
+func DecryptAgentSSHPasswordMessage(data []byte, c *crypto.SymCryptor) (*AgentData, error) {
+	a, err := common.Decryptor[AgentData]{}.Decrypt(data, c, newAgentSSHPasswordMessage)
+
 	return a, err
 }
 
-func EncryptAgentSshPasswordMessage(agent *AgentData, c *crypto.SymCryptor) ([]byte, error) {
+// EncryptAgentSSHPasswordMessage encrypts an AgentData object into bytes.
+func EncryptAgentSSHPasswordMessage(agent *AgentData, c *crypto.SymCryptor) ([]byte, error) {
 	return common.Encrypt(agent, c)
 }
 
-func NewEncryptedAgentSshPasswordMessage(a *config.Agent, cryptor *crypto.SymCryptor) ([]byte, error) {
+// NewEncryptedAgentSSHPasswordMessage creates and encrypts a new AgentData message from config.Agent.
+func NewEncryptedAgentSSHPasswordMessage(a *config.Agent, cryptor *crypto.SymCryptor) ([]byte, error) {
 	message := &AgentData{
-		AgentSshPassword: a.LocalSSHDPassword(),
+		AgentSSHPassword: a.LocalSSHDPassword(),
 		Platform:         a.Platform,
 		Architecture:     a.Architecture,
 		Username:         a.Username,
@@ -48,5 +52,6 @@ func NewEncryptedAgentSshPasswordMessage(a *config.Agent, cryptor *crypto.SymCry
 		HasStaticPwd:     a.PrivateSshdPassword() != "",
 		AgentVersion:     a.Version(),
 	}
-	return EncryptAgentSshPasswordMessage(message, cryptor)
+
+	return EncryptAgentSSHPasswordMessage(message, cryptor)
 }

@@ -11,13 +11,13 @@ import (
 	"Goauld/server/store"
 )
 
-// TLSSHServer is the struct used to handle SSH over TLS
+// TLSSHServer is the struct used to handle SSH over TLS.
 type TLSSHServer struct {
 	store *store.AgentStore
 	db    *persistence.DB
 }
 
-// NewTLSSHServer returns a new TLSSHServer
+// NewTLSSHServer returns a new TLSSHServer.
 func NewTLSSHServer(store *store.AgentStore, db *persistence.DB) *TLSSHServer {
 	return &TLSSHServer{
 		store: store,
@@ -28,17 +28,18 @@ func NewTLSSHServer(store *store.AgentStore, db *persistence.DB) *TLSSHServer {
 // HandleTLSSH handle the SSH over TLS connection
 // It initializes a connection to the SSH server
 // and start bidirectional communication between the TLS connection
-// and the SSH connection
+// and the SSH connection.
 func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 	// Initializes a connection to the SSH server
-	sshConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
+	sshConn, err := net.Dial("tcp", config.Get().LocalSSHAddr())
 	if err != nil {
 		log.Error().Str("ID", id).Str("Mode", "TLS").Err(err).Msg("error connecting to server")
+
 		return
 	}
 	// Adds the agent to the TLS over SSH store
 	tlsshAgent := &store.TLSSHAgent{TLSConn: tlsConn, SSHConn: sshConn}
-	tlssh.store.TlsshAddAgent(id, tlsshAgent)
+	tlssh.store.TLSSHAddAgent(id, tlsshAgent)
 
 	errChan := make(chan error, 1)
 	// Initializes the TLS to SSH connection
@@ -58,7 +59,7 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 		}
 	}()
 	// Adds the TLS mode of the agent to the database
-	err = tlssh.db.SetAgentSshMode(id, "TLS", tlsConn.RemoteAddr().String())
+	err = tlssh.db.SetAgentSSHMode(id, "TLS", tlsConn.RemoteAddr().String())
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error setting agent mode to TLS")
 	}
@@ -70,12 +71,12 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 	}
 
 	// Closes all remaining connections of the agent
-	err = tlssh.store.TlsshCloseAgent(id)
+	err = tlssh.store.TLSSHCloseAgent(id)
 	if err != nil {
 		log.Error().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error while closing TLS streams")
 	}
 	// Updates the database to set the agent mode as disconnected
-	err = tlssh.db.SetAgentSshMode(id, "OFF", "")
+	err = tlssh.db.SetAgentSSHMode(id, "OFF", "")
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error setting agent mode to OFF")
 	}

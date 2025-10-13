@@ -13,13 +13,13 @@ import (
 	"Goauld/server/store"
 )
 
-// QUICServer is the struct used to handle SSH over QUIC
+// QUICServer is the struct used to handle SSH over QUIC.
 type QUICServer struct {
 	store *store.AgentStore
 	db    *persistence.DB
 }
 
-// NewQUICServer returns a new QUICSHServer
+// NewQUICServer returns a new QUICSHServer.
 func NewQUICServer(store *store.AgentStore, db *persistence.DB) *QUICServer {
 	return &QUICServer{
 		store: store,
@@ -30,12 +30,13 @@ func NewQUICServer(store *store.AgentStore, db *persistence.DB) *QUICServer {
 // HandleQuic handle the SSH over QUIC connection
 // It initializes a connection to the SSH server
 // and start bidirectional communication between the QUIC connection
-// and the SSH connection
+// and the SSH connection.
 func (qssh *QUICServer) HandleQuic(quicConn *quic.Stream, id string, remote string) {
 	// Initializes a connection to the SSH server
-	sshConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
+	sshConn, err := net.Dial("tcp", config.Get().LocalSSHAddr())
 	if err != nil {
 		log.Error().Str("ID", id).Str("Mode", "QUIC").Err(err).Msg("error connecting to server")
+
 		return
 	}
 	// Adds the agent to the QUIC over SSH store
@@ -60,7 +61,7 @@ func (qssh *QUICServer) HandleQuic(quicConn *quic.Stream, id string, remote stri
 		}
 	}()
 	// Adds the QUIC mode of the agent to the database
-	err = qssh.db.SetAgentSshMode(id, "QUIC", remote)
+	err = qssh.db.SetAgentSSHMode(id, "QUIC", remote)
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error setting agent mode to QUIC")
 	}
@@ -72,12 +73,12 @@ func (qssh *QUICServer) HandleQuic(quicConn *quic.Stream, id string, remote stri
 	}
 
 	// Closes all remaining connections of the agent
-	err = qssh.store.TlsshCloseAgent(id)
+	err = qssh.store.TLSSHCloseAgent(id)
 	if err != nil {
 		log.Error().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error while closing QUIC streams")
 	}
 	// Updates the database to set the agent mode as disconnected
-	err = qssh.db.SetAgentSshMode(id, "OFF", "")
+	err = qssh.db.SetAgentSSHMode(id, "OFF", "")
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error setting agent mode to OFF")
 	}

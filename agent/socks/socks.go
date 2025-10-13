@@ -1,6 +1,8 @@
+// Package socks holds the socks server
 package socks
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	stdlog "log"
@@ -14,6 +16,9 @@ import (
 	"github.com/things-go/go-socks5"
 )
 
+// SocksServer holds the socks server
+//
+//nolint:revive
 type SocksServer struct {
 	socksServer *socks5.Server
 	listener    net.Listener
@@ -41,10 +46,11 @@ func NewSocks() (*SocksServer, error) {
 	socksServer := &SocksServer{
 		socksServer: s5,
 	}
+
 	return socksServer, nil
 }
 
-// Serve uses the provided listener to listen and serve the Socks proxy
+// Serve uses the provided listener to listen and serve the Socks proxy.
 func (s *SocksServer) Serve(l net.Listener) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -54,19 +60,21 @@ func (s *SocksServer) Serve(l net.Listener) (err error) {
 	s.listener = l
 
 	err = s.socksServer.Serve(l)
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		return nil
 	}
+
 	return err
 }
 
-// Close closes the socks server
+// Close closes the socks server.
 func (s *SocksServer) Close() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
 		}
 	}()
-	log.Warn().Msgf("Shutting done the socks server")
+	log.Warn().Msgf("Shutting down the socks server")
+
 	return s.listener.Close()
 }

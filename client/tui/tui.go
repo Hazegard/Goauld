@@ -20,12 +20,18 @@ import (
 )
 
 const (
-	action_delete = "ctrl+d"
-	action_kill   = "ctrl+k"
-	action_reset  = "ctrl+r"
-	action_vscode = "ctrl+e"
-	action_enter  = "enter"
-	action_plus   = "+"
+	// actionDelete delete keybind.
+	actionDelete = "ctrl+d"
+	// actionKill kill keybind.
+	actionKill = "ctrl+k"
+	// actionReset reset keybind.
+	actionReset = "ctrl+r"
+	// actionVSCode vscode keybind.
+	actionVSCode = "ctrl+e"
+	// actionEnter enter keybind.
+	actionEnter = "enter"
+	// actionPlus plus keybind.
+	actionPlus = "+"
 )
 
 var (
@@ -35,25 +41,25 @@ var (
 	textHelp    = lipgloss.NewStyle().Foreground(lipgloss.Color("242"))
 )
 
-type TickMessage time.Time
+type tickMessage time.Time
 
-type CmdResponse struct {
+type cmdResponse struct {
 	Success bool
 	Message string
 	Action  string
 }
 
-type UpdateMessage struct {
+type updateMessage struct {
 	agents       []types.Agent
 	ErrorMessage string
 }
 
-type PromptPassword struct{}
+type promptPassword struct{}
 
 var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
-// NewTui returns the Model holding the TUI
+// NewTui returns the Model holding the TUI.
 func NewTui(api *api.API, agentPwd map[string]string) Model {
 	ti := textinput.New()
 	ti.Width = 100
@@ -62,6 +68,7 @@ func NewTui(api *api.API, agentPwd map[string]string) Model {
 	if err != nil {
 		log.Error().Err(err).Str("Mode", "TUI").Msg("unable to fetch agents")
 		os.Exit(1)
+
 		return Model{}
 	}
 	m := Model{
@@ -73,6 +80,7 @@ func NewTui(api *api.API, agentPwd map[string]string) Model {
 	}
 	if len(m.agents) == 0 {
 		m.agentInfoTable = m.GenerateInfoTable(types.Agent{})
+
 		return m
 	}
 	m.agentInfoTable = m.GenerateInfoTable(agents[0])
@@ -80,13 +88,16 @@ func NewTui(api *api.API, agentPwd map[string]string) Model {
 	return m
 }
 
+// Run run the Model.
 func (m *Model) Run() (string, string, error) {
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		return "", "", err
 	}
+
 	return m.agent, m.execMode, nil
 }
 
+// Model holds the TUI model.
 type Model struct {
 	api             *api.API
 	agentsTable     table.Model
@@ -104,9 +115,10 @@ type Model struct {
 	execMode        string
 }
 
+// Init initialize the TUI model.
 func (m *Model) Init() tea.Cmd { return m.doTick() }
 
-// Update follow bubble tea mechanism
+// Update follow bubble tea mechanism.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var agentsTableCmd tea.Cmd
 	var agentInfoCmd tea.Cmd
@@ -146,25 +158,27 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.promptedAction = ""
 				m.ti.Placeholder = ""
 				m.askingPwd = false
+
 				return m, nil
-			case action_enter:
+			case actionEnter:
 				m.password = m.ti.Value()
 				m.askingPwd = false
 				switch m.promptedAction {
-				case action_kill:
+				case actionKill:
 					return m, m.Kill(selectedAgent, true, false, m.password)
-				case action_reset:
+				case actionReset:
 					return m, m.Kill(selectedAgent, false, false, m.password)
-				case action_delete:
+				case actionDelete:
 					return m, m.Kill(selectedAgent, true, true, m.password)
 				}
-
 			}
 		default:
 			m.ti, cmd = m.ti.Update(msg)
+
 			return m, cmd
 		}
 		m.ti, cmd = m.ti.Update(msg)
+
 		return m, cmd
 	}
 
@@ -172,28 +186,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		// ctrl+k: shortcut to kill the agent
-		case action_kill:
+		case actionKill:
 			// if the selected agent is not empty
 			switch m.confirmAction {
 			case "":
-				m.confirmAction = action_kill
-				text = fmt.Sprintf("Confirm killing %s? (%s to confirm)", selectedAgent.Name, action_kill)
+				m.confirmAction = actionKill
+				text = fmt.Sprintf("Confirm killing %s? (%s to confirm)", selectedAgent.Name, actionKill)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
-			case action_kill:
-				if selectedAgent.Id != "" {
+			case actionKill:
+				if selectedAgent.ID != "" {
 					m.confirmAction = ""
 					// if selectedAgent.Connected {
-					text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+					text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.ID)
 					m.statusText.TextStyle = textError
 					if selectedAgent.HasStaticPassword {
 						pwd, ok := m._agentPassword[selectedAgent.Name]
 						if ok {
 							batch = append(batch, m.Kill(selectedAgent, true, false, pwd))
 						} else {
-							m.promptedAction = action_kill
+							m.promptedAction = actionKill
 							batch = append(batch, func() tea.Msg {
-								return PromptPassword{}
+								return promptPassword{}
 							})
 						}
 					} else {
@@ -207,28 +221,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.SetValue("")
 			}
 			doUpdateStatus = true
-		case action_reset:
+		case actionReset:
 			// if the selected agent is not empty
 			switch m.confirmAction {
 			case "":
-				m.confirmAction = action_reset
-				text = fmt.Sprintf("Confirm reset %s? (%s to confirm)", selectedAgent.Name, action_reset)
+				m.confirmAction = actionReset
+				text = fmt.Sprintf("Confirm reset %s? (%s to confirm)", selectedAgent.Name, actionReset)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
-			case action_reset:
-				if selectedAgent.Id != "" {
-					m.confirmAction = action_reset
+			case actionReset:
+				if selectedAgent.ID != "" {
+					m.confirmAction = actionReset
 					// if selectedAgent.Connected {
-					text = fmt.Sprintf("Resetting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+					text = fmt.Sprintf("Resetting %s (%s)...", selectedAgent.Name, selectedAgent.ID)
 					m.statusText.TextStyle = textError
 					if selectedAgent.HasStaticPassword {
 						pwd, ok := m._agentPassword[selectedAgent.Name]
 						if ok {
 							batch = append(batch, m.Kill(selectedAgent, false, false, pwd))
 						} else {
-							m.promptedAction = action_reset
+							m.promptedAction = actionReset
 							batch = append(batch, func() tea.Msg {
-								return PromptPassword{}
+								return promptPassword{}
 							})
 						}
 					} else {
@@ -243,27 +257,27 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.SetValue("")
 			}
 			doUpdateStatus = true
-		case action_delete:
+		case actionDelete:
 			// if the selected agent is not empty
 			switch m.confirmAction {
 			case "":
-				m.confirmAction = action_delete
-				text = fmt.Sprintf("Confirm deleting %s? (%s to confirm)", selectedAgent.Name, action_delete)
+				m.confirmAction = actionDelete
+				text = fmt.Sprintf("Confirm deleting %s? (%s to confirm)", selectedAgent.Name, actionDelete)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
-			case action_delete:
-				if selectedAgent.Id != "" {
-					m.confirmAction = action_delete
-					text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+			case actionDelete:
+				if selectedAgent.ID != "" {
+					m.confirmAction = actionDelete
+					text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.ID)
 					m.statusText.TextStyle = textError
 					if selectedAgent.HasStaticPassword && selectedAgent.Connected {
 						pwd, ok := m._agentPassword[selectedAgent.Name]
 						if ok {
 							batch = append(batch, m.Kill(selectedAgent, true, true, pwd))
 						} else {
-							m.promptedAction = action_delete
+							m.promptedAction = actionDelete
 							batch = append(batch, func() tea.Msg {
-								return PromptPassword{}
+								return promptPassword{}
 							})
 						}
 					} else {
@@ -278,41 +292,42 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusText.SetValue("")
 			}
 			doUpdateStatus = true
-		case action_enter:
+		case actionEnter:
 			if m.askingPwd {
 				m.password = m.ti.Value()
 				m.askingPwd = false
 				switch m.promptedAction {
-				case action_kill:
+				case actionKill:
 					batch = append(batch, m.Kill(selectedAgent, true, false, m.password))
-				case action_reset:
+				case actionReset:
 					batch = append(batch, m.Kill(selectedAgent, false, false, m.password))
-				case action_delete:
+				case actionDelete:
 					batch = append(batch, m.Kill(selectedAgent, true, true, m.password))
 				}
-
 			} else {
 				m.execMode = "ssh"
 				m.agent = selectedAgent.Name
+
 				return m, tea.Quit
 			}
 
-		case action_vscode:
+		case actionVSCode:
 			// if the selected agent is not empty
 			switch m.confirmAction {
 			case "":
-				m.confirmAction = action_vscode
-				text = fmt.Sprintf("Confirm launching remote VSCode on %s? (%s to confirm)", selectedAgent.Name, action_vscode)
+				m.confirmAction = actionVSCode
+				text = fmt.Sprintf("Confirm launching remote VSCode on %s? (%s to confirm)", selectedAgent.Name, actionVSCode)
 				m.statusText.TextStyle = textWarning
 				m.statusText.SetValue(text)
-			case action_vscode:
-				if selectedAgent.Id != "" {
-					m.confirmAction = action_vscode
-					text = fmt.Sprintf("Starting remote VSCode on %s (%s)...", selectedAgent.Name, selectedAgent.Id)
+			case actionVSCode:
+				if selectedAgent.ID != "" {
+					m.confirmAction = actionVSCode
+					text = fmt.Sprintf("Starting remote VSCode on %s (%s)...", selectedAgent.Name, selectedAgent.ID)
 					m.statusText.TextStyle = textOk
 					m.execMode = "vscode"
 					m.agent = selectedAgent.Name
 					m.statusText.SetValue(text)
+
 					return m, tea.Quit
 				}
 				m.confirmAction = ""
@@ -324,7 +339,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			batch = append(batch, m.doUpdate(m.agents))
 			// return m, m.UpdateAgents(m.agents)
-		case action_plus:
+		case actionPlus:
 			m.extendedDetails = !m.extendedDetails
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -334,7 +349,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			doUpdateStatus = true
 		}
 	// If the message is a response of an API call
-	case CmdResponse:
+	case cmdResponse:
 		switch msg.Action {
 		// Handle kill api call
 		case "kill", "delete":
@@ -348,7 +363,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statusText.SetValue(text)
 		}
 	// Handle updates agent list
-	case UpdateMessage:
+	case updateMessage:
 		rows := AgentsToRow(msg.agents)
 		m.agents = msg.agents
 		m.agentsTable = m.agentsTable.WithRows(rows)
@@ -357,9 +372,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statusText.SetValue(msg.ErrorMessage)
 			m.statusText.TextStyle = textWarning
 		}
-	case TickMessage:
+	case tickMessage:
 		batch = append(batch, m.doUpdate(m.agents), m.doTick())
-	case PromptPassword:
+	case promptPassword:
 		ti := textinput.New()
 		ti.Prompt = fmt.Sprintf("(%s) Password: ", selectedAgent.Name)
 		ti.Placeholder = ""
@@ -367,6 +382,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		ti.PromptStyle = textWarning
 		m.ti = ti
 		m.askingPwd = true
+
 		return m, m.ti.Focus()
 	}
 
@@ -386,60 +402,61 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		batch = append(batch, agentsTableCmd)
 	}
 
-	if selectedAgent.Id != "" {
+	if selectedAgent.ID != "" {
 		m.agentInfoTable = m.GenerateInfoTable(selectedAgent)
 	}
 	var seq tea.Cmd
 	if batch != nil {
 		seq = tea.Sequence(batch...)
 	}
+
 	return m, seq
 }
 
 // UpdateAgents return a tea.Cmd used to update the agent list
 // If the update fails, it returns the previous list to keep
-// the table populated
+// the table populated.
 func (m *Model) UpdateAgents(prevAgents []types.Agent) tea.Cmd {
 	return func() tea.Msg {
 		return m.doUpdate(prevAgents)
 	}
 }
 
-// doUpdate performs the update mechanism
+// doUpdate performs the update mechanism.
 func (m *Model) doUpdate(prevAgents []types.Agent) func() tea.Msg {
 	return func() tea.Msg {
 		agents, err := m.api.GetAgents()
 		if err != nil {
-			return UpdateMessage{
+			return updateMessage{
 				agents:       prevAgents,
 				ErrorMessage: err.Error(),
 			}
 		}
-		return UpdateMessage{
+
+		return updateMessage{
 			agents:       agents,
 			ErrorMessage: "",
 		}
 	}
 }
 
-func (m *Model) Help() string {
+func (m *Model) help() string {
 	return textHelp.SetString(
 		"   [ctrl+r]:Reset agent    [ctrl+d]:Delete agent    [↑]:Up      [←]:Previous    [r]:Refresh view    [q]/[ctrl+c]:Quit" +
 			"\n   [ctrl+k]:Kill agent     [Enter]: SSH agent       [↓]:Down    [→]:Next        [ctrl+e] VsCode     [+]Details").String()
-
 }
 
-// doTick handle the periodic update
+// doTick handle the periodic update.
 func (m *Model) doTick() tea.Cmd {
 	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
-		return TickMessage(t)
+		return tickMessage(t)
 	})
 }
 
-// GenerateInfoTable populate the info table to show the details of the currently selected agent
+// GenerateInfoTable populate the info table to show the details of the currently selected agent.
 func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 	rows := []teatable.Row{
-		{"Id", agent.Id},
+		{"ID", agent.ID},
 		{"Username", agent.Username},
 		{"Hostname", agent.Hostname},
 		{"Path", agent.Path},
@@ -454,10 +471,10 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		details := []teatable.Row{
 			{"Last Updated", timeAgo(agent.LastUpdated)},
 			{"Last Ping", timeAgo(agent.LastPing)},
-			{"Ssh Mode", agent.SshMode},
+			{"SSH Mode", agent.SSHMode},
 			{"SSHD Port", agent.GetSSHPort()},
 			{"Socks Port", agent.GetSocksPort()},
-			{"HTTP Port", agent.GetHttpPort()},
+			{"HTTP Port", agent.GetHTTPPort()},
 			{"Other Port", agent.GetOtherPort()},
 		}
 		rows = append(rows, details...)
@@ -467,7 +484,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 	// Compute the longest field that will be shown on the table
 	length := 0
 	lines := []string{
-		agent.Id,
+		agent.ID,
 		agent.Version.String(),
 		agent.Platform,
 		agent.Architecture,
@@ -478,12 +495,12 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		timeAgo(agent.LastPing),
 		agent.IPs,
 		agent.Path,
-		agent.SshMode,
+		agent.SSHMode,
 		agent.GetSSHPort(),
 		agent.GetSocksPort(),
-		agent.GetHttpPort(),
+		agent.GetHTTPPort(),
 		agent.GetOtherPort(),
-		agent.SshPasswd,
+		agent.SSHPasswd,
 	}
 	for _, v := range lines {
 		length = max(length, len(v))
@@ -506,18 +523,21 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 	)
 
 	t.SetStyles(s)
+
 	return t
 }
 
+// View return a string to print the model to the terminal.
 func (m *Model) View() string {
-	res := baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.Help() + "\n"
+	res := baseStyle.Render(m.statusText.View()) + "\n" + baseStyle.Render(m.agentInfoTable.View()) + "\n" + baseStyle.Render(m.agentsTable.View()) + "\n" + m.help() + "\n"
 	if m.askingPwd {
 		res += m.ti.View()
 	}
+
 	return res
 }
 
-// centerString adds left padding to center the string in the column given the column length
+// centerString adds left padding to center the string in the column given the column length.
 func centerString(str string, length int) string {
 	// If the string is already longer than or equal to the required length, return it as is.
 	if len(str) >= length {
@@ -527,18 +547,18 @@ func centerString(str string, length int) string {
 	// Calculate how many spaces need to be added to the left and right.
 	totalPadding := length - len(str)
 	leftPadding := totalPadding / 2
-	//rightPadding := totalPadding - leftPadding
+	// rightPadding := totalPadding - leftPadding
 
 	// Create the padded string.
 	return strings.Repeat(" ", leftPadding) + str
 }
 
-// NewCenterColumn return a column with its title centered
+// NewCenterColumn return a column with its title centered.
 func NewCenterColumn(key string, title string, width int) table.Column {
 	return table.NewColumn(key, centerString(title, width), width)
 }
 
-// GenerateAgentTable initialize the agent table
+// GenerateAgentTable initialize the agent table.
 func GenerateAgentTable() table.Model {
 	columns := []table.Column{
 		NewCenterColumn("N", "N", 3),
@@ -556,6 +576,7 @@ func GenerateAgentTable() table.Model {
 		WithRowStyleFunc(func(input table.RowStyleFuncInput) lipgloss.Style {
 			row := input.Row.Data
 			s := input.Row.Style
+			//nolint:forcetypeassert
 			mode := row["Mode"].(string)
 			mode = strings.TrimSpace(mode)
 			if mode == "OFF" || mode == "" {
@@ -564,6 +585,7 @@ func GenerateAgentTable() table.Model {
 			if input.IsHighlighted {
 				s = s.Background(lipgloss.Color("240"))
 			}
+
 			return s
 		}).
 		WithPageSize(20)
@@ -571,16 +593,17 @@ func GenerateAgentTable() table.Model {
 	return t
 }
 
-// GetAgents calls the API and returns the slice of the agents
+// GetAgents calls the API and returns the slice of the agents.
 func (m *Model) GetAgents() []table.Row {
 	agents, err := m.api.GetAgents()
 	if err != nil {
 		panic(err)
 	}
+
 	return AgentsToRow(agents)
 }
 
-// AgentsToRow converts a slice of agents to a slice of rows to be used in the table component
+// AgentsToRow converts a slice of agents to a slice of rows to be used in the table component.
 func AgentsToRow(agents []types.Agent) []table.Row {
 	var rows []table.Row
 	sort.Slice(agents, func(i, j int) bool {
@@ -589,15 +612,15 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 	for i, agent := range agents {
 		row := table.NewRow(
 			table.RowData{
-				"Id":           agent.Id,
+				"ID":           agent.ID,
 				"N":            centerString(strconv.Itoa(i+1), 3),
 				"Name":         centerString(agent.Name, 30),
 				"Last Updated": centerString(timeAgo(agent.LastUpdated), 14),
 				"Last Ping":    centerString(timeAgo(agent.LastPing), 13),
-				"Mode":         centerString(agent.SshMode, 10),
+				"Mode":         centerString(agent.SSHMode, 10),
 				"SSHD Port":    centerString(agent.GetSSHPort(), 13),
 				"Socks Port":   centerString(agent.GetSocksPort(), 13),
-				"HTTP Port":    centerString(agent.GetHttpPort(), 14),
+				"HTTP Port":    centerString(agent.GetHTTPPort(), 14),
 				"Other Port":   agent.GetOtherPort(),
 			})
 
@@ -607,7 +630,7 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 	return rows
 }
 
-// Kill performs a call to the API to kill the selected agent
+// Kill performs a call to the API to kill the selected agent.
 func (m *Model) Kill(agent types.Agent, doExit bool, doDelete bool, password string) tea.Cmd {
 	killing := "resetting"
 	reset := "Reset"
@@ -615,43 +638,46 @@ func (m *Model) Kill(agent types.Agent, doExit bool, doDelete bool, password str
 		killing = "killing"
 		reset = "Killed"
 	}
+
 	return func() tea.Msg {
-		err := m.api.KillAgent(agent.Id, doExit, doDelete, password)
+		err := m.api.KillAgent(agent.ID, doExit, doDelete, password)
 		if err != nil {
-			return CmdResponse{
+			return cmdResponse{
 				Success: false,
-				Message: fmt.Sprintf("Error %s %s (%s): %s", killing, agent.Name, agent.Id, err),
+				Message: fmt.Sprintf("Error %s %s (%s): %s", killing, agent.Name, agent.ID, err),
 				Action:  "kill",
 			}
 		}
-		return CmdResponse{
+
+		return cmdResponse{
 			Success: false,
-			Message: fmt.Sprintf("%s %s (%s)", reset, agent.Name, agent.Id),
+			Message: fmt.Sprintf("%s %s (%s)", reset, agent.Name, agent.ID),
 			Action:  "kill",
 		}
 	}
 }
 
-// Delete performs a call to the API to delete the selected agent
+// Delete performs a call to the API to delete the selected agent.
 func (m *Model) Delete(agent types.Agent) tea.Cmd {
 	return func() tea.Msg {
-		err := m.api.DeleteAgent(agent.Id)
+		err := m.api.DeleteAgent(agent.ID)
 		if err != nil {
-			return CmdResponse{
+			return cmdResponse{
 				Success: false,
-				Message: fmt.Sprintf("Error deleting %s (%s): %s", agent.Name, agent.Id, err),
+				Message: fmt.Sprintf("Error deleting %s (%s): %s", agent.Name, agent.ID, err),
 				Action:  "delete",
 			}
 		}
-		return CmdResponse{
+
+		return cmdResponse{
 			Success: false,
-			Message: fmt.Sprintf("Deleted %s (%s)", agent.Name, agent.Id),
+			Message: fmt.Sprintf("Deleted %s (%s)", agent.Name, agent.ID),
 			Action:  "delete",
 		}
 	}
 }
 
-// timeAgo converts a date to XXX times ago
+// timeAgo converts a date to XXX times ago.
 func timeAgo(t time.Time) string {
 	now := time.Now()
 	duration := now.Sub(t)

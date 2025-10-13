@@ -3,7 +3,7 @@
 package shell
 
 import (
-	"Goauld/agent/sshd/shell/shim_embed"
+	"Goauld/agent/sshd/shell/shimembed"
 	"Goauld/common/log"
 	"fmt"
 )
@@ -31,7 +31,7 @@ func UpdateShell(shell Command, rawCommand string) (Command, func() error, error
 		shell.Args = []string{SHELL_PARAM, rawCommand}
 		return shell, func() error { return nil }, nil
 	} else {
-		exe, cleanup, err := shim_embed.DropShimSSHD()
+		exe, cleanup, err := shimembed.DropShimSSHD()
 
 		if err != nil {
 			return Command{}, cleanup, fmt.Errorf("error while dropping sshd shim: %s", err)

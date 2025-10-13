@@ -1,17 +1,19 @@
+// Package vscode holds the agent side vscode functions
 package vscode
 
 import (
 	"Goauld/common/utils"
 	"Goauld/common/vscode"
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 )
 
+// Cleanup tries to clean the vscode directory on the agent exit.
 func Cleanup() error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("unable to get current working directory")
+		return errors.New("unable to get current working directory")
 	}
 
 	targetPath := filepath.Join(cwd, vscode.VSCode)
@@ -19,5 +21,6 @@ func Cleanup() error {
 	if utils.IsDir(targetPath) {
 		return os.RemoveAll(targetPath)
 	}
+
 	return nil
 }

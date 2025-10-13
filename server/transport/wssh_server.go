@@ -16,7 +16,7 @@ import (
 	"github.com/coder/websocket"
 )
 
-// NewWSshHandler returns a new WSshHandler
+// NewWSshHandler returns a new WSshHandler.
 func NewWSshHandler(agentStore *store.AgentStore, db *persistence.DB) *WSshHandler {
 	return &WSshHandler{
 		agentStore: agentStore,
@@ -24,27 +24,29 @@ func NewWSshHandler(agentStore *store.AgentStore, db *persistence.DB) *WSshHandl
 	}
 }
 
-// WSshHandler handles the SSH over Websockets connections
+// WSshHandler handles the SSH over Websockets connections.
 type WSshHandler struct {
 	agentStore *store.AgentStore
 	db         *persistence.DB
 }
 
-// ServeHTTP handle the SSH over Websockets connections
+// ServeHTTP handle the SSH over Websockets connections.
 func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	id := r.PathValue("agentId")
 
-	r = net2.Http10ToHttp11FakeUpgrader(r)
+	r = net2.HTTP10ToHTTP11FakeUpgrader(r)
 
 	// Handle the websocket connection
 	wsConn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+
 		InsecureSkipVerify: true,
 		OriginPatterns:     []string{"*"},
 	})
 	if err != nil {
 		log.Error().Err(err).Str("ID", id).Str("Mode", "WSSH").Msg("error initiating websocket connection")
+
 		return
 	}
 
@@ -54,11 +56,12 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Warn().Err(err).Str("ID", id).Str("Mode", "WSSH").Msg("error closing connection")
 		}
 	}(wsConn)
-	log.Info().Str("ID", id).Err(err).Str("Mode", "WS").Msgf("connecting to agent SSH server %s", config.Get().LocalSShAddr())
+	log.Info().Str("ID", id).Err(err).Str("Mode", "WS").Msgf("connecting to agent SSH server %s", config.Get().LocalSSHAddr())
 	// Initializes the connection to the SSH server
-	targetConn, err := net.Dial("tcp", config.Get().LocalSShAddr())
+	targetConn, err := net.Dial("tcp", config.Get().LocalSSHAddr())
 	if err != nil {
-		log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msgf("failed to connect to %s", config.Get().LocalSShAddr())
+		log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msgf("failed to connect to %s", config.Get().LocalSSHAddr())
+
 		return
 	}
 	defer func(targetConn net.Conn) {
@@ -78,7 +81,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}(conn)
 
 	// Adds the agent to the websocket store
-	wssh.agentStore.WsshAddAgent(id, conn, targetConn)
+	wssh.agentStore.WSSHAddAgent(id, conn, targetConn)
 	errChan := make(chan error, 1)
 
 	// Initialize the Websocket -> SSH connection
@@ -99,7 +102,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	// Updates the database to add the Websocket over SSH as the connection mode
-	err = wssh.db.SetAgentSshMode(id, "WS", r.RemoteAddr)
+	err = wssh.db.SetAgentSSHMode(id, "WS", r.RemoteAddr)
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "WS").Msg("error setting agent mode to WS")
 	}
@@ -112,13 +115,13 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Closes all remaining connections of the agent
-	err = wssh.agentStore.WsshCloseAgent(id)
+	err = wssh.agentStore.WSSHCloseAgent(id)
 	if err != nil {
 		log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("error while closing websocket streams")
 	}
 
 	// Updates the database to set the agent mode as disconnected
-	err = wssh.db.SetAgentSshMode(id, "OFF", "")
+	err = wssh.db.SetAgentSSHMode(id, "OFF", "")
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "WS").Msg("error setting agent mode to [OFF]")
 	}

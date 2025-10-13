@@ -12,26 +12,31 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
+// StreamConn holds the QUIC information of a SSH over QUIC connection.
 type StreamConn struct {
 	*quic.Stream
+
 	lAddr net.Addr
 	rAddr net.Addr
 }
 
-func (s *StreamConn) LocalAddr() net.Addr  { return s.lAddr }
+// LocalAddr returns the local addr.
+func (s *StreamConn) LocalAddr() net.Addr { return s.lAddr }
+
+// RemoteAddr returns the remote addr.
 func (s *StreamConn) RemoteAddr() net.Addr { return s.rAddr }
 
 // GetQuicConn dials a QUIC connection and opens a stream, all respecting ctx.
 func GetQuicConn(ctx context.Context) (*StreamConn, error) {
 	// 1) Prepare TLS and QUIC configs
-	tlsConf := proxy.NewTlsConfig()
+	tlsConf := proxy.NewTLSConfig()
 	tlsConf.NextProtos = []string{"quic"}
 	tlsConf.MinVersion = tls.VersionTLS13
 
 	quicConf := &quic.Config{}
 
 	// 2) Dial QUIC with context
-	conn, err := quic.DialAddr(ctx, config.Get().QuicUrl(), tlsConf, quicConf)
+	conn, err := quic.DialAddr(ctx, config.Get().QuicURL(), tlsConf, quicConf)
 	if err != nil {
 		return nil, fmt.Errorf("error dialing QUIC address: %w", err)
 	}
@@ -41,6 +46,7 @@ func GetQuicConn(ctx context.Context) (*StreamConn, error) {
 	if err != nil {
 		// Clean up the QUIC connection on failure
 		_ = conn.CloseWithError(0, "stream open failed")
+
 		return nil, fmt.Errorf("error opening QUIC stream: %w", err)
 	}
 
@@ -49,9 +55,10 @@ func GetQuicConn(ctx context.Context) (*StreamConn, error) {
 		// quic-go streams implement SetWriteDeadline
 		_ = stream.SetWriteDeadline(dl)
 	}
-	header := []byte(config.Get().Id)
+	header := []byte(config.Get().ID)
 	if _, err := stream.Write(header); err != nil {
 		_ = conn.CloseWithError(0, "header write failed")
+
 		return nil, err
 	}
 	// Clear deadline so subsequent I/O isn’t affected
@@ -63,5 +70,6 @@ func GetQuicConn(ctx context.Context) (*StreamConn, error) {
 		lAddr:  conn.LocalAddr(),
 		rAddr:  conn.RemoteAddr(),
 	}
+
 	return sc, nil
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+//nolint:unparam
 func getCaffeinateProcesses() ([]int, error) {
 	if runtime.GOOS != "darwin" {
 		return nil, nil
@@ -20,6 +21,7 @@ func getCaffeinateProcesses() ([]int, error) {
 	output, err := cmd.Output()
 	if err != nil {
 		// No processes found is not an error for our purposes
+		//nolint:nilerr
 		return nil, nil
 	}
 
@@ -33,9 +35,11 @@ func getCaffeinateProcesses() ([]int, error) {
 			pids = append(pids, pid)
 		}
 	}
+
 	return pids, nil
 }
 
+//nolint:unparam
 func killCaffeinate() error {
 	if runtime.GOOS != "darwin" {
 		return nil
@@ -46,6 +50,7 @@ func killCaffeinate() error {
 	if output, err := termCmd.CombinedOutput(); err != nil {
 		// Ignore permission errors, as we can't kill processes we don't own
 		if !strings.Contains(string(output), "Operation not permitted") {
+			//nolint:forbidigo
 			fmt.Printf("pkill output: %s, error: %v\n", string(output), err)
 		}
 	}
@@ -58,11 +63,13 @@ func killCaffeinate() error {
 		if output, err := killCmd.CombinedOutput(); err != nil {
 			// Ignore permission errors
 			if !strings.Contains(string(output), "Operation not permitted") {
+				//nolint:forbidigo
 				fmt.Printf("pkill -9 output: %s, error: %v\n", string(output), err)
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+
 	return nil
 }
 

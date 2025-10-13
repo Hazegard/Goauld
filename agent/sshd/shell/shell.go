@@ -1,3 +1,4 @@
+// Package shell holds the agent shell
 package shell
 
 import (
@@ -18,15 +19,16 @@ import (
 // It enables interaction with a shell (e.g., bash) through the session.
 // If the session is not interactive, it directly executes the command, without
 // wrapping it in a pty.
-func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Context) (err error) {
+func GivePty(globalCtx context.Context, s ssh.Session, c []string, rawCommand string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error().Err(err).Msg("panic recovered in GivePty")
+			//nolint:forcetypeassert
 			err = r.(error)
 		}
 	}()
 
-	log.Debug().Msgf("Receving shell command [%s] (User: %s, RemoteAddr: %s)", strings.Join(c, " "), s.User(), s.RemoteAddr())
+	log.Debug().Msgf("Receiving shell command [%s] (User: %s, RemoteAddr: %s)", strings.Join(c, " "), s.User(), s.RemoteAddr())
 
 	// Get pty information
 	ptyReq, winCh, isPty := s.Pty()
@@ -65,13 +67,13 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 		// Get new pty
 		pseudo, err := pty.New()
 		if err != nil {
-			return fmt.Errorf("error while opening pty: %s", err)
+			return fmt.Errorf("error while opening pty: %w", err)
 		}
 
 		// Resize the pty to the client window
 		w, h := ptyReq.Window.Width, ptyReq.Window.Height
 		if err := pseudo.Resize(w, h); err != nil {
-			return fmt.Errorf("error while resizing pty: %s", err)
+			return fmt.Errorf("error while resizing pty: %w", err)
 		}
 
 		// Exec the command within the pty
@@ -79,7 +81,7 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 		cmd.Env = append(os.Environ(), cmd.Env...)
 		cmd.Env = append(cmd.Env, "TERM="+ptyReq.Term, "SSH_TTY="+pseudo.Name())
 		if err := cmd.Start(); err != nil {
-			return fmt.Errorf("error while starting command (%s): %s", c, err)
+			return fmt.Errorf("error while starting command (%s): %w", c, err)
 		}
 		// start a loop to handle dynamic window size modification
 		go func() {
@@ -127,6 +129,7 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 
 		if err := cmd.Wait(); err != nil {
 			log.Debug().Err(err).Msgf("error while waiting for command to finish (%s)", strings.Join(c, " "))
+
 			return nil
 		}
 	} else {
@@ -141,10 +144,12 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 		}()
 		if err != nil {
 			log.Error().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while opening shell")
+
 			return err
 		}
 		log.Debug().Str("Command", shell.Executable).Str("Args", strings.Join(shell.Args, " ")).Msg("shell opened")
 
+		//nolint:gosec
 		cmd := exec.Command(shell.Executable, shell.Args...)
 		cmd.Stderr = s.Stderr()
 		cmd.Stdout = s
@@ -153,8 +158,8 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 		}
 
 		cmd.Env = append(os.Environ(),
-			fmt.Sprintf("PLATFORM=%s", strings.ToLower(runtime.GOOS)),
-			fmt.Sprintf("USER=%s", s.User()),
+			"PLATFORM="+strings.ToLower(runtime.GOOS),
+			"USER="+s.User(),
 			"LANG=en_US.UTF-8",
 		)
 
@@ -207,24 +212,28 @@ func GivePty(s ssh.Session, c []string, rawCommand string, globalCtx context.Con
 		}
 		log.Debug().Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("session closed")
 	}
+
 	return nil
 }
 
+// Command hold a command to be run.
 type Command struct {
 	Executable string
 	Args       []string
 }
 
+// Cli return a cli representation of the command.
 func (c *Command) Cli() []string {
 	return append([]string{c.Executable}, c.Args...)
 }
 
-// getShellCmd return the first command found in the system path
+// getShellCmd return the first command found in the system path.
 func getShellCmd(cmds []Command) Command {
 	for _, cmd := range cmds {
 		if absPath, err := exec.LookPath(cmd.Executable); err == nil {
 			return Command{Executable: absPath, Args: cmd.Args}
 		}
 	}
+
 	return Command{}
 }

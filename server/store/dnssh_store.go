@@ -8,6 +8,7 @@ import (
 	"github.com/xtaci/smux"
 )
 
+// DNSSHAgent holds the information of DNS-connected agents.
 type DNSSHAgent struct {
 	UpstreamConn []net.Conn
 	Session      *smux.Stream
@@ -18,7 +19,7 @@ type DNSSHAgent struct {
 // TODO: ajouter les conn pour le serveur SSH et pour le serveur Websocket
 // idée: faire une map des upstream conn address pour garder l'implémentation simple et flexible ?
 
-// DnsshAddAgent adds the ssh connection of agent id to the agent store
+// DnsshAddAgent adds the ssh connection of agent id to the agent store.
 func (a *AgentStore) DnsshAddAgent(upstreamConn net.Conn, session *smux.Stream, kcpAddr string, id string, publicRemoteAddr string) {
 	a.dnsshAgentMapMu.Lock()
 	agent, ok := a.dnsshAgentMap[id]
@@ -37,22 +38,23 @@ func (a *AgentStore) DnsshAddAgent(upstreamConn net.Conn, session *smux.Stream, 
 	a.AddRemote(id, publicRemoteAddr)
 }
 
-// DnsshRemoveAgent removes the ssh connection of the agent id to the agent store
+// DnsshRemoveAgent removes the ssh connection of the agent id to the agent store.
 func (a *AgentStore) DnsshRemoveAgent(id string) {
 	a.dnsshAgentMapMu.Lock()
 	delete(a.dnsshAgentMap, id)
 	a.dnsshAgentMapMu.Unlock()
 }
 
-// DnsshGetAgent returns the ssh connection of the agent id to the agent store
+// DnsshGetAgent returns the ssh connection of the agent id to the agent store.
 func (a *AgentStore) DnsshGetAgent(id string) *DNSSHAgent {
 	a.dnsshAgentMapMu.Lock()
 	agent := a.dnsshAgentMap[id]
 	a.dnsshAgentMapMu.Unlock()
+
 	return agent
 }
 
-// DnsshCloseAgent closes the ssh connection of the agent id to the agent store
+// DnsshCloseAgent closes the ssh connection of the agent id to the agent store.
 func (a *AgentStore) DnsshCloseAgent(id string) error {
 	var errs []error
 	a.dnsshAgentMapMu.Lock()
@@ -63,22 +65,22 @@ func (a *AgentStore) DnsshCloseAgent(id string) error {
 		for _, conn := range agent.UpstreamConn {
 			if conn != nil {
 				errs = append(errs, conn.Close())
-
 			}
 		}
 	}
 	a.DnsshRemoveAgent(id)
+
 	return errors.Join(errs...)
 }
 
-// DumpDNSSH return the DNSSH information associated to the agent
+// DumpDNSSH return the DNSSH information associated to the agent.
 func (a *AgentStore) DumpDNSSH(id string) types.DNSSHState {
 	a.dnsshAgentMapMu.Lock()
 	agent := a.dnsshAgentMap[id]
 	defer a.dnsshAgentMapMu.Unlock()
 	if agent == nil {
 		return types.DNSSHState{
-			AgentId: id,
+			AgentID: id,
 		}
 	}
 
@@ -90,7 +92,7 @@ func (a *AgentStore) DumpDNSSH(id string) types.DNSSHState {
 		}
 	}
 	state := types.DNSSHState{
-		AgentId:      id,
+		AgentID:      id,
 		UpstreamConn: upstreamConn,
 		KCPAddr:      agent.KcpAddr,
 		MuxSession: types.Conn{
@@ -98,5 +100,6 @@ func (a *AgentStore) DumpDNSSH(id string) types.DNSSHState {
 			LocaleAddr: agent.Session.LocalAddr().String(),
 		},
 	}
+
 	return state
 }

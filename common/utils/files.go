@@ -1,6 +1,8 @@
+//nolint:revive
 package utils
 
 import (
+	"Goauld/common/log"
 	"fmt"
 	"os"
 	"runtime"
@@ -10,19 +12,23 @@ func closeFile(file *os.File) {
 	_ = file.Close()
 }
 
+// WriteToFile writes data the path.
 func WriteToFile(content string, outputFile string) error {
+	//nolint:gosec
 	f, err := os.Create(outputFile)
 	if err != nil {
-		return fmt.Errorf("error writing to file %s: %s", outputFile, err)
+		return fmt.Errorf("error writing to file %s: %w", outputFile, err)
 	}
 	_, err = f.WriteString(content)
 	if err != nil {
-		return fmt.Errorf("error writing to file %s: %s", outputFile, err)
+		return fmt.Errorf("error writing to file %s: %w", outputFile, err)
 	}
 	defer closeFile(f)
+
 	return nil
 }
 
+// OverwriteFile writes data the path and overwrite existing data if needed.
 func OverwriteFile(path string, data []byte) error {
 	// Get current file info (to preserve permissions)
 	info, err := os.Stat(path)
@@ -32,6 +38,7 @@ func OverwriteFile(path string, data []byte) error {
 	perm := info.Mode().Perm()
 
 	// Open the file with write-only, truncate and no create flags
+	//nolint:gosec
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, perm)
 	if err != nil {
 		return fmt.Errorf("failed to open file for overwrite: %w", err)
@@ -68,7 +75,8 @@ func CreateOrReplaceFileSymlink(target, linkName string) error {
 	// On Windows, fall back to hard link if symlink fails
 	if runtime.GOOS == "windows" {
 		if linkErr := os.Link(target, linkName); linkErr == nil {
-			fmt.Println("Symlink not allowed; created a hard link instead.")
+			log.Warn().Str("target", target).Str("linkname", linkName).Msg("Symlink not allowed; created a hard link instead")
+
 			return nil
 		}
 	}

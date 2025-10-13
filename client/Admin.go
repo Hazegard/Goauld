@@ -1,9 +1,8 @@
+// Package main holds the client entrypoint
 package main
 
 import (
 	"Goauld/client/api"
-	"Goauld/common"
-	"Goauld/common/log"
 	colorYaml "Goauld/common/yaml"
 
 	"github.com/goccy/go-yaml"
@@ -25,27 +24,11 @@ type Loglevel struct {
 	Level string `arg:"" help:"Log level"`
 }
 
-func CheckAdminVersion(api *api.API) {
-	srvVersion, err := api.Version()
-	if err != nil {
-		log.Debug().Err(err).Msg("error getting version")
-		return
-	}
-	clientVersion := common.JsonVersion()
-	if srvVersion.Compare(clientVersion) != 0 {
-		log.Warn().Str("Server", srvVersion.Version).Str("Client", clientVersion.Version).Msg("version mismatch")
-		log.Trace().Str("Server Commit", srvVersion.Commit).Str("Client Commit", clientVersion.Commit).Msg("version mismatch")
-		log.Trace().Str("Server Date", srvVersion.Date).Str("Client Date", clientVersion.Date).Msg("version mismatch")
-	}
-}
-
-// dump dumps the information regading the agents currently connected to the server
+// dump dumps the information regading the agents currently connected to the server.
 func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
+	adminAPA := api.NewAPI(cfg.ServerURL(), cfg.AdminToken, cfg.Insecure, "")
 
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
-	// CheckAdminVersion(adminApi)
-
-	res, err := adminApi.DumpAll()
+	res, err := adminAPA.DumpAll()
 	if err != nil {
 		return err
 	}
@@ -55,14 +38,14 @@ func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 		return err
 	}
 	colorYaml.PrintColorizedYAML(string(y))
+
 	return nil
 }
 
-// Loglevel updates the log level on the server side
+// Loglevel updates the log level on the server side.
 func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
-	//CheckAdminVersion(adminApi)
-	res, err := adminApi.UpdateLogLevel(cfg.Admin.Loglevel.Level)
+	adminAPA := api.NewAPI(cfg.ServerURL(), cfg.AdminToken, cfg.Insecure, "")
+	res, err := adminAPA.UpdateLogLevel(cfg.Admin.Loglevel.Level)
 	if err != nil {
 		return err
 	}
@@ -71,30 +54,28 @@ func (l *Loglevel) Run(_ *api.API, cfg ClientConfig) error {
 		return err
 	}
 	colorYaml.PrintColorizedYAML(string(y))
+
 	return nil
 }
 
-// Config dumps the server side configuration
+// Config dumps the server side configuration.
 func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
-
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
-	//CheckAdminVersion(adminApi)
-	res, err := adminApi.GetConfig()
+	adminAPA := api.NewAPI(cfg.ServerURL(), cfg.AdminToken, cfg.Insecure, "")
+	res, err := adminAPA.GetConfig()
 	if err != nil {
 		return err
 	}
 
 	colorYaml.PrintColorizedYAML(res)
+
 	return nil
 }
 
-// State dumps the information regading all the agents (connected or not)
+// State dumps the information regading all the agents (connected or not).
 func (c *State) Run(_ *api.API, cfg ClientConfig) error {
+	adminAPA := api.NewAPI(cfg.ServerURL(), cfg.AdminToken, cfg.Insecure, "")
 
-	adminApi := api.NewAPI(cfg.ServerUrl(), cfg.AdminToken, cfg.Insecure, "")
-	//CheckAdminVersion(adminApi)
-
-	res, err := adminApi.DumpState()
+	res, err := adminAPA.DumpState()
 	if err != nil {
 		return err
 	}
@@ -105,5 +86,6 @@ func (c *State) Run(_ *api.API, cfg ClientConfig) error {
 	}
 
 	colorYaml.PrintColorizedYAML(string(state))
+
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/aus/proxyplease"
 )
 
+// UA the user agent to hide the go user agent.
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0"
 
 type userAgentTransport struct {
@@ -18,27 +19,31 @@ type userAgentTransport struct {
 	ua string
 }
 
+// NewHeaderMap returns a map of default HTTP header.
 func NewHeaderMap() map[string][]string {
 	hm := make(map[string][]string)
 	hm["User-Agent"] = []string{UA}
+
 	return hm
 }
 
+// RoundTrip perform the HTTP request.
 func (t *userAgentTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// clone so we don’t stomp on callers’ headers
 	r2 := req.Clone(req.Context())
 	r2.Header.Set("User-Agent", t.ua)
+
 	return t.rt.RoundTrip(r2)
 }
 
-// NewProxyDialer return a proxied dialer
-func NewProxyDialer(proxyUrl *url.URL, username string, password string, domain string) proxyplease.DialContext {
+// NewProxyDialer return a proxied dialer.
+func NewProxyDialer(proxyURL *url.URL, username string, password string, domain string) proxyplease.DialContext {
 	proxyplease.SetDebugf(log.ProxyPleaseLog())
 	proxy := proxyplease.Proxy{
-		TLSConfig: NewTlsConfig(),
+		TLSConfig: NewTLSConfig(),
 	}
-	if proxyUrl.String() != "" {
-		proxy.URL = proxyUrl
+	if proxyURL.String() != "" {
+		proxy.URL = proxyURL
 	}
 	if username != "" {
 		proxy.Username = username
@@ -49,15 +54,16 @@ func NewProxyDialer(proxyUrl *url.URL, username string, password string, domain 
 	if domain != "" {
 		proxy.Domain = domain
 	}
+
 	return proxyplease.NewDialContext(proxy)
 }
 
-// NewHttpClientProxy return a new http Client configured to use the proxy
-func NewHttpClientProxy(tr *http.Transport) *http.Client {
+// NewHTTPClientProxy return a new http Client configured to use the proxy.
+func NewHTTPClientProxy(tr *http.Transport) *http.Client {
 	if tr == nil {
 		tr = &http.Transport{}
 	}
-	tr.TLSClientConfig = NewTlsConfig()
+	tr.TLSClientConfig = NewTLSConfig()
 	tr.ForceAttemptHTTP2 = false
 
 	if config.Get().NoProxy() {
@@ -72,6 +78,7 @@ func NewHttpClientProxy(tr *http.Transport) *http.Client {
 
 	dialContext := NewProxyDialer(config.Get().Proxy(), config.Get().ProxyUsername(), config.Get().ProxyPassword(), config.Get().ProxyDomain())
 	tr.DialContext = dialContext
+
 	return &http.Client{
 		// Transport: &transport,
 		Transport: &userAgentTransport{
@@ -81,17 +88,19 @@ func NewHttpClientProxy(tr *http.Transport) *http.Client {
 	}
 }
 
-// NewTransportProxy returns a new http.Transport configured to use the proxy
+// NewTransportProxy returns a new http.Transport configured to use the proxy.
 func NewTransportProxy() http.RoundTripper {
 	return ProxyTransport(&http.Transport{})
 }
 
-// ProxyTransport add the proxy configuration to an existing http.Transport
+// ProxyTransport add the proxy configuration to an existing http.Transport.
+//
+//nolint:revive
 func ProxyTransport(tr *http.Transport) http.RoundTripper {
 	if tr == nil {
 		tr = &http.Transport{}
 	}
-	tr.TLSClientConfig = NewTlsConfig()
+	tr.TLSClientConfig = NewTLSConfig()
 	tr.ForceAttemptHTTP2 = false
 
 	if config.Get().NoProxy() {

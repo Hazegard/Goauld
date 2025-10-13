@@ -1,28 +1,35 @@
-package socket_io
+package socketio
 
 import (
 	"Goauld/common"
 	"Goauld/common/crypto"
 )
 
-type SshPrivateKeyMessage struct {
-	SshPrivateKey string `json:"ssh_public_key"`
+// SSHPrivateKeyMessage represents a message containing an SSH private key.
+type SSHPrivateKeyMessage struct {
+	SSHPrivateKey string `json:"ssh_public_key"`
 }
 
-func newSshPublicKeyMessage() *SshPrivateKeyMessage {
-	return &SshPrivateKeyMessage{}
+// newSSHPublicKeyMessage creates a new empty SSHPrivateKeyMessage.
+func newSSHPublicKeyMessage() *SSHPrivateKeyMessage {
+	return &SSHPrivateKeyMessage{}
 }
 
-func DecryptSshPrivateKeyMessage(data []byte, c *crypto.SymCryptor) (*SshPrivateKeyMessage, error) {
-	agent, err := common.Decryptor[SshPrivateKeyMessage]{}.Decrypt(data, c, newSshPublicKeyMessage)
+// DecryptSSHPrivateKeyMessage decrypts encrypted data into a SSHPrivateKeyMessage.
+func DecryptSSHPrivateKeyMessage(data []byte, c *crypto.SymCryptor) (*SSHPrivateKeyMessage, error) {
+	agent, err := common.Decryptor[SSHPrivateKeyMessage]{}.Decrypt(data, c, newSSHPublicKeyMessage)
+
 	return agent, err
 }
 
-func EncryptSshPrivateKeyMessage(agent *SshPrivateKeyMessage, c *crypto.SymCryptor) ([]byte, error) {
+// EncryptSSHPrivateKeyMessage encrypts a SSHPrivateKeyMessage into bytes.
+func EncryptSSHPrivateKeyMessage(agent *SSHPrivateKeyMessage, c *crypto.SymCryptor) ([]byte, error) {
 	return common.Encrypt(agent, c)
 }
 
-func NewEncryptedSshPrivateKeyMessage(privateKey string, cryptor *crypto.SymCryptor) ([]byte, error) {
-	message := &SshPrivateKeyMessage{SshPrivateKey: privateKey}
-	return EncryptSshPrivateKeyMessage(message, cryptor)
+// NewEncryptedSSHPrivateKeyMessage creates and encrypts a new SSHPrivateKeyMessage.
+func NewEncryptedSSHPrivateKeyMessage(privateKey string, cryptor *crypto.SymCryptor) ([]byte, error) {
+	message := &SSHPrivateKeyMessage{SSHPrivateKey: privateKey}
+
+	return EncryptSSHPrivateKeyMessage(message, cryptor)
 }

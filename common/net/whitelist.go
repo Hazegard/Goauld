@@ -1,6 +1,6 @@
 package net
 
-// IsIPAllowed check if the IP is in the allowed list
+// IsIPAllowed check if the IP is in the allowed list.
 func IsIPAllowed(ip string, allowedIPs []string) bool {
 	if len(allowedIPs) == 0 {
 		return true
@@ -10,5 +10,6 @@ func IsIPAllowed(ip string, allowedIPs []string) bool {
 			return true
 		}
 	}
+
 	return false
 }

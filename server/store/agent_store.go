@@ -1,3 +1,4 @@
+// Package store holds the dynamic agents information
 package store
 
 import (
@@ -20,7 +21,7 @@ var (
 )
 
 // NewAgentStore saves in memory all the information related
-// to the active connections
+// to the active connections.
 func NewAgentStore(_db *persistence.DB) *AgentStore {
 	once.Do(func() {
 		store = &AgentStore{
@@ -31,7 +32,7 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 			sioSocketMap:   make(map[string]sio.ServerSocket),
 			sioSocketMapMu: sync.Mutex{},
 
-			wsshAgentMap:   make(map[string]*WsshAgent),
+			wsshAgentMap:   make(map[string]*WSSHAgent),
 			wsshAgentMapMu: sync.Mutex{},
 
 			sshttpAgentMap:   make(map[string]*SSHTTPAgent),
@@ -53,9 +54,11 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 			remoteAddrMapMu: sync.Mutex{},
 		}
 	})
+
 	return store
 }
 
+// AgentStore holds the information of all connected agents, depending on the tunnel type.
 type AgentStore struct {
 	db             *persistence.DB
 	sioAgentMap    map[sio.ServerSocket]*persistence.Agent
@@ -63,7 +66,7 @@ type AgentStore struct {
 	sioSocketMap   map[string]sio.ServerSocket
 	sioSocketMapMu sync.Mutex
 
-	wsshAgentMap   map[string]*WsshAgent
+	wsshAgentMap   map[string]*WSSHAgent
 	wsshAgentMapMu sync.Mutex
 
 	sshttpAgentMap   map[string]*SSHTTPAgent
@@ -85,43 +88,44 @@ type AgentStore struct {
 	remoteAddrMapMu sync.Mutex
 }
 
-// ClearByPort Clears all agent connections related to a given port
+// ClearByPort Clears all agent connections related to a given port.
 func (a *AgentStore) ClearByPort(port int) error {
 	agents, err := a.db.GetAgentsByUsedPort(port)
 	if err != nil {
-		return fmt.Errorf("get agents by used port:%d err:%v", port, err)
+		return fmt.Errorf("get agents by used port:%d err:%w", port, err)
 	}
 
 	errs := make([]error, 0)
 
 	for _, agent := range agents {
-		err := a.ClearById(agent.Id)
+		err := a.ClearByID(agent.ID)
 		errs = append(errs, err)
 	}
+
 	return errors.Join(errs...)
 }
 
-// ClearById Clears all agent connections related to a given agent id
-func (a *AgentStore) ClearById(id string) error {
+// ClearByID Clears all agent connections related to a given agent id.
+func (a *AgentStore) ClearByID(id string) error {
 	return a.CloseAgentConnections(id)
 }
 
-// CloseAgentConnections closes all the connections of the agent
+// CloseAgentConnections closes all the connections of the agent.
 func (a *AgentStore) CloseAgentConnections(id string) error {
 	return errors.Join(
 		a.SSHCloseAgent(id),
-		a.TlsshCloseAgent(id),
-		a.WsshCloseAgent(id),
-		a.SshttpCloseAgent(id),
+		a.TLSSHCloseAgent(id),
+		a.WSSHCloseAgent(id),
+		a.SSHTTPCloseAgent(id),
 		a.DnsshCloseAgent(id),
 	)
 }
 
+// IsAgentConnected returns whether an agent is connected to the server.
 func (a *AgentStore) IsAgentConnected(id string) bool {
 	a.sioSocketMapMu.Lock()
 	socket, ok := a.sioSocketMap[id]
 	a.sioSocketMapMu.Unlock()
-	fmt.Println("socket:", socket)
 	if socket == nil || !ok {
 		return false
 	}
@@ -131,7 +135,6 @@ func (a *AgentStore) IsAgentConnected(id string) bool {
 	if agent == nil || !ok {
 		return false
 	}
-	fmt.Println("agent:", agent)
 
 	a.dnsshAgentMapMu.Lock()
 	dnsAgent := a.dnsshAgentMap[id]
@@ -139,7 +142,6 @@ func (a *AgentStore) IsAgentConnected(id string) bool {
 	if dnsAgent != nil {
 		return true
 	}
-	fmt.Println("dnsAgent:", dnsAgent)
 
 	a.sshAgentMapMu.Lock()
 	sshAgent := a.sshAgentMap[id]
@@ -147,7 +149,6 @@ func (a *AgentStore) IsAgentConnected(id string) bool {
 	if sshAgent != nil {
 		return true
 	}
-	fmt.Println("sshAgent:", sshAgent)
 
 	a.sshttpAgentMapMu.Lock()
 	sshttpAgent := a.sshttpAgentMap[id]
@@ -155,7 +156,6 @@ func (a *AgentStore) IsAgentConnected(id string) bool {
 	if sshttpAgent != nil {
 		return true
 	}
-	fmt.Println("sshttpAgent:", sshttpAgent)
 
 	a.wsshAgentMapMu.Lock()
 	wsshAgent := a.sshttpAgentMap[id]
@@ -163,7 +163,6 @@ func (a *AgentStore) IsAgentConnected(id string) bool {
 	if wsshAgent != nil {
 		return true
 	}
-	fmt.Println("wsshAgent:", wsshAgent)
 
 	a.tlsshAgentMapMu.Lock()
 	tlsshAgent := a.sshttpAgentMap[id]
@@ -171,37 +170,34 @@ func (a *AgentStore) IsAgentConnected(id string) bool {
 	if tlsshAgent != nil {
 		return true
 	}
-	fmt.Println("tlsshAgent:", tlsshAgent)
 
 	a.quicAgentMapMu.Lock()
 	quickAgent := a.sshttpAgentMap[id]
 	a.quicAgentMapMu.Unlock()
-	if quickAgent != nil {
-		return true
-	}
-	fmt.Println("quickAgent:", quickAgent)
 
-	return false
+	return quickAgent != nil
 }
 
 // KillAGent kills the agent, if doKill is true, the agent does not restart
-// If false, the agent resets and restarts
+// If false, the agent resets and restarts.
 func (a *AgentStore) KillAGent(id string, doKill bool) error {
 	socket := a.SioGetSocket(id)
 	if socket == nil {
-		err := a.db.SetAgentSshMode(id, "OFF", "")
+		err := a.db.SetAgentSSHMode(id, "OFF", "")
 		if err != nil {
-			return fmt.Errorf("socket not found, error while disconnecting agent: %v", err)
+			return fmt.Errorf("socket not found, error while disconnecting agent: %w", err)
 		}
+
 		return errors.New("socket not found")
 	}
 
 	socket.Emit(socketio.ExitEvent.ID(), doKill)
+
 	return nil
 }
 
-// GetAllActivesId return the ID of all running agents
-func (a *AgentStore) GetAllActivesId() []string {
+// GetAllActivesID return the ID of all running agents.
+func (a *AgentStore) GetAllActivesID() []string {
 	var ids []string
 	a.tlsshAgentMapMu.Lock()
 	for id := range a.tlsshAgentMap {
@@ -236,19 +232,20 @@ func (a *AgentStore) GetAllActivesId() []string {
 	return utils.Unique(ids)
 }
 
-// GetAllStates returns the state of all agents
+// GetAllStates returns the state of all agents.
 func (a *AgentStore) GetAllStates() []types.State {
 	var states []types.State
-	for _, id := range a.GetAllActivesId() {
+	for _, id := range a.GetAllActivesID() {
 		states = append(states, a.GetState(id))
 	}
+
 	return states
 }
 
-// GetState return the state of an agent
+// GetState return the state of an agent.
 func (a *AgentStore) GetState(id string) types.State {
 	state := types.State{
-		Id:       id,
+		ID:       id,
 		TLSSH:    a.DumpTLSSH(id),
 		QUIC:     a.DumpQUIC(id),
 		WSSH:     a.DumpWSSH(id),
@@ -257,31 +254,36 @@ func (a *AgentStore) GetState(id string) types.State {
 		SSH:      a.DumpSSH(id),
 		DNS:      a.DumpDNSSH(id),
 	}
+
 	return state
 }
 
+// AddRemote add the remote address of a newly connected agent.
 func (a *AgentStore) AddRemote(id string, remoteAddr string) {
-	remoteIp, _ := commonnet.ExtractIP(remoteAddr)
-	isLoopback := commonnet.IsLoopback(remoteIp)
+	remoteIP, _ := commonnet.ExtractIP(remoteAddr)
+	isLoopback := commonnet.IsLoopback(remoteIP)
 	a.remoteAddrMapMu.Lock()
 	defer a.remoteAddrMapMu.Unlock()
 	if isLoopback {
 		// If the new address is loopback, only set if none stored yet
 		if a.remoteAddrMap[id] == "" {
-			a.remoteAddrMap[id] = remoteIp
+			a.remoteAddrMap[id] = remoteIP
+
 			return
 		}
 		// else do nothing (don't override)
 		return
 	}
-	if remoteIp != "" {
+	if remoteIP != "" {
 		// If the new address is NOT loopback, always override
-		a.remoteAddrMap[id] = remoteIp
+		a.remoteAddrMap[id] = remoteIP
 	}
 }
 
+// GetRemote returns the public remote address from which the agent connects.
 func (a *AgentStore) GetRemote(id string) string {
 	a.remoteAddrMapMu.Lock()
 	defer a.remoteAddrMapMu.Unlock()
+
 	return a.remoteAddrMap[id]
 }

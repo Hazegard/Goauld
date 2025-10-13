@@ -18,10 +18,11 @@ func RewriteArgs(bin string, mode string) []string {
 	if strings.HasSuffix(path, ".exe") {
 		path = fmt.Sprintf("%s%s%s.exe", path, string(filepath.Separator), strings.TrimSuffix(bin, fmt.Sprintf("-%s.exe", mode)))
 	} else {
-		path = fmt.Sprintf("%s%s%s", path, string(filepath.Separator), strings.TrimSuffix(bin, fmt.Sprintf("-%s", mode)))
+		path = fmt.Sprintf("%s%s%s", path, string(filepath.Separator), strings.TrimSuffix(bin, "-"+mode))
 	}
 	args := []string{path, mode}
 	args = append(args, os.Args[1:]...)
+
 	return args
 }
 
@@ -42,6 +43,7 @@ func PreParseArgs() {
 	for _, arg := range os.Args {
 		if strings.HasPrefix(arg, "ConnectTimeout=") {
 			isVscodeCommand = true
+
 			break
 		}
 	}
@@ -67,6 +69,7 @@ func main() {
 	// To handle vscode scp check (call scp and checks that the output starts with "usage: scp"
 	if len(os.Args) == 1 && filepath.Base(os.Args[0]) == "scp" {
 		_ = ExecSCp()
+
 		return
 	}
 	// Preparsing/reordering of the os.Args
@@ -74,16 +77,19 @@ func main() {
 
 	kong, cfg, ctx, err := InitConfig()
 	if err != nil {
+		//nolint:forbidigo
 		fmt.Println(err)
+
 		return
 	}
 
 	if strings.Fields(ctx.Command())[0] == "compile" {
 		os.Args = append([]string{"compile"}, cfg.Compile.Args...)
-		//os.Args = os.Args[1:]
-		kong, cfg, err := compiler.InitCompilerConfig(APP_NAME, defaultValues)
+		kong, cfg, err := compiler.InitCompilerConfig(AppName, defaultValues)
 		if err != nil {
+			//nolint:forbidigo
 			fmt.Println(err)
+
 			return
 		}
 		kong.Bind(*cfg)
@@ -91,6 +97,7 @@ func main() {
 		if err != nil {
 			log.Error().Err(err).Msg("error running compiler")
 		}
+
 		return
 	}
 
@@ -98,8 +105,10 @@ func main() {
 		if strings.HasPrefix(ctx.Command(), "ssh") {
 			ExecuteSystemSSH("-V")
 		} else {
+			//nolint:forbidigo
 			fmt.Println(_common.GetVersion())
 		}
+
 		return
 	}
 	if cfg.GenerateConfig {
@@ -107,34 +116,39 @@ func main() {
 		c, err := cfg.GenerateYAMLConfig()
 		if err != nil {
 			log.Error().Err(err).Msg("error generating the agent config")
+
 			return
 		}
+		//nolint:forbidigo
 		fmt.Println(c)
+
 		return
 	}
-	httpclient := api.NewAPI(cfg.ServerUrl(), cfg.AccessToken, cfg.Insecure, cfg.AdminToken)
-	CheckApiVersion(httpclient)
+	httpclient := api.NewAPI(cfg.ServerURL(), cfg.AccessToken, cfg.Insecure, cfg.AdminToken)
+	CheckAPIVersion(httpclient)
 	kong.Bind(*cfg, httpclient)
 
 	err = kong.Run(httpclient, cfg)
 	if err != nil {
 		if len(os.Args) > 1 {
-			log.Error().Err(err).Str("Mode", kong.Command()).Msg("error running " + common.APP_NAME)
+			log.Error().Err(err).Str("Mode", kong.Command()).Msg("error running " + common.AppName)
+
 			return
 		}
-		log.Error().Err(err).Msg("error running " + common.APP_NAME)
+		log.Error().Err(err).Msg("error running " + common.AppName)
 	}
 }
 
-// CheckApiVersion fetches the server side version and compares it to the client version
-// It prints a warning to the user if the versions mismatch
-func CheckApiVersion(api *api.API) {
+// CheckAPIVersion fetches the server side version and compares it to the client version
+// It prints a warning to the user if the versions mismatch.
+func CheckAPIVersion(api *api.API) {
 	srvVersion, err := api.Version()
 	if err != nil {
 		log.Warn().Err(err).Msg("error getting version")
+
 		return
 	}
-	clientVersion := _common.JsonVersion()
+	clientVersion := _common.JSONVersion()
 	if srvVersion.Compare(clientVersion) != 0 {
 		log.Warn().Str("Server", srvVersion.Version).Str("Client", clientVersion.Version).Msg("version mismatch")
 		log.Trace().Str("Server Commit", srvVersion.Commit).Str("Client Commit", clientVersion.Commit).Msg("version mismatch")

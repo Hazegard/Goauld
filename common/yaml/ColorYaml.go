@@ -1,3 +1,4 @@
+// Package yaml holds the yaml related operations
 package yaml
 
 import (
@@ -15,12 +16,12 @@ import (
 
 const escape = "\x1b"
 
-// format returns the ANSI code associated with the color
+// format returns the ANSI code associated with the color.
 func format(attr color.Attribute) string {
 	return fmt.Sprintf("%s[%dm", escape, attr)
 }
 
-// PrintColorizedYAML pretty print a YAML, with colors if printed to a terminal
+// PrintColorizedYAML pretty print a YAML, with colors if printed to a terminal.
 func PrintColorizedYAML(input string) {
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
@@ -32,6 +33,7 @@ func PrintColorizedYAML(input string) {
 		writer = os.Stdout // fallback to regular stdout (no color)
 
 		_, _ = writer.Write([]byte(p.PrintTokens(tokens) + "\n"))
+
 		return
 	}
 
@@ -40,6 +42,7 @@ func PrintColorizedYAML(input string) {
 
 	p.LineNumberFormat = func(num int) string {
 		fn := color.New(color.Bold, color.FgHiWhite).SprintFunc()
+
 		return fn(fmt.Sprintf("%2d | ", num))
 	}
 	p.Bool = func() *printer.Property {

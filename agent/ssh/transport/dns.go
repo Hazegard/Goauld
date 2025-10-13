@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -60,15 +61,16 @@ var base32Encoding = base32.StdEncoding.WithPadding(base32.NoPadding)
 // be correlated. When sending a query, we generate a random ID, and when
 // receiving a response, we ignore the ID.
 type DNSPacketConn struct {
+	// QueuePacketConn is the direct receiver of ReadFrom and WriteTo calls.
+	// recvLoop and sendLoop take the messages out of the receive and send
+	// queues and actually put them on the network.
+	*turbotunnel.QueuePacketConn
+
 	clientID turbotunnel.ClientID
 	domain   dns.Name
 	// Sending on pollChan permits sendLoop to send an empty polling query.
 	// sendLoop also does its own polling according to a time schedule.
 	pollChan chan struct{}
-	// QueuePacketConn is the direct receiver of ReadFrom and WriteTo calls.
-	// recvLoop and sendLoop take the messages out of the receive and send
-	// queues and actually put them on the network.
-	*turbotunnel.QueuePacketConn
 }
 
 // NewDNSPacketConn creates a new DNSPacketConn. transport, through its WriteTo
@@ -96,6 +98,7 @@ func NewDNSPacketConn(transport net.PacketConn, addr net.Addr, domain dns.Name) 
 			log.Trace().Err(err).Str("Mode", "DNSSH").Msg("sendLoop error")
 		}
 	}()
+
 	return c
 }
 
@@ -148,11 +151,11 @@ func nextPacket(r *bytes.Reader) ([]byte, error) {
 	p := make([]byte, n)
 	_, err = io.ReadFull(r, p)
 	// Here we must change io.EOF to io.ErrUnexpectedEOF.
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		err = io.ErrUnexpectedEOF
 	}
-	return p, err
 
+	return p, err
 }
 
 // recvLoop repeatedly calls transport.ReadFrom to receive a DNS message,
@@ -189,25 +192,29 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 		var buf [4096]byte
 		n, addr, err := transport.ReadFrom(buf[:])
 		var payload []byte
-		if config.Get().GetDnsCommand() != "" {
+		if config.Get().GetDNSCommand() != "" {
 			payload, err = dns.DecodeRDataTXT(buf[:n])
 			if err != nil {
 				log.Trace().Err(err).Str("Mode", "DNSSH").Msg("error decoding payload")
+
 				continue
 			}
 		} else {
 			if err != nil {
-				//nolint:staticcheck // SA1019
-				if err, ok := err.(net.Error); ok && err.Temporary() {
+				var err net.Error
+				if errors.As(err, &err) {
 					log.Debug().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
+
 					continue
 				}
+
 				return err
 			}
 			// Got a response. Try to parse it as a DNS message.
 			resp, err := dns.MessageFromWireFormat(buf[:n])
 			if err != nil {
 				log.Debug().Str("Mode", "DNSSH").Msgf("MessageFromWireFormat: %v", err)
+
 				continue
 			}
 			payload = dnsResponsePayload(&resp, c.domain)
@@ -250,6 +257,7 @@ func chunks(p []byte, n int) [][]byte {
 		result = append(result, p[:sz])
 		p = p[sz:]
 	}
+
 	return result
 }
 
@@ -293,7 +301,7 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 	var decoded []byte
 	{
 		if len(p) >= 224 {
-			return fmt.Errorf("too long")
+			return errors.New("too long")
 		}
 		var buf bytes.Buffer
 		// ClientID
@@ -323,11 +331,11 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 		return err
 	}
 
-	if config.Get().GetDnsCommand() != "" {
+	if config.Get().GetDNSCommand() != "" {
 		// If we rely on an external system command to perform the dns query, we get the result from the command
 		// And pass it to the recvloop using a mocked net.packetConn,
 		// where WriteTo data is directly available by ReadFrom method
-		res := DnsReq(name.String())
+		res := DNSReq(name.String())
 		_, _ = transport.WriteTo(res, addr)
 		// We do not need to process further, as the data has already been transmitted
 		return nil
@@ -361,27 +369,29 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 	}
 
 	_, err = transport.WriteTo(buf, addr)
+
 	return err
 }
 
-// DnsReq execute a system command that performs the DNS request
-// The system command is responsible for converting the request to raw bytes data
-func DnsReq(data string) []byte {
-	//cmd := exec.Command("powershell", "-c", fmt.Sprintf("(Resolve-DnsName -Type TXT -DnsOnly -Name %s -Server XXXXX).Strings", data))
-	//cmd := exec.Command("powershell", "-c", fmt.Sprintf("dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p", data))
+// DNSReq execute a system command that performs the DNS request
+// The system command is responsible for converting the request to raw bytes data.
+func DNSReq(data string) []byte {
+	// cmd := exec.Command("powershell", "-c", fmt.Sprintf("(Resolve-DnsName -Type TXT -DnsOnly -Name %s -Server XXXXX).Strings", data))
+	// cmd := exec.Command("powershell", "-c", fmt.Sprintf("dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p", data))
 	exe := "sh"
 	param := []string{"-c"}
 	if runtime.GOOS == "windows" {
 		exe = "powershell"
 		param = []string{"-NoProfile", "-NonInteractive"}
 	}
-	param = append(param, fmt.Sprintf(config.Get().GetDnsCommand(), data))
+	param = append(param, fmt.Sprintf(config.Get().GetDNSCommand(), data))
 	cmd := exec.Command(exe, param...)
 	res, err := cmd.Output()
 	if err != nil {
 		return nil
 	}
 	a := bytes.Trim(res, "\"")
+
 	return a
 }
 
@@ -441,6 +451,7 @@ func (c *DNSPacketConn) sendLoop(transport net.PacketConn, addr net.Addr) error 
 		err := c.send(transport, p, addr)
 		if err != nil {
 			log.Debug().Str("Mode", "DNSSH").Str("Addr", addr.String()).Msgf("send error: %v", err)
+
 			continue
 		}
 	}

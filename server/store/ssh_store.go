@@ -10,13 +10,14 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
+// SSHSession holds the ssh information of direct-ssh connected agent.
 type SSHSession struct {
 	Ctx       ssh.Context
 	Conns     []*gossh.ServerConn
 	Listeners []net.Listener
 }
 
-// AdSSHSession adds the SSH connections to the SSH agent store
+// AdSSHSession adds the SSH connections to the SSH agent store.
 func (a *AgentStore) AdSSHSession(id string, ctx ssh.Context, ln net.Listener) {
 	a.sshAgentMapMu.Lock()
 	sess := a.sshAgentMap[id]
@@ -25,6 +26,7 @@ func (a *AgentStore) AdSSHSession(id string, ctx ssh.Context, ln net.Listener) {
 			Conns: nil,
 		}
 	}
+
 	conn, ok := ctx.Value(ssh.ContextKeyConn).(*gossh.ServerConn)
 	if ok {
 		sess.Conns = append(sess.Conns, conn)
@@ -34,14 +36,14 @@ func (a *AgentStore) AdSSHSession(id string, ctx ssh.Context, ln net.Listener) {
 	a.sshAgentMapMu.Unlock()
 }
 
-// SSHRemoveAgent removes the SSH connections of the SSH agent
+// SSHRemoveAgent removes the SSH connections of the SSH agent.
 func (a *AgentStore) SSHRemoveAgent(id string) {
 	a.sshAgentMapMu.Lock()
 	delete(a.sshAgentMap, id)
 	a.sshAgentMapMu.Unlock()
 }
 
-// SSHCloseAgent closes the SSH connections of the SSH agent
+// SSHCloseAgent closes the SSH connections of the SSH agent.
 func (a *AgentStore) SSHCloseAgent(id string) error {
 	a.sshAgentMapMu.Lock()
 	agent := a.sshAgentMap[id]
@@ -59,16 +61,17 @@ func (a *AgentStore) SSHCloseAgent(id string) error {
 			errs = append(errs, err)
 		}
 	}
+
 	return errors.Join(errs...)
 }
 
-// DumpSSH return the SSH information associated with the agent
+// DumpSSH return the SSH information associated with the agent.
 func (a *AgentStore) DumpSSH(id string) types.SSHState {
 	a.sshAgentMapMu.Lock()
 	agent := a.sshAgentMap[id]
 	defer a.sshAgentMapMu.Unlock()
 	state := types.SSHState{
-		AgentId: id,
+		AgentID: id,
 	}
 	if agent == nil {
 		return state
@@ -76,8 +79,8 @@ func (a *AgentStore) DumpSSH(id string) types.SSHState {
 	for _, conn := range agent.Conns {
 		c := types.SSHConnection{
 
-			AgentId: conn.User(),
-			SshConn: types.Conn{
+			AgentID: conn.User(),
+			SSHConn: types.Conn{
 				RemoteAddr: conn.RemoteAddr().String(),
 				LocaleAddr: conn.LocalAddr().String(),
 			},

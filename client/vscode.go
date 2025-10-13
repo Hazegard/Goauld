@@ -7,6 +7,7 @@ import (
 	"Goauld/common/utils"
 	"Goauld/common/vscode"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -24,35 +25,38 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	err := CheckVsCode()
 	if err != nil {
 		log.Error().Err(err).Msg("VSCode is not installed")
+
 		return err
 	}
 
 	configDir := GetConfigDir()
 	userVsCode := filepath.Join(configDir, "User")
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("ConfigDir", userVsCode).Str("Path", userVsCode).Msg("Generated User VsCode config")
-	err = os.MkdirAll(userVsCode, 0777)
+	err = os.MkdirAll(userVsCode, 0750)
 	if err != nil {
 		log.Error().Err(err).Str("Path", userVsCode).Msg("Failed to create User VsCode directory")
+
 		return err
 	}
 
 	sshConfigFile := filepath.Join(userVsCode, "ssh_config")
-	sshConfig := GenSshConfig(cfg.VsCode.Target)
+	sshConfig := GenSSHConfig(cfg.VsCode.Target)
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("Config", sshConfig).Str("Path", sshConfigFile).Msg("Generated SSH config file")
 	err = utils.WriteToFile(sshConfig, sshConfigFile)
 	if err != nil {
 		log.Error().Str("Agent", cfg.VsCode.Target).Err(err).Str("Path", sshConfigFile).Msg("Failed to write SSH config file")
-		return fmt.Errorf("failed to write ssh_config to %s: %s", sshConfigFile, err)
+
+		return fmt.Errorf("failed to write ssh_config to %s: %w", sshConfigFile, err)
 	}
 
 	binDir := filepath.Join(configDir, "bin")
 
-	err = os.MkdirAll(binDir, 0755)
+	err = os.MkdirAll(binDir, 0750)
 	if err != nil {
-		return fmt.Errorf("failed to create bin vscode directory: %v", err)
+		return fmt.Errorf("failed to create bin vscode directory: %w", err)
 	}
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("BinDir", binDir).Msg("Generated bin directory")
-	suffix := ""
+	var suffix string
 	if strings.HasSuffix(os.Args[0], ".exe") {
 		suffix = ".exe"
 	}
@@ -61,13 +65,15 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	srcAbsBin, err := filepath.Abs(os.Args[0])
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Path", os.Args[0]).Msg("Failed to get absolute path")
+
 		return err
 	}
 	log.Trace().Str("Path", srcAbsBin).Msg("Generated absolute path")
 	err = utils.CreateOrReplaceFileSymlink(srcAbsBin, sshPath)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", srcAbsBin).Str("Link", sshPath).Msg("Failed to create or replace ssh file")
-		return fmt.Errorf("failed to create ssh symlink: %v", err)
+
+		return fmt.Errorf("failed to create ssh symlink: %w", err)
 	}
 	log.Debug().Str("Target", srcAbsBin).Str("Link", sshPath).Msg("SSH symlink created")
 
@@ -75,40 +81,46 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	err = utils.CreateOrReplaceFileSymlink(srcAbsBin, scpPath)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", srcAbsBin).Str("Link", scpPath).Msg("Failed to create or replace scp file")
-		return fmt.Errorf("failed to create scp symlink: %v", err)
+
+		return fmt.Errorf("failed to create scp symlink: %w", err)
 	}
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("Target", srcAbsBin).Str("Link", scpPath).Msg("SCP symlink created")
 
 	agent, err := api.GetAgentByName(cfg.VsCode.Target)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", cfg.VsCode.Target).Msg("Failed to get agent")
+
 		return err
 	}
 	vsCodeSettings := GenVSCodeSettings(sshConfigFile, agent, sshPath)
 
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("SSH config Path", vsCodeSettings.RemoteSSHConfigFile).Str("SSH bin Path", vsCodeSettings.RemoteSSHPath).Str("Remote install path", vsCodeSettings.InstallPath).Msg("Generate vscode config")
 
-	vsCodeSettingsJson, err := json.MarshalIndent(vsCodeSettings, "", "  ")
+	vsCodeSettingsJSON, err := json.MarshalIndent(vsCodeSettings, "", "  ")
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("VsCode settings", fmt.Sprintf("%+v", vsCodeSettings)).Msg("Failed to marshal vscode settings")
+
 		return err
 	}
 
 	settingsPath := filepath.Join(userVsCode, "settings.json")
-	err = utils.WriteToFile(string(vsCodeSettingsJson), settingsPath)
+	err = utils.WriteToFile(string(vsCodeSettingsJSON), settingsPath)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Path", settingsPath).Msg("Failed to write vscode settings to file")
+
 		return err
 	}
 	log.Trace().Str("Agent", cfg.VsCode.Target).Str("Path", settingsPath).Msg("VSCode settings written")
 
-	cmd := exec.Command("code", "--user-data-dir", configDir, "--remote", fmt.Sprintf("ssh-remote+%s", cfg.VsCode.Target), cfg.VsCode.RemotePath)
+	//nolint:gosec
+	cmd := exec.Command("code", "--user-data-dir", configDir, "--remote", "ssh-remote+"+cfg.VsCode.Target, cfg.VsCode.RemotePath)
 
 	cmd.Env = os.Environ()
 	if agent.HasStaticPassword && cfg.ShouldPrompt(agent) {
 		err = cfg.Prompt(agent.Name)
 		if err != nil {
 			log.Error().Err(err).Str("Agent", agent.Name).Msg("Failed to prompt for static password")
+
 			return err
 		}
 		cmd.Env = append(cmd.Env, prefixEnv("PASSWORD", cfg.PrivatePassword))
@@ -126,6 +138,7 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	_, err = cmd.Output()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to run vscode command")
+
 		return err
 	}
 
@@ -150,18 +163,19 @@ func CheckVsCode() error {
 	vscodeCmd := "code"
 	_, err := exec.LookPath(vscodeCmd)
 	if err != nil {
-		return fmt.Errorf("vscode (code) not found in $PATH")
+		return errors.New("vscode (code) not found in $PATH")
 	}
 	cmd := exec.Command(vscodeCmd, "--help")
 
 	out, err := cmd.Output()
 	if err != nil {
-		return fmt.Errorf("vscode is not installed")
+		return errors.New("vscode is not installed")
 	}
 	outStr := string(out)
 	if strings.HasPrefix(outStr, "Visual Studio Code") {
 		return nil
 	}
+
 	return fmt.Errorf("vscode is not installed, expected \"Visual Studio Code*\", got \"%s\"", strings.Split(outStr, "\n")[0])
 }
 
@@ -177,8 +191,7 @@ type VsCodeSettings struct {
 }
 
 func GenVSCodeSettings(sshConfigFile string, agent types.Agent, binPath string) VsCodeSettings {
-
-	sep := ""
+	var sep string
 	if runtime.GOOS == "windows" {
 		sep = "\\"
 	} else {
@@ -197,16 +210,18 @@ func GenVSCodeSettings(sshConfigFile string, agent types.Agent, binPath string) 
 		},
 		InstallPath: targetPath,
 	}
+
 	return settings
 }
 
-func GenSshConfig(target string) string {
+func GenSSHConfig(target string) string {
 	split := strings.Split(target, "@")
 	if len(split) == 1 {
 		return fmt.Sprintf(`Host %s
   Hostname %s
 `, target, target)
 	}
+
 	return fmt.Sprintf(`Host %s
   Hostname %s
   User %s

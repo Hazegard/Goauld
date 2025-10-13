@@ -1,3 +1,4 @@
+// Package http holds the ssh over HTTP client
 package http
 
 import (
@@ -48,20 +49,23 @@ const (
 // of incoming packets which are queued to be returned from a future call to
 // ReadFrom.
 type PollingPacketConn struct {
-	remoteAddr net.Addr
-	clientID   turbotunnel.ClientID
-	ctx        context.Context
-	client     *http.Client
-	cancel     context.CancelFunc
 	// QueuePacketConn is the direct receiver of ReadFrom and WriteTo calls.
 	// sendLoop removes messages from the outgoing queue that were placed
 	// there by WriteTo, and inserts messages into the incoming queue to be
 	// returned from ReadFrom.
 	*turbotunnel.QueuePacketConn
+
+	remoteAddr net.Addr
+	clientID   turbotunnel.ClientID
+	ctx        context.Context
+	client     *http.Client
+	cancel     context.CancelFunc
 }
 
+// PollFunc represent a function used to poll the tunnel.
 type PollFunc func(context.Context, *http.Client, []byte) (io.ReadCloser, error)
 
+// NewPollingPacketConn returns a new PollingPacketConn.
 func NewPollingPacketConn(remoteAddr net.Addr, poll PollFunc, client *http.Client) *PollingPacketConn {
 	clientID := turbotunnel.NewClientID()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -79,6 +83,7 @@ func NewPollingPacketConn(remoteAddr net.Addr, poll PollFunc, client *http.Clien
 			log.Trace().Err(err).Str("Mode", "SSHTTP").Msg("pollLoop() failed")
 		}
 	}()
+
 	return c
 }
 
@@ -86,9 +91,11 @@ func NewPollingPacketConn(remoteAddr net.Addr, poll PollFunc, client *http.Clien
 // QueuePacketConn.
 func (c *PollingPacketConn) Close() error {
 	c.cancel()
+
 	return c.QueuePacketConn.Close()
 }
 
+//nolint:unparam
 func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 	// TODO: compute this dynamically, considering URL length and encoding
 	// overhead.
@@ -179,6 +186,7 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 		}
 
 		now := time.Now()
+		//nolint:revive
 		if limited, _ := rateLimit.IsLimited(now); limited {
 			// Drop packets while rate limited. We drop packets,
 			// rather than indefinitely delay them, to prevent
@@ -194,6 +202,7 @@ func (c *PollingPacketConn) pollLoop(poll PollFunc) error {
 				if err != nil {
 					log.Trace().Err(err).Str("Mode", "SSHTTP").Msgf("poll error, reducing request rate from %.3f/s", rateLimit.rate)
 					rateLimit.MultiplicativeDecrease(now, requestsPerSecondMultiplicativeDecrease)
+
 					return
 				}
 				//nolint:errcheck
@@ -220,11 +229,13 @@ func (c *PollingPacketConn) processIncoming(body io.Reader) error {
 	for {
 		p, err := encapsulation.ReadData(lr)
 		if err != nil {
-			if err == io.EOF && lr.(*io.LimitedReader).N == 0 {
+			//nolint:forcetypeassert
+			if errors.Is(err, io.EOF) && lr.(*io.LimitedReader).N == 0 {
 				err = errors.New("response body too large")
-			} else if err == io.EOF {
+			} else if errors.Is(err, io.EOF) {
 				err = nil
 			}
+
 			return err
 		}
 

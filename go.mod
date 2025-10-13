@@ -37,6 +37,7 @@ require (
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
 
+//nolint:gomoddirectives
 replace github.com/hazegard/socket.io-go => ./vendored/github.com/hazegard/socket.io-go
 
 require (

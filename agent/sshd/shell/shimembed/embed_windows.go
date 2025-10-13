@@ -1,4 +1,4 @@
-package shim_embed
+package shimembed
 
 import (
 	"Goauld/common"
@@ -21,7 +21,7 @@ func DropShimSSHD() (string, func() error, error) {
 	cwd, err := os.Getwd()
 	if err == nil {
 		targetBinary := filepath.Join(cwd, fileName)
-		if err := os.WriteFile(targetBinary, EmbeddedBinary, 0o755); err == nil {
+		if err := os.WriteFile(targetBinary, EmbeddedBinary, 0o750); err == nil {
 
 			cleanup := func() error {
 				return os.Remove(targetBinary)
@@ -41,7 +41,7 @@ func DropShimSSHD() (string, func() error, error) {
 	}
 
 	targetPath := filepath.Join(tmpDir, fileName)
-	if err := os.WriteFile(targetPath, EmbeddedBinary, 0o755); err != nil {
+	if err := os.WriteFile(targetPath, EmbeddedBinary, 0o750); err != nil {
 		return "", cleanDir, fmt.Errorf("write sshd.exe: %w", err)
 	}
 

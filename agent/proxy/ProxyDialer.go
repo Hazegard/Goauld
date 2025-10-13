@@ -1,3 +1,4 @@
+// Package proxy holds the client proxy used by the agent
 package proxy
 
 import (
@@ -17,8 +18,9 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-var ProxyDialerCacheTimeout = 60 * time.Minute
+var proxyDialerCacheTimeout = 60 * time.Minute
 
+//nolint:revive
 type ProxyDialer struct {
 	group          *singleflight.Group
 	cache          *ttlcache.Cache
@@ -26,13 +28,13 @@ type ProxyDialer struct {
 	ProxyOverrides map[string]*url.URL
 }
 
-// NewHttpProxyDialer returns a new ProxyDialer instance
-func NewHttpProxyDialer() *ProxyDialer {
+// NewHTTPProxyDialer returns a new ProxyDialer instance.
+func NewHTTPProxyDialer() *ProxyDialer {
 	//
 	// LRU Cache: Memoize DialContexts for 60 minutes
 	//
 	dialerCache := ttlcache.NewCache()
-	_ = dialerCache.SetTTL(ProxyDialerCacheTimeout)
+	_ = dialerCache.SetTTL(proxyDialerCacheTimeout)
 	dialerCacheGroup := singleflight.Group{}
 
 	return &ProxyDialer{
@@ -49,21 +51,23 @@ func NewHttpProxyDialer() *ProxyDialer {
 // for proxy overrides and also handles tunneling for secure connections. The context is cached for future use
 // to improve performance by reusing previously established connections. The method also handles the connection
 // through proxy authentication (username, password, domain) and sends the CONNECT request for tunneling when necessary.
-func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyplease.DialContext {
+func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyplease.DialContext {
 	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 	cacheKey := addr
-	if pxyUrl != nil && pxyUrl.Host != "" && p.ProxyOverrides == nil {
-		cacheKey = pxyUrl.Host
+	if pxyURL != nil && pxyURL.Host != "" && p.ProxyOverrides == nil {
+		cacheKey = pxyURL.Host
 	}
 
 	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
 	if dctx, err := p.cache.Get(cacheKey); err == nil {
+		//nolint:forcetypeassert
 		return dctx.(proxyplease.DialContext)
 	}
 	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
-	dctx, err, _ := p.group.Do(cacheKey, func() (pxyCtx interface{}, err error) {
+	dctx, err, _ := p.group.Do(cacheKey, func() (interface{}, error) {
+		var pxyCtx proxyplease.DialContext
 		if p.ProxyOverrides != nil {
 			var detected bool
 			hosts := []string{addr, strings.Split(addr, ":")[0]}
@@ -78,7 +82,8 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyple
 					}
 
 					detected = true
-					pxyUrl = pxy
+					pxyURL = pxy
+
 					break
 				}
 			}
@@ -95,7 +100,8 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyple
 								return p.directDialer, nil
 							}
 							detected = true
-							pxyUrl = pxy
+							pxyURL = pxy
+
 							break
 						}
 					}
@@ -109,14 +115,14 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyple
 			// Check if we need to tunnel
 			//
 			if detected {
-				if tunnelPxy, ok := p.ProxyOverrides[pxyUrl.Host]; ok {
+				if tunnelPxy, ok := p.ProxyOverrides[pxyURL.Host]; ok {
 					var tunnelctx proxyplease.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 						conn, err := proxyplease.NewDialContext(proxyplease.Proxy{
 							URL:      tunnelPxy,
-							Username: config.Get().HttpProxyUsername(),
-							Password: config.Get().HttpProxyPassword(),
-							Domain:   config.Get().HttpProxyDomain(),
-						})(ctx, network, pxyUrl.Host)
+							Username: config.Get().HTTPProxyUsername(),
+							Password: config.Get().HTTPProxyPassword(),
+							Domain:   config.Get().HTTPProxyDomain(),
+						})(ctx, network, pxyURL.Host)
 
 						if err != nil {
 							return conn, err
@@ -146,9 +152,11 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyple
 						if resp.StatusCode == http.StatusOK {
 							return conn, nil
 						}
+
 						return conn, errors.New(resp.Status)
 					}
 					_ = p.cache.Set(cacheKey, tunnelctx)
+
 					return tunnelctx, nil
 				}
 			}
@@ -156,22 +164,24 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyUrl *url.URL) proxyple
 
 		log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 		pxyCtx = proxyplease.NewDialContext(proxyplease.Proxy{
-			URL:       pxyUrl,
-			Username:  config.Get().HttpProxyUsername(),
-			Password:  config.Get().HttpProxyPassword(),
-			Domain:    config.Get().HttpProxyDomain(),
+			URL:       pxyURL,
+			Username:  config.Get().HTTPProxyUsername(),
+			Password:  config.Get().HTTPProxyPassword(),
+			Domain:    config.Get().HTTPProxyDomain(),
 			TargetURL: &url.URL{Host: addr, Scheme: scheme},
 		})
 
-		err = p.cache.Set(cacheKey, pxyCtx)
+		err := p.cache.Set(cacheKey, pxyCtx)
 
 		log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
-		return
+
+		return pxyCtx, err
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to connect to proxy")
 	}
 	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
+	//nolint:forcetypeassert
 	return dctx.(proxyplease.DialContext)
 }

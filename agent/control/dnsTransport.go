@@ -1,13 +1,15 @@
+// Package control holds the control socket connection
 package control
 
 import (
 	"context"
 	"crypto/tls"
-	"github.com/xtaci/smux"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/xtaci/smux"
 )
 
 // The DNSTransport is used to tunnel the control socket when running in DNS-only mode.
@@ -32,20 +34,21 @@ func (d dummyAddr) String() string  { return string(d) }
 // newSmuxHTTPandHTTPSClient creates and returns an HTTP client that supports both HTTP and HTTPS protocols
 // over an existing smux stream. It uses custom dial functions for HTTP and TLS connections over the stream.
 // The function returns a configured *http.Client with a custom Transport that handles non-TLS and TLS connections.
-// This client is used in DNS only mode as the HTTP traffic must go within a DNS tunnel
+// This client is used in DNS only mode as the HTTP traffic must go within a DNS tunnel.
 func newSmuxHTTPandHTTPSClient(stream *smux.Stream) *http.Client {
-	dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
+	dialContext := func(_ context.Context, _, _ string) (net.Conn, error) {
 		return &streamConn{stream}, nil
 	}
 
-	dialTLSContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
+	dialTLSContext := func(_ context.Context, _, addr string) (net.Conn, error) {
 		host, _, err := net.SplitHostPort(addr)
 		if err != nil {
 			return nil, err
 		}
 
 		tlsConn := tls.Client(&streamConn{stream}, &tls.Config{
-			ServerName:         host,
+			ServerName: host,
+			//nolint:gosec
 			InsecureSkipVerify: true, // for testing only!
 		})
 
@@ -70,12 +73,11 @@ func newSmuxHTTPandHTTPSClient(stream *smux.Stream) *http.Client {
 // with the stream.
 func NewSmuxTransport(stream *smux.Stream) *http.Transport {
 	return &http.Transport{
-		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 			return &streamConn{stream}, nil
 		},
 
-		DialTLSContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-
+		DialTLSContext: func(_ context.Context, _, addr string) (net.Conn, error) {
 			host, _, err := net.SplitHostPort(addr)
 			if err != nil {
 				// fallback for addr without port
@@ -83,7 +85,8 @@ func NewSmuxTransport(stream *smux.Stream) *http.Transport {
 			}
 
 			tlsConn := tls.Client(&streamConn{stream}, &tls.Config{
-				ServerName:         host,
+				ServerName: host,
+				//nolint:gosec
 				InsecureSkipVerify: true,
 			})
 

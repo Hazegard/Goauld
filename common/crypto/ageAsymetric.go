@@ -1,3 +1,4 @@
+// Package crypto is used to perform crypto related operations
 package crypto
 
 import (
@@ -10,12 +11,12 @@ import (
 
 // ageAsymmetric handle the asymmetric cryptography using the age library
 
-// AsymEncrypt encrypt the plaintext using the provided age public key
+// AsymEncrypt encrypt the plaintext using the provided age public key.
 func AsymEncrypt(publicKey string, plainText string) ([]byte, error) {
 	// Parse the recipient's public key
 	recipients, err := age.ParseX25519Recipient(publicKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse public key: %v", err)
+		return nil, fmt.Errorf("failed to parse public key: %w", err)
 	}
 
 	// Create a buffer to write encrypted data
@@ -24,17 +25,17 @@ func AsymEncrypt(publicKey string, plainText string) ([]byte, error) {
 	// Create a new age encryptor targeting the recipient
 	writer, err := age.Encrypt(&encryptedBuffer, recipients)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create encryptor: %v", err)
+		return nil, fmt.Errorf("failed to create encryptor: %w", err)
 	}
 
 	// Write the plaintext to the encryptor
 	if _, err := io.WriteString(writer, plainText); err != nil {
-		return nil, fmt.Errorf("failed to write plaintext: %v", err)
+		return nil, fmt.Errorf("failed to write plaintext: %w", err)
 	}
 
 	// Close the writer to finalize encryption
 	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to finalize encryption: %v", err)
+		return nil, fmt.Errorf("failed to finalize encryption: %w", err)
 	}
 
 	// Return the encrypted data
@@ -46,7 +47,7 @@ func AsymDecrypt(privateKey string, encryptedData []byte) (string, error) {
 	// Parse the recipient's private key
 	identity, err := age.ParseX25519Identity(privateKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse private key: %v", err)
+		return "", fmt.Errorf("failed to parse private key: %w", err)
 	}
 
 	// Create a buffer to hold the encrypted data
@@ -55,14 +56,14 @@ func AsymDecrypt(privateKey string, encryptedData []byte) (string, error) {
 	// Create a new age decryptor using the private key (identity)
 	reader, err := age.Decrypt(encryptedBuffer, identity)
 	if err != nil {
-		return "", fmt.Errorf("failed to create decryptor: %v", err)
+		return "", fmt.Errorf("failed to create decryptor: %w", err)
 	}
 
 	// Read the decrypted data
 	var decryptedBuffer bytes.Buffer
 	_, err = io.Copy(&decryptedBuffer, reader)
 	if err != nil {
-		return "", fmt.Errorf("failed to read decrypted data: %v", err)
+		return "", fmt.Errorf("failed to read decrypted data: %w", err)
 	}
 
 	// Return the decrypted plaintext as a string

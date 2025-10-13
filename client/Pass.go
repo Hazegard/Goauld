@@ -18,9 +18,8 @@ type Password struct {
 	Args  []string `arg:"" optional:""`
 }
 
-// Run executes the pass subcommand
+// Run executes the pass subcommand.
 func (p *Password) Run(api *api.API, cfg ClientConfig) error {
-
 	if len(cfg.Pass.Args) > 0 && cfg.Pass.Agent == "" {
 		cfg.Pass.Agent = cfg.Pass.Args[0]
 	}
@@ -36,25 +35,33 @@ func (p *Password) Run(api *api.API, cfg ClientConfig) error {
 	if len(cfg.Pass.Args) >= 1 {
 		input := cfg.Pass.Args[0]
 		serverString := fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost())
-		agentString := fmt.Sprintf("%s@%s", agent.Name, agent.Id)
+		agentString := fmt.Sprintf("%s@%s", agent.Name, agent.ID)
 
 		if strings.Contains(input, agentString) {
-			fmt.Println(staticPwd + agent.SshPasswd)
+			//nolint:forbidigo
+			fmt.Println(staticPwd + agent.SSHPasswd)
+
 			return nil
 		} else if strings.Contains(input, serverString) {
+			//nolint:forbidigo
 			fmt.Println(GenerateServerPassword(staticPwd, agent.OneTimePassword))
+
 			return nil
 		}
 	}
 
 	switch cfg.Pass.Type {
 	case "otp":
+		//nolint:forbidigo
 		fmt.Println(GenerateServerPassword(staticPwd, agent.OneTimePassword))
 	case "agent":
-		fmt.Println(staticPwd + agent.SshPasswd)
+		//nolint:forbidigo
+		fmt.Println(staticPwd + agent.SSHPasswd)
 	default:
-		fmt.Printf("OTP:   %s\nAgent: %s\n", GenerateServerPassword(staticPwd, agent.OneTimePassword), agent.SshPasswd)
+		//nolint:forbidigo
+		fmt.Printf("OTP:   %s\nAgent: %s\n", GenerateServerPassword(staticPwd, agent.OneTimePassword), agent.SSHPasswd)
 	}
+
 	return nil
 }
 
@@ -64,6 +71,7 @@ func GenerateServerPassword(agentPassword string, serverPassword string) string 
 	if err != nil {
 		return ""
 	}
+
 	return string(res)
 }
 
@@ -72,6 +80,7 @@ func (p *Password) GetStaticPassword(cfg ClientConfig) (string, error) {
 	if len(pwd) > 72 {
 		return "", bcrypt.ErrPasswordTooLong
 	}
+
 	return pwd, nil
 }
 func (p *Password) getStaticPassword(cfg ClientConfig) string {
@@ -92,5 +101,6 @@ func (p *Password) getStaticPassword(cfg ClientConfig) string {
 		return pass
 	}
 	log.Debug().Str("Agent", cfg.Pass.Agent).Msg("No static password found, trying empty static password")
+
 	return ""
 }

@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/negroni"
 )
 
-// MainRouter is the primary router that listens to
+// MainRouter is the primary router that listens to.
 type MainRouter struct {
 	controlServer *sio.Server
 	wsshHandler   *transport.WSshHandler
@@ -33,7 +33,8 @@ type MainRouter struct {
 	quicSSH       *transport.QUICServer
 }
 
-func NewHttpRouter(controlServer *control.SocketIO,
+// NewHTTPRouter returns an HTTP router responsible for handling all HTTP related connections.
+func NewHTTPRouter(controlServer *control.SocketIO,
 	wssh *transport.WSshHandler,
 	sshttp *transport.SSHHttpServer,
 	tlssh *transport.TLSSHServer,
@@ -44,7 +45,6 @@ func NewHttpRouter(controlServer *control.SocketIO,
 ) (*MainRouter, error) {
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
-	// router.Handle("/socket.io/{$}", controlServer.Server)
 	router.Handle("/live/{agentId}/{$}", controlServer.Server)
 	router.Handle("/wssh/{agentId}", wssh)
 	router.Handle("/sshttp/{agentId}", sshttp)
@@ -61,6 +61,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		if strings.HasPrefix(r.URL.Path, "/sshttp") && r.Method == http.MethodPost {
 			next(w, r)
+
 			return
 		}
 
@@ -70,7 +71,7 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	n.Use(negroni.NewRecovery())
 	n.UseHandler(router)
 	server := &http.Server{
-		// Addr:    config.Get().LocalHttpAddr(),
+		// Addr:    config.Get().LocalHTTPAddr(),
 		Handler: n,
 
 		// It is always a good practice to set timeouts.
@@ -98,42 +99,43 @@ func NewHttpRouter(controlServer *control.SocketIO,
 	}
 
 	// If the TLS is enabled, configure the server to use TLS
-	if config.Get().Tls {
+	if config.Get().TLS {
 		if config.Get().IsCustomTLS() {
-			cert, err := tls.LoadX509KeyPair(config.Get().TlsCert, config.Get().TlsKey)
+			cert, err := tls.LoadX509KeyPair(config.Get().TLSCert, config.Get().TLSKey)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to load key pair")
 			}
+			//nolint:gosec
 			tlsC := &tls.Config{
 				NextProtos:   []string{"http/1.1"},
 				Certificates: []tls.Certificate{cert},
-				//nolint:staticcheck // SA1019
+				//nolint:staticcheck,gosec // SA1019
 				MinVersion: tls.VersionSSL30,
 			}
 			httprouter.tlsConfig = tlsC
-			quicTls := &tls.Config{
+			quicTLS := &tls.Config{
 				NextProtos:   []string{"quic"},
 				Certificates: []tls.Certificate{cert},
 				MinVersion:   tls.VersionTLS13,
 			}
 
-			httprouter.server3.TLSConfig = quicTls
+			httprouter.server3.TLSConfig = quicTLS
 		} else {
 			// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 			certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
 			certmagic.DefaultACME.Agreed = true
 			certmagic.DefaultACME.Email = "mail@example.com"
 
-			tlsConfig, err := certmagic.TLS(config.Get().GetTlsDomains())
+			tlsConfig, err := certmagic.TLS(config.Get().GetTLSDomains())
 			if err != nil {
 				return nil, err
 			}
 			tlsConfig.NextProtos = []string{"http/1.1"}
-			//nolint:staticcheck // SA1019
+			//nolint:staticcheck,gosec // SA1019
 			tlsConfig.MinVersion = tls.VersionSSL30
 			httprouter.tlsConfig = tlsConfig
 
-			quicConfig, err := certmagic.TLS(config.Get().GetTlsDomains())
+			quicConfig, err := certmagic.TLS(config.Get().GetTLSDomains())
 			if err != nil {
 				return nil, err
 			}
@@ -142,18 +144,17 @@ func NewHttpRouter(controlServer *control.SocketIO,
 
 			httprouter.server3.TLSConfig = quicConfig
 		}
-
 	}
 
 	return httprouter, nil
 }
 
-// Serve serves the Server
+// Serve serves the Server.
 func (router *MainRouter) Serve() error {
 	var err error
 
 	// If the TLS is enabled, run the TLS server in a dedicated goroutine
-	if config.Get().Tls {
+	if config.Get().TLS {
 		go router.ServeTLS()
 
 		if config.Get().Quic {
@@ -161,17 +162,19 @@ func (router *MainRouter) Serve() error {
 		}
 	}
 	// serve the HTTP server
-	listener, err := net.Listen("tcp", config.Get().LocalHttpAddr())
+	listener, err := net.Listen("tcp", config.Get().LocalHTTPAddr())
 	if err != nil {
 		return err
 	}
+	//nolint:forcetypeassert
 	config.Get().UpdateHTTPAddr(listener.Addr().(*net.TCPAddr).Port)
 
-	log.Info().Str("Address", config.Get().LocalHttpAddr()).Msgf("HTTP server listening")
+	log.Info().Str("Address", config.Get().LocalHTTPAddr()).Msgf("HTTP server listening")
 	err = router.server.Serve(listener)
 
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
+
 	return nil
 }

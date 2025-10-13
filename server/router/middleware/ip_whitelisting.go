@@ -1,4 +1,4 @@
-package midleware
+package middleware
 
 import (
 	"Goauld/common/log"
@@ -21,6 +21,7 @@ func WhitelistMiddleware(allowedIPs []string) negroni.HandlerFunc {
 			// If not allowed, return 403 Forbidden
 			log.Get().Trace().Str("ClientIP", clientIP).Msg("ClientIP not allowed")
 			http.Error(w, net.Forbidden, http.StatusForbidden)
+
 			return
 		}
 
@@ -29,7 +30,7 @@ func WhitelistMiddleware(allowedIPs []string) negroni.HandlerFunc {
 	}
 }
 
-// Helper function to retrieve the client IP address
+// Helper function to retrieve the client IP address.
 func getClientIP(r *http.Request) string {
 	return strings.Split(r.RemoteAddr, ":")[0]
 }

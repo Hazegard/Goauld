@@ -1,3 +1,4 @@
+// Package main holds the server entrypoint
 package main
 
 import (
@@ -21,10 +22,13 @@ func main() {
 	_, _, err := config.InitServer()
 	if err != nil {
 		log.Error().Err(err).Msg("error initializing the server")
+
 		return
 	}
 	if config.Get().Version {
+		//nolint:forbidigo
 		fmt.Println(common.GetVersion())
+
 		return
 	}
 
@@ -32,15 +36,19 @@ func main() {
 		c, err := config.Get().GenerateYAMLConfig()
 		if err != nil {
 			log.Error().Err(err).Msg("error generating the agent config")
+
 			return
 		}
+		//nolint:forbidigo
 		fmt.Println(c)
+
 		return
 	}
 	// Initialize the database
 	db, err := persistence.InitDB()
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing database")
+
 		return
 	}
 	// Reset the connected status of all agents when restarting
@@ -53,6 +61,7 @@ func main() {
 	sioServer, err := control.InitSocketIOServer(agentStore, db)
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing socketio server")
+
 		return
 	}
 	wssh := transport.NewWSshHandler(agentStore, db)
@@ -67,9 +76,10 @@ func main() {
 	quicRouter := transport.NewQUICServer(agentStore, db)
 
 	// Initialize the HTTP router
-	r, err := router.NewHttpRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter, staticRouter, quicRouter)
+	r, err := router.NewHTTPRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter, staticRouter, quicRouter)
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing http router")
+
 		return
 	}
 
@@ -89,6 +99,7 @@ func main() {
 			dnsServer, err := transport.NewDNSSHServer(agentStore, db)
 			if err != nil {
 				log.Error().Err(err).Msgf("error initializing dns server")
+
 				return
 			}
 			err = dnsServer.Run()
@@ -96,7 +107,6 @@ func main() {
 				log.Error().Err(err).Msg("error starting the DNS server")
 			}
 		}()
-
 	}
 
 	// waits for the end

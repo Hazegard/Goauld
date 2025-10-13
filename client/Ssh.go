@@ -19,18 +19,18 @@ import (
 	"github.com/aymanbagabas/go-pty"
 )
 
-type Ssh struct {
+type SSH struct {
 	Target         string   `arg:"" help:"The target agent." optional:""`
 	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
-	Http           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:""  optional:"" help:"Forward the HTTP proxy ports on the local host."`
+	HTTP           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:"" optional:"" help:"Forward the HTTP proxy ports on the local host."`
 	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
-	LocalHttpPort  int      `default:"${_ssh_local_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Local port to bind the SOCKS to."`
-	Ssh            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:""  optional:"" help:"Connect to the agent SSHD service."`
+	LocalHTTPPort  int      `default:"${_ssh_local_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Local port to bind the SOCKS to."`
+	SSH            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:"" optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
-	SshOpts        []string `short:"o"`
-	SshConfFile    string   `short:"F"`
-	SshArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
+	SSHOpts        []string `short:"o"`
+	SSHConfFile    string   `short:"F"`
+	SSHArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
 }
 
 type Command struct {
@@ -39,7 +39,7 @@ type Command struct {
 	Env        []string
 }
 
-// InlineEnv modify the command to use the env binary to load the environment variables
+// InlineEnv modify the command to use the env binary to load the environment variables.
 func (c *Command) InlineEnv() *Command {
 	args := c.Env
 	args = append(args, c.Executable)
@@ -47,28 +47,30 @@ func (c *Command) InlineEnv() *Command {
 	c.Args = args
 	c.Executable = "env"
 	c.Env = []string{}
+
 	return c
 }
 
-// String returns the command as a string
+// String returns the command as a string.
 func (c *Command) String() string {
 	return fmt.Sprintf("%s %s", c.Executable, strings.Join(c.Args, " "))
 }
 
-// StringShell returns the command as a string, each parameter escaped by quotes
+// StringShell returns the command as a string, each parameter escaped by quotes.
 func (c *Command) StringShell() string {
-	args := []string{}
+	var args []string
 	for _, arg := range c.Args {
 		args = append(args, fmt.Sprintf("'%s'", arg))
 	}
+
 	return fmt.Sprintf("%s %s", c.Executable, strings.Join(args, " "))
 }
 
 func (c *Command) Execute(cfg ClientConfig, target string, inPty bool) error {
 	var err error
-	for attempt := 0; attempt <= 3; attempt++ {
-		hasFailed := false
-		err, hasFailed = c.execute(cfg, inPty)
+	for attempt := range 4 {
+		var hasFailed bool
+		hasFailed, err = c.execute(cfg, inPty)
 		if !hasFailed {
 			return err
 		}
@@ -76,11 +78,13 @@ func (c *Command) Execute(cfg ClientConfig, target string, inPty bool) error {
 			err = cfg.Prompt(target)
 			if err != nil {
 				log.Warn().Err(err).Msg("error while retrieving password from command line, ignoring...")
+
 				break
 			}
 			c.UpdatePwd(cfg.PrivatePassword)
 		}
 	}
+
 	return err
 }
 
@@ -88,14 +92,15 @@ func (c *Command) UpdatePwd(newPwd string) {
 	for i := range c.Env {
 		if strings.HasPrefix(c.Env[i], prefixEnv("PASSWORD", "")) {
 			c.Env[i] = prefixEnv("PASSWORD", newPwd)
+
 			return
 		}
 	}
 	c.Env = append([]string{prefixEnv("PASSWORD", newPwd)}, c.Env...)
 }
 
-// Execute executes the command and adds the environment variables if needed
-func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
+// Execute executes the command and adds the environment variables if needed.
+func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 	var err error
 	var stdoutPipe io.ReadCloser
 	var stderrPipe io.ReadCloser
@@ -106,7 +111,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
 		var ptyFile pty.Pty
 		ptyFile, err = pty.New()
 		if err != nil {
-			return err, false
+			return false, err
 		}
 		cmd := ptyFile.Command(c.Executable, c.Args...)
 		if len(c.Env) > 0 {
@@ -126,6 +131,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
 			return cmd.Wait()
 		}
 	} else {
+		//nolint:gosec
 		cmd := exec.Command(c.Executable, c.Args...)
 		if len(c.Env) > 0 {
 			cmd.Env = append(os.Environ(), c.Env...)
@@ -134,11 +140,11 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
 		cmd.Stdin = os.Stdin
 		stdoutPipe, err = cmd.StdoutPipe()
 		if err != nil {
-			return err, false
+			return false, err
 		}
 		stderrPipe, err = cmd.StderrPipe()
 		if err != nil {
-			return err, false
+			return false, err
 		}
 		run = func() error {
 			return cmd.Start()
@@ -146,7 +152,6 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
 		wait = func() error {
 			return cmd.Wait()
 		}
-
 	}
 
 	// Tee stdout
@@ -191,6 +196,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
 			line := scanner.Text()
 			if strings.Contains(line, "Permission denied, please try again.") {
 				hasAuthFailed.Store(true)
+
 				break
 			}
 		}
@@ -208,6 +214,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
 				if err != nil {
 					log.Warn().Err(err).Msg("Failed to update config file")
 				}
+
 				break
 			}
 		}
@@ -216,67 +223,68 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (error, bool) {
 
 	err = run()
 	if err != nil {
-		return err, hasAuthFailed.Load()
+		return hasAuthFailed.Load(), err
 	}
 
 	err = wait()
 
 	wg.Wait()
-	return err, hasAuthFailed.Load()
+
+	return hasAuthFailed.Load(), err
 }
 
-// Run execute the ssh subcommand
-func (e *Ssh) Run(api *api.API, cfg ClientConfig) error {
-
-	for i := range e.SshArgs {
-		if cfg.Ssh.SshArgs[i] == "-F" {
-			cfg.Ssh.SshConfFile = cfg.Ssh.SshArgs[i+1]
+// Run execute the ssh subcommand.
+func (e *SSH) Run(api *api.API, cfg ClientConfig) error {
+	for i := range e.SSHArgs {
+		if cfg.SSH.SSHArgs[i] == "-F" {
+			cfg.SSH.SSHConfFile = cfg.SSH.SSHArgs[i+1]
 		}
 	}
 	if cfg.Socks.Target != "" {
 		// we are in socks mode, so apply the socks option to the ssh
-		cfg.Ssh = Ssh{
+		cfg.SSH = SSH{
 			Target:         cfg.Socks.Target,
 			Socks:          cfg.Socks.Socks,
-			Http:           cfg.Ssh.Http,
+			HTTP:           cfg.SSH.HTTP,
 			LocalSocksPort: cfg.Socks.LocalSocksPort,
-			LocalHttpPort:  cfg.Socks.LocalHttpPort,
-			Ssh:            false,
-			Print:          cfg.Ssh.Print,
+			LocalHTTPPort:  cfg.Socks.LocalHTTPPort,
+			SSH:            false,
+			Print:          cfg.SSH.Print,
 			Proxy:          false,
-			SshArgs:        cfg.Socks.SshArgs,
-			SshConfFile:    cfg.ConfigFile,
+			SSHArgs:        cfg.Socks.SSHArgs,
+			SSHConfFile:    cfg.ConfigFile,
 		}
 	}
 	if e.Proxy {
 		e.Socks = false
-		e.Http = false
+		e.HTTP = false
 	}
+
 	return e.Execute(api, cfg)
 }
 
-// Execute start the ssh
-func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
-	if len(e.SshArgs) == 1 && e.SshArgs[0] == "" {
-		e.SshArgs = []string{}
+// Execute start the ssh.
+func (e *SSH) Execute(api *api.API, cfg ClientConfig) error {
+	if len(e.SSHArgs) == 1 && e.SSHArgs[0] == "" {
+		e.SSHArgs = []string{}
 	}
-	agent, err := api.GetAgentByName(cfg.Ssh.Target)
+	agent, err := api.GetAgentByName(cfg.SSH.Target)
 	if err != nil {
-		log.Warn().Err(err).Str("target", cfg.Ssh.Target).Msg("Failed to get agent")
-		cfg.Ssh.Target, err = GetFromSSHConfig(cfg.Ssh.SshConfFile, cfg.Ssh.Target)
+		log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to get agent")
+		cfg.SSH.Target, err = GetFromSSHConfig(cfg.SSH.SSHConfFile, cfg.SSH.Target)
 		if err != nil {
-			log.Warn().Err(err).Str("SSH Config file", cfg.Ssh.SshConfFile).Str("target", cfg.Ssh.Target).Msg("Failed to get agent")
+			log.Warn().Err(err).Str("SSH Config file", cfg.SSH.SSHConfFile).Str("target", cfg.SSH.Target).Msg("Failed to get agent")
 		}
 
-		log.Debug().Str("Target", cfg.Ssh.Target).Msg("Trying using ssh_config file")
+		log.Debug().Str("Target", cfg.SSH.Target).Msg("Trying using ssh_config file")
 
-		agent, err = api.GetAgentByName(cfg.Ssh.Target)
+		agent, err = api.GetAgentByName(cfg.SSH.Target)
 		if err != nil {
-			return fmt.Errorf("failed to get agent by name (%s): %s", cfg.Ssh.Target, err)
+			return fmt.Errorf("failed to get agent by name (%s): %w", cfg.SSH.Target, err)
 		}
 	}
 	if !agent.Connected {
-		return fmt.Errorf("unable to connect, agent %s (%s) not connected", agent.Name, agent.Id)
+		return fmt.Errorf("unable to connect, agent %s (%s) not connected", agent.Name, agent.ID)
 	}
 
 	exePath, err := getPath()
@@ -293,7 +301,9 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 
 	cmd := e.buildCommand(cfg, agent, exePath)
 	if e.Print {
+		//nolint:forbidigo
 		fmt.Println(cmd.InlineEnv().String())
+
 		return nil
 	}
 	if e.Proxy {
@@ -310,35 +320,38 @@ func (e *Ssh) Execute(api *api.API, cfg ClientConfig) error {
 			if exitStatus == 255 || exitStatus == 4294967295 {
 				return nil
 			}
-			return err
-		} else {
+
 			return err
 		}
+
+		return err
 	}
+
 	return nil
 }
 
-// buildCommand build the ssh command
-func (e *Ssh) buildCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
+// buildCommand build the ssh command.
+func (e *SSH) buildCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	if e.Proxy {
-		return e.buildTunnelSshCommand(cfg, agent, exePath)
+		return e.buildTunnelSSHCommand(cfg, agent, exePath)
 	}
-	if e.Ssh {
-		return e.buildOuterSshCommand(cfg, agent, exePath)
+	if e.SSH {
+		return e.buildOuterSSHCommand(cfg, agent, exePath)
 	}
-	cmd := e.buildTunnelSshCommand(cfg, agent, exePath)
+	cmd := e.buildTunnelSSHCommand(cfg, agent, exePath)
 	cmd.Args = append(cmd.Args, "-N")
+
 	return cmd
 }
 
-// buildOuterSshCommand build the outer SSH command. This SSH command will be executed in second
-// through the ProxyCommand
-func (e *Ssh) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
-	innerCmd := e.buildTunnelSshCommand(cfg, agent, exePath)
+// buildOuterSSHCommand build the outer SSH command. This SSH command will be executed in second
+// through the ProxyCommand.
+func (e *SSH) buildOuterSSHCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
+	innerCmd := e.buildTunnelSSHCommand(cfg, agent, exePath)
 	cmd := Command{}
 	cmd.Executable = "ssh"
-	cmd.Args = buildAllSshOptions(cfg)
-	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.Ssh.Target)
+	cmd.Args = buildAllSSHOptions(cfg)
+	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.SSH.Target)
 	if e.Print {
 		for i := range cmd.Env {
 			cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
@@ -349,45 +362,47 @@ func (e *Ssh) buildOuterSshCommand(cfg ClientConfig, agent types.Agent, exePath 
 	if e.Print {
 		sep = "'"
 	}
-	proxyCmd := ""
+	var proxyCmd string
 	if e.Print {
 		proxyCmd = fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.InlineEnv().String(), sep)
 	} else {
 		proxyCmd = fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.String(), sep)
 	}
 	cmd.Args = append(cmd.Args, proxyCmd)
-	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.Id))
-	cmd.Args = append(cmd.Args, cfg.Ssh.SshArgs...)
+	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.ID))
+	cmd.Args = append(cmd.Args, cfg.SSH.SSHArgs...)
+
 	return cmd
 }
 
-// buildTunnelSshCommand create the ssh command used in the SSH proxycommand
+// buildTunnelSSHCommand create the ssh command used in the SSH proxycommand
 // this SSH command is the tunnel one in the ssh command, but is actually the outer one
-// when being executed (i.e.: it will be executed first)
-func (e *Ssh) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
+// when being executed (i.e.: it will be executed first).
+func (e *SSH) buildTunnelSSHCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	cmd := Command{
 		Executable: "ssh",
 	}
-	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.Ssh.Target)
+	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.SSH.Target)
 	for i := range cmd.Env {
 		cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
 	}
-	cmd.Args = buildInnerSshOptions(cfg)
-	cmd.Args = append(cmd.Args, fmt.Sprintf("-p%s", cfg.GetSshdPort()))
-	if e.Ssh || e.Proxy {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("-W127.0.0.1:%s", agent.GetSSHPort()))
+	cmd.Args = buildInnerSSHOptions(cfg)
+	cmd.Args = append(cmd.Args, "-p"+cfg.GetSshdPort())
+	if e.SSH || e.Proxy {
+		cmd.Args = append(cmd.Args, "-W127.0.0.1:"+agent.GetSSHPort())
 	}
 	if e.Socks && agent.GetSocksPort() != "0" && agent.GetSocksPort() != ":" {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Ssh.LocalSocksPort, agent.GetSocksPort()))
+		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.SSH.LocalSocksPort, agent.GetSocksPort()))
 	}
-	if e.Http && agent.GetHttpPort() != "0" && agent.GetHttpPort() != "/" {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.Ssh.LocalHttpPort, agent.GetHttpPort()))
+	if e.HTTP && agent.GetHTTPPort() != "0" && agent.GetHTTPPort() != "/" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.SSH.LocalHTTPPort, agent.GetHTTPPort()))
 	}
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
+
 	return cmd
 }
 
-// buildEnvironments returns the environment variables required to access the agents
+// buildEnvironments returns the environment variables required to access the agents.
 func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target string) []string {
 	envs := []string{
 		"SSH_ASKPASS_REQUIRE=force",
@@ -403,11 +418,12 @@ func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target
 	if cfg.IsFlagInCommandLine("--access-token", "") {
 		envs = append(envs, prefixEnv("ACCESS_TOKEN", cfg.AccessToken))
 	}
+
 	return envs
 }
 
-// buildAllSshOptions returns the ssh options that are in common to the inner and the outer ssh
-func buildAllSshOptions(cfg ClientConfig) []string {
+// buildAllSSHOptions returns the ssh options that are in common to the inner and the outer ssh.
+func buildAllSSHOptions(cfg ClientConfig) []string {
 	options := []string{
 		"-oStrictHostKeyChecking=no",
 		"-oUserKnownHostsFile=/dev/null",
@@ -418,27 +434,29 @@ func buildAllSshOptions(cfg ClientConfig) []string {
 	}
 
 	if cfg.Verbose > 0 {
-		options = append(options, fmt.Sprintf("-%s", strings.Repeat("v", cfg.Verbose)))
+		options = append(options, "-"+strings.Repeat("v", cfg.Verbose))
 	}
+
 	return options
 }
 
-// buildSshOptions returns the SSH options required to access the agents
-func buildInnerSshOptions(cfg ClientConfig) []string {
+// buildSshOptions returns the SSH options required to access the agents.
+func buildInnerSSHOptions(cfg ClientConfig) []string {
 	options := []string{
 		"-oClearAllForwardings=no",
-		//"-vv",
+		// "-vv",
 	}
-	return append(options, buildAllSshOptions(cfg)...)
+
+	return append(options, buildAllSSHOptions(cfg)...)
 }
 
 // prefixEnv adds the application name to the provided value and returns it
-// as an environment variable
+// as an environment variable.
 func prefixEnv(name string, value string) string {
-	return fmt.Sprintf("%s_%s=%s", strings.ToUpper(common.APP_NAME), strings.ToUpper(name), value)
+	return fmt.Sprintf("%s_%s=%s", strings.ToUpper(common.AppName), strings.ToUpper(name), value)
 }
 
-// getPath returns the path of the binary currently being executed
+// getPath returns the path of the binary currently being executed.
 func getPath() (string, error) {
 	// Get the executable's path
 	exePath, err := os.Executable()
@@ -469,6 +487,7 @@ func ExecuteSystemSSH(args ...string) {
 	err := cmd.Run()
 	if err != nil {
 		log.Error().Err(err).Msg("error running ssh")
+
 		return
 	}
 }

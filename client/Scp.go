@@ -13,27 +13,26 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
-// Scp wraps the scp command to copy files between the host and the agent
+// Scp wraps the scp command to copy files between the host and the agent.
 type Scp struct {
 	Target string `kong:"-"`
 	Print  bool   `default:"${_scp_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	//Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
-	//Destination string   `default:"${_scp_destination}" arg:"" name:"destination" yaml:"destination" help:"Destination to copy."`
-	SshOpts     []string `short:"o"`
-	SshConfFile string   `short:"F"`
+	// Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
+	// Destination string   `default:"${_scp_destination}" arg:"" name:"destination" yaml:"destination" help:"Destination to copy."`
+	SSHOpts     []string `short:"o"`
+	SSHConfFile string   `short:"F"`
 	Paths       []string `arg:"" name:"paths" help:"List of paths to scp" passthrough:""`
 
-	//ScpArgs     []string `arg:"" passthrough:"" optional:""`
+	// ScpArgs     []string `arg:"" passthrough:"" optional:""`
 }
 
-// Run execute the scp command
+// Run execute the scp command.
 func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
 	return s.Execute(api, cfg)
 }
 
-// GetTarget parses the input and fetches the target agent, whether it is in the source or destination of the scp command
+// GetTarget parses the input and fetches the target agent, whether it is in the source or destination of the scp command.
 func (s *Scp) GetTarget() (string, error) {
-
 	for _, p := range s.Paths {
 		isRemote, target := ExtractRemote(p)
 		if isRemote {
@@ -53,7 +52,7 @@ func (s *Scp) GetTarget() (string, error) {
 	return "", fmt.Errorf("SCP target not found in [%s]", strings.Join(s.Paths, ", "))
 }
 
-// ExtractRemote tries to find the remote agent, whether located in the source or in the destination of the command
+// ExtractRemote tries to find the remote agent, whether located in the source or in the destination of the command.
 func ExtractRemote(s string) (bool, string) {
 	parts := strings.Split(s, ":")
 	if len(parts) == 1 {
@@ -68,23 +67,24 @@ func ExtractRemote(s string) (bool, string) {
 	if windriveRegex.MatchString(remaining) {
 		return true, part
 	}
+
 	return true, part
 }
 
-// Execute start the ssh
+// Execute start the ssh.
 func (s *Scp) Execute(api *api.API, cfg ClientConfig) error {
 	target, err := s.GetTarget()
 	if err != nil {
 		return err
 	}
 	s.Target = target
-	cfg.Scp.Target = target
-	agent, err := api.GetAgentByName(cfg.Scp.Target)
+	cfg.SCP.Target = target
+	agent, err := api.GetAgentByName(cfg.SCP.Target)
 	if err != nil {
 		return err
 	}
 	if !agent.Connected {
-		return fmt.Errorf("unable to connect, agent %s (%s) not connected", agent.Name, agent.Id)
+		return fmt.Errorf("unable to connect, agent %s (%s) not connected", agent.Name, agent.ID)
 	}
 
 	exePath, err := getPath()
@@ -94,7 +94,9 @@ func (s *Scp) Execute(api *api.API, cfg ClientConfig) error {
 
 	cmd := s.buildScpCommand(cfg, agent, exePath)
 	if s.Print {
+		//nolint:forbidigo
 		fmt.Println(cmd.InlineEnv().StringShell())
+
 		return nil
 	}
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
@@ -103,15 +105,14 @@ func (s *Scp) Execute(api *api.API, cfg ClientConfig) error {
 }
 
 // buildScpCommand build the outer SSH command. This SSH command will be executed in second
-// through the ProxyCommand
+// through the ProxyCommand.
 func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
-
-	proxyCmd := s.buildTunnelSshCommand(cfg, agent, exePath)
+	proxyCmd := s.buildTunnelSSHCommand(cfg, agent, exePath)
 
 	cmd := Command{}
 	cmd.Executable = "scp"
-	cmd.Args = append([]string{"-r"}, buildAllSshOptions(cfg)...)
-	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.Scp.Target)
+	cmd.Args = append([]string{"-r"}, buildAllSSHOptions(cfg)...)
+	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.SCP.Target)
 	if s.Print {
 		for i := range cmd.Env {
 			cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
@@ -124,42 +125,44 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 	}
 	proxyScpCmd := fmt.Sprintf("-oProxyCommand=%s%s%s", sep, proxyCmd.String(), sep)
 	cmd.Args = append(cmd.Args, proxyScpCmd)
-	//cmd.Args = append(cmd.Args, cfg.Scp.ScpArgs...)
-	for _, opt := range s.SshOpts {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("-o%s", opt))
+	// cmd.Args = append(cmd.Args, cfg.SCP.ScpArgs...)
+	for _, opt := range s.SSHOpts {
+		cmd.Args = append(cmd.Args, "-o"+opt)
 	}
-	if s.SshConfFile != "" {
-		cmd.Args = append(cmd.Args, "-F", s.SshConfFile)
+	if s.SSHConfFile != "" {
+		cmd.Args = append(cmd.Args, "-F", s.SSHConfFile)
 	}
 	cmd.Args = append(cmd.Args, s.Paths...)
 	//	cmd.Args = append(cmd.Args, s.Destination)
-	// cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.Id))
+	// cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.ID))
 	return cmd
 }
 
-// buildTunnelSshCommand create the ssh command used in the SSH proxycommand
+// buildTunnelSSHCommand create the ssh command used in the SSH proxycommand
 // this SSH command is the tunnel one in the ssh command, but is actually the outer one
-// when being executed (i.e.: it will be executed first)
-func (s *Scp) buildTunnelSshCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
+// when being executed (i.e.: it will be executed first).
+func (s *Scp) buildTunnelSSHCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	cmd := Command{
 		Executable: "ssh",
 	}
-	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.Scp.Target)
+	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.SCP.Target)
 	for i := range cmd.Env {
 		cmd.Env[i] = strings.ReplaceAll(cmd.Env[i], ` `, `\ `)
 	}
-	cmd.Args = buildInnerSshOptions(cfg)
-	cmd.Args = append(cmd.Args, fmt.Sprintf("-p%s", cfg.GetSshdPort()))
-	cmd.Args = append(cmd.Args, fmt.Sprintf("-W127.0.0.1:%s", agent.GetSSHPort()))
+	cmd.Args = buildInnerSSHOptions(cfg)
+	cmd.Args = append(cmd.Args, "-p"+cfg.GetSshdPort())
+	cmd.Args = append(cmd.Args, "-W127.0.0.1:"+agent.GetSSHPort())
 
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
+
 	return cmd
 }
 
-func ExecSCp(args ...string) error {
+func ExecSCp() error {
 	cmd := exec.Command("scp")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Env = os.Environ()
+
 	return cmd.Run()
 }

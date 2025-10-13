@@ -1,3 +1,4 @@
+// Package router holds the admin routes
 package router
 
 import (
@@ -6,7 +7,7 @@ import (
 	"Goauld/common/types"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
-	"Goauld/server/router/midleware"
+	"Goauld/server/router/middleware"
 	"Goauld/server/store"
 	"encoding/json"
 	"net/http"
@@ -17,14 +18,14 @@ import (
 	"github.com/urfave/negroni"
 )
 
-// AdminRouter is the router used by the management API
+// AdminRouter is the router used by the management API.
 type AdminRouter struct {
 	userRouter *http.ServeMux
 	db         *persistence.DB
 	store      *store.AgentStore
 }
 
-// NewAdminRouter returns a new AdminRouter
+// NewAdminRouter returns a new AdminRouter.
 func NewAdminRouter(_db *persistence.DB, store *store.AgentStore) *AdminRouter {
 	r := &AdminRouter{
 		db:         _db,
@@ -36,23 +37,25 @@ func NewAdminRouter(_db *persistence.DB, store *store.AgentStore) *AdminRouter {
 	r.userRouter.HandleFunc("GET /state/", r.State)
 	r.userRouter.HandleFunc("GET /dump/{id}", r.Dump)
 	r.userRouter.HandleFunc("POST /loglevel/{level}", r.UpdateLogLevel)
+
 	return r
 }
 
 // GetRouter returns the router, with the middleware configured
 // - Authentication middleware
-// - IP allowlisting middleware
+// - IP allowlisting middleware.
 func (ur *AdminRouter) GetRouter() *negroni.Negroni {
 	n := negroni.New()
-	n.Use(midleware.AuthMiddleware(config.Get().AdminToken))
-	n.Use(midleware.WhitelistMiddleware(config.Get().AllowedIPs))
+	n.Use(middleware.AuthMiddleware(config.Get().AdminToken))
+	n.Use(middleware.WhitelistMiddleware(config.Get().AllowedIPs))
 	n.UseHandler(ur.userRouter)
+
 	return n
 }
 
-// Version returns the server version (Version, Commit and Commit date)
+// Version returns the server version (Version, Commit and Commit date).
 func (ur *AdminRouter) Version(w http.ResponseWriter, r *http.Request) {
-	res, err := json.Marshal(common.JsonVersion())
+	res, err := json.Marshal(common.JSONVersion())
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,30 +66,37 @@ func (ur *AdminRouter) Version(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Dump return all the information stored regarding the agent
-func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	dump := ur.store.GetState(id)
-	agent, err := ur.db.FindAgentById(dump.Id)
-	if err != nil {
-		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("dump fail")
-		http.NotFound(w, r)
-		return
-	}
+func addAgentInfoToDump(dump types.State, agent *persistence.Agent) types.State {
 	dump.Path = agent.Path
 	dump.Name = agent.Name
-	dump.Id = agent.Id
+	dump.ID = agent.ID
 	dump.LastUpdated = agent.LastUpdated
 	dump.LastPing = agent.LastPing
 	dump.Platform = agent.Platform
-	dump.SSHMode = agent.SshMode
+	dump.SSHMode = agent.SSHMode
 	dump.Architecture = agent.Architecture
+	dump.RemoteAddr = agent.RemoteAddr
 	dump.Hostname = agent.Hostname
 	dump.Username = agent.Username
 	dump.UsedPorts = agent.UsedPorts
 	dump.IPs = agent.IPs
-	dump.RemoteAddr = agent.RemoteAddr
-	res, err := json.Marshal(dump)
+
+	return dump
+}
+
+// Dump return all the information stored regarding the agent.
+func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	dump := ur.store.GetState(id)
+	agent, err := ur.db.FindAgentByID(dump.ID)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("dump fail")
+		http.NotFound(w, r)
+
+		return
+	}
+	dump = addAgentInfoToDump(dump, agent)
+	res, err := yaml.Marshal(dump)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -97,35 +107,24 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// dumpAllAgents return all the information stored regarding all the agents
+// dumpAllAgents return all the information stored regarding all the agents.
 func (ur *AdminRouter) dumpAllAgents() []types.State {
 	dump := ur.store.GetAllStates()
 	var outDump []types.State
 	for _, d := range dump {
-		agent, err := ur.db.FindAgentById(d.Id)
+		agent, err := ur.db.FindAgentByID(d.ID)
 		if err != nil {
 			// outDump = append(outDump, d)
 			continue
 		}
-		d.Path = agent.Path
-		d.Name = agent.Name
-		d.Id = agent.Id
-		d.LastUpdated = agent.LastUpdated
-		d.LastPing = agent.LastPing
-		d.Platform = agent.Platform
-		d.SSHMode = agent.SshMode
-		d.Architecture = agent.Architecture
-		d.RemoteAddr = agent.RemoteAddr
-		d.Hostname = agent.Hostname
-		d.Username = agent.Username
-		d.UsedPorts = agent.UsedPorts
-		d.IPs = agent.IPs
+		d = addAgentInfoToDump(d, agent)
 		outDump = append(outDump, d)
 	}
+
 	return outDump
 }
 
-// DumpAll return all the information stored regarding all the agents
+// DumpAll return all the information stored regarding all the agents.
 func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	outDump := ur.dumpAllAgents()
 	res, err := yaml.Marshal(outDump)
@@ -139,20 +138,20 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// UpdateLogLevel updates the server log level
+// UpdateLogLevel updates the server log level.
 func (ur *AdminRouter) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 	l := r.PathValue("level")
 	level, err := zerolog.ParseLevel(l)
-	res := types.HttpResponse{}
+	res := types.HTTPResponse{}
 	if err != nil {
-		res = types.HttpResponse{
+		res = types.HTTPResponse{
 			Message: err.Error(),
 			Success: true,
 		}
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("unable to update log level")
 	} else {
 		log.UpdateLogLevel(level)
-		res = types.HttpResponse{
+		res = types.HTTPResponse{
 			Message: level.String(),
 			Success: true,
 		}
@@ -169,15 +168,15 @@ func (ur *AdminRouter) UpdateLogLevel(w http.ResponseWriter, r *http.Request) {
 func (ur *AdminRouter) GetConfig(w http.ResponseWriter, r *http.Request) {
 	c, err := config.Get().GenerateSafeYAMLConfig()
 
-	res := types.HttpResponse{}
+	res := types.HTTPResponse{}
 	if err != nil {
-		res = types.HttpResponse{
+		res = types.HTTPResponse{
 			Message: err.Error(),
 			Success: true,
 		}
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating yaml config")
 	} else {
-		res = types.HttpResponse{
+		res = types.HTTPResponse{
 			Success: true,
 			Message: c,
 		}
@@ -189,7 +188,7 @@ func (ur *AdminRouter) GetConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// State return all the server information (configuration, agent connected or not)
+// State return all the server information (configuration, agent connected or not).
 func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
 	agents, _ := ur.db.GetAllAgentsSanitized()
 
@@ -199,7 +198,7 @@ func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: a.CreatedAt,
 			UpdatedAt: a.UpdatedAt,
 			DeletedAt: a.DeletedAt,
-			SocketId:  a.SocketId,
+			SocketID:  a.SocketID,
 			Agent:     a.Agent,
 		}
 		dbAgents = append(dbAgents, agent)

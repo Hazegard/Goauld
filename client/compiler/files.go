@@ -6,27 +6,29 @@ import (
 	"strings"
 )
 
-// ReplaceInFile replace lines when a pattern is identified on the incoming content
-func ReplaceInFile(content string, pattern string, new string) string {
+// ReplaceInFile replace lines when a pattern is identified on the incoming content.
+func ReplaceInFile(content string, pattern string, newContent string) string {
 	lines := strings.Split(content, "\n")
-	newLines := []string{}
+	var newLines []string
 	for _, line := range lines {
 		if strings.HasPrefix(line, pattern) {
-			newLines = append(newLines, new)
+			newLines = append(newLines, newContent)
 		} else {
 			newLines = append(newLines, line)
 		}
 	}
+
 	return strings.Join(newLines, "\n")
 }
 
-// CopyFile copies the file
+// CopyFile copies the file.
 func CopyFile(src, dst string) error {
 	// Open the source file for reading.
 	srcStat, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
+	//nolint:gosec
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return err
@@ -35,6 +37,7 @@ func CopyFile(src, dst string) error {
 	defer sourceFile.Close()
 
 	// Create the destination file for writing.
+	//nolint:gosec
 	destinationFile, err := os.Create(dst)
 	if err != nil {
 		return err
@@ -56,7 +59,7 @@ func CopyFile(src, dst string) error {
 	return destinationFile.Sync()
 }
 
-// MkdirAll create a directory
+// MkdirAll create a directory.
 func MkdirAll(path string) error {
-	return os.MkdirAll(path, 0o755)
+	return os.MkdirAll(path, 0o750)
 }

@@ -27,33 +27,40 @@ type Event interface {
 	Msgf(format string, v ...any)
 }
 
+// GormLoggerEvent hold the logger used by gorm.
 type GormLoggerEvent struct {
 	*zerolog.Event
 }
 
+// Str wraps the zerolog in the gorm logger.
 func (e *GormLoggerEvent) Str(key, value string) Event {
 	e.Event = e.Event.Str(key, value)
+
 	return e
 }
 
+// Msgf wraps the zerolog in the gorm logger.
 func (e *GormLoggerEvent) Msgf(format string, v ...any) {
 	e.Event.Msgf(format, v...)
 }
 
 func newGormLoggerEventInfo() Event {
 	return &GormLoggerEvent{
+		//nolint:zerologlint
 		Event: log.Trace(),
 	}
 }
 
 func newGormLoggerEventWarn() Event {
 	return &GormLoggerEvent{
+		//nolint:zerologlint
 		Event: log.Warn(),
 	}
 }
 
 func newGormLoggerEventError() Event {
 	return &GormLoggerEvent{
+		//nolint:zerologlint
 		Event: log.Error(),
 	}
 }
@@ -84,18 +91,21 @@ func NewGormLogger() *GormLogger {
 // WithInfo sets a zerologger builder for info level logging.
 func (l *GormLogger) WithInfo(info func() Event) *GormLogger {
 	l.loggers[logger.Info] = info
+
 	return l
 }
 
 // WithWarn sets a zerologger builder for warn level logging.
 func (l *GormLogger) WithWarn(warn func() Event) *GormLogger {
 	l.loggers[logger.Warn] = warn
+
 	return l
 }
 
 // WithError sets a zerologger builder for error level logging.
 func (l *GormLogger) WithError(err func() Event) *GormLogger {
 	l.loggers[logger.Error] = err
+
 	return l
 }
 
@@ -107,6 +117,7 @@ func (l *GormLogger) IgnoreRecordNotFoundError(b bool) {
 // LogMode sets a log level value.
 func (l *GormLogger) LogMode(logLevel logger.LogLevel) logger.Interface {
 	l.logLevel = logLevel
+
 	return l
 }
 
@@ -129,22 +140,22 @@ func (l *GormLogger) log(logLevel logger.LogLevel, msg string, data ...any) {
 }
 
 // Info starts a new message with info level.
-func (l *GormLogger) Info(ctx context.Context, msg string, data ...any) {
+func (l *GormLogger) Info(_ context.Context, msg string, data ...any) {
 	l.log(logger.Info, msg, data...)
 }
 
 // Warn starts a new message with WARN level.
-func (l *GormLogger) Warn(ctx context.Context, msg string, data ...any) {
+func (l *GormLogger) Warn(_ context.Context, msg string, data ...any) {
 	l.log(logger.Warn, msg, data...)
 }
 
 // Error starts a new message with error level.
-func (l *GormLogger) Error(ctx context.Context, msg string, data ...any) {
+func (l *GormLogger) Error(_ context.Context, msg string, data ...any) {
 	l.log(logger.Error, msg, data...)
 }
 
 // Trace starts a new message with trace level.
-func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+func (l *GormLogger) Trace(_ context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.logLevel <= logger.Silent {
 		return
 	}
@@ -169,7 +180,7 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 
 var gormSourceDir string
 
-// fileWithLineNum return the file name and line number of the current file
+// fileWithLineNum return the file name and line number of the current file.
 func fileWithLineNum() string {
 	// the second caller usually from gorm internal, so set i start from 2
 	for i := 2; i < 15; i++ {
@@ -182,6 +193,7 @@ func fileWithLineNum() string {
 	return ""
 }
 
+//nolint:gochecknoinits
 func init() {
 	_, file, _, _ := runtime.Caller(0)
 	// compatible solution to get gorm source directory with various operating systems

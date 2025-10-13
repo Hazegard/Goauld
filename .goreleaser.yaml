@@ -179,7 +179,7 @@ before:
         env GOOS=windows GOARCH=arm64 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm64.exe ./agent/sshd/shell/shim_windows/
         env GOOS=windows GOARCH=386 go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_386.exe ./agent/sshd/shell/shim_windows/
       fi"
-    - env GOOS=windows GOARCH=arm go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shim_embed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
+    - env GOOS=windows GOARCH=arm go build -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
 
     # you may remove this if you don't need go generate
     # - go generate ./...

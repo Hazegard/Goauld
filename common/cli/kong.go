@@ -1,3 +1,4 @@
+// Package cli holds the common cli
 package cli
 
 import (
@@ -15,18 +16,21 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
+// GetConfigFile returns the first existing directory.
 func GetConfigFile(paths ...string) string {
 	for _, path := range paths {
 		_, err := os.Stat(kong.ExpandPath(path))
 		if err != nil {
 			continue
 		}
+
 		return path
 	}
+
 	return ""
 }
 
-// Hack required because goccy/go-yaml CustomMarshaller does not accept empty result (either nil, empty []byte("")), etc.
+// EMPTUYRL is a Hack required because goccy/go-yaml CustomMarshaller does not accept empty result (either nil, empty []byte("")), etc.
 const EMPTUYRL = "THISISANEMPTYURL"
 
 // Taken from https://github.com/alecthomas/kong-yaml
@@ -37,13 +41,13 @@ const EMPTUYRL = "THISISANEMPTYURL"
 // the configuration files
 
 // YAMLKeepEnvVar resolve the YAML configuration file.
-// It does not override values found in the environment variables
+// It does not override values found in the environment variables.
 func YAMLKeepEnvVar(r io.Reader) (kong.Resolver, error) {
 	return YAML(r, true, []string{})
 }
 
 // YAMLOverwriteEnvVar resolve the YAML configuration file.
-// Values found in the file are overwriting the value found in the environment variable
+// Values found in the file are overwriting the value found in the environment variable.
 func YAMLOverwriteEnvVar(ignoreOverwrite []string) func(r io.Reader) (kong.Resolver, error) {
 	return func(r io.Reader) (kong.Resolver, error) {
 		return YAML(r, false, ignoreOverwrite)
@@ -52,7 +56,7 @@ func YAMLOverwriteEnvVar(ignoreOverwrite []string) func(r io.Reader) (kong.Resol
 
 // YAML returns a kong resolver to load YAML configuration file
 // overwriteEnvVar should be set to true if we want the values in the YAML file to take precedence over
-// the environment variable. If not, the value should be set to false
+// the environment variable. If not, the value should be set to false.
 func YAML(r io.Reader, overwriteEnvVar bool, ignoreOverwrite []string) (kong.Resolver, error) {
 	decoder := yaml.NewDecoder(r)
 	config := map[string]interface{}{}
@@ -60,21 +64,24 @@ func YAML(r io.Reader, overwriteEnvVar bool, ignoreOverwrite []string) (kong.Res
 	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, fmt.Errorf("YAML agent decode error: %w", err)
 	}
-	return kong.ResolverFunc(func(context *kong.Context, parent *kong.Path, flag *kong.Flag) (interface{}, error) {
+
+	return kong.ResolverFunc(func(_ *kong.Context, parent *kong.Path, flag *kong.Flag) (interface{}, error) {
 		if overwriteEnvVar || utils.Contains(ignoreOverwrite, flag.Name) {
 			for _, env := range flag.Envs {
 				_, ok := os.LookupEnv(env)
 				if ok {
+					//nolint:nilnil
 					return nil, nil
 				}
 			}
 		}
 		// Build a string path up to this flag.
-		path := []string{}
+		var path []string
 		for n := parent.Node(); n != nil && n.Type != kong.ApplicationNode; n = n.Parent {
 			path = append([]string{n.Name}, path...)
 		}
 		path = append(path, flag.Name)
+
 		return find(config, path), nil
 	}), nil
 }
@@ -83,41 +90,45 @@ func find(config map[string]interface{}, path []string) interface{} {
 	if len(path) == 0 {
 		return config
 	}
-	for i := 0; i < len(path); i++ {
+	for i := range path {
 		prefix := strings.Join(path[:i+1], "-")
+
 		if child, ok := config[prefix].(map[string]interface{}); ok {
 			return find(child, path[i+1:])
 		}
 	}
 	v := config[strings.Join(path, "-")]
 	// Check if value is a uint64 and convert it to int
+
 	if v, ok := v.(uint64); ok {
+		//nolint:gosec
 		return int(v) // Convert uint64 to int
 	}
+
 	return v
 }
 
-func CustomUrlP(u *url.URL) ([]byte, error) {
-
+// CustomURLP returns an arbitrary string to represent an empty url when marshalling it in YAML.
+func CustomURLP(u *url.URL) ([]byte, error) {
 	if u.String() == "" {
 		return []byte(EMPTUYRL), nil
 	}
+
 	return []byte((*u).String()), nil
 }
 
 // GenerateYAMLWithComments generates a YAML file with comments.
 func GenerateYAMLWithComments(cfg any) (string, error) {
-
 	comments := make(map[string][]*yaml.Comment)
 	AddComments(cfg, "$", comments)
-	yaml.RegisterCustomMarshaler(CustomUrlP)
+	yaml.RegisterCustomMarshaler(CustomURLP)
 	d, e := yaml.MarshalWithOptions(&cfg, yaml.WithComment(comments))
-	//d, e := Marshal(cfg)
 	if e != nil {
 		return "", e
 	}
 	d = bytes.ReplaceAll(d, []byte("\n#"), []byte("\n\n# "))
 	d = bytes.ReplaceAll(d, []byte(EMPTUYRL), []byte("\"\""))
+
 	return string(d), e
 }
 
@@ -136,7 +147,7 @@ func AddComments(v interface{}, path string, comments map[string][]*yaml.Comment
 		return
 	}
 
-	for i := 0; i < val.NumField(); i++ {
+	for i := range val.NumField() {
 		field := val.Field(i)
 		fieldType := typ.Field(i)
 
@@ -159,5 +170,4 @@ func AddComments(v interface{}, path string, comments map[string][]*yaml.Comment
 			AddComments(field.Interface(), path+"."+tag, comments)
 		}
 	}
-
 }

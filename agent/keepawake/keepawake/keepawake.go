@@ -1,3 +1,4 @@
+// Package keepawake holds the lock screen prevention
 package keepawake
 
 import (
@@ -8,7 +9,7 @@ import (
 	"time"
 )
 
-// Keeper manages the system's keep-alive state
+// Keeper manages the system's keep-alive state.
 type Keeper struct {
 	running bool
 	mu      sync.Mutex
@@ -19,14 +20,15 @@ type Keeper struct {
 	endTime time.Time
 }
 
-// IsRunning returns whether the keep-alive is currently active
+// IsRunning returns whether the keep-alive is currently active.
 func (k *Keeper) IsRunning() bool {
 	k.mu.Lock()
 	defer k.mu.Unlock()
+
 	return k.running
 }
 
-// StartIndefinite starts keeping the system alive indefinitely
+// StartIndefinite starts keeping the system alive indefinitely.
 func (k *Keeper) StartIndefinite() error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -50,6 +52,7 @@ func (k *Keeper) StartIndefinite() error {
 	// Start the platform-specific keep-alive
 	if err := k.keeper.Start(k.ctx); err != nil {
 		k.cancel()
+
 		return err
 	}
 
@@ -58,7 +61,7 @@ func (k *Keeper) StartIndefinite() error {
 	return nil
 }
 
-// StartTimed starts keeping the system alive for the specified duration
+// StartTimed starts keeping the system alive for the specified duration.
 func (k *Keeper) StartTimed(d time.Duration) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -82,6 +85,7 @@ func (k *Keeper) StartTimed(d time.Duration) error {
 	// Start the platform-specific keep-alive
 	if err := k.keeper.Start(k.ctx); err != nil {
 		k.cancel()
+
 		return err
 	}
 
@@ -94,7 +98,7 @@ func (k *Keeper) StartTimed(d time.Duration) error {
 	return nil
 }
 
-// Stop stops keeping the system alive
+// Stop stops keeping the system alive.
 func (k *Keeper) Stop() error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -120,10 +124,11 @@ func (k *Keeper) Stop() error {
 	}
 
 	k.running = false
+
 	return nil
 }
 
-// TimeRemaining returns the remaining duration for timed mode
+// TimeRemaining returns the remaining duration for timed mode.
 func (k *Keeper) TimeRemaining() time.Duration {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -140,5 +145,6 @@ func (k *Keeper) TimeRemaining() time.Duration {
 	if remaining < 0 {
 		return 0
 	}
+
 	return remaining
 }

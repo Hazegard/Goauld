@@ -1,3 +1,4 @@
+// Package sshd holds the SSHD server
 package sshd
 
 import (
@@ -22,15 +23,17 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
-// StartSshd init and start the sshd server
+// StartSshd init and start the sshd server.
 func StartSshd(context context.Context, db *persistence.DB, store *store.AgentStore) {
-	listener, err := net.Listen("tcp", config.Get().LocalSShAddr())
+	listener, err := net.Listen("tcp", config.Get().LocalSSHAddr())
 	if err != nil {
 		panic(err)
 	}
 	// Update if listening on 0 to get the real port
+	//nolint:forcetypeassert
+	//nolint:forcetypeassert
 	config.Get().UpdateSSHAddr(listener.Addr().(*net.TCPAddr).Port)
-	log.Info().Str("Address", config.Get().LocalSShAddr()).Msgf("SSH server listening")
+	log.Info().Str("Address", config.Get().LocalSSHAddr()).Msgf("SSH server listening")
 	forwardHandler := &ForwardedTCPHandler{}
 
 	// The SSHD server
@@ -46,21 +49,25 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			log.Error().Str("User", s.User()).Msgf("START SSH connection from: %s", s.RemoteAddr().String())
 			defer log.Error().Str("User", s.User()).Msgf("END  SSH connection from: %s", s.LocalAddr().String())
 		},
-		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
+		LocalPortForwardingCallback: func(ctx ssh.Context, _ string, destinationPort uint32) bool {
+			// TODO: should we check fo destination to be localhost ?
 			username := ctx.User()
-			sourceIp := strings.Split(ctx.RemoteAddr().String(), ":")[0]
+			sourceIP := strings.Split(ctx.RemoteAddr().String(), ":")[0]
 			log.Trace().Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msgf("SSH local Port forwarding attempt from: %s", ctx.RemoteAddr().String())
-			if !_net.IsIPAllowed(sourceIp, config.Get().AllowedIPs) {
-				log.Warn().Err(errors.New("ip not in whitelist")).Str("Source IP", sourceIp).Str("Agent.Name", username).Msg("unable to port forward")
+			if !_net.IsIPAllowed(sourceIP, config.Get().AllowedIPs) {
+				log.Warn().Err(errors.New("ip not in whitelist")).Str("Source IP", sourceIP).Str("Agent.Name", username).Msg("unable to port forward")
+
 				return false
 			}
 			agent, err := db.FindAgentByName(username)
 			if err != nil {
 				log.Warn().Err(err).Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msg("port forward failed, unable to find agent")
+
 				return false
 			}
 			if !agent.IsPortForwarded(int(destinationPort)) {
 				log.Warn().Err(errors.New("attempt to forward forbidden port")).Str("Port", strconv.Itoa(int(destinationPort))).Msg("port forward failed")
+
 				return false
 			}
 
@@ -75,23 +82,26 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			err := db.AddPortToAgent(id, int(port))
 			if err != nil {
 				log.Error().Err(err).Str("User", ctx.User()).Msg("Failed to add port to agent")
+
 				return false
 			}
+
 			return true
 		},
 		RequestHandlers: map[string]ssh.RequestHandler{
-			"tcpip-forward": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
-
+			"tcpip-forward": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte) {
 				log.Trace().Str("User", ctx.User()).Str("Type", req.Type).Str("Payload", string(req.Payload)).Msg("SSH Request received")
 
 				ok, payload, ln := forwardHandler.HandleSSHRequest(ctx, srv, req)
 				if ln != nil {
 					store.AdSSHSession(ctx.User(), ctx, ln)
 				}
+
 				return ok, payload
 			},
-			"cancel-tcpip-forward": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
-				ok, payload, _ = forwardHandler.HandleSSHRequest(ctx, srv, req)
+			"cancel-tcpip-forward": func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte) {
+				ok, payload, _ := forwardHandler.HandleSSHRequest(ctx, srv, req)
+
 				return ok, payload
 			},
 			// HandleKeepAlive returns pong when an agent sends a ping
@@ -116,9 +126,10 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			id := ctx.User()
 			remote := ctx.RemoteAddr().String()
 			log.Debug().Str("User", id).Str("Remote", remote).Msgf("SSH Connection attempt")
-			agent, err := db.FindAgentById(id)
+			agent, err := db.FindAgentByID(id)
 			if err != nil {
 				log.Debug().Msgf("Agent not found (%s)", id)
+
 				return false
 			}
 			log.Trace().Str("User", id).Msg("Agent found, getting public key...")
@@ -126,26 +137,30 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			agentPubKey, err := _ssh.ParseSSHPublicKey(agent.PublicKey)
 			if err != nil {
 				log.Debug().Msgf("Error parsing public key (%s)", id)
+
 				return false
 			}
 			log.Trace().Str("User", id).Msg("Public Key found, checking public key...")
 			if !ssh.KeysEqual(agentPubKey, key) {
 				log.Warn().Str("User", id).Str("Remote", remote).Msg("Wrong Public Key...")
+
 				return false
 			}
 
 			log.Trace().Msgf("SSH connection succeeded from %s (%s)", ctx.User(), id)
-			err = db.SetAgentSshMode(id, "SSH", remote)
+			err = db.SetAgentSSHMode(id, "SSH", remote)
 			if err != nil {
 				log.Warn().Str("User", id).Str("Remote", remote).Str("SSH Mode", "SSH").Msg("Error updating connection mode...")
 			}
+
 			return true
 		},
 		PasswordHandler: func(ctx ssh.Context, inPwd string) bool {
-			sourceIp := strings.Split(ctx.RemoteAddr().String(), ":")[0]
-			log.Trace().Str("User", ctx.User()).Str("IP", sourceIp).Msg("SSH Connection attempt")
-			if !_net.IsIPAllowed(sourceIp, config.Get().AllowedIPs) {
-				log.Trace().Str("Remote", sourceIp).Msg("Connection attempt from non whitelisted IP address")
+			sourceIP := strings.Split(ctx.RemoteAddr().String(), ":")[0]
+			log.Trace().Str("User", ctx.User()).Str("IP", sourceIP).Msg("SSH Connection attempt")
+			if !_net.IsIPAllowed(sourceIP, config.Get().AllowedIPs) {
+				log.Trace().Str("Remote", sourceIP).Msg("Connection attempt from non whitelisted IP address")
+
 				return false
 			}
 
@@ -153,6 +168,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			err := json.Unmarshal([]byte(inPwd), &pwd)
 			if err != nil {
 				log.Warn().Err(err).Str("User", ctx.User()).Msg("Error parsing agent password")
+
 				return false
 			}
 
@@ -160,39 +176,45 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 			agent, err := db.FindAgentByName(agentName)
 			if err != nil {
 				log.Debug().Msgf("Agent not found (%s)", agentName)
+
 				return false
 			}
-			if agent.SshMode == "/" {
+			if agent.SSHMode == "/" {
 				log.Info().Str("Agent.Name", agent.Name).Msg("Agent not connected")
+
 				return false
 			}
 
-			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.Id), pwd.HashAgentPassword)
+			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.ID), pwd.HashAgentPassword)
 			if !isStaticPwdValid {
 				return false
 			}
 
-			agent.Source = sourceIp
-			err = db.ValidatePasswordAndRotateIfTrue(agent.Id, pwd.ServerPassword)
+			agent.Source = sourceIP
+			err = db.ValidatePasswordAndRotateIfTrue(agent.ID, pwd.ServerPassword)
 			// err = agent.ValidatePasswordAndRotateIfTrue(password)
 			if err != nil {
-				log.Warn().Err(err).Str("Incoming", pwd.ServerPassword).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to validate agent password")
+				log.Warn().Err(err).Str("Incoming", pwd.ServerPassword).Str("Agent.Name", agentName).Str("Agent.ID", agent.ID).Msg("Failed to validate agent password")
+
 				return false
 			}
 			err = db.UpdateAgentFieldShadow(agent, "OneTimePassword")
 			if err != nil {
-				log.Warn().Err(err).Str("Agent.Name", agentName).Str("Agent.ID", agent.Id).Msg("Failed to update agent password")
+				log.Warn().Err(err).Str("Agent.Name", agentName).Str("Agent.ID", agent.ID).Msg("Failed to update agent password")
+
 				return false
 			}
 			log.Trace().Str("Agent.Name", agentName).Msg("Password accepted")
+
 			return true
 		},
 		// SessionRequestCallback logs information when a user requests a session
-		SessionRequestCallback: func(sess ssh.Session, requestType string) bool {
+		SessionRequestCallback: func(sess ssh.Session, _ string) bool {
 			id := sess.User()
 			remote := sess.RemoteAddr().String()
 
 			log.Info().Str("User", id).Str("Remote", remote).Msgf("SSH session requested from %s", id)
+
 			return false
 		},
 	}
@@ -204,18 +226,21 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 	context.Done()
 }
 
-func HandleKeepAlive(db *persistence.DB) func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
-	return func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (ok bool, payload []byte) {
+//nolint:revive
+func HandleKeepAlive(db *persistence.DB) func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte) {
+	return func(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte) {
 		log.Trace().Str("User", ctx.User()).Msg("PING received")
 
 		id := ctx.User()
-		agent, err := db.FindAgentById(id)
+		agent, err := db.FindAgentByID(id)
 		if err != nil {
 			log.Error().Err(err).Str("User", id).Msg("Failed to find agent")
+
 			return true, []byte("pong")
 		}
 		agent.LastPing = time.Now()
 		_ = db.UpdateAgentFieldShadow(agent, "LastPing")
+
 		return true, []byte("pong")
 	}
 }

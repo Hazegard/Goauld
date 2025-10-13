@@ -10,7 +10,7 @@ var (
 	timeout = time.Second * 2
 )
 
-// CheckHostPortAvailability checks if the provided host:port is reachable
+// CheckHostPortAvailability checks if the provided host:port is reachable.
 func CheckHostPortAvailability(proto string, host string, port int) bool {
 	address := net.JoinHostPort(host, strconv.Itoa(port))
 	conn, err := net.DialTimeout(proto, address, timeout)
@@ -19,5 +19,6 @@ func CheckHostPortAvailability(proto string, host string, port int) bool {
 	}
 	//nolint:errcheck
 	defer conn.Close()
+
 	return true
 }

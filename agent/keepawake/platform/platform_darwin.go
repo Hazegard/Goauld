@@ -1,5 +1,6 @@
 //go:build darwin
 
+// Package platform holds the keepawake detail implementation
 package platform
 
 import (
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-// darwinKeepAlive implements the KeepAlive interface for macOS
+// darwinKeepAlive implements the KeepAlive interface for macOS.
 type darwinKeepAlive struct {
 	mu           sync.Mutex
 	cmd          *exec.Cmd
@@ -20,7 +21,7 @@ type darwinKeepAlive struct {
 	activityTick *time.Ticker
 }
 
-// Start initiates the keep-alive functionality
+// Start initiates the keep-alive functionality.
 func (k *darwinKeepAlive) Start(ctx context.Context) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -41,6 +42,7 @@ func (k *darwinKeepAlive) Start(ctx context.Context) error {
 
 	if err := k.cmd.Start(); err != nil {
 		k.cancel()
+
 		return err
 	}
 
@@ -72,6 +74,7 @@ func (k *darwinKeepAlive) Start(ctx context.Context) error {
 	}()
 
 	k.isRunning = true
+
 	return nil
 }
 
@@ -109,7 +112,7 @@ func (k *darwinKeepAlive) killProcess() {
 	_ = exec.Command("pkill", "-9", "caffeinate").Run()
 }
 
-// Stop terminates the keep-alive functionality
+// Stop terminates the keep-alive functionality.
 func (k *darwinKeepAlive) Stop() error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -130,10 +133,11 @@ func (k *darwinKeepAlive) Stop() error {
 	k.wg.Wait()
 
 	k.isRunning = false
+
 	return nil
 }
 
-// NewKeepAlive creates a new platform-specific keep-alive instance
+// NewKeepAlive creates a new platform-specific keep-alive instance.
 func NewKeepAlive() (KeepAlive, error) {
 	return &darwinKeepAlive{}, nil
 }

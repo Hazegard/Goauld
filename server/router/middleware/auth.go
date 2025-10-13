@@ -1,4 +1,5 @@
-package midleware
+// Package middleware handle the custom middleware used by negroni
+package middleware
 
 import (
 	"Goauld/common/log"
@@ -20,6 +21,7 @@ func AuthMiddleware(expectedAuthToken string) negroni.HandlerFunc {
 			// If the token is not correct, return 403 Forbidden
 			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
 			log.Get().Trace().Str("Header", authHeader).Msg("Header not allowed")
+
 			return
 		}
 
@@ -35,6 +37,7 @@ func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			w.WriteHeader(http.StatusUnauthorized)
 			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
+
 			return
 		}
 		u, p, ok := r.BasicAuth()
@@ -42,10 +45,12 @@ func BasicAuthMiddleware(username string, password string) negroni.HandlerFunc {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			w.WriteHeader(http.StatusUnauthorized)
 			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
+
 			return
 		}
 		if u != username || p != password {
 			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
+
 			return
 		}
 

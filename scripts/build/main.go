@@ -1,3 +1,4 @@
+// Package main build
 package main
 
 import (
@@ -22,9 +23,9 @@ import (
 type BuildConfig struct {
 	GenAgeKey      bool   `default:"false" optional:"" help:"generate Age keys."`
 	GenAccessToken bool   `default:"false" help:"Generate the Access Token."`
-	Id             string `default:"" help:"[client|server|agent]."`
+	ID             string `default:"" help:"[client|server|agent]."`
 	Goos           string `default:"" help:"[darwin|linux|windows]."`
-	Goarch         string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for Id=client)."`
+	Goarch         string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
 	NoSeed         bool   `default:"false" help:"don't generate seed keys."`
 }
 
@@ -41,11 +42,13 @@ func main() {
 	envFile, err := GenEnvFile(compiler.EnvFile, *cfg)
 	if err != nil {
 		log.Error().Err(err).Msg("genEnvFile()")
+
 		return
 	}
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Error().Err(err).Msg("os.Getwd()")
+
 		return
 	}
 
@@ -54,7 +57,7 @@ func main() {
 		seed = ""
 	}
 	cpl := compiler.Compiler{
-		Id:          cfg.Id,
+		ID:          cfg.ID,
 		Goos:        cfg.Goos,
 		Goarch:      cfg.Goarch,
 		Source:      pwd,
@@ -68,7 +71,6 @@ func main() {
 	if err != nil {
 		log.Error().Err(err).Msg("compiler.Compile()")
 	}
-
 }
 
 func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
@@ -78,6 +80,7 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 		return "", err
 	}
 
+	//nolint:gosec
 	bytes, err := os.ReadFile(newEnv)
 	if err != nil {
 		return "", err
@@ -89,8 +92,8 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		content = compiler.ReplaceInFile(content, "SERVER__AGE_PRIVKEY", fmt.Sprintf("SERVER__AGE_PRIVKEY=%s", pubKey))
-		content = compiler.ReplaceInFile(content, "AGENT__AGE_PUBKEY", fmt.Sprintf("AGENT__AGE_PUBKEY=%s", privKey))
+		content = compiler.ReplaceInFile(content, "SERVER__AGE_PRIVKEY", "SERVER__AGE_PRIVKEY="+pubKey)
+		content = compiler.ReplaceInFile(content, "AGENT__AGE_PUBKEY", "AGENT__AGE_PUBKEY="+privKey)
 	}
 
 	if cfg.GenAccessToken {
@@ -98,13 +101,13 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		content = compiler.ReplaceInFile(content, "SERVER__ACCESS_TOKEN", fmt.Sprintf("SERVER__ACCESS_TOKEN=%s", newToken))
+		content = compiler.ReplaceInFile(content, "SERVER__ACCESS_TOKEN", "SERVER__ACCESS_TOKEN="+newToken)
 	}
 
-	return newEnv, os.WriteFile(newEnv, []byte(content), 0o700)
+	return newEnv, os.WriteFile(newEnv, []byte(content), 0o600)
 }
 
-// parse parses the command line arguments
+// parse parses the command line arguments.
 func parse() (*kong.Context, *BuildConfig, error) {
 	cfg := &BuildConfig{}
 	dir, err := os.Getwd()
@@ -120,6 +123,7 @@ func parse() (*kong.Context, *BuildConfig, error) {
 		// defaultValues,
 	)
 	log.SetLogLevel(2)
+
 	return app, cfg, nil
 }
 
@@ -130,5 +134,6 @@ func genAgeKey() (string, string, error) {
 	}
 	pubkey := key.Recipient().String()
 	privkey := key.String()
+
 	return pubkey, privkey, err
 }

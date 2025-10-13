@@ -36,6 +36,7 @@ func NewSessionAwareAdapterCreator(maxDisconnectionDuration time.Duration) Creat
 	const cleanerDuration = time.Minute * 1
 	creator := NewInMemoryAdapterCreator()
 	return func(socketStore SocketStore, parserCreator parser.Creator) Adapter {
+		//nolint:forcetypeassert
 		inMemoryAdapter := creator(socketStore, parserCreator).(*inMemoryAdapter)
 		return newSessionAwareAdapter(
 			inMemoryAdapter,

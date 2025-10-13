@@ -1,6 +1,8 @@
+// Package sshd holds the agent sshd server
 package sshd
 
 import (
+	"errors"
 	"io"
 
 	"Goauld/common/log"
@@ -10,7 +12,7 @@ import (
 	"github.com/pkg/sftp"
 )
 
-// SftpHandler handle sftp connections
+// SftpHandler handle sftp connections.
 func SftpHandler(sess ssh.Session) {
 	debugStream := io.Discard
 	serverOptions := []sftp.ServerOption{
@@ -22,9 +24,10 @@ func SftpHandler(sess ssh.Session) {
 	)
 	if err != nil {
 		log.Debug().Err(err).Msg("sftp server error")
+
 		return
 	}
-	if err := server.Serve(); err == io.EOF {
+	if err := server.Serve(); errors.Is(err, io.EOF) {
 		err := server.Close()
 		if err != nil {
 			log.Debug().Err(err).Msg("sftp server error")

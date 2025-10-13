@@ -12,7 +12,7 @@ import (
 	gossh "golang.org/x/crypto/ssh"
 )
 
-// Taken from https://github.com/charmbracelet/ssh/blob/master/tcpip.go but adapted to have control over listeners
+// Taken from https://github.com/charmbracelet/ssh/blob/master/tcpip.go but adapted to have control over listeners.
 const (
 	forwardedTCPChannelType = "forwarded-tcpip"
 )
@@ -42,16 +42,20 @@ type remoteForwardChannelData struct {
 // adding the HandleSSHRequest callback to the server's RequestHandlers under
 // tcpip-forward and cancel-tcpip-forward.
 type ForwardedTCPHandler struct {
-	forwards map[string]net.Listener
 	sync.Mutex
+
+	forwards map[string]net.Listener
 }
 
+// HandleSSHRequest handle the tcp-forwards requests.
+// It returns the listener to be able to properly close it later.
 func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte, net.Listener) {
 	h.Lock()
 	if h.forwards == nil {
 		h.forwards = make(map[string]net.Listener)
 	}
 	h.Unlock()
+	//nolint:forcetypeassert
 	conn := ctx.Value(ssh.ContextKeyConn).(*gossh.ServerConn)
 	switch req.Type {
 	case "tcpip-forward":
@@ -93,9 +97,11 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 				originAddr, orignPortStr, _ := net.SplitHostPort(c.RemoteAddr().String())
 				originPort, _ := strconv.Atoi(orignPortStr)
 				payload := gossh.Marshal(&remoteForwardChannelData{
-					DestAddr:   reqPayload.BindAddr,
+					DestAddr: reqPayload.BindAddr,
+					//nolint:gosec
 					DestPort:   uint32(destPort),
 					OriginAddr: originAddr,
+					//nolint:gosec
 					OriginPort: uint32(originPort),
 				})
 				go func() {
@@ -104,6 +110,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 						// TODO: log failure to open channel
 						log.Trace().Err(err).Msg("Failed to open forwarded channel")
 						_ = c.Close()
+
 						return
 					}
 					go gossh.DiscardRequests(reqs)
@@ -127,6 +134,8 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 			delete(h.forwards, addr)
 			h.Unlock()
 		}()
+
+		//nolint:gosec
 		return true, gossh.Marshal(&remoteForwardSuccess{uint32(destPort)}), ln
 
 	case "cancel-tcpip-forward":
@@ -142,6 +151,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 		if ok {
 			_ = ln.Close()
 		}
+
 		return true, nil, nil
 	default:
 		return false, nil, nil

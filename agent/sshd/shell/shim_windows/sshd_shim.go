@@ -39,6 +39,7 @@ func main() {
 	err := cmd.Wait()
 	if err != nil {
 		// try to map exit code
+		//nolint:forcetypeassert
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if ws, ok := exitErr.Sys().(syscall.WaitStatus); ok {
 				os.Exit(ws.ExitStatus())
@@ -48,6 +49,7 @@ func main() {
 		log.Fatalf("powershell exited with error: %v", err)
 	} else {
 		if ps := cmd.ProcessState; ps != nil {
+			//nolint:forcetypeassert
 			if ws, ok := ps.Sys().(syscall.WaitStatus); ok {
 				os.Exit(ws.ExitStatus())
 			}

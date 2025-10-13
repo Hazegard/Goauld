@@ -1,3 +1,4 @@
+// Package transport holds the SSH tunneling
 package transport
 
 import (
@@ -13,11 +14,12 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const SSHD_BANNER = "SSH-2.0-"
+// SSHDBanner the SSHD banner.
+const SSHDBanner = "SSH-2.0-"
 
-// CheckDirectSshAccess connects to the given address, verifies that the service is SSH,
+// CheckDirectSSHAccess connects to the given address, verifies that the service is SSH,
 // and checks if the returned banner matches the expected one.
-func CheckDirectSshAccess(address string) error {
+func CheckDirectSSHAccess(address string) error {
 	// Set a timeout for the connection
 	conn, err := net.DialTimeout("tcp", address, 5*time.Second)
 	if err != nil {
@@ -43,19 +45,19 @@ func CheckDirectSshAccess(address string) error {
 	banner = strings.TrimSpace(banner)
 
 	// Check if the banner matches the expected one
-	if !strings.Contains(banner, SSHD_BANNER) {
-		return fmt.Errorf("unexpected banner: got %s, want %s*", banner, SSHD_BANNER)
+	if !strings.Contains(banner, SSHDBanner) {
+		return fmt.Errorf("unexpected banner: got %s, want %s*", banner, SSHDBanner)
 	}
 
 	return nil
 }
 
-// DirectSshConnect performs a direct SSH connection to the server
+// DirectSSHConnect performs a direct SSH connection to the server
 // and will abort dialing or handshaking if ctx is cancelled.
-func DirectSshConnect(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Client, error) {
-	addr := config.Get().ControlSshServer()
+func DirectSSHConnect(ctx context.Context, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	addr := config.Get().ControlSSHServer()
 
-	if err := CheckDirectSshAccess(addr); err != nil {
+	if err := CheckDirectSSHAccess(addr); err != nil {
 		return nil, fmt.Errorf(
 			"unable to access the SSH server directly (%s): %w",
 			addr, err,
@@ -78,6 +80,7 @@ func DirectSshConnect(sshConfig *ssh.ClientConfig, ctx context.Context) (*ssh.Cl
 	conn, chans, reqs, err := ssh.NewClientConn(rawConn, addr, sshConfig)
 	if err != nil {
 		_ = rawConn.Close()
+
 		return nil, fmt.Errorf("SSH handshake with %s failed: %w", addr, err)
 	}
 
