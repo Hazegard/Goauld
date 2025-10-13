@@ -1,0 +1,6 @@
+go 1.25
+
+use (
+	.
+	vendored/github.com/hazegard/socket.io-go
+)
