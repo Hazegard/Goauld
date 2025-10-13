@@ -2,6 +2,7 @@ package vscode
 
 import (
 	"Goauld/common/utils"
+	"Goauld/common/vscode"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,7 +14,7 @@ func Cleanup() error {
 		return fmt.Errorf("unable to get current working directory")
 	}
 
-	targetPath := filepath.Join(cwd, "tealc-VSServer")
+	targetPath := filepath.Join(cwd, vscode.VSCode)
 
 	if utils.IsDir(targetPath) {
 		return os.RemoveAll(targetPath)

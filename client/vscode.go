@@ -5,6 +5,7 @@ import (
 	"Goauld/client/types"
 	"Goauld/common/log"
 	"Goauld/common/utils"
+	"Goauld/common/vscode"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -146,12 +147,12 @@ func GetConfigDir() string {
 }
 
 func CheckVsCode() error {
-	vscode := "code"
-	_, err := exec.LookPath(vscode)
+	vscodeCmd := "code"
+	_, err := exec.LookPath(vscodeCmd)
 	if err != nil {
 		return fmt.Errorf("vscode (code) not found in $PATH")
 	}
-	cmd := exec.Command(vscode, "--help")
+	cmd := exec.Command(vscodeCmd, "--help")
 
 	out, err := cmd.Output()
 	if err != nil {
@@ -183,7 +184,7 @@ func GenVSCodeSettings(sshConfigFile string, agent types.Agent, binPath string) 
 	} else {
 		sep = "/"
 	}
-	targetPath := fmt.Sprintf("%s%s%s", agent.Path, sep, "tealc-VSServer")
+	targetPath := fmt.Sprintf("%s%s%s", agent.Path, sep, vscode.VSCode)
 	settings := VsCodeSettings{
 		RemoteSSHConfigFile:            sshConfigFile,
 		RemoteSSHPath:                  binPath,
