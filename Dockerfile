@@ -13,7 +13,8 @@ RUN go mod download
 
 FROM init AS build
 
-ARG COMPRESS=1
+ARG COMPRESS
+ENV COMPRESS=$COMPRESS
 COPY . /app
 WORKDIR /app
 
