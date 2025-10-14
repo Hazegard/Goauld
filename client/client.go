@@ -96,6 +96,7 @@ func main() {
 		err = kong.Run(cfg)
 		if err != nil {
 			log.Error().Err(err).Msg("error running compiler")
+			os.Exit(1)
 		}
 
 		return

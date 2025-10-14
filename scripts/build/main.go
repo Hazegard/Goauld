@@ -70,6 +70,7 @@ func main() {
 	err = cpl.Run()
 	if err != nil {
 		log.Error().Err(err).Msg("compiler.Compile()")
+		os.Exit(1)
 	}
 }
 
