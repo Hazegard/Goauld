@@ -155,6 +155,8 @@ func (sshAgent *SSHAgent) RemoteForward(ctx context.Context, rpf _ssh.RemotePort
 					continue
 				}
 				if errors.Is(err, io.EOF) {
+					time.Sleep(1 * time.Second)
+
 					continue
 				}
 

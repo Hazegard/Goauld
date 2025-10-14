@@ -19,7 +19,7 @@ type AgentData struct {
 	IPs              string          `json:"ips"`
 	Path             string          `json:"path"`
 	HasStaticPwd     bool            `json:"has_static_pwd"`
-	AgentVersion     common.JVersion `json:"agent_version"` // TODO: add in socket.io agent/server + tuidata information
+	AgentVersion     common.JVersion `json:"agent_version"`
 }
 
 // newAgentSSHPasswordMessage creates a new empty AgentData instance.
