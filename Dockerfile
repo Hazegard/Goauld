@@ -1,6 +1,6 @@
 FROM golang:1.25.2-alpine3.22 AS init
 
-RUN apk add go alpine-sdk upx
+RUN apk add go alpine-sdk upx git
 RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
 RUN go install mvdan.cc/garble@latest
 
