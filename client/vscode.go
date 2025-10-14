@@ -62,7 +62,14 @@ func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 	sshPath := filepath.Join(binDir, "ssh"+suffix)
 
-	srcAbsBin, err := filepath.Abs(os.Args[0])
+	executable, err := os.Executable()
+	if err != nil {
+		log.Error().Err(err).Str("Path", sshPath).Msg("Failed to get executable")
+
+		return err
+	}
+
+	srcAbsBin, err := filepath.Abs(executable)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Path", os.Args[0]).Msg("Failed to get absolute path")
 
