@@ -293,11 +293,13 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 	cfg := &ClientConfig{}
 	app := kong.Parse(cfg, kongOptions...)
 
-	abs, err := filepath.Abs(cfgTmp.ConfigFile)
-	if err != nil {
-		cfg.ConfigFile = cfgTmp.ConfigFile
-	} else {
-		cfg.ConfigFile = abs
+	if cfgTmp.ConfigFile != "" {
+		abs, err := filepath.Abs(cfgTmp.ConfigFile)
+		if err != nil {
+			cfg.ConfigFile = cfgTmp.ConfigFile
+		} else {
+			cfg.ConfigFile = abs
+		}
 	}
 	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
 
