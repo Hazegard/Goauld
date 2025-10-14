@@ -143,14 +143,15 @@ type ClientConfig struct {
 	PromptPassword  bool              `default:"${_prompt_static_password}" name:"prompt" yaml:"prompt" short:"Q" help:"Prompt for the agent private password."`
 	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" negatable:"" help:"Save the prompted password in the config file."`
 
-	SSH     SSH      `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
-	Socks   Socks    `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
-	SCP     Scp      `cmd:"" name:"scp" help:"Transfer files using SCP from/to the agent."`
-	TUI     Tui      `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
-	Pass    Password `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
-	Compile Compiler `cmd:"" name:"compile" help:"Compile the agent."`
-	Admin   Admin    `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
-	VsCode  VsCode   `cmd:"" name:"vscode" help:"Start vsCode in remote mode."`
+	SSH       SSH       `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
+	Socks     Socks     `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
+	SCP       Scp       `cmd:"" name:"scp" help:"Transfer files using SCP from/to the agent."`
+	TUI       Tui       `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
+	Pass      Password  `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
+	Compile   Compiler  `cmd:"" name:"compile" help:"Compile the agent."`
+	Admin     Admin     `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
+	VsCode    VsCode    `cmd:"" name:"vscode" help:"Start vsCode in remote mode."`
+	Clipboard Clipboard `cmd:"" name:"clip" help:"Interact with agent clipboard."`
 
 	SearchConfigDir string `hidden:""`
 }

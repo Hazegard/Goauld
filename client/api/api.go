@@ -141,9 +141,7 @@ func (api *API) GetAgents() ([]types.Agent, error) {
 	if err != nil {
 		return nil, err
 	}
-	// for i := range agents {
-	// 	agents[i].ParseFPR()
-	// }
+
 	return agents, nil
 }
 
@@ -169,9 +167,7 @@ func (api *API) GetAgentByID(id string) (types.Agent, error) {
 	if err != nil {
 		return types.Agent{}, err
 	}
-	// for i := range agents {
-	// 	agents[i].ParseFPR()
-	// }
+
 	return agents, nil
 }
 
@@ -391,4 +387,69 @@ func (api *API) DumpState() (commontypes.Status, error) {
 	}
 
 	return result, nil
+}
+
+func (api *API) GetClipboard(id string, password string) (string, error) {
+	u := fmt.Sprintf("/manage/agent/%s/getClipboard", id)
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", errors.New("error generating hash from password")
+	}
+	req := socketio.ClipboardMessage{
+		HashPassword: string(hashedPwd),
+	}
+	jsBody, err := json.Marshal(req)
+	if err != nil {
+		return "", err
+	}
+	res, err := api.post(u, bytes.NewBuffer(jsBody))
+	if err != nil {
+		return "", fmt.Errorf("error sending request (%s)", err.Error())
+	}
+	//nolint:errcheck
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response (%s)", res.Status)
+	}
+	if res.StatusCode != http.StatusOK {
+		return "", HandleError(body)
+	}
+	var result socketio.ClipboardMessage
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling response (%s)", res.Status)
+	}
+
+	return result.Content, nil
+}
+
+func (api *API) SetClipboard(id string, password string, clipboard string) error {
+	u := fmt.Sprintf("/manage/agent/%s/setClipboard", id)
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("error generating password (%s)", clipboard)
+	}
+	req := socketio.ClipboardMessage{
+		HashPassword: string(hashedPwd),
+		Content:      clipboard,
+	}
+	jsBody, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("error marshalling request body (%s)", clipboard)
+	}
+	res, err := api.post(u, bytes.NewBuffer(jsBody))
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response (%s)", res.Status)
+	}
+	if res.StatusCode != http.StatusOK {
+		return HandleError(body)
+	}
+
+	return nil
 }

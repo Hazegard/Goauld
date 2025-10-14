@@ -406,3 +406,90 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, hashA
 
 	return response
 }
+
+func SetClipboard(agent *persistence.Agent, socket gosio.Socket, clip socketio.ClipboardMessage) bool {
+	cryptor, err := agent.GetCryptor()
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msgf("Error getting crypto for agent (%s)", agent.Name)
+
+		return false
+	}
+	if socket == nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msg("socket is nil")
+
+		return false
+	}
+	data, err := socketio.NewEncryptedClipboardMessageEventMessage(clip, cryptor)
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msg("Error creating clipboard message event")
+
+		return false
+	}
+
+	socket.Emit(socketio.ClipboardContentEvent.ID(), data)
+
+	return true
+}
+
+func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd string) socketio.ClipboardMessage {
+	cryptor, err := agent.GetCryptor()
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msgf("Error getting crypto for agent (%s)", agent.Name)
+
+		return socketio.ClipboardMessage{
+			Error: true,
+		}
+	}
+	if socket == nil {
+		return socketio.ClipboardMessage{
+			Error: true,
+		}
+	}
+
+	id := uuid.NewString()
+	eventID := fmt.Sprintf("%s@%s", socketio.ClipboardContentEvent.ID(), id)
+	chanResponse := make(chan socketio.ClipboardMessage, 1)
+	socket.OnEvent(eventID, func(data []byte) {
+		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Event received")
+		response, err := socketio.DecryptClipboardMessageEventMessage(data, cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("Error decrypting clipboard message response")
+			chanResponse <- socketio.ClipboardMessage{
+				Error: true,
+			}
+
+			return
+		}
+		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Bool("Response", response.Error).Msg("Agent response")
+		chanResponse <- response
+	})
+	defer socket.OffEvent(eventID)
+
+	request := socketio.ClipboardRequestMessage{
+		EventID:      eventID,
+		HashPassword: hashAgentPwd,
+	}
+
+	encryptedClipboardRequest, err := socketio.NewEncryptedClipboardRequestMessageEventMessage(request, cryptor)
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Str("Event", eventID).Err(err).Msgf("Error encrypting password validation request")
+
+		return socketio.ClipboardMessage{
+			Error: true,
+		}
+	}
+
+	socket.Emit(socketio.CopyClipboardRequestEvent.ID(), encryptedClipboardRequest)
+	var response socketio.ClipboardMessage
+	select {
+	case r := <-chanResponse:
+		response = r
+	case <-time.After(5 * time.Second):
+		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Timeout waiting for response")
+		response = socketio.ClipboardMessage{
+			Error: true,
+		}
+	}
+
+	return response
+}

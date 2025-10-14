@@ -43,6 +43,9 @@ func NewManageRouter(_db *persistence.DB, agentStore *store.AgentStore) *ManageR
 	r.userRouter.HandleFunc("POST /clearport/{$}", r.ClearPort)
 	r.userRouter.HandleFunc("GET /version/", r.Version)
 
+	r.userRouter.HandleFunc("POST /agent/{id}/setClipboard", r.SetClipboard)
+	r.userRouter.HandleFunc("POST /agent/{id}/getClipboard", r.GetClipboard)
+
 	return r
 }
 
@@ -319,4 +322,73 @@ func HasAdminToken(r *http.Request) bool {
 	authHeader = strings.Split(authHeader, ":")[1]
 
 	return authHeader == config.Get().AdminToken
+}
+
+func (mr *ManageRouter) GetClipboard(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error reading body")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+	jsonBody := socketio.ClipboardMessage{}
+	err = json.Unmarshal(body, &jsonBody)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error unmarshalling json")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+	socket := mr.store.SioGetSocket(id)
+	agent := mr.store.SioGetAgent(socket)
+	res := control.GetClipboard(agent, socket, jsonBody.HashPassword)
+
+	jsonRes, err := json.Marshal(res)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating json response")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	_, err = w.Write(jsonRes)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error returning response")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (mr *ManageRouter) SetClipboard(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error reading body")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+	jsonBody := socketio.ClipboardMessage{}
+	err = json.Unmarshal(body, &jsonBody)
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error unmarshalling json")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	socket := mr.store.SioGetSocket(id)
+	agent := mr.store.SioGetAgent(socket)
+
+	res := control.SetClipboard(agent, socket, jsonBody)
+	if !res {
+		http.Error(w, "error setting clipboard", http.StatusInternalServerError)
+
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

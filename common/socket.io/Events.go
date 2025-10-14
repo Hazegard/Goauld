@@ -48,4 +48,6 @@ const (
 	SendSSHPrivateKeySuccess
 	PasswordValidationRequestEvent
 	PasswordValidationRequestResponse
+	ClipboardContentEvent
+	CopyClipboardRequestEvent
 )

