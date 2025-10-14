@@ -182,13 +182,6 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 
 // Get return the global config.
 func Get() *ServerConfig {
-	/*serverOnce.Do(func() {
-		srvCfg = &ServerConfig{
-			PrivKey:           privKey,
-			httpDomain: ":3000",
-			SshdPort:          0,
-		}
-	})*/
 	return srvCfg
 }
 

@@ -59,7 +59,7 @@ func (cs CustomSlog) Write(p []byte) (int, error) {
 // colorize returns the string s wrapped in ANSI code c, unless disabled is true or c is 0.
 //
 //nolint:unparam
-func colorize(s interface{}, c int, disabled bool) string {
+func colorize(s any, c int, disabled bool) string {
 	e := os.Getenv("NO_COLOR")
 	if e != "" || c == 0 {
 		disabled = true
@@ -88,9 +88,7 @@ func initLoggers() {
 
 		return l.String()
 	}
-	// fileWriter := zerolog.Writer
-	// writers := zerolog.MultiLevelWriter(writer)
-	writer.FormatLevel = func(i interface{}) string {
+	writer.FormatLevel = func(i any) string {
 		if i == nil {
 			return colorize("AAA", 34, false)
 		}
@@ -122,11 +120,11 @@ func initLoggers() {
 
 		return colorize(fmt.Sprintf("%s", i), 37, false) // "\x1b[1;37m???\x1b[0m"
 	}
-	writer.FormatMessage = func(i interface{}) string {
+	writer.FormatMessage = func(i any) string {
 		return fmt.Sprintf("%v", i)
 	}
 
-	writer.FormatFieldName = func(i interface{}) string {
+	writer.FormatFieldName = func(i any) string {
 		//nolint:gocritic
 		switch v := i.(type) {
 		case string:
@@ -144,7 +142,7 @@ func initLoggers() {
 		if strings.HasSuffix(file, root+"/") {
 			return fmt.Sprintf("%s:%d", strings.TrimPrefix(file, root+"/"), line)
 		}
-		regex := regexp.MustCompile(`([a-zA-Z0-9\-_]+@[a-zA-Z0-9\.]+).*`)
+		regex := regexp.MustCompile(`([a-zA-Z0-9\-_]+@[a-zA-Z0-9.]+).*`)
 		m := regex.FindString(file)
 		if m == "" {
 			return fmt.Sprintf("%s:%d", file, line)
@@ -185,7 +183,6 @@ func UpdateLogLevel(level zerolog.Level) {
 
 // SetLogLevel set the default log level.
 func SetLogLevel(verbosity int) {
-	// logLevel = VerbosityToLogLevel(verbosity)
 	zerolog.SetGlobalLevel(VerbosityToLogLevel(verbosity))
 
 	if verbosity > 3 {
@@ -242,12 +239,12 @@ func GetNegroniLogger() *NegroniLogger {
 }
 
 // Println negroni logger.
-func (n *NegroniLogger) Println(v ...interface{}) {
+func (n *NegroniLogger) Println(v ...any) {
 	n.logger.Trace().Msg(fmt.Sprint(v...))
 }
 
 // Printf negroni logger.
-func (n *NegroniLogger) Printf(format string, v ...interface{}) {
+func (n *NegroniLogger) Printf(format string, v ...any) {
 	n.logger.Trace().Msg(fmt.Sprint(format, v))
 }
 
@@ -310,17 +307,17 @@ func Error() *zerolog.Event {
 }
 
 // Print zerolog event.
-func Print(v ...interface{}) {
+func Print(v ...any) {
 	Get().Print(v...)
 }
 
 // Println zerolog event.
-func Println(v ...interface{}) {
+func Println(v ...any) {
 	Get().Println(v...)
 }
 
 // Printf zerolog event.
-func Printf(format string, v ...interface{}) {
+func Printf(format string, v ...any) {
 	Get().Printf(format, v...)
 }
 

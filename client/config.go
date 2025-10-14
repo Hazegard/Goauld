@@ -226,8 +226,8 @@ func (cfg *ClientConfig) IsFlagInCommandLine(long string, short string) bool {
 type Tui struct{}
 
 // Run executes the tui subcommand.
-func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
-	tt := tui.NewTui(api, cfg.AgentPassword)
+func (t *Tui) Run(clientAPI *api.API, cfg ClientConfig) error {
+	tt := tui.NewTui(clientAPI, cfg.AgentPassword)
 	agent, mode, err := tt.Run()
 
 	if err != nil {
@@ -240,11 +240,11 @@ func (t *Tui) Run(api *api.API, cfg ClientConfig) error {
 	case "ssh":
 		cfg.SSH.Target = agent
 
-		return cfg.SSH.Run(api, cfg)
+		return cfg.SSH.Run(clientAPI, cfg)
 	case "vscode":
 		cfg.VsCode.Target = agent
 
-		return cfg.VsCode.Run(api, cfg)
+		return cfg.VsCode.Run(clientAPI, cfg)
 	}
 
 	return nil

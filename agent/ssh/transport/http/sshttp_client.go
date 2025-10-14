@@ -46,14 +46,10 @@ const (
 
 // NewSSHTTP sets up an SSHTTP instance with HTTP, KCP, and smux, returning an error if any step fails.
 func NewSSHTTP(serverURL string) (*SSHTTP, error) {
-	// http.DefaultTransport.(*http.Transport).MaxConnsPerHost = 20
-
 	tr := &http.Transport{
 		MaxIdleConns: 5,
 	}
 	httpClient := proxy.NewHTTPClientProxy(tr)
-	// httpClient.Transport.(*http.Transport).
-	// httpClient.Transport.(*http.Transport).MaxConnsPerHost = 20
 	res, err := httpClient.Get(serverURL)
 	if err != nil {
 		return nil, err
@@ -134,7 +130,6 @@ func poll(ctx context.Context, httpClient *http.Client, serverURL string, p []by
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	// req.Header.Set("User-Agent", "") // Disable default "Go-http-client/1.1".
 
 	resp, err := httpClient.Transport.RoundTrip(req) // http.DefaultTransport.RoundTrip(req)
 	if err != nil {

@@ -141,8 +141,8 @@ func main() {
 
 // CheckAPIVersion fetches the server side version and compares it to the client version
 // It prints a warning to the user if the versions mismatch.
-func CheckAPIVersion(api *api.API) {
-	srvVersion, err := api.Version()
+func CheckAPIVersion(clientAPI *api.API) {
+	srvVersion, err := clientAPI.Version()
 	if err != nil {
 		log.Warn().Err(err).Msg("error getting version")
 

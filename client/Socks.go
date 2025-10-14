@@ -17,7 +17,7 @@ type Socks struct {
 }
 
 // Run execute the socks command.
-func (s *Socks) Run(api *api.API, cfg ClientConfig) error {
+func (s *Socks) Run(clientAPI *api.API, cfg ClientConfig) error {
 	ssh := &SSH{
 		Target:         s.Target,
 		Socks:          s.Socks,
@@ -30,5 +30,5 @@ func (s *Socks) Run(api *api.API, cfg ClientConfig) error {
 		SSHArgs:        s.SSHArgs,
 	}
 
-	return ssh.Run(api, cfg)
+	return ssh.Run(clientAPI, cfg)
 }

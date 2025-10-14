@@ -234,7 +234,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 }
 
 // Run execute the ssh subcommand.
-func (e *SSH) Run(api *api.API, cfg ClientConfig) error {
+func (e *SSH) Run(clientAPI *api.API, cfg ClientConfig) error {
 	for i := range e.SSHArgs {
 		if cfg.SSH.SSHArgs[i] == "-F" {
 			cfg.SSH.SSHConfFile = cfg.SSH.SSHArgs[i+1]
@@ -260,15 +260,15 @@ func (e *SSH) Run(api *api.API, cfg ClientConfig) error {
 		e.HTTP = false
 	}
 
-	return e.Execute(api, cfg)
+	return e.Execute(clientAPI, cfg)
 }
 
 // Execute start the ssh.
-func (e *SSH) Execute(api *api.API, cfg ClientConfig) error {
+func (e *SSH) Execute(clientAPI *api.API, cfg ClientConfig) error {
 	if len(e.SSHArgs) == 1 && e.SSHArgs[0] == "" {
 		e.SSHArgs = []string{}
 	}
-	agent, err := api.GetAgentByName(cfg.SSH.Target)
+	agent, err := clientAPI.GetAgentByName(cfg.SSH.Target)
 	if err != nil {
 		log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to get agent")
 		cfg.SSH.Target, err = GetFromSSHConfig(cfg.SSH.SSHConfFile, cfg.SSH.Target)
@@ -278,7 +278,7 @@ func (e *SSH) Execute(api *api.API, cfg ClientConfig) error {
 
 		log.Debug().Str("Target", cfg.SSH.Target).Msg("Trying using ssh_config file")
 
-		agent, err = api.GetAgentByName(cfg.SSH.Target)
+		agent, err = clientAPI.GetAgentByName(cfg.SSH.Target)
 		if err != nil {
 			return fmt.Errorf("failed to get agent by name (%s): %w", cfg.SSH.Target, err)
 		}

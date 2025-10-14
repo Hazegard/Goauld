@@ -102,7 +102,7 @@ func lookPath(binaryName Command, path string) (Command, error) {
 	}
 
 	// Check if the file is executable
-	if info.Mode()&0111 == 0 {
+	if info.Mode()&0o111 == 0 {
 		return Command{}, fmt.Errorf("binary '%s' is not executable", binaryName)
 	}
 

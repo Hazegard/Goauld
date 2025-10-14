@@ -12,7 +12,7 @@ var initPPLog sync.Once
 var pplogger *zerolog.Logger
 
 // ProxyPleaseLog logs the ProxyPlease infos.
-func ProxyPleaseLog() func(format string, a ...interface{}) {
+func ProxyPleaseLog() func(format string, a ...any) {
 	initPPLog.Do(func() {
 		ppl := Get().Sample(
 			&zerolog.BurstSampler{
@@ -23,7 +23,7 @@ func ProxyPleaseLog() func(format string, a ...interface{}) {
 		pplogger = &ppl
 	})
 
-	return func(format string, a ...interface{}) {
+	return func(format string, a ...any) {
 		pplogger.Trace().Str("From", "ProxyPlease").Msgf(format, a...)
 	}
 }

@@ -24,7 +24,7 @@ import (
 )
 
 // StartSshd init and start the sshd server.
-func StartSshd(context context.Context, db *persistence.DB, store *store.AgentStore) {
+func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentStore) {
 	listener, err := net.Listen("tcp", config.Get().LocalSSHAddr())
 	if err != nil {
 		panic(err)
@@ -94,7 +94,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 
 				ok, payload, ln := forwardHandler.HandleSSHRequest(ctx, srv, req)
 				if ln != nil {
-					store.AdSSHSession(ctx.User(), ctx, ln)
+					agentStore.AdSSHSession(ctx.User(), ctx, ln)
 				}
 
 				return ok, payload
@@ -185,7 +185,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 				return false
 			}
 
-			isStaticPwdValid := control.ValidateStaticPassword(agent, store.SioGetSocket(agent.ID), pwd.HashAgentPassword)
+			isStaticPwdValid := control.ValidateStaticPassword(agent, agentStore.SioGetSocket(agent.ID), pwd.HashAgentPassword)
 			if !isStaticPwdValid {
 				return false
 			}
@@ -223,7 +223,7 @@ func StartSshd(context context.Context, db *persistence.DB, store *store.AgentSt
 		log.Error().Msg(err.Error())
 	}
 	log.Info().Msg("SSH server stopped")
-	context.Done()
+	ctx.Done()
 }
 
 //nolint:revive

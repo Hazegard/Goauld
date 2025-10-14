@@ -376,8 +376,6 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 // DNSReq execute a system command that performs the DNS request
 // The system command is responsible for converting the request to raw bytes data.
 func DNSReq(data string) []byte {
-	// cmd := exec.Command("powershell", "-c", fmt.Sprintf("(Resolve-DnsName -Type TXT -DnsOnly -Name %s -Server XXXXX).Strings", data))
-	// cmd := exec.Command("powershell", "-c", fmt.Sprintf("dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p", data))
 	exe := "sh"
 	param := []string{"-c"}
 	if runtime.GOOS == "windows" {

@@ -26,11 +26,11 @@ type AdminRouter struct {
 }
 
 // NewAdminRouter returns a new AdminRouter.
-func NewAdminRouter(_db *persistence.DB, store *store.AgentStore) *AdminRouter {
+func NewAdminRouter(_db *persistence.DB, agentStore *store.AgentStore) *AdminRouter {
 	r := &AdminRouter{
 		db:         _db,
 		userRouter: http.NewServeMux(),
-		store:      store,
+		store:      agentStore,
 	}
 	r.userRouter.HandleFunc("GET /config/", r.GetConfig)
 	r.userRouter.HandleFunc("GET /dump/", r.DumpAll)
@@ -59,6 +59,8 @@ func (ur *AdminRouter) Version(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
@@ -66,7 +68,7 @@ func (ur *AdminRouter) Version(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func addAgentInfoToDump(dump types.State, agent *persistence.Agent) types.State {
+func addAgentInfoToDump(dump *types.State, agent *persistence.Agent) {
 	dump.Path = agent.Path
 	dump.Name = agent.Name
 	dump.ID = agent.ID
@@ -80,8 +82,6 @@ func addAgentInfoToDump(dump types.State, agent *persistence.Agent) types.State 
 	dump.Username = agent.Username
 	dump.UsedPorts = agent.UsedPorts
 	dump.IPs = agent.IPs
-
-	return dump
 }
 
 // Dump return all the information stored regarding the agent.
@@ -95,11 +95,13 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	dump = addAgentInfoToDump(dump, agent)
+	addAgentInfoToDump(&dump, agent)
 	res, err := yaml.Marshal(dump)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
@@ -111,14 +113,14 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 func (ur *AdminRouter) dumpAllAgents() []types.State {
 	dump := ur.store.GetAllStates()
 	var outDump []types.State
-	for _, d := range dump {
-		agent, err := ur.db.FindAgentByID(d.ID)
+	for i := range dump {
+		agent, err := ur.db.FindAgentByID(dump[i].ID)
 		if err != nil {
 			// outDump = append(outDump, d)
 			continue
 		}
-		d = addAgentInfoToDump(d, agent)
-		outDump = append(outDump, d)
+		addAgentInfoToDump(&dump[i], agent)
+		outDump = append(outDump, dump[i])
 	}
 
 	return outDump
@@ -131,6 +133,8 @@ func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
@@ -220,6 +224,8 @@ func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 	_, err = w.Write(res)
 	if err != nil {

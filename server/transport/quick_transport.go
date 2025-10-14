@@ -15,15 +15,15 @@ import (
 
 // QUICServer is the struct used to handle SSH over QUIC.
 type QUICServer struct {
-	store *store.AgentStore
-	db    *persistence.DB
+	agentStore *store.AgentStore
+	db         *persistence.DB
 }
 
 // NewQUICServer returns a new QUICSHServer.
-func NewQUICServer(store *store.AgentStore, db *persistence.DB) *QUICServer {
+func NewQUICServer(agentStore *store.AgentStore, db *persistence.DB) *QUICServer {
 	return &QUICServer{
-		store: store,
-		db:    db,
+		agentStore: agentStore,
+		db:         db,
 	}
 }
 
@@ -41,7 +41,7 @@ func (qssh *QUICServer) HandleQuic(quicConn *quic.Stream, id string, remote stri
 	}
 	// Adds the agent to the QUIC over SSH store
 	QUICshAgent := &store.QUICAgent{QUICStream: quicConn, SSHConn: sshConn}
-	qssh.store.QuicAddAgent(id, QUICshAgent)
+	qssh.agentStore.QuicAddAgent(id, QUICshAgent)
 
 	errChan := make(chan error, 1)
 	// Initializes the QUIC to SSH connection
@@ -73,7 +73,7 @@ func (qssh *QUICServer) HandleQuic(quicConn *quic.Stream, id string, remote stri
 	}
 
 	// Closes all remaining connections of the agent
-	err = qssh.store.TLSSHCloseAgent(id)
+	err = qssh.agentStore.TLSSHCloseAgent(id)
 	if err != nil {
 		log.Error().Str("ID", id).Err(err).Str("Mode", "QUIC").Msg("error while closing QUIC streams")
 	}

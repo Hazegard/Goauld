@@ -66,7 +66,7 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyple
 	}
 	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
-	dctx, err, _ := p.group.Do(cacheKey, func() (interface{}, error) {
+	dctx, err, _ := p.group.Do(cacheKey, func() (any, error) {
 		var pxyCtx proxyplease.DialContext
 		if p.ProxyOverrides != nil {
 			var detected bool
@@ -137,9 +137,9 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyple
 							},
 						}
 
-						// req.Write(os.Stdout)
 						br := bufio.NewReader(conn)
-						if err = req.Write(conn); err != nil {
+						err = req.Write(conn)
+						if err != nil {
 							return conn, err
 						}
 

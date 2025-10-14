@@ -73,7 +73,7 @@ func (api *API) delete(p string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	req, err := http.NewRequest(http.MethodDelete, u, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (api *API) get(p string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, u, nil)
+	req, err := http.NewRequest(http.MethodGet, u, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +286,7 @@ func (api *API) DumpAll() ([]commontypes.State, error) {
 }
 
 // UpdateLogLevel updates the server log level.
-func (api *API) UpdateLogLevel(level string) (map[string]interface{}, error) {
+func (api *API) UpdateLogLevel(level string) (map[string]any, error) {
 	res, err := api.post("/admin/loglevel/"+url.PathEscape(level), nil)
 	if err != nil {
 		return nil, err
@@ -300,7 +300,7 @@ func (api *API) UpdateLogLevel(level string) (map[string]interface{}, error) {
 	if res.StatusCode != http.StatusOK {
 		return nil, HandleError(body)
 	}
-	result := map[string]interface{}{}
+	result := map[string]any{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return nil, err

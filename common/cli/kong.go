@@ -59,13 +59,13 @@ func YAMLOverwriteEnvVar(ignoreOverwrite []string) func(r io.Reader) (kong.Resol
 // the environment variable. If not, the value should be set to false.
 func YAML(r io.Reader, overwriteEnvVar bool, ignoreOverwrite []string) (kong.Resolver, error) {
 	decoder := yaml.NewDecoder(r)
-	config := map[string]interface{}{}
+	config := map[string]any{}
 	err := decoder.Decode(&config)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, fmt.Errorf("YAML agent decode error: %w", err)
 	}
 
-	return kong.ResolverFunc(func(_ *kong.Context, parent *kong.Path, flag *kong.Flag) (interface{}, error) {
+	return kong.ResolverFunc(func(_ *kong.Context, parent *kong.Path, flag *kong.Flag) (any, error) {
 		if overwriteEnvVar || utils.Contains(ignoreOverwrite, flag.Name) {
 			for _, env := range flag.Envs {
 				_, ok := os.LookupEnv(env)
@@ -86,14 +86,14 @@ func YAML(r io.Reader, overwriteEnvVar bool, ignoreOverwrite []string) (kong.Res
 	}), nil
 }
 
-func find(config map[string]interface{}, path []string) interface{} {
+func find(config map[string]any, path []string) any {
 	if len(path) == 0 {
 		return config
 	}
 	for i := range path {
 		prefix := strings.Join(path[:i+1], "-")
 
-		if child, ok := config[prefix].(map[string]interface{}); ok {
+		if child, ok := config[prefix].(map[string]any); ok {
 			return find(child, path[i+1:])
 		}
 	}
@@ -133,7 +133,7 @@ func GenerateYAMLWithComments(cfg any) (string, error) {
 }
 
 // AddComments recursively traverses the struct, extracting comments based on the struct tags.
-func AddComments(v interface{}, path string, comments map[string][]*yaml.Comment) {
+func AddComments(v any, path string, comments map[string][]*yaml.Comment) {
 	val := reflect.ValueOf(v)
 	typ := reflect.TypeOf(v)
 

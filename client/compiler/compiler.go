@@ -1,7 +1,7 @@
 package compiler
 
 import (
-	"Goauld"
+	sources "Goauld"
 	"Goauld/client/common"
 	goauldcommon "Goauld/common"
 	"Goauld/common/cli"
@@ -97,7 +97,7 @@ func (c *Compiler) Run() error {
 		return fmt.Errorf("could not create output directory %s: %w", c.Output, err)
 	}
 	newEnvFile := filepath.Join(c.Output, EnvFile)
-	err = os.WriteFile(newEnvFile, []byte(content), 0600)
+	err = os.WriteFile(newEnvFile, []byte(content), 0o600)
 	if err != nil {
 		return fmt.Errorf("could not write env file %s: %w", newEnvFile, err)
 	}
@@ -247,20 +247,20 @@ func drop(destDir string, source embed.FS) error {
 
 		// Create the necessary directories
 		dir := filepath.Dir(destPath)
-		err = os.MkdirAll(dir, 0750)
+		err = os.MkdirAll(dir, 0o750)
 		if err != nil {
 			return err
 		}
 
 		// Write the content to the file
-		err = os.WriteFile(destPath, fileContent, 0600)
+		err = os.WriteFile(destPath, fileContent, 0o600)
 		if err != nil {
 			return err
 		}
 
 		if strings.Contains(destPath, "scripts/garble") {
 			//nolint:gosec
-			err = os.Chmod(destPath, 0750)
+			err = os.Chmod(destPath, 0o750)
 			if err != nil {
 				return err
 			}

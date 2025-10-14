@@ -19,11 +19,11 @@ type Password struct {
 }
 
 // Run executes the pass subcommand.
-func (p *Password) Run(api *api.API, cfg ClientConfig) error {
+func (p *Password) Run(clientAPI *api.API, cfg ClientConfig) error {
 	if len(cfg.Pass.Args) > 0 && cfg.Pass.Agent == "" {
 		cfg.Pass.Agent = cfg.Pass.Args[0]
 	}
-	agent, err := api.GetAgentByName(cfg.Pass.Agent)
+	agent, err := clientAPI.GetAgentByName(cfg.Pass.Agent)
 	if err != nil {
 		return err
 	}

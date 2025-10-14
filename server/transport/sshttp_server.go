@@ -301,7 +301,7 @@ func (s *SSHHttpServer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 // NewSSHHttpServer creates an SSHHttpServer using turbotunnel.
-func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) (*SSHHttpServer, error) {
+func NewSSHHttpServer(agentStore *store.AgentStore, db *persistence.DB) (*SSHHttpServer, error) {
 	// noiseConn is the packet interface that communicates with the AMP/HTTP
 	// Handler; it deals in encrypted Noise messages. plainConn is the
 	// packet interface that communicates with KCP. noiseLoop sits in the
@@ -318,7 +318,7 @@ func NewSSHHttpServer(store *store.AgentStore, db *persistence.DB) (*SSHHttpServ
 		pconn:   plainConn,
 		kcpConn: ln,
 		db:      db,
-		store:   store,
+		store:   agentStore,
 	}
 
 	go func() {

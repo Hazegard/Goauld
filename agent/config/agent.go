@@ -5,6 +5,7 @@ import (
 	"Goauld/common"
 	"Goauld/common/log"
 	"Goauld/common/utils"
+
 	//nolint:gosec
 	"crypto/md5"
 	"errors"
@@ -193,7 +194,7 @@ func (a *Agent) ValidatePassword(in string) bool {
 func (a *Agent) DNSServer() []string {
 	var servers []string
 	for _, srv := range a.cfg.DNSServer {
-		if strings.ToLower(srv) == "system" {
+		if strings.EqualFold(srv, "system") {
 			for _, systemDNSServer := range nameserver.GetDNSServers() {
 				servers = append(servers, systemDNSServer.String())
 			}

@@ -29,11 +29,11 @@ type ManageRouter struct {
 }
 
 // NewManageRouter returns a new ManageRouter.
-func NewManageRouter(_db *persistence.DB, store *store.AgentStore) *ManageRouter {
+func NewManageRouter(_db *persistence.DB, agentStore *store.AgentStore) *ManageRouter {
 	r := &ManageRouter{
 		db:         _db,
 		userRouter: http.NewServeMux(),
-		store:      store,
+		store:      agentStore,
 	}
 	r.userRouter.HandleFunc("POST /agent/{id}/kill", r.KillAgent)
 	r.userRouter.HandleFunc("GET /agent/{id}", r.GetAgentByID)
@@ -64,6 +64,8 @@ func (mr *ManageRouter) Version(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 	_, err = w.Write(res)
 	if err != nil {
@@ -94,6 +96,8 @@ func handleFindAgent(agent *persistence.Agent, err error, key string, val string
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str(key, val).Msg("error generating json response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 	// return the JSON agent to the caller
 	_, err = w.Write(jsonAgent)
@@ -131,7 +135,7 @@ func (mr *ManageRouter) DeleteAgentByID(w http.ResponseWriter, r *http.Request) 
 	id := r.PathValue("id")
 	err := mr.store.KillAGent(id, true)
 	if err != nil {
-		// http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error killing agent")
 	}
 	err = mr.db.DeleteAgentByID(id)
@@ -159,6 +163,8 @@ func (mr *ManageRouter) GetAgents(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating json response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
 	}
 
 	_, err = w.Write(jsonAgent)

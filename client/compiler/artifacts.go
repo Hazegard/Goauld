@@ -20,15 +20,15 @@ type Artifact struct {
 	Goamd64      string `json:"goamd64,omitempty"`
 	Target       string `json:"target,omitempty"`
 	Extra        struct {
-		Binary    string      `json:"Binary,omitempty"`
-		Builder   string      `json:"Builder,omitempty"`
-		Ext       string      `json:"Ext,omitempty"`
-		ID        string      `json:"ID,omitempty"`
-		Binaries  []string    `json:"Binaries,omitempty"`
-		Checksum  string      `json:"Checksum,omitempty"`
-		Format    string      `json:"Format,omitempty"`
-		Replaces  interface{} `json:"Replaces"`
-		WrappedIn string      `json:"WrappedIn,omitempty"`
+		Binary    string   `json:"Binary,omitempty"`
+		Builder   string   `json:"Builder,omitempty"`
+		Ext       string   `json:"Ext,omitempty"`
+		ID        string   `json:"ID,omitempty"`
+		Binaries  []string `json:"Binaries,omitempty"`
+		Checksum  string   `json:"Checksum,omitempty"`
+		Format    string   `json:"Format,omitempty"`
+		Replaces  any      `json:"Replaces"`
+		WrappedIn string   `json:"WrappedIn,omitempty"`
 	} `json:"extra,omitempty"`
 	Go386   string `json:"go386,omitempty"`
 	Goarm   string `json:"goarm,omitempty"`

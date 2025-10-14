@@ -21,7 +21,7 @@ type VsCode struct {
 	RemotePath string `arg:"" default:"."`
 }
 
-func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
+func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 	err := CheckVsCode()
 	if err != nil {
 		log.Error().Err(err).Msg("VSCode is not installed")
@@ -32,7 +32,7 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	configDir := GetConfigDir()
 	userVsCode := filepath.Join(configDir, "User")
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("ConfigDir", userVsCode).Str("Path", userVsCode).Msg("Generated User VsCode config")
-	err = os.MkdirAll(userVsCode, 0750)
+	err = os.MkdirAll(userVsCode, 0o750)
 	if err != nil {
 		log.Error().Err(err).Str("Path", userVsCode).Msg("Failed to create User VsCode directory")
 
@@ -51,7 +51,7 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 
 	binDir := filepath.Join(configDir, "bin")
 
-	err = os.MkdirAll(binDir, 0750)
+	err = os.MkdirAll(binDir, 0o750)
 	if err != nil {
 		return fmt.Errorf("failed to create bin vscode directory: %w", err)
 	}
@@ -86,7 +86,7 @@ func (v VsCode) Run(api *api.API, cfg ClientConfig) error {
 	}
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("Target", srcAbsBin).Str("Link", scpPath).Msg("SCP symlink created")
 
-	agent, err := api.GetAgentByName(cfg.VsCode.Target)
+	agent, err := clientAPI.GetAgentByName(cfg.VsCode.Target)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", cfg.VsCode.Target).Msg("Failed to get agent")
 

@@ -13,15 +13,15 @@ import (
 
 // TLSSHServer is the struct used to handle SSH over TLS.
 type TLSSHServer struct {
-	store *store.AgentStore
-	db    *persistence.DB
+	agentStore *store.AgentStore
+	db         *persistence.DB
 }
 
 // NewTLSSHServer returns a new TLSSHServer.
-func NewTLSSHServer(store *store.AgentStore, db *persistence.DB) *TLSSHServer {
+func NewTLSSHServer(agentStore *store.AgentStore, db *persistence.DB) *TLSSHServer {
 	return &TLSSHServer{
-		store: store,
-		db:    db,
+		agentStore: agentStore,
+		db:         db,
 	}
 }
 
@@ -39,7 +39,7 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 	}
 	// Adds the agent to the TLS over SSH store
 	tlsshAgent := &store.TLSSHAgent{TLSConn: tlsConn, SSHConn: sshConn}
-	tlssh.store.TLSSHAddAgent(id, tlsshAgent)
+	tlssh.agentStore.TLSSHAddAgent(id, tlsshAgent)
 
 	errChan := make(chan error, 1)
 	// Initializes the TLS to SSH connection
@@ -71,7 +71,7 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 	}
 
 	// Closes all remaining connections of the agent
-	err = tlssh.store.TLSSHCloseAgent(id)
+	err = tlssh.agentStore.TLSSHCloseAgent(id)
 	if err != nil {
 		log.Error().Str("ID", id).Err(err).Str("Mode", "TLS").Msg("error while closing TLS streams")
 	}

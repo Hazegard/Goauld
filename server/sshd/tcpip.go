@@ -41,6 +41,8 @@ type remoteForwardChannelData struct {
 // ForwardedTCPHandler can be enabled by creating a ForwardedTCPHandler and
 // adding the HandleSSHRequest callback to the server's RequestHandlers under
 // tcpip-forward and cancel-tcpip-forward.
+//
+//nolint:gocritic
 type ForwardedTCPHandler struct {
 	sync.Mutex
 
@@ -49,6 +51,8 @@ type ForwardedTCPHandler struct {
 
 // HandleSSHRequest handle the tcp-forwards requests.
 // It returns the listener to be able to properly close it later.
+//
+//nolint:gocritic
 func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server, req *gossh.Request) (bool, []byte, net.Listener) {
 	h.Lock()
 	if h.forwards == nil {

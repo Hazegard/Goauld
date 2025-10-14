@@ -279,7 +279,6 @@ func run() utils.CancelReason {
 				return
 			}
 			config.Get().UpdateSshdPort(rPort)
-			// config.Get().AddSshdToRpf()
 
 			go func() {
 				select {
@@ -353,7 +352,6 @@ func run() utils.CancelReason {
 			listener, err := net.Listen("tcp4", "127.0.0.1:0")
 			//nolint:forcetypeassert
 			port := listener.Addr().(*net.TCPAddr).Port
-			// rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedHTTPProxyAddress())
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the HTTP proxy connection")
 			}

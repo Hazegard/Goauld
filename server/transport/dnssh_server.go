@@ -810,12 +810,7 @@ func (d *DNSSHServer) Run() error {
 
 // NewDNSSHServer returns a DNSSHServer
 // It errors if the DNS domain in the config is invalid.
-func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, error) {
-	// var udpAddr string
-
-	// flag.IntVar(&maxUDPPayload, "mtu", maxUDPPayload, "maximum size of DNS responses")
-	// flag.StringVar(&udpAddr, "udp", "", "UDP address to listen on (required)")
-
+func NewDNSSHServer(agentStore *store.AgentStore, db *persistence.DB) (*DNSSHServer, error) {
 	domain, err := dns.ParseName(config.Get().DNSDomain)
 	if err != nil {
 		return nil, fmt.Errorf("invalid domain %s: %w", config.Get().DNSDomain, err)
@@ -836,7 +831,7 @@ func NewDNSSHServer(store *store.AgentStore, db *persistence.DB) (*DNSSHServer, 
 	log.Info().Str("Address", config.Get().DNSAddr).Msgf("DNS server listening")
 
 	return &DNSSHServer{
-		store:         store,
+		store:         agentStore,
 		db:            db,
 		domain:        domain,
 		sshUpstream:   config.Get().LocalSSHAddr(),

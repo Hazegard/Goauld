@@ -17,8 +17,7 @@ func CheckHostPortAvailability(proto string, host string, port int) bool {
 	if err != nil {
 		return false
 	}
-	//nolint:errcheck
-	defer conn.Close()
+	_ = conn.Close()
 
 	return true
 }

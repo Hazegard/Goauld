@@ -27,8 +27,8 @@ type Scp struct {
 }
 
 // Run execute the scp command.
-func (s *Scp) Run(api *api.API, cfg ClientConfig) error {
-	return s.Execute(api, cfg)
+func (s *Scp) Run(clientAPI *api.API, cfg ClientConfig) error {
+	return s.Execute(clientAPI, cfg)
 }
 
 // GetTarget parses the input and fetches the target agent, whether it is in the source or destination of the scp command.
@@ -72,14 +72,14 @@ func ExtractRemote(s string) (bool, string) {
 }
 
 // Execute start the ssh.
-func (s *Scp) Execute(api *api.API, cfg ClientConfig) error {
+func (s *Scp) Execute(clientAPI *api.API, cfg ClientConfig) error {
 	target, err := s.GetTarget()
 	if err != nil {
 		return err
 	}
 	s.Target = target
 	cfg.SCP.Target = target
-	agent, err := api.GetAgentByName(cfg.SCP.Target)
+	agent, err := clientAPI.GetAgentByName(cfg.SCP.Target)
 	if err != nil {
 		return err
 	}

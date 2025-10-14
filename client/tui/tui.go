@@ -60,11 +60,11 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 // NewTui returns the Model holding the TUI.
-func NewTui(api *api.API, agentPwd map[string]string) Model {
+func NewTui(apiClient *api.API, agentPwd map[string]string) Model {
 	ti := textinput.New()
 	ti.Width = 100
 
-	agents, err := api.GetAgents()
+	agents, err := apiClient.GetAgents()
 	if err != nil {
 		log.Error().Err(err).Str("Mode", "TUI").Msg("unable to fetch agents")
 		os.Exit(1)
@@ -75,7 +75,7 @@ func NewTui(api *api.API, agentPwd map[string]string) Model {
 		agentsTable:    GenerateAgentTable().WithRows(AgentsToRow(agents)),
 		agents:         agents,
 		statusText:     ti,
-		api:            api,
+		api:            apiClient,
 		_agentPassword: agentPwd,
 	}
 	if len(m.agents) == 0 {
@@ -86,15 +86,6 @@ func NewTui(api *api.API, agentPwd map[string]string) Model {
 	m.agentInfoTable = m.GenerateInfoTable(agents[0])
 
 	return m
-}
-
-// Run run the Model.
-func (m *Model) Run() (string, string, error) {
-	if _, err := tea.NewProgram(m).Run(); err != nil {
-		return "", "", err
-	}
-
-	return m.agent, m.execMode, nil
 }
 
 // Model holds the TUI model.
@@ -113,6 +104,15 @@ type Model struct {
 	promptedAction  string
 	extendedDetails bool
 	execMode        string
+}
+
+// Run run the Model.
+func (m *Model) Run() (string, string, error) {
+	if _, err := tea.NewProgram(m).Run(); err != nil {
+		return "", "", err
+	}
+
+	return m.agent, m.execMode, nil
 }
 
 // Init initialize the TUI model.
