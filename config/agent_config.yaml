@@ -36,7 +36,7 @@ sshd: true
 # Start the Socks proxy server.
 socks: true
 
-# Start the Http proxy server.
+# Start the HTTP proxy server.
 http: true
 
 # Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system

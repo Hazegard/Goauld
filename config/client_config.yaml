@@ -54,6 +54,8 @@ ssh:
   print: false
   #Enable direct STDIN/STDOUT connections to Allow to use proxycommand.
   proxy: false
+  sshopts: []
+  sshconffile: ""
   sshargs: []
 
 # Mount the socks server exposed by the agent.
@@ -80,11 +82,10 @@ scp:
   target: ""
   #Show the SSH command instead of executing it.
   print: false
-  #Origin copy.
-  source: ""
-  #Destination to copy.
-  destination: ""
-  scpargs: []
+  sshopts: []
+  sshconffile: ""
+  #List of paths to scp
+  paths: []
 
 # TUI used to manage the connected agents
 tui: {}
@@ -108,5 +109,16 @@ admin:
     level: ""
   config: {}
   state: {}
+
+# Start vsCode in remote mode.
+vscode:
+  target: ""
+  remotepath: .
+clipboard:
+  get:
+    target: ""
+  set:
+    target: ""
+    content: ""
 searchconfigdir: ~/.config/tealc.yaml
 
