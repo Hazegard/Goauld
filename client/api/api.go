@@ -421,7 +421,7 @@ func (api *API) GetClipboard(id string, password string) (string, error) {
 		return "", fmt.Errorf("error unmarshalling response (%s)", res.Status)
 	}
 
-	return result.Content, nil
+	return result.Content, result.ErrorMsg
 }
 
 func (api *API) SetClipboard(id string, password string, clipboard string) error {

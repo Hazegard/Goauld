@@ -437,12 +437,14 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msgf("Error getting crypto for agent (%s)", agent.Name)
 
 		return socketio.ClipboardMessage{
-			Error: true,
+			Error:    true,
+			ErrorMsg: fmt.Errorf("error getting crypto for agent (%s)", agent.Name),
 		}
 	}
 	if socket == nil {
 		return socketio.ClipboardMessage{
-			Error: true,
+			Error:    true,
+			ErrorMsg: fmt.Errorf("agent socket is nil"),
 		}
 	}
 
@@ -455,7 +457,8 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 		if err != nil {
 			log.Error().Err(err).Msg("Error decrypting clipboard message response")
 			chanResponse <- socketio.ClipboardMessage{
-				Error: true,
+				Error:    true,
+				ErrorMsg: fmt.Errorf("error decrypting clipboard message response"),
 			}
 
 			return
@@ -475,7 +478,8 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 		log.Debug().Str("Agent.Name", agent.Name).Str("Event", eventID).Err(err).Msgf("Error encrypting password validation request")
 
 		return socketio.ClipboardMessage{
-			Error: true,
+			Error:    true,
+			ErrorMsg: fmt.Errorf("error encrypting password validation request"),
 		}
 	}
 
@@ -487,7 +491,8 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	case <-time.After(5 * time.Second):
 		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Timeout waiting for response")
 		response = socketio.ClipboardMessage{
-			Error: true,
+			Error:    true,
+			ErrorMsg: fmt.Errorf("timeout waiting for clipboard message response"),
 		}
 	}
 

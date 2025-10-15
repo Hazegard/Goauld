@@ -10,6 +10,7 @@ type ClipboardMessage struct {
 	Content      string `json:"content"`
 	HashPassword string `json:"hash_password"`
 	Error        bool   `json:"error"`
+	ErrorMsg     error  `json:"errorMsg"`
 }
 
 // newClipboardMessageEventMessage creates a new empty slice of ClipboardMessageEvent messages.
