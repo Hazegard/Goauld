@@ -2,6 +2,7 @@
 package compiler
 
 import (
+	"Goauld/common/log"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -79,6 +80,7 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 		if err != nil {
 			return fmt.Errorf("error copying files: %w", err)
 		}
+		log.Info().Str("Source", filepath.Join(source, artifact.Path)).Str("Dest", outPath).Msg("moved artifact")
 	}
 
 	return nil
