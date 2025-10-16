@@ -43,7 +43,7 @@ replace github.com/hazegard/socket.io-go => ./vendored/github.com/hazegard/socke
 require (
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
-	github.com/atotto/clipboard v0.1.4
+	github.com/gopasspw/clipboard v0.0.4
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
