@@ -407,16 +407,17 @@ func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target
 	envs := []string{
 		"SSH_ASKPASS_REQUIRE=force",
 		"SSH_ASKPASS=" + exePath,
-		prefixEnv("SERVER", cfg.Server),
-		prefixEnv("AGENT", target),
-		prefixEnv("TYPE", typePass),
-		prefixEnv("CONFIG_FILE", cfg.ConfigFile),
+		// prefixEnv("SERVER", cfg.Server),
+		// prefixEnv("AGENT", target),
+		// prefixEnv("TYPE", typePass),
+		// prefixEnv("CONFIG_FILE", cfg.ConfigFile),
 	}
+	envs = append(envs, cfg.EnvVar(target)...)
 	if cfg.PrivatePassword != "" {
-		envs = append(envs, prefixEnv("PASSWORD", cfg.PrivatePassword))
+		//envs = append(envs, prefixEnv("PASSWORD", cfg.PrivatePassword))
 	}
 	if cfg.IsFlagInCommandLine("--access-token", "") {
-		envs = append(envs, prefixEnv("ACCESS_TOKEN", cfg.AccessToken))
+		//envs = append(envs, prefixEnv("ACCESS_TOKEN", cfg.AccessToken))
 	}
 
 	return envs

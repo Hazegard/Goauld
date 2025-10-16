@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"Goauld/client/api"
@@ -157,6 +158,27 @@ type ClientConfig struct {
 	Clipboard Clipboard `cmd:"" name:"clip" help:"Interact with agent clipboard."`
 
 	SearchConfigDir string `hidden:""`
+}
+
+func (cfg *ClientConfig) EnvVar(target string) []string {
+	var env []string
+	env = append(env, prefixEnv("SERVER", cfg.Server))
+	env = append(env, prefixEnv("SSH_SERVER", cfg.SSHServer))
+
+	env = append(env, prefixEnv("ACCESS_TOKEN", cfg.AccessToken))
+	env = append(env, prefixEnv("ADMIN_TOKEN", cfg.AdminToken))
+	env = append(env, prefixEnv("AGENT", target))
+
+	env = append(env, prefixEnv("VERBOSE", strconv.Itoa(cfg.Verbose)))
+	env = append(env, prefixEnv("QUIET", strconv.FormatBool(cfg.Quiet)))
+
+	env = append(env, prefixEnv("CONFIG_FILE", cfg.ConfigFile))
+
+	env = append(env, prefixEnv("PASSWORD", "")) //string(cfg.AgentPassword)))
+	env = append(env, prefixEnv("PROMPT_STATIC_PASSWORD", strconv.FormatBool(cfg.PromptPassword)))
+	env = append(env, prefixEnv("PASSWORD", cfg.PrivatePassword))
+
+	return env
 }
 
 // ValidateConfig check the required options and returns an error if they are not set.
