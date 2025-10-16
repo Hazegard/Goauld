@@ -303,7 +303,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 			return
 		}
 
-		err = clipboard.Paste(message.Content)
+		err = clipboard.Paste(context.Background(), message.Content)
 		if err != nil {
 			log.Error().Err(err).Msg("OnEvent: Paste")
 		}
@@ -325,7 +325,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 			return
 		}
 
-		content, err := clipboard.Copy()
+		content, err := clipboard.Copy(context.Background())
 		if err != nil {
 			log.Error().Err(err).Msg("OnEvent: Copy")
 		}

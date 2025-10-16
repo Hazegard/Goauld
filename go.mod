@@ -37,13 +37,14 @@ require (
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
 
+require github.com/atotto/clipboard v0.1.4 // indirect
+
 //nolint:gomoddirectives
 replace github.com/hazegard/socket.io-go => ./vendored/github.com/hazegard/socket.io-go
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
-	github.com/gopasspw/clipboard v0.0.4
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
@@ -63,6 +64,7 @@ require (
 	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/google/uuid v1.6.0
+	github.com/gopasspw/clipboard v0.0.4
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/karagenc/yeast v0.1.1 // indirect

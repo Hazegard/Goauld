@@ -1,20 +1,21 @@
 package clipboard
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/atotto/clipboard"
+	"github.com/gopasspw/clipboard"
 )
 
-func Copy() (string, error) {
-	content, err := clipboard.ReadAll()
+func Copy(ctx context.Context) (string, error) {
+	content, err := clipboard.ReadAll(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error while reading from clipboard: %w", err)
 	}
 
-	return content, nil
+	return string(content), nil
 }
 
-func Paste(content string) error {
-	return clipboard.WriteAll(content)
+func Paste(ctx context.Context, content string) error {
+	return clipboard.WriteAll(ctx, []byte(content))
 }
