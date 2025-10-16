@@ -642,6 +642,7 @@ func (m *Model) Kill(agent types.Agent, doExit bool, doDelete bool, password str
 	return func() tea.Msg {
 		err := m.api.KillAgent(agent.ID, doExit, doDelete, password)
 		if err != nil {
+			log.Error().Err(err).Str("agent", agent.ID).Msg("failed to kill agent")
 			return cmdResponse{
 				Success: false,
 				Message: fmt.Sprintf("Error %s %s (%s): %s", killing, agent.Name, agent.ID, err),

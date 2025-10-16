@@ -61,6 +61,7 @@ var (
 	_keepawake = "false"
 	_keepalive = "20"
 	_verbosity = "0"
+	_quiet     = "false"
 
 	_only_working_days    = "false"        //nolint:revive
 	_working_day_start    = "8:00"         //nolint:revive
@@ -127,6 +128,7 @@ var (
 		"_keepawake": _keepawake,
 		"_keepalive": _keepalive,
 		"_verbosity": _verbosity,
+		"_quiet":     _quiet,
 
 		"_only_working_days":    _only_working_days,
 		"_working_day_start":    _working_day_start,
@@ -205,6 +207,7 @@ type AgentConfig struct {
 	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
 	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" yaml:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops (0 => no keepalive)."`
 	Verbose   int  `default:"${_verbosity}" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Verbosity of the logs. Repeat -v to increase"`
+	Quiet     bool `default:"${_quiet}" name:"quiet" yaml:"quiet"  short:"q" help:"Suppress all logs"`
 
 	OnlyWorkingDays    bool   `default:"${_only_working_days}" name:"only-working-days" yaml:"only-working-days" optional:"" help:"Only working days."`
 	WorkingDayStart    string `default:"${_working_day_start}" name:"working-day-start" yaml:"working-day-start" help:"Start time of working day in days."`
@@ -288,8 +291,11 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	cfg := &AgentConfig{}
 	app := kong.Parse(cfg, kongOptions...)
 
-	log.SetLogLevel(cfg.Verbose)
-
+	if cfg.Quiet {
+		log.SetLogLevel(-1)
+	} else {
+		log.SetLogLevel(cfg.Verbose)
+	}
 	return app, cfg, nil
 }
 

@@ -208,6 +208,8 @@ func verbosityToGormLogLevel(verbosity int) logger.LogLevel {
 // VerbosityToLogLevel returns the zerolog.Level verbosity given an integer representing the verbosity.
 func VerbosityToLogLevel(verbosity int) zerolog.Level {
 	switch verbosity {
+	case -1:
+		return zerolog.Disabled
 	case 0:
 		return zerolog.InfoLevel
 	case 1:

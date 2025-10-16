@@ -28,6 +28,7 @@ var (
 	_access_token = "" //nolint:revive
 	_admin_token  = "" //nolint:revive
 
+	_quiet     = "false"
 	_verbosity = "0"
 	_insecure  = "false"
 
@@ -78,6 +79,7 @@ var (
 		"_access_token": _access_token,
 		"_admin_token":  _admin_token,
 
+		"_quiet":     _quiet,
 		"_verbosity": _verbosity,
 		"_insecure":  _insecure,
 
@@ -131,6 +133,7 @@ type ClientConfig struct {
 	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required to access the /manage/ endpoint."`
 	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token required to access the /admin/ endpoint."`
 
+	Quiet    bool `default:"${_quiet}" name:"quiet" yaml:"quiet"  short:"q" help:"Suppress all logs"`
 	Verbose  int  `default:"${_verbosity}" name:"verbose" yaml:"verbose"  short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
 	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" yaml:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
 
@@ -304,7 +307,11 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 	}
 	cfg.SearchConfigDir = cli.GetConfigFile(configSearchDir...)
 
-	log.SetLogLevel(cfg.Verbose)
+	if cfg.Quiet {
+		log.SetLogLevel(-1)
+	} else {
+		log.SetLogLevel(cfg.Verbose)
+	}
 
 	return app, cfg, ctx, cfg.ValidateConfig()
 }

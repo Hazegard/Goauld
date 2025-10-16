@@ -41,6 +41,7 @@ var (
 	_quic_listen_addr  = ":443"  //nolint:revive
 
 	_verbosity = "0"
+	_quiet     = "false"
 
 	_tls      = "true"
 	_tls_cert = ""     //nolint:revive
@@ -77,6 +78,7 @@ var (
 		"_quic_listen_addr":  _quic_listen_addr,
 
 		"_verbosity": _verbosity,
+		"_quiet":     _quiet,
 
 		"_tls":      _tls,
 		"_tls_cert": _tls_cert,
@@ -121,7 +123,8 @@ type ServerConfig struct {
 	DNSAddr   string `default:"${_dns_listen_addr}"  name:"dns-listen-addr" yaml:"dns-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 	QuicAddr  string `default:"${_quic_listen_addr}"  name:"quic-listen-addr" yaml:"quic-listen-addr" optional:"" help:"Remote address to bind to, port 0 => Random."`
 
-	Verbose int `default:"${_verbosity}" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
+	Verbose int  `default:"${_verbosity}" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
+	Quiet   bool `default:"${_quiet}" name:"quiet" yaml:"quiet"  short:"q" help:"Suppress all logs"`
 
 	TLS     bool   `default:"${_tls}" negatable:"" name:"tls" yaml:"tls" help:"Enable TLS."`
 	TLSKey  string `default:"${_tls_key}" name:"tls-key" yaml:"tls-key" help:"Path to TLS certificate key."`
@@ -175,8 +178,11 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 	app := kong.Parse(cfg, kongOptions...)
 	srvCfg = cfg
 
-	log.SetLogLevel(cfg.Verbose)
-
+	if cfg.Quiet {
+		log.SetLogLevel(-1)
+	} else {
+		log.SetLogLevel(cfg.Verbose)
+	}
 	return app, cfg, nil
 }
 
