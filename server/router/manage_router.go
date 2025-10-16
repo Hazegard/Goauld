@@ -316,10 +316,11 @@ func HasAdminToken(r *http.Request) bool {
 	// Extract the Authorization header
 	authHeader := r.Header.Get("Authorization")
 	// Validate the Authorization header
-	if len(authHeader) < 2 {
+	split := strings.Split(authHeader, ":")
+	if len(split) < 2 {
 		return false
 	}
-	authHeader = strings.Split(authHeader, ":")[1]
+	authHeader = split[1]
 
 	return authHeader == config.Get().AdminToken
 }
