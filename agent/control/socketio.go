@@ -303,7 +303,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 			return
 		}
 
-		err = clipboard.Paste(context.Background(), message.Content)
+		err = clipboard.Paste(context.Background(), []byte(message.Content))
 		if err != nil {
 			log.Error().Err(err).Msg("OnEvent: Paste")
 		}
@@ -334,7 +334,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 
 		resp := socketio.ClipboardMessage{
 			Error:   res,
-			Content: content,
+			Content: string(content),
 		}
 
 		response, err := socketio.NewEncryptedClipboardMessageEventMessage(resp, config.Get().Cryptor)

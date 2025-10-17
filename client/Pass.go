@@ -27,6 +27,7 @@ func (p *Password) Run(clientAPI *api.API, cfg ClientConfig) error {
 	agent, err := clientAPI.GetAgentByName(cfg.Pass.Agent)
 	if err != nil {
 		log.Error().Err(err).Str("agent", cfg.Pass.Agent).Msg("failed to get agent")
+
 		return err
 	}
 

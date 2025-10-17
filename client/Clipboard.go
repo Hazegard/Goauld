@@ -21,6 +21,22 @@ type SetClipboard struct {
 }
 
 func (gc *GetClipboard) Run(clientAPI *api.API, cfg ClientConfig) error {
+	sshClient, err := NewCustomSSH(clientAPI, cfg, cfg.Clipboard.Get.Target)
+	if err != nil {
+		return err
+	}
+	//nolint:errcheck
+	defer sshClient.Close()
+	content, err := sshClient.Copy()
+	if err != nil {
+		return err
+	}
+	//nolint:forbidigo
+	fmt.Println(string(content))
+
+	return nil
+
+	// deprecated
 	agent, err := clientAPI.GetAgentByName(cfg.Clipboard.Get.Target)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", cfg.VsCode.Target).Msg("Failed to get agent")
@@ -48,6 +64,20 @@ func (gc *GetClipboard) Run(clientAPI *api.API, cfg ClientConfig) error {
 	return nil
 }
 func (sc *SetClipboard) Run(clientAPI *api.API, cfg ClientConfig) error {
+	sshClient, err := NewCustomSSH(clientAPI, cfg, cfg.Clipboard.Set.Target)
+	if err != nil {
+		return err
+	}
+	//nolint:errcheck
+	defer sshClient.Close()
+	err = sshClient.Paste([]byte(cfg.Clipboard.Set.Content))
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+	// deprecated
 	agent, err := clientAPI.GetAgentByName(cfg.Clipboard.Set.Target)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", cfg.VsCode.Target).Msg("Failed to get agent")

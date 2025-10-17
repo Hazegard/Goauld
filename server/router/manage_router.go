@@ -325,6 +325,7 @@ func HasAdminToken(r *http.Request) bool {
 	return authHeader == config.Get().AdminToken
 }
 
+// GetClipboard deprecated.
 func (mr *ManageRouter) GetClipboard(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	body, err := io.ReadAll(r.Body)
@@ -364,6 +365,7 @@ func (mr *ManageRouter) GetClipboard(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// SetClipboard deprecated.
 func (mr *ManageRouter) SetClipboard(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	body, err := io.ReadAll(r.Body)

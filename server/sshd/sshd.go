@@ -106,8 +106,8 @@ func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentS
 			},
 			// HandleKeepAlive returns pong when an agent sends a ping
 			// This ping pong mechanism is used to perform a keepalive of the connections
-			"ping":                  HandleKeepAlive(db),
-			"keepalive@openssh.com": HandleKeepAlive(db),
+			"ping":         HandleKeepAlive(db),
+			_ssh.Keepalive: HandleKeepAlive(db),
 		},
 		ChannelHandlers: map[string]ssh.ChannelHandler{
 			"direct-tcpip": ssh.DirectTCPIPHandler,

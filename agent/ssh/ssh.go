@@ -223,7 +223,7 @@ func (sshAgent *SSHAgent) sshKeepAliveLoop(ctx context.Context) {
 		select {
 		case <-t.C:
 			log.Trace().Msg("Sending keepalive to SSH connection")
-			_, b, err := sshAgent.client.SendRequest("keepalive@openssh.com", true, nil)
+			_, b, err := sshAgent.client.SendRequest(_ssh.Keepalive, true, nil)
 			if err != nil {
 				return
 			}

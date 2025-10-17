@@ -174,7 +174,7 @@ func (cfg *ClientConfig) EnvVar(target string) []string {
 
 	env = append(env, prefixEnv("CONFIG_FILE", cfg.ConfigFile))
 
-	env = append(env, prefixEnv("PASSWORD", "")) //string(cfg.AgentPassword)))
+	env = append(env, prefixEnv("PASSWORD", "")) // string(cfg.AgentPassword)))
 	env = append(env, prefixEnv("PROMPT_STATIC_PASSWORD", strconv.FormatBool(cfg.PromptPassword)))
 	env = append(env, prefixEnv("PASSWORD", cfg.PrivatePassword))
 

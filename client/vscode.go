@@ -130,10 +130,10 @@ func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 
 			return err
 		}
-		//cmd.Env = append(cmd.Env, prefixEnv("PASSWORD", cfg.PrivatePassword))
+		// cmd.Env = append(cmd.Env, prefixEnv("PASSWORD", cfg.PrivatePassword))
 	}
 	if cfg.ConfigFile != "" {
-		//cmd.Env = append(cmd.Env, prefixEnv("CONFIG_FILE", cfg.ConfigFile))
+		// cmd.Env = append(cmd.Env, prefixEnv("CONFIG_FILE", cfg.ConfigFile))
 	}
 	cmd.Env = append(cmd.Env, cfg.EnvVar(agent.Name)...)
 	cwd, err := os.Getwd()

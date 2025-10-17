@@ -3,6 +3,7 @@ package control
 
 import (
 	"Goauld/common"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -444,7 +445,7 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	if socket == nil {
 		return socketio.ClipboardMessage{
 			Error:    true,
-			ErrorMsg: fmt.Errorf("agent socket is nil"),
+			ErrorMsg: errors.New("agent socket is nil"),
 		}
 	}
 
@@ -458,7 +459,7 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 			log.Error().Err(err).Msg("Error decrypting clipboard message response")
 			chanResponse <- socketio.ClipboardMessage{
 				Error:    true,
-				ErrorMsg: fmt.Errorf("error decrypting clipboard message response"),
+				ErrorMsg: errors.New("error decrypting clipboard message response"),
 			}
 
 			return
@@ -479,7 +480,7 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 
 		return socketio.ClipboardMessage{
 			Error:    true,
-			ErrorMsg: fmt.Errorf("error encrypting password validation request"),
+			ErrorMsg: errors.New("error encrypting password validation request"),
 		}
 	}
 
@@ -492,7 +493,7 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Timeout waiting for response")
 		response = socketio.ClipboardMessage{
 			Error:    true,
-			ErrorMsg: fmt.Errorf("timeout waiting for clipboard message response"),
+			ErrorMsg: errors.New("timeout waiting for clipboard message response"),
 		}
 	}
 

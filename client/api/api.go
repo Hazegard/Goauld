@@ -3,6 +3,7 @@ package api
 
 import (
 	"Goauld/common"
+	"Goauld/common/log"
 	"Goauld/common/net"
 	"bytes"
 	"crypto/tls"
@@ -173,6 +174,7 @@ func (api *API) GetAgentByID(id string) (types.Agent, error) {
 
 // GetAgentByName fetch the agent associated with the name.
 func (api *API) GetAgentByName(name string) (types.Agent, error) {
+	log.Trace().Str("name", name).Msg("GetAgentByName")
 	name = url.PathEscape(name)
 	res, err := api.get("/manage/agent/by_name/" + name)
 	if err != nil {
@@ -389,6 +391,7 @@ func (api *API) DumpState() (commontypes.Status, error) {
 	return result, nil
 }
 
+// GetClipboard deprecated.
 func (api *API) GetClipboard(id string, password string) (string, error) {
 	u := fmt.Sprintf("/manage/agent/%s/getClipboard", id)
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -424,6 +427,7 @@ func (api *API) GetClipboard(id string, password string) (string, error) {
 	return result.Content, result.ErrorMsg
 }
 
+// SetClipboard deprecated.
 func (api *API) SetClipboard(id string, password string, clipboard string) error {
 	u := fmt.Sprintf("/manage/agent/%s/setClipboard", id)
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

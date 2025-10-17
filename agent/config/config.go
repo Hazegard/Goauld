@@ -296,6 +296,7 @@ func parse() (*kong.Context, *AgentConfig, error) {
 	} else {
 		log.SetLogLevel(cfg.Verbose)
 	}
+
 	return app, cfg, nil
 }
 

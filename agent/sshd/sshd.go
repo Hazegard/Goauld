@@ -1,16 +1,18 @@
 package sshd
 
 import (
+	"Goauld/agent/clipboard"
+	"Goauld/agent/config"
+	"Goauld/agent/sshd/shell"
+	"Goauld/common/log"
+	_ssh "Goauld/common/ssh"
 	"context"
 	"errors"
 	"io"
 	"net"
 
-	"Goauld/agent/config"
-	"Goauld/agent/sshd/shell"
-	"Goauld/common/log"
-
 	"github.com/charmbracelet/ssh"
+	gossh "golang.org/x/crypto/ssh"
 )
 
 // Sshd holds the SSHD server.
@@ -48,6 +50,28 @@ func NewSshdServer(ctx context.Context) *Sshd {
 		RequestHandlers: map[string]ssh.RequestHandler{
 			"tcpip-forward":        forwardHandler.HandleSSHRequest,
 			"cancel-tcpip-forward": forwardHandler.HandleSSHRequest,
+			_ssh.Copy: func(ctx ssh.Context, _ *ssh.Server, _ *gossh.Request) (bool, []byte) {
+				log.Trace().Str("Event", _ssh.Copy).Msgf("Received COPY from %s", ctx.User())
+				content, err := clipboard.Copy(ctx)
+				if err != nil {
+					log.Error().Err(err).Msg("clipboard copy")
+
+					return false, content
+				}
+
+				return true, content
+			},
+			_ssh.Paste: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
+				log.Trace().Str("Event", _ssh.Paste).Str("Content", string(req.Payload)).Msgf("Received PASTE from %s", ctx.User())
+				err := clipboard.Paste(ctx, req.Payload)
+				if err != nil {
+					log.Error().Err(err).Msg("clipboard copy")
+
+					return false, nil
+				}
+
+				return true, nil
+			},
 		},
 		// Allows channels
 		ChannelHandlers: map[string]ssh.ChannelHandler{

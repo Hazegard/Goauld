@@ -183,6 +183,7 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 	} else {
 		log.SetLogLevel(cfg.Verbose)
 	}
+
 	return app, cfg, nil
 }
 

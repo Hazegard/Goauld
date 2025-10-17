@@ -3,7 +3,6 @@ package compiler
 import (
 	"Goauld/common"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 )
