@@ -150,12 +150,13 @@ type ClientConfig struct {
 	SSH       SSH       `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
 	Socks     Socks     `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
 	SCP       Scp       `cmd:"" name:"scp" help:"Transfer files using SCP from/to the agent."`
+	Rsync     Rsync     `cmd:"" name:"rsync" help:"Transfer files using Rsync from/to the agent."`
+	VsCode    VsCode    `cmd:"" name:"vscode" help:"Start vsCode in remote mode."`
+	Clipboard Clipboard `cmd:"" name:"clip" help:"Interact with agent clipboard."`
 	TUI       Tui       `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
 	Pass      Password  `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
 	Compile   Compiler  `cmd:"" name:"compile" help:"Compile the agent."`
 	Admin     Admin     `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
-	VsCode    VsCode    `cmd:"" name:"vscode" help:"Start vsCode in remote mode."`
-	Clipboard Clipboard `cmd:"" name:"clip" help:"Interact with agent clipboard."`
 
 	SearchConfigDir string `hidden:""`
 }

@@ -31,9 +31,8 @@ func (s *Scp) Run(clientAPI *api.API, cfg ClientConfig) error {
 	return s.Execute(clientAPI, cfg)
 }
 
-// GetTarget parses the input and fetches the target agent, whether it is in the source or destination of the scp command.
-func (s *Scp) GetTarget() (string, error) {
-	for _, p := range s.Paths {
+func extractTarget(paths []string) (string, error) {
+	for _, p := range paths {
 		isRemote, target := ExtractRemote(p)
 		if isRemote {
 			return target, nil
@@ -49,7 +48,12 @@ func (s *Scp) GetTarget() (string, error) {
 	// if isRemote {
 	// return target, nil
 	// }
-	return "", fmt.Errorf("SCP target not found in [%s]", strings.Join(s.Paths, ", "))
+	return "", fmt.Errorf("SCP target not found in [%s]", strings.Join(paths, ", "))
+}
+
+// GetTarget parses the input and fetches the target agent, whether it is in the source or destination of the scp command.
+func (s *Scp) GetTarget() (string, error) {
+	return extractTarget(s.Paths)
 }
 
 // ExtractRemote tries to find the remote agent, whether located in the source or in the destination of the command.

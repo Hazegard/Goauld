@@ -28,7 +28,7 @@ func NewSshdServer(ctx context.Context) *Sshd {
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
 			log.Info().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
-			if strings.HasPrefix(s.RawCommand(), "rsync --server") || s.Command()[0] == "rsync" {
+			if strings.HasPrefix(s.RawCommand(), "rsync --server") || (len(s.Command()) > 0 && s.Command()[0] == "rsync") {
 				HandleRsync(s)
 
 				return
