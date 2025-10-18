@@ -21,6 +21,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/goccy/go-yaml v1.18.0
+	github.com/gokrazy/rsync v0.2.10
 	github.com/google/uuid v1.6.0
 	github.com/gopasspw/clipboard v0.0.4
 	github.com/jellydator/ttlcache/v2 v2.11.1
@@ -43,6 +44,13 @@ require (
 	gorm.io/gorm v1.31.0
 	www.bamsoftware.com/git/champa.git v0.20250620.0
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
+)
+
+require (
+	github.com/google/renameio/v2 v2.0.0 // indirect
+	github.com/landlock-lsm/go-landlock v0.0.0-20250303204525-1544bccde3a3 // indirect
+	github.com/mmcloughlin/md4 v0.1.2 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.70 // indirect
 )
 
 //nolint:gomoddirectives

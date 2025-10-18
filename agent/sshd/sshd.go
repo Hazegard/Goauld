@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"strings"
 
 	"github.com/charmbracelet/ssh"
 	gossh "golang.org/x/crypto/ssh"
@@ -26,7 +27,12 @@ func NewSshdServer(ctx context.Context) *Sshd {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
-			log.Info().Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
+			log.Info().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
+			if strings.HasPrefix(s.RawCommand(), "rsync --server") || s.Command()[0] == "rsync" {
+				HandleRsync(s)
+
+				return
+			}
 			err := shell.GivePty(ctx, s, s.Command(), s.RawCommand())
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
@@ -102,7 +108,8 @@ func NewSshdServer(ctx context.Context) *Sshd {
 			return true
 		},
 		SubsystemHandlers: map[string]ssh.SubsystemHandler{
-			"sftp": SftpHandler,
+			"sftp":  SftpHandler,
+			"rsync": HandleRsync,
 		},
 	}
 	// This is an attempt to use builtin charmbracelet/ssh pty

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -41,7 +42,7 @@ var (
 
 // CustomSlog holds the zerolog logger.
 type CustomSlog struct {
-	l *zerolog.Logger
+	L *zerolog.Logger
 }
 
 // Write override the zerolog write to alter the default stacktrace.
@@ -51,7 +52,20 @@ func (cs CustomSlog) Write(p []byte) (int, error) {
 		// Trim CR added by stdlog.
 		p = p[0 : n-1]
 	}
-	cs.l.Trace().CallerSkipFrame(4).Msg(string(p))
+	m := 10
+	i := 0
+	for {
+		_, file, _, _ := runtime.Caller(i)
+		if strings.HasPrefix(file, "../") {
+			i++
+		} else {
+			break
+		}
+		if i == m {
+			break
+		}
+	}
+	cs.L.Trace().CallerSkipFrame(i).Msg(string(p))
 
 	return n, nil
 }
@@ -90,7 +104,7 @@ func initLoggers() {
 	}
 	writer.FormatLevel = func(i any) string {
 		if i == nil {
-			return colorize("AAA", 34, false)
+			return colorize("TRC", 34, false)
 		}
 
 		if level, ok := i.(string); ok {
