@@ -4,7 +4,6 @@ import (
 	"Goauld/client/api"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/mattn/go-isatty"
 )
@@ -45,10 +44,6 @@ func (r *Rsync) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 	r.Target = target
 	cfg.Rsync.Target = r.Target
-
-	for i := range r.Args {
-		r.Args[i] = strings.TrimPrefix(r.Args[i], target)
-	}
 
 	agent, err := clientAPI.GetAgentByName(target)
 	if err != nil {

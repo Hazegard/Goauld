@@ -28,12 +28,12 @@ func NewSshdServer(ctx context.Context) *Sshd {
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
 			log.Info().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
-			if strings.HasPrefix(s.RawCommand(), "rsync --server") || (len(s.Command()) > 0 && s.Command()[0] == "rsync") {
+			if strings.Contains(s.RawCommand(), "rsync --server") || (len(s.Command()) > 0 && s.Command()[0] == "rsync") {
 				HandleRsync(s)
 
 				return
 			}
-			err := shell.GivePty(ctx, s, s.Command(), s.RawCommand())
+			err := shell.GivePty(ctx, s, s.Command()[1:], s.RawCommand())
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
 			}
