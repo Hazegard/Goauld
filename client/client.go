@@ -83,7 +83,7 @@ func main() {
 		return
 	}
 
-	if strings.Fields(ctx.Command())[0] == "compile" {
+	if strings.Fields(ctx.Command())[0] == "compile" || strings.Contains(ctx.Command(), "compile ") {
 		os.Args = append([]string{"compile"}, cfg.Compile.Args...)
 		kong, cfg, err := compiler.InitCompilerConfig(AppName, defaultValues)
 		if err != nil {

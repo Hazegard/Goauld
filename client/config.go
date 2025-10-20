@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Goauld/client/compiler"
 	"Goauld/client/types"
 	common2 "Goauld/common"
 	"Goauld/common/cli"
@@ -301,6 +302,11 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(AppName)),
 		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
+
+			if strings.HasPrefix(ctx.Command(), "compile") {
+				_, _, _ = compiler.InitCompilerConfig(AppName, defaultValues)
+				return nil
+			}
 			if ctx.Error == nil {
 				//nolint:forbidigo
 				fmt.Println(common.GetBanner())
