@@ -25,8 +25,8 @@ import (
 // Compiler holds the information used to compile the binaries.
 type Compiler struct {
 	ID            string `default:"${_compile_id}" help:"[client|server|agent]."`
-	Goos          string `default:"${_compile_goos}" short:"O" help:"[darwin|linux|windows]."`
-	Goarch        string `default:"${_compile_goarch}" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
+	Goos          string `default:"${_compile_goos}" enum:",windows,linux,darwin" short:"O" help:"[darwin|linux|windows]."`
+	Goarch        string `default:"${_compile_goarch}" enum:",amd64,arm64,arm,386" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
 	Source        string `default:"${_compile_source}" short:"s" help:"Source goauld directory."`
 	EnvFile       string `default:"${_compile_env_file}" name:"env" help:"File containing environment variables."`
 	Output        string `default:"${_compile_output}" short:"o" help:"Folder containing compiled agents."`
@@ -128,13 +128,13 @@ func (c *Compiler) Run() error {
 
 // GenerateSecureRandomBase64 generates a secure random Base64 string of the given byte length.
 func GenerateSecureRandomBase64(byteLength int) (string, error) {
-	bytes := make([]byte, byteLength)
-	_, err := rand.Read(bytes)
+	b := make([]byte, byteLength)
+	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(bytes), nil
+	return base64.StdEncoding.EncodeToString(b), nil
 }
 
 // HandleDropEnv get the .env file stored in the embed struct and drops print the file to the stdout.
@@ -273,8 +273,10 @@ func drop(destDir string, source embed.FS) error {
 		}
 
 		log.Trace().Msgf("%s -> %s", path, destPath)
+
 		return nil
 	})
+
 	return err
 }
 
@@ -299,7 +301,6 @@ func extractTarGz(destDir string, data []byte) error {
 
 		base := filepath.Base(header.Name)
 		if strings.HasPrefix(base, "._") || base == ".DS_Store" {
-			log.Debug().Msgf("Skipping macOS metadata file: %s", header.Name)
 			continue
 		}
 		if strings.HasPrefix(header.Name, ".git") {
@@ -323,6 +324,7 @@ func extractTarGz(destDir string, data []byte) error {
 			}
 			if _, err := io.Copy(outFile, tr); err != nil {
 				outFile.Close()
+
 				return err
 			}
 			outFile.Close()
