@@ -156,6 +156,10 @@ type ClientConfig struct {
 	Clipboard Clipboard `cmd:"" name:"clip" help:"Interact with agent clipboard."`
 	TUI       Tui       `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
 	Pass      Password  `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
+	Kill      Kill      `cmd:"" name:"kill" help:"Kill the agent."`
+	Reset     Reset     `cmd:"" name:"reset" help:"Reset the agent."`
+	Delete    Delete    `cmd:"" name:"delete" help:"Delete the agent."`
+	List      List      `cmd:"" name:"list" help:"List all agents."`
 	Compile   Compiler  `cmd:"" name:"compile" help:"Compile the agent."`
 	Admin     Admin     `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
 

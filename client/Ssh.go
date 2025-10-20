@@ -20,7 +20,7 @@ import (
 )
 
 type SSH struct {
-	Target         string   `arg:"" help:"The target agent." optional:""`
+	Target         string   `arg:"" name:"agent" help:"The target agent." optional:""`
 	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
 	HTTP           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:"" optional:"" help:"Forward the HTTP proxy ports on the local host."`
 	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`

@@ -7,17 +7,17 @@ import (
 )
 
 type Clipboard struct {
-	Get GetClipboard `cmd:"" name:"get"`
-	Set SetClipboard `cmd:"" name:"set"`
+	Get GetClipboard `cmd:"" name:"get" help:"Get the agent clipboard content."`
+	Set SetClipboard `cmd:"" name:"set" help:"Set the agent clipboard content."`
 }
 
 type GetClipboard struct {
-	Target string `arg:""`
+	Target string `arg:"" name:"agent" help:"The target agent."`
 }
 
 type SetClipboard struct {
-	Target  string `arg:""`
-	Content string `arg:""`
+	Target  string `arg:"" name:"agent" help:"The target agent."`
+	Content string `arg:"" name:"content"`
 }
 
 func (gc *GetClipboard) Run(clientAPI *api.API, cfg ClientConfig) error {

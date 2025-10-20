@@ -5,7 +5,7 @@ import (
 )
 
 type Socks struct {
-	Target         string   `arg:"" help:"The target agent."`
+	Target         string   `arg:"" name:"agent" help:"The target agent."`
 	Socks          bool     `default:"${_socks_socks}" name:"socks" yaml:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
 	HTTP           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:"" optional:"" help:"Forward the HTTP proxy ports on the local host."`
 	LocalSocksPort int      `default:"${_socks_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`

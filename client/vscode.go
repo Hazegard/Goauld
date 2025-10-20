@@ -17,7 +17,7 @@ import (
 )
 
 type VsCode struct {
-	Target     string `arg:""`
+	Target     string `arg:"" name:"agent" help:"The target agent."`
 	RemotePath string `arg:"" default:"."`
 }
 
