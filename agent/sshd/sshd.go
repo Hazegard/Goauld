@@ -33,7 +33,7 @@ func NewSshdServer(ctx context.Context) *Sshd {
 
 				return
 			}
-			err := shell.GivePty(ctx, s, s.Command()[1:], s.RawCommand())
+			err := shell.GivePty(ctx, s, s.Command(), s.RawCommand())
 			if err != nil {
 				log.Error().Err(err).Msg("error spawning pty")
 			}
