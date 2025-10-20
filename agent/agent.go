@@ -201,6 +201,7 @@ func run() utils.CancelReason {
 				// As the  control socket is established using DNS we consider that the only working protocol is DNS
 				// so we set the RSSH protocol order to only DNS
 				config.Get().SetRSSHOrder([]string{"DNS"})
+
 				return nil
 			},
 		},

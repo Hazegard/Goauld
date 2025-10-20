@@ -12,6 +12,7 @@ import (
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -292,7 +293,7 @@ func extractTarGz(destDir string, data []byte) error {
 
 	for {
 		header, err := tr.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -306,10 +307,17 @@ func extractTarGz(destDir string, data []byte) error {
 		if strings.HasPrefix(header.Name, ".git") {
 			continue
 		}
-		targetPath := filepath.Join(destDir, header.Name)
+		targetPath, err := SanitizeArchivePath(destDir, header.Name)
+		if err != nil {
+			log.Error().Err(err).Msgf("error extracting tar.gz from %s", header.Name)
+
+			continue
+		}
+		//		targetPath := filepath.Join(destDir, header.Name)
 
 		switch header.Typeflag {
 		case tar.TypeDir:
+			//nolint:gosec
 			if err := os.MkdirAll(targetPath, os.FileMode(header.Mode)); err != nil {
 				return err
 			}
@@ -318,10 +326,12 @@ func extractTarGz(destDir string, data []byte) error {
 				return err
 			}
 
+			//nolint:gosec
 			outFile, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
+			//nolint:gosec
 			if _, err := io.Copy(outFile, tr); err != nil {
 				outFile.Close()
 
@@ -335,4 +345,14 @@ func extractTarGz(destDir string, data []byte) error {
 	}
 
 	return nil
+}
+
+// SanitizeArchivePath file pathing from "G305: Zip Slip vulnerability".
+func SanitizeArchivePath(d string, t string) (string, error) {
+	v := filepath.Join(d, t)
+	if strings.HasPrefix(v, filepath.Clean(d)) {
+		return v, nil
+	}
+
+	return "", fmt.Errorf("%s: %s", "content filepath is tainted", t)
 }
