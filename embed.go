@@ -11,7 +11,7 @@ import (
 // Sources embed the agent source code te be able to dynamically compile it
 //
 //nolint:revive
-//go:embed agent client common server vendored .goreleaser.yaml embed.go go.mod go.sum .env.build.tmpl scripts/garble.sh scripts/garble.bat
+//go:embed agent client common server vendored/github.com/hazegard/socket.io-go.tar.gz .goreleaser.yaml embed.go go.mod go.sum .env.build.tmpl scripts/garble.sh scripts/garble.bat
 var Sources embed.FS
 
 // GetRoot returns the directory path of the current source file.

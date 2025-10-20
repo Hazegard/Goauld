@@ -6,10 +6,14 @@ import (
 	goauldcommon "Goauld/common"
 	"Goauld/common/cli"
 	"Goauld/common/log"
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -240,36 +244,93 @@ func drop(destDir string, source embed.FS) error {
 			return err
 		}
 
-		// Create the target file path
-		// Remove the 'files/' part from the embedded path
-		relativePath := strings.TrimPrefix(path, "")
-		destPath := filepath.Join(destDir, relativePath)
-
-		// Create the necessary directories
-		dir := filepath.Dir(destPath)
-		err = os.MkdirAll(dir, 0o750)
-		if err != nil {
-			return err
-		}
-
-		// Write the content to the file
-		err = os.WriteFile(destPath, fileContent, 0o600)
-		if err != nil {
-			return err
-		}
-
-		if strings.Contains(destPath, "scripts/garble") {
-			//nolint:gosec
-			err = os.Chmod(destPath, 0o750)
-			if err != nil {
+		// Handle vendored tarballs
+		if strings.HasPrefix(path, "vendored/") && strings.HasSuffix(path, ".tar.gz") {
+			tarDir := filepath.Join(destDir, strings.TrimSuffix(path, ".tar.gz"))
+			log.Debug().Msgf("Extracting vendored archive: %s", path)
+			if err := extractTarGz(tarDir, fileContent); err != nil {
 				return err
 			}
 		}
 
-		log.Trace().Msgf("%s -> %s", path, destPath)
+		// Normal file extraction
+		relativePath := strings.TrimPrefix(path, "")
+		destPath := filepath.Join(destDir, relativePath)
 
+		// Ensure parent dirs exist
+		if err := os.MkdirAll(filepath.Dir(destPath), 0o750); err != nil {
+			return err
+		}
+
+		// Write file
+		if err := os.WriteFile(destPath, fileContent, 0o600); err != nil {
+			return err
+		}
+
+		// Make garble scripts executable
+		if strings.Contains(destPath, "scripts/garble") {
+			_ = os.Chmod(destPath, 0o750)
+		}
+
+		log.Trace().Msgf("%s -> %s", path, destPath)
 		return nil
 	})
-
 	return err
+}
+
+// extractTarGz extracts a .tar.gz archive from memory into destDir.
+func extractTarGz(destDir string, data []byte) error {
+	gzr, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		base := filepath.Base(header.Name)
+		if strings.HasPrefix(base, "._") || base == ".DS_Store" {
+			log.Debug().Msgf("Skipping macOS metadata file: %s", header.Name)
+			continue
+		}
+		if strings.HasPrefix(header.Name, ".git") {
+			continue
+		}
+		targetPath := filepath.Join(destDir, header.Name)
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(targetPath, os.FileMode(header.Mode)); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0o750); err != nil {
+				return err
+			}
+
+			outFile, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(outFile, tr); err != nil {
+				outFile.Close()
+				return err
+			}
+			outFile.Close()
+		default:
+			// Ignore symlinks and other types for safety
+			log.Debug().Msgf("Skipping non-regular file in tar: %s", header.Name)
+		}
+	}
+
+	return nil
 }
