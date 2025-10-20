@@ -46,13 +46,6 @@ require (
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
 
-require (
-	github.com/google/renameio/v2 v2.0.0 // indirect
-	github.com/landlock-lsm/go-landlock v0.0.0-20250303204525-1544bccde3a3 // indirect
-	github.com/mmcloughlin/md4 v0.1.2 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.70 // indirect
-)
-
 //nolint:gomoddirectives
 replace github.com/hazegard/socket.io-go => ./vendored/github.com/hazegard/socket.io-go
 
@@ -66,7 +59,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.10.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/conpty v0.1.1 // indirect
-	github.com/charmbracelet/x/errors v0.0.0-20251008171431-5d3777519489 // indirect
+	github.com/charmbracelet/x/errors v0.0.0-20251016201629-54e687c87a08 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
@@ -76,17 +69,20 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
+	github.com/google/renameio/v2 v2.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/karagenc/yeast v0.1.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/reedsolomon v1.12.5 // indirect
 	github.com/kr/fs v0.1.0 // indirect
+	github.com/landlock-lsm/go-landlock v0.0.0-20250303204525-1544bccde3a3 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/mholt/acmez/v3 v3.1.4 // indirect
+	github.com/mmcloughlin/md4 v0.1.2 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
@@ -109,14 +105,15 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
-	golang.org/x/exp v0.0.0-20251009144603-d2f985daa21b // indirect
+	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	h12.io/socks v1.0.3 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.39.0 // indirect
+	modernc.org/sqlite v1.39.1 // indirect
 )
