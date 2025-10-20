@@ -28,12 +28,12 @@ type Compiler struct {
 	ID            string `default:"${_compile_id}" help:"[client|server|agent]."`
 	Goos          string `default:"${_compile_goos}" enum:",windows,linux,darwin" short:"O" help:"[darwin|linux|windows]."`
 	Goarch        string `default:"${_compile_goarch}" enum:",amd64,arm64,arm,386" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
-	Source        string `default:"${_compile_source}" short:"s" help:"Source goauld directory."`
+	Source        string `default:"${_compile_source}" help:"Source goauld directory."`
 	EnvFile       string `default:"${_compile_env_file}" name:"env" help:"File containing environment variables."`
 	Output        string `default:"${_compile_output}" short:"o" help:"Folder containing compiled agents."`
 	Verbose       int    `default:"${_verbosity}" name:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
-	Seed          string `default:"${_compile_seed}" name:"seed" short:"S" help:"Seed to use to obfuscate agent."`
+	Seed          string `default:"${_compile_seed}" name:"seed" help:"Seed to use to obfuscate agent."`
 	AgentPassword string `default:"${_compile_private_password}" short:"p" help:"Static agent password."`
 	ClientBuild   bool   `default:"true" hidden:"true"`
 }
@@ -95,7 +95,10 @@ func (c *Compiler) Run() error {
 		if err != nil {
 			return fmt.Errorf("could not generate random seed: %w", err)
 		}
-		content = ReplaceInFile(content, "CLIENT__COMPILE_SEED=", "CLIENT__COMPILE_SEED="+seed)
+		c.Seed = seed
+	}
+	if c.Seed != "" {
+		content = ReplaceInFile(content, "CLIENT__COMPILE_SEED=", "CLIENT__COMPILE_SEED="+c.Seed)
 	}
 	err = MkdirAll(c.Output)
 	if err != nil {

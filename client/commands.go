@@ -10,11 +10,12 @@ type Delete struct {
 	Target string `arg:"" name:"agent" help:"The target agent."`
 }
 
-func (delete *Delete) Run(clientAPI *api.API, cfg ClientConfig) error {
-	err := wrap(clientAPI, cfg, delete.Target, true, true)
+func (d *Delete) Run(clientAPI *api.API, cfg ClientConfig) error {
+	err := wrap(clientAPI, cfg, d.Target, true, true)
 	if err != nil {
-		log.Error().Err(err).Str("Agent", delete.Target).Msg("Failed to delete agent")
+		log.Error().Err(err).Str("Agent", d.Target).Msg("Failed to d agent")
 	}
+
 	return err
 }
 
@@ -27,6 +28,7 @@ func (reset *Reset) Run(clientAPI *api.API, cfg ClientConfig) error {
 	if err != nil {
 		log.Error().Err(err).Str("Agent", reset.Target).Msg("Failed to reset agent")
 	}
+
 	return err
 }
 
@@ -39,6 +41,7 @@ func (kill *Kill) Run(clientAPI *api.API, cfg ClientConfig) error {
 	if err != nil {
 		log.Error().Err(err).Str("Agent", kill.Target).Msg("Failed to kill agent")
 	}
+
 	return err
 }
 
@@ -63,15 +66,18 @@ func wrap(clientAPI *api.API, cfg ClientConfig, target string, doExit bool, doDe
 type List struct {
 }
 
-func (list *List) Run(clientAPI *api.API, cfg ClientConfig) error {
+func (list *List) Run(clientAPI *api.API, _ ClientConfig) error {
 	agents, err := clientAPI.GetAgents()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to list agents")
+
 		return err
 	}
 
 	for _, agent := range agents {
+		//nolint:forbidigo
 		fmt.Println(agent.Name)
 	}
+
 	return nil
 }
