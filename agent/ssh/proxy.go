@@ -24,7 +24,7 @@ func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTrans
 	var client *ssh.Client
 	var conn net.Conn
 	var closer io.Closer
-	for _, proto := range config.Get().GetRsshOrder() {
+	for _, proto := range config.Get().GetRSSHOrder() {
 		log.Info().Str("Mode", proto).Dur("Timeout", config.Get().GetSSHTimeout()).Msg("Connecting to ssh")
 		timeoutCtx, cancel := context.WithTimeout(ctx, config.Get().GetSSHTimeout())
 		resultChan := make(chan string, 1)

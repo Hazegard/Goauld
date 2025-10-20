@@ -408,9 +408,13 @@ func (a *Agent) StartTime() string {
 	return a.WorkingDay.Start
 }
 
-// GetRsshOrder returns the order that the agent should follow to attempt to connect
+func (a *Agent) SetRSSHOrder(order []string) {
+	a.cfg.RSSHOrder = order
+}
+
+// GetRSSHOrder returns the order that the agent should follow to attempt to connect
 // to the SSHD server.
-func (a *Agent) GetRsshOrder() []string {
+func (a *Agent) GetRSSHOrder() []string {
 	return utils.ToLower(utils.Unique(a.cfg.RSSHOrder))
 }
 

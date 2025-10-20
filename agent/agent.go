@@ -193,11 +193,19 @@ func run() utils.CancelReason {
 					}
 				}
 
-				return client.InitOverDNS(dnsTransport.ControlStream, success, chanErr)
+				err = client.InitOverDNS(dnsTransport.ControlStream, success, chanErr)
+				if err != nil {
+					return err
+				}
+
+				// As the  control socket is established using DNS we consider that the only working protocol is DNS
+				// so we set the RSSH protocol order to only DNS
+				config.Get().SetRSSHOrder([]string{"DNS"})
+				return nil
 			},
 		},
 	}
-	order := config.Get().GetRsshOrder()
+	order := config.Get().GetRSSHOrder()
 	if len(order) == 1 {
 		if order[0] == "dns" {
 			socketOrder = []string{"DNS"}
