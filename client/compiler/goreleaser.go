@@ -24,7 +24,7 @@ func Goreleaser(cfg Compiler) error {
 	if cfg.Goarch != "" {
 		env = append(env, "GOARCH="+cfg.Goarch)
 	}
-	if cfg.Goos != "" && cfg.Goarch != "" {
+	if cfg.Goos != "" || cfg.Goarch != "" {
 		c = append(c, "--single-target")
 	}
 	if cfg.ClientBuild {
