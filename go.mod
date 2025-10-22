@@ -48,6 +48,7 @@ require (
 
 //nolint:gomoddirectives
 replace github.com/hazegard/socket.io-go => ./vendored/github.com/hazegard/socket.io-go
+replace github.com/aus/proxyplease => ./vendored/github.com/aus/proxyplease@v0.1.0
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect

@@ -3,4 +3,5 @@ go 1.25.3
 use (
 	.
 	vendored/github.com/hazegard/socket.io-go
+	vendored/github.com/aus/proxyplease@v0.1.0
 )

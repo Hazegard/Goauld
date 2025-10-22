@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -144,7 +145,7 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyple
 						}
 
 						resp, err := http.ReadResponse(br, req)
-						_ = resp.Body.Close()
+						defer resp.Body.Close()
 						if err != nil {
 							return conn, err
 						}
@@ -153,6 +154,9 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyple
 							return conn, nil
 						}
 
+						body, _ := io.ReadAll(resp.Body)
+
+						log.Trace().Err(err).Str("resp", resp.Status).Msg(string(body))
 						return conn, errors.New(resp.Status)
 					}
 					_ = p.cache.Set(cacheKey, tunnelctx)

@@ -37,6 +37,8 @@ func InitHTTPProxy() *HTTPProxy {
 	proxy.Proxy.KeepAcceptEncoding = true
 	proxy.Proxy.KeepHeader = true
 	proxy.Proxy.KeepDestinationHeaders = true
+	proxyLogger := log.Get().With().Str("From", "HttpProxy").Logger()
+	proxy.Proxy.Logger = &proxyLogger
 
 	// HTTP
 	proxy.Proxy.Tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -51,6 +53,10 @@ func InitHTTPProxy() *HTTPProxy {
 
 		return conn, err
 	}
+
+	proxy.Proxy.OnResponse().DoFunc(func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+		return resp
+	})
 
 	var ConnectHandler goproxy.FuncHttpsHandler = func(host string, _ *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
 		return goproxy.OkConnect, host
