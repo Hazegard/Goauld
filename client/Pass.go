@@ -6,7 +6,6 @@ import (
 	"Goauld/common/types"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -79,31 +78,10 @@ func GenerateServerPassword(agentPassword string, serverPassword string) string 
 }
 
 func (p *Password) GetStaticPassword(cfg ClientConfig) (string, error) {
-	pwd := p.getStaticPassword(cfg)
+	pwd := cfg.GetStaticPassword()
 	if len(pwd) > 72 {
 		return "", bcrypt.ErrPasswordTooLong
 	}
 
 	return pwd, nil
-}
-func (p *Password) getStaticPassword(cfg ClientConfig) string {
-	if cfg.PrivatePassword != "" {
-		return cfg.PrivatePassword
-	}
-	// If for instance a static password is set but the user currently wants to connect without a password,
-	// an empty environment variable "TEALC_PASSWORD=" will be set
-	// If we encounter it, we return an empty static password
-	empty := prefixEnv("PASSWORD", "")
-	for _, e := range os.Environ() {
-		if e == empty {
-			return ""
-		}
-	}
-	pass, ok := cfg.AgentPassword[cfg.Pass.Agent]
-	if ok {
-		return pass
-	}
-	log.Debug().Str("Agent", cfg.Pass.Agent).Msg("No static password found, trying empty static password")
-
-	return ""
 }

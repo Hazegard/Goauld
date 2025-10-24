@@ -154,6 +154,7 @@ type ClientConfig struct {
 	Socks     Socks     `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
 	SCP       Scp       `cmd:"" name:"scp" help:"Transfer files using SCP from/to the agent."`
 	Rsync     Rsync     `cmd:"" name:"rsync" help:"Transfer files using Rsync from/to the agent."`
+	Jump      Jump      `cmd:"" name:"jump" help:"SSh to a remote server using the agent as jump server."`
 	VsCode    VsCode    `cmd:"" name:"vscode" help:"Start vsCode in remote mode."`
 	Clipboard Clipboard `cmd:"" name:"clip" help:"Interact with agent clipboard."`
 	TUI       Tui       `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
@@ -182,10 +183,10 @@ func (cfg *ClientConfig) EnvVar(target string) []string {
 
 	env = append(env, prefixEnv("CONFIG_FILE", cfg.ConfigFile))
 
-	env = append(env, prefixEnv("PASSWORD", "")) // string(cfg.AgentPassword)))
 	env = append(env, prefixEnv("PROMPT_STATIC_PASSWORD", strconv.FormatBool(cfg.PromptPassword)))
-	env = append(env, prefixEnv("PASSWORD", cfg.PrivatePassword))
-
+	if cfg.GetStaticPassword() != "" {
+		env = append(env, prefixEnv("PASSWORD", cfg.GetStaticPassword()))
+	}
 	return env
 }
 
@@ -401,4 +402,26 @@ func (cfg *ClientConfig) Prompt(agent string) error {
 	cfg.PrivatePassword = pass
 
 	return nil
+}
+
+func (cfg *ClientConfig) GetStaticPassword() string {
+	if cfg.PrivatePassword != "" {
+		return cfg.PrivatePassword
+	}
+	// If for instance a static password is set but the user currently wants to connect without a password,
+	// an empty environment variable "TEALC_PASSWORD=" will be set
+	// If we encounter it, we return an empty static password
+	empty := prefixEnv("PASSWORD", "")
+	for _, e := range os.Environ() {
+		if e == empty {
+			return ""
+		}
+	}
+	pass, ok := cfg.AgentPassword[cfg.Pass.Agent]
+	if ok {
+		return pass
+	}
+	log.Debug().Str("Agent", cfg.Pass.Agent).Msg("No static password found, trying empty static password")
+
+	return ""
 }
