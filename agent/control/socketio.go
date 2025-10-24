@@ -464,8 +464,7 @@ func getEioConfig(transport []string) *sio.ManagerConfig {
 			WebTransportDialer: &webtransport.Dialer{
 				TLSClientConfig: proxy.NewTLSConfig(),
 			},
-			Transports: transport, // []string{"polling"}, //, "websocket", "webtransport"},
-			// Debugger:   sio.NewPrintDebugger(),
+			Transports: transport,
 		},
 	}
 }
@@ -485,8 +484,7 @@ func getDNSEioConfig(session *smux.Stream) *sio.ManagerConfig {
 			// The tunnel fails to establish properly as the server responds to unwanted content to the open HTTP socket.
 			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
 			// On the client side
-			Transports: []string{"websocket"}, // , "websocket"},
-			// Debugger:   sio.NewPrintDebugger(),
+			Transports: []string{"websocket"},
 		},
 	}
 }

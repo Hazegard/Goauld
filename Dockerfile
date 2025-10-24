@@ -1,4 +1,4 @@
-FROM golang:1.25.2-alpine3.22 AS init
+FROM golang:1.25.3-alpine3.22 AS init
 
 RUN apk add go alpine-sdk upx git
 RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
@@ -24,14 +24,14 @@ RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id se
 
 RUN if [[ "$COMPRESS" == 1 ]]; then \
       for binary in output/agent/*; do \
-        if [[ "$binary" != *darwin* && "$binary" != *windows-arm* ]]; then \
+        if [[ "$binary" != *darwin* ]] && [[ "$binary" != *windows-arm* ]]; then \
           if [[ "$binary" == *.exe ]]; then \
             n="${binary%.exe}"; \
             new="${n}_compressed.exe"; \
           else \
             new="${binary}_compressed"; \
           fi; \
-          upx "$binary" --best -o "$new"; \
+          upx "$binary" --lzma -o "$new"; \
         else \
           echo "Skipping $binary (darwin/windows-arm build)"; \
         fi; \

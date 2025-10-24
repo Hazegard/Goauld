@@ -174,7 +174,7 @@ before:
     - go mod tidy
     - |
       sh -c "
-      if [[ "$GOOS" == "windows" ]] || [[ ! -z "$GOOS" ]]; then
+      if [[ -z "$GOOS" ]] || [[ "$GOOS" == "windows" ]]; then
         if command -v zig >/dev/null 2>&1; then
           zig build-exe agent/sshd/shell/shim_windows/sshd_shim.zig -target x86_64-windows -O ReleaseSmall -femit-bin=agent/sshd/shell/shimembed/sshd_shim/sshd_windows_amd64.exe
           zig build-exe agent/sshd/shell/shim_windows/sshd_shim.zig -target aarch64-windows -O ReleaseSmall -femit-bin=agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm64.exe

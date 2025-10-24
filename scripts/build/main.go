@@ -21,12 +21,13 @@ import (
 )
 
 type BuildConfig struct {
-	GenAgeKey      bool   `default:"false" optional:"" help:"generate Age keys."`
-	GenAccessToken bool   `default:"false" help:"Generate the Access Token."`
-	ID             string `default:"" help:"[client|server|agent]."`
-	Goos           string `default:"" help:"[darwin|linux|windows]."`
-	Goarch         string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
-	NoSeed         bool   `default:"false" help:"don't generate seed keys."`
+	GenAgeKey        bool   `default:"false" optional:"" help:"generate Age keys."`
+	GenAccessToken   bool   `default:"false" help:"Generate the Access Token."`
+	GenAgentPassword bool   `default:"true" help:"Generate the agent password."`
+	ID               string `default:"" help:"[client|server|agent]."`
+	Goos             string `default:"" help:"[darwin|linux|windows]."`
+	Goarch           string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
+	NoSeed           bool   `default:"false" help:"don't generate seed keys."`
 }
 
 func main() {
@@ -65,6 +66,7 @@ func main() {
 		Output:      "output",
 		Seed:        seed,
 		ClientBuild: false,
+		NoPass:      !cfg.GenAgentPassword,
 	}
 
 	err = cpl.Run()

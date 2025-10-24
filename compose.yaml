@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        - COMPRESS=0
+        - COMPRESS=1
     # platform: linux/amd64
     container_name: server
     image: goauld_server
