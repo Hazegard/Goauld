@@ -423,7 +423,6 @@ func run() utils.CancelReason {
 				log.Run().Str("Control", controlMode).Str("Mode", sshAgent.Mode).Str("Password", config.Get().PrivateSshdPassword()).Msg("Agent successfully started.")
 			} else {
 				log.Run().Str("Control", controlMode).Str("Mode", sshAgent.Mode).Msg("Agent successfully started.")
-
 			}
 		}
 	}()

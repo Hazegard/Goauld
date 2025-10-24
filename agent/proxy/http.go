@@ -54,7 +54,7 @@ func InitHTTPProxy() *HTTPProxy {
 		return conn, err
 	}
 
-	proxy.Proxy.OnResponse().DoFunc(func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
+	proxy.Proxy.OnResponse().DoFunc(func(resp *http.Response, _ *goproxy.ProxyCtx) *http.Response {
 		return resp
 	})
 

@@ -91,7 +91,6 @@ func (c *Compiler) Run() error {
 	content := string(byteContent)
 	if !c.NoPass {
 		if c.AgentPassword == "" {
-
 			newPass, err := pwgen.GetXKCDPassword()
 			if err != nil {
 				return fmt.Errorf("could not generate password for agent: %w", err)
@@ -111,7 +110,6 @@ func (c *Compiler) Run() error {
 					c.AgentPassword = newPass
 				}
 			}
-
 		}
 		content = ReplaceInFile(content, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
 	}

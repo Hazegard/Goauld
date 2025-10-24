@@ -157,6 +157,7 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyple
 						body, _ := io.ReadAll(resp.Body)
 
 						log.Trace().Err(err).Str("resp", resp.Status).Msg(string(body))
+
 						return conn, errors.New(resp.Status)
 					}
 					_ = p.cache.Set(cacheKey, tunnelctx)

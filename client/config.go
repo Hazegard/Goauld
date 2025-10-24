@@ -187,6 +187,7 @@ func (cfg *ClientConfig) EnvVar(target string) []string {
 	if cfg.GetStaticPassword() != "" {
 		env = append(env, prefixEnv("PASSWORD", cfg.GetStaticPassword()))
 	}
+
 	return env
 }
 

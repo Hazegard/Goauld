@@ -13,13 +13,12 @@ type Jump struct {
 }
 
 func (j *Jump) Run(cfg ClientConfig) error {
-
 	exe, err := os.Executable()
 	if err != nil {
 		return err
 	}
 	proxyCommand := fmt.Sprintf("%s ssh %s -W %%h:%%p", exe, j.Agent)
-	args := []string{fmt.Sprintf("-oProxycommand=%s", proxyCommand)}
+	args := []string{"-oProxycommand=" + proxyCommand}
 	args = append(args, j.Args...)
 
 	exeCmd := "ssh"
@@ -32,7 +31,9 @@ func (j *Jump) Run(cfg ClientConfig) error {
 		Env:        cfg.EnvVar(j.Agent),
 	}
 	if j.Print {
+		//nolint:forbidigo
 		fmt.Println(cmd.String())
+
 		return nil
 	}
 

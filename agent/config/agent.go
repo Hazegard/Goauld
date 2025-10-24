@@ -192,6 +192,7 @@ func (a *Agent) PrivateSshdPassword() string {
 		a.IsStaticPasswordDynamic = true
 		_private_password = p
 	}
+
 	return _private_password
 }
 
