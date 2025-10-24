@@ -641,11 +641,19 @@ func (a *Agent) ShouldRunInBackground() bool {
 // A hidden flag is appended to the command line
 // to notify the child process that is already running in the background.
 func (a *Agent) StartInBackground() error {
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
 	args := os.Args[1:]
-	args = append(args, "--hidden-background")
+	for i := range args {
+		if args[i] == "--background" {
+			args[i] = "--hidden-background"
+		}
+	}
 	//nolint:gosec
-	c := exec.Command(args[0], args[1:]...)
-	err := c.Start()
+	c := exec.Command(exe, args...)
+	err = c.Start()
 	if err != nil {
 		return fmt.Errorf("failed to start agent: %w", err)
 	}
