@@ -5,6 +5,7 @@ import (
 	"Goauld/client/common"
 	goauldcommon "Goauld/common"
 	"Goauld/common/cli"
+	"Goauld/common/crypto/pwgen"
 	"Goauld/common/log"
 	"archive/tar"
 	"bytes"
@@ -18,6 +19,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -35,6 +37,7 @@ type Compiler struct {
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
 	Seed          string `default:"${_compile_seed}" name:"seed" help:"Seed to use to obfuscate agent."`
 	AgentPassword string `default:"${_compile_private_password}" short:"p" help:"Static agent password."`
+	NoPass        bool   `default:"${_compile_nopass}" name:"nopass" help:"Do not set the agent password."`
 	ClientBuild   bool   `default:"true" hidden:"true"`
 }
 
@@ -86,7 +89,30 @@ func (c *Compiler) Run() error {
 		return fmt.Errorf("could not read env file %s: %w", c.EnvFile, err)
 	}
 	content := string(byteContent)
-	if c.AgentPassword != "" {
+	if !c.NoPass {
+		if c.AgentPassword == "" {
+
+			newPass, err := pwgen.GetXKCDPassword()
+			if err != nil {
+				return fmt.Errorf("could not generate password for agent: %w", err)
+			}
+
+			emptyPassReg := regexp.MustCompile(`^AGENT__PRIVATE_PASSWORD=.*$`)
+			currentPass := emptyPassReg.FindString(content)
+
+			if currentPass == "" {
+				c.AgentPassword = newPass
+				content += "\nAGENT__PRIVATE_PASSWORD=" + c.AgentPassword
+			} else {
+				_, pass, ok := strings.Cut(currentPass, "=")
+				if ok && pass != "" {
+					c.AgentPassword = pass
+				} else {
+					c.AgentPassword = newPass
+				}
+			}
+
+		}
 		content = ReplaceInFile(content, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
 	}
 
@@ -126,6 +152,8 @@ func (c *Compiler) Run() error {
 	if err != nil {
 		return fmt.Errorf("compilation failed: %w", err)
 	}
+
+	log.Run().Str("Password", c.AgentPassword).Msg("Compiler finished")
 
 	return nil
 }

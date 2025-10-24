@@ -74,6 +74,7 @@ var (
 	_compile_drop_env         = "false"      //nolint:revive
 	_compile_seed             = "__generate" //nolint:revive
 	_compile_private_password = ""           //nolint:revive
+	_compile_nopass           = "false"      //nolint:revive
 
 	defaultValues = kong.Vars{
 		"_server":       _server,
@@ -125,6 +126,7 @@ var (
 		"_compile_drop_env":         _compile_drop_env,
 		"_compile_seed":             _compile_seed,
 		"_compile_private_password": _compile_private_password,
+		"_compile_nopass":           _compile_nopass,
 	}
 )
 
@@ -204,7 +206,7 @@ func (cfg *ClientConfig) ValidateConfig() error {
 }
 
 type Compiler struct {
-	Args []string `hidden:"true" arg:"" passthrough:""`
+	Args []string `hidden:"true" arg:"" optional:"" passthrough:""`
 }
 
 // GetSshdHost returns the configured sshd host.

@@ -9,7 +9,10 @@ import (
 
 // Goreleaser executes the Goreleaser build process with the provided compiler configuration.
 func Goreleaser(cfg Compiler) error {
-	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate", "--verbose"}
+	c := []string{"goreleaser", "build", "--clean", "--auto-snapshot", "--skip=validate"}
+	if cfg.Verbose > 0 {
+		c = append(c, "--verbose")
+	}
 	// customBuild, err := DoSpecificBuild(cfg)
 	// if err != nil {
 	// 	return fmt.Errorf("error building: %s", err)

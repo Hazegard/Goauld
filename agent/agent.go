@@ -419,7 +419,12 @@ func run() utils.CancelReason {
 		if err != nil {
 			log.Error().Err(err).Msg("error sending the forwarded ports")
 		} else {
-			log.Run().Str("Control", controlMode).Str("Mode", sshAgent.Mode).Msg("Agent successfully started.")
+			if config.Get().IsStaticPasswordDynamic {
+				log.Run().Str("Control", controlMode).Str("Mode", sshAgent.Mode).Str("Password", config.Get().PrivateSshdPassword()).Msg("Agent successfully started.")
+			} else {
+				log.Run().Str("Control", controlMode).Str("Mode", sshAgent.Mode).Msg("Agent successfully started.")
+
+			}
 		}
 	}()
 

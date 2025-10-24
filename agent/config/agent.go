@@ -3,6 +3,7 @@ package config
 
 import (
 	"Goauld/common"
+	"Goauld/common/crypto/pwgen"
 	"Goauld/common/log"
 	"Goauld/common/utils"
 
@@ -37,6 +38,7 @@ type Agent struct {
 	SharedSecret             string
 	Cryptor                  *crypto.SymCryptor
 	cfg                      *AgentConfig
+	IsStaticPasswordDynamic  bool
 	RemoteDynamicPortForward []int
 	RemotePortForward        []int
 	Platform                 string
@@ -179,7 +181,17 @@ func (a *Agent) PrivateSshdPassword() string {
 	if a.cfg.PrivatePassword != "" {
 		return a.cfg.PrivatePassword
 	}
-
+	if _private_password == "" {
+		p, err := pwgen.GetXKCDPassword()
+		if err != nil {
+			p, err = crypto.GeneratePassword(30)
+			if err != nil {
+				panic(err)
+			}
+		}
+		a.IsStaticPasswordDynamic = true
+		_private_password = p
+	}
 	return _private_password
 }
 
