@@ -32,6 +32,7 @@ env:
   - SERVER__QUIC_LISTEN_ADDR={{ .Env.SERVER__QUIC_LISTEN_ADDR }}
 
   - SERVER__VERBOSITY={{ .Env.SERVER__VERBOSITY }}
+  - SERVER__QUIET={{ .Env.SERVER__QUIET }}
 
   - SERVER__TLS={{ .Env.SERVER__TLS }}
   - SERVER__TLS_KEY={{ .Env.SERVER__TLS_KEY }}
@@ -95,6 +96,7 @@ env:
   - AGENT__KEEPAWAKE={{ .Env.AGENT__KEEPAWAKE }}
   - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
   - AGENT__VERBOSITY={{ .Env.AGENT__VERBOSITY }}
+  - AGENT__QUIET={{ .Env.AGENT__QUIET }}
 
   - AGENT__ONLY_WORKING_DAYS={{ .Env.AGENT__ONLY_WORKING_DAYS }}
   - AGENT__WORKING_DAY_START={{ .Env.AGENT__WORKING_DAY_START }}
@@ -124,6 +126,7 @@ env:
   - CLIENT__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}
   - CLIENT__ADMIN_TOKEN={{ .Env.CLIENT__ADMIN_TOKEN }}
 
+  - CLIENT__QUIET={{ .Env.CLIENT__QUIET }}
   - CLIENT__VERBOSITY={{ .Env.CLIENT__VERBOSITY }}
   - CLIENT__INSECURE={{ .Env.CLIENT__INSECURE }}
 
@@ -162,6 +165,7 @@ env:
   - CLIENT__COMPILE_DROP_ENV={{ .Env.CLIENT__COMPILE_DROP_ENV }}
   - CLIENT__COMPILE_SEED={{ .Env.CLIENT__COMPILE_SEED }}
   - CLIENT__COMPILE_PRIVATE_PASSWORD={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}
+  - CLIENT__COMPILE_NOPASS={{ .Env.CLIENT__COMPILE_NOPASS }}
 
 # END Dynamic ENV
 
@@ -243,6 +247,7 @@ builds:
       - '{{ if (index .Env "SERVER__QUIC_LISTEN_ADDR") }} -X Goauld/server/config._quic_listen_addr={{ .Env.SERVER__QUIC_LISTEN_ADDR }}{{end}}'
 
       - '{{ if (index .Env "SERVER__VERBOSITY") }} -X Goauld/server/config._verbosity={{ .Env.SERVER__VERBOSITY }}{{end}}'
+      - '{{ if (index .Env "SERVER__QUIET") }} -X Goauld/server/config._quiet={{ .Env.SERVER__QUIET }}{{end}}'
 
       - '{{ if (index .Env "SERVER__TLS") }} -X Goauld/server/config._tls={{ .Env.SERVER__TLS }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_KEY") }} -X Goauld/server/config._tls_key={{ .Env.SERVER__TLS_KEY }}{{end}}'
@@ -337,6 +342,7 @@ builds:
       - '{{ if (index .Env "AGENT__KEEPAWAKE") }} -X Goauld/agent/config._keepawake={{ .Env.AGENT__KEEPAWAKE }}{{end}}'
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
       - '{{ if (index .Env "AGENT__VERBOSITY") }} -X Goauld/agent/config._verbosity={{ .Env.AGENT__VERBOSITY }}{{end}}'
+      - '{{ if (index .Env "AGENT__QUIET") }} -X Goauld/agent/config._quiet={{ .Env.AGENT__QUIET }}{{end}}'
 
       - '{{ if (index .Env "AGENT__ONLY_WORKING_DAYS") }} -X Goauld/agent/config._only_working_days={{ .Env.AGENT__ONLY_WORKING_DAYS }}{{end}}'
       - '{{ if (index .Env "AGENT__WORKING_DAY_START") }} -X Goauld/agent/config._working_day_start={{ .Env.AGENT__WORKING_DAY_START }}{{end}}'
@@ -397,6 +403,7 @@ builds:
       - '{{ if (index .Env "CLIENT__ACCESS_TOKEN") }} -X main._access_token={{ .Env.CLIENT__ACCESS_TOKEN }}{{end}}'
       - '{{ if (index .Env "CLIENT__ADMIN_TOKEN") }} -X main._admin_token={{ .Env.CLIENT__ADMIN_TOKEN }}{{end}}'
 
+      - '{{ if (index .Env "CLIENT__QUIET") }} -X main._quiet={{ .Env.CLIENT__QUIET }}{{end}}'
       - '{{ if (index .Env "CLIENT__VERBOSITY") }} -X main._verbosity={{ .Env.CLIENT__VERBOSITY }}{{end}}'
       - '{{ if (index .Env "CLIENT__INSECURE") }} -X main._insecure={{ .Env.CLIENT__INSECURE }}{{end}}'
 
@@ -440,6 +447,7 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_DROP_ENV") }} -X main._compile_drop_env={{ .Env.CLIENT__COMPILE_DROP_ENV }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_SEED") }} -X main._compile_seed={{ .Env.CLIENT__COMPILE_SEED }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_PRIVATE_PASSWORD") }} -X main._compile_private_password={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_NOPASS") }} -X main._compile_nopass={{ .Env.CLIENT__COMPILE_NOPASS }}{{end}}'
 
 # END Dynamic CLIENT
 

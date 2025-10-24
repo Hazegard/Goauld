@@ -10,6 +10,9 @@ access-token: a23YiXyAZzrPlc8oWXqlSK2z7d8COQn1gGuti6KLfF5HHhZt
 # Admin token required to access the /admin/ endpoint.
 admin-token: moVmzz5aTuptalF26SnlCkwdZ5MUyX9h7xRv8BXS79LoRThi
 
+# Suppress all logs
+quiet: false
+
 # Verbosity. Repeat to increase
 verbose: 0
 
@@ -87,6 +90,24 @@ scp:
   #List of paths to scp
   paths: []
 
+# Transfer files using Rsync from/to the agent.
+rsync:
+  target: ""
+  #Show the SSH command instead of executing it.
+  print: false
+  args: []
+
+# Start vsCode in remote mode.
+vscode:
+  target: ""
+  remotepath: .
+clipboard:
+  get:
+    target: ""
+  set:
+    target: ""
+    content: ""
+
 # TUI used to manage the connected agents
 tui: {}
 
@@ -97,6 +118,21 @@ pass:
   #Password to retrieve (OTP/Agent).
   type: ""
   args: []
+
+# Kill the agent.
+kill:
+  target: ""
+
+# Reset the agent.
+reset:
+  target: ""
+
+# Delete the agent.
+delete:
+  target: ""
+
+# List all agents.
+list: {}
 
 # Compile the agent.
 compile:
@@ -110,15 +146,5 @@ admin:
   config: {}
   state: {}
 
-# Start vsCode in remote mode.
-vscode:
-  target: ""
-  remotepath: .
-clipboard:
-  get:
-    target: ""
-  set:
-    target: ""
-    content: ""
 searchconfigdir: ~/.config/tealc.yaml
 

@@ -99,6 +99,9 @@ keepalive: 20
 # Verbosity of the logs. Repeat -v to increase
 verbose: 0
 
+# Suppress all logs
+quiet: false
+
 # Only working days.
 only-working-days: false
 

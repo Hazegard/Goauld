@@ -30,6 +30,9 @@ quic-listen-addr: :443
 # Verbosity. Repeat to increase
 verbose: 0
 
+# Suppress all logs
+quiet: false
+
 # Enable TLS.
 tls: true
 
