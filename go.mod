@@ -5,6 +5,7 @@ go 1.25.3
 require (
 	filippo.io/age v1.2.1
 	github.com/hazegard/socket.io-go v0.1.1
+	github.com/hazegard/togettyc v0.3.5
 	github.com/alecthomas/kong v1.12.1
 	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
@@ -75,6 +76,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/karagenc/yeast v0.1.1 // indirect
+	github.com/klauspost/compress v1.18.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/reedsolomon v1.12.5 // indirect
 	github.com/kr/fs v0.1.0 // indirect
@@ -114,6 +116,7 @@ require (
 	golang.org/x/tools v0.38.0 // indirect
 	h12.io/socks v1.0.3 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.76 // indirect
+	maze.io/x/ttyrec v1.0.0 // indirect
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect

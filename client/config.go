@@ -50,6 +50,7 @@ var (
 	_ssh_ssh              = "true"  //nolint:revive
 	_ssh_print            = "false" //nolint:revive
 	_ssh_proxy            = "false" //nolint:revive
+	_ssh_log              = "false" //nolint:revive
 
 	_socks_socks            = "true"  //nolint:revive
 	_socks_local_socks_port = "1080"  //nolint:revive
@@ -102,6 +103,7 @@ var (
 		"_ssh_ssh":              _ssh_ssh,
 		"_ssh_print":            _ssh_print,
 		"_ssh_proxy":            _ssh_proxy,
+		"_ssh_log":              _ssh_log,
 
 		"_socks_socks":            _socks_socks,
 		"_socks_local_socks_port": _socks_local_socks_port,

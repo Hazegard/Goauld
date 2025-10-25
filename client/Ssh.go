@@ -15,7 +15,9 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
+	"github.com/hazegard/togettyc/ttyencoder"
 	"github.com/aymanbagabas/go-pty"
 )
 
@@ -28,6 +30,7 @@ type SSH struct {
 	SSH            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:"" optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
+	Log            bool     `default:"${_ssh_log}" name:"log" yaml:"log" optional:"" help:"Record shell."`
 	SSHOpts        []string `short:"o"`
 	SSHConfFile    string   `short:"F"`
 	SSHArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
@@ -105,8 +108,11 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 	var stdoutPipe io.ReadCloser
 	var stderrPipe io.ReadCloser
 
+	var hasAuthFailed atomic.Bool
+
 	var run func() error
 	var wait func() error
+	encoder := io.Discard
 	if inPty {
 		var ptyFile pty.Pty
 		ptyFile, err = pty.New()
@@ -131,6 +137,25 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 			return cmd.Wait()
 		}
 	} else {
+		if cfg.SSH.Log {
+			out := fmt.Sprintf("%s-%s.log", cfg.SSH.Target, time.Now().Format("2006-01-02_15-04-05"))
+			e, err := ttyencoder.NewEncoder().
+				WithAppend(true).
+				WithCompress(true).
+				WithOutput(out).
+				Open()
+			if err != nil {
+				return false, err
+			}
+
+			encoder = e
+			defer func() {
+				_ = e.Close()
+				if hasAuthFailed.Load() {
+					_ = os.Remove(out)
+				}
+			}()
+		}
 		//nolint:gosec
 		cmd := exec.Command(c.Executable, c.Args...)
 		if len(c.Env) > 0 {
@@ -156,11 +181,11 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 
 	// Tee stdout
 	prOut, pwOut := io.Pipe()
-	teeOut := io.TeeReader(stdoutPipe, pwOut)
+	teeOut := io.TeeReader(stdoutPipe, io.MultiWriter(pwOut, encoder))
 
 	// Tee stderr
 	prErr, pwErr := io.Pipe()
-	teeErr := io.TeeReader(stderrPipe, pwErr)
+	teeErr := io.TeeReader(stderrPipe, io.MultiWriter(pwErr, encoder))
 
 	// Let output go to terminal
 	go func() {
@@ -186,7 +211,6 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 
 	// Scanner for stderr to detect failure
 	wg := sync.WaitGroup{}
-	var hasAuthFailed atomic.Bool
 
 	wg.Add(1)
 	go func() {
