@@ -49,10 +49,14 @@ func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentS
 			log.Error().Str("User", s.User()).Msgf("START SSH connection from: %s", s.RemoteAddr().String())
 			defer log.Error().Str("User", s.User()).Msgf("END  SSH connection from: %s", s.LocalAddr().String())
 		},
-		LocalPortForwardingCallback: func(ctx ssh.Context, _ string, destinationPort uint32) bool {
-			// TODO: should we check fo destination to be localhost ?
+		LocalPortForwardingCallback: func(ctx ssh.Context, destinationHost string, destinationPort uint32) bool {
 			username := ctx.User()
 			sourceIP := strings.Split(ctx.RemoteAddr().String(), ":")[0]
+			if destinationHost != "localhost" && destinationHost != "127.0.0.1" {
+				log.Error().Str("User", username).Str("Source", sourceIP).Str("Dest host", destinationHost).Uint32("Dest port", destinationPort).Msg("Forwarded connection to a forbidden host")
+
+				return false
+			}
 			log.Trace().Str("User", username).Str("Port", strconv.Itoa(int(destinationPort))).Msgf("SSH local Port forwarding attempt from: %s", ctx.RemoteAddr().String())
 			if !_net.IsIPAllowed(sourceIP, config.Get().AllowedIPs) {
 				log.Warn().Err(errors.New("ip not in whitelist")).Str("Source IP", sourceIP).Str("Agent.Name", username).Msg("unable to port forward")
