@@ -217,10 +217,7 @@ func getEioConfig(transport []string) *sio.ManagerConfig {
 				HTTPHeader: proxy.NewHeaderMap(),
 			},
 			Transports: transport,
-			Debugger:   eio.NewPrintDebugger(),
 		},
-
-		Debugger: sio.NewPrintDebugger(),
 	}
 }
 
@@ -241,6 +238,5 @@ func getDNSEioConfig(session *smux.Stream) *sio.ManagerConfig {
 			// On the client side
 			Transports: []string{"websocket"},
 		},
-		Debugger: sio.NewPrintDebugger(),
 	}
 }
