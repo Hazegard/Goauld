@@ -1,3 +1,6 @@
+//go:build !mini
+// +build !mini
+
 package log
 
 import (

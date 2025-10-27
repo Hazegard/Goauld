@@ -234,7 +234,7 @@ type AgentConfig struct {
 
 	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"Number of days to stay alive. Afterward, the agent will kill itself. (0 to disable the killswitch)"`
 
-	Remaining []string `arg:"" passthrough:""`
+	Remaining []string `arg:"" passthrough:"" optional:""`
 }
 
 // Validate validates the configuration.

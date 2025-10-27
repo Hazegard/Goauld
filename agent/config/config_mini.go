@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alecthomas/kong"
 	"github.com/keygen-sh/machineid"
 )
 
@@ -41,7 +40,7 @@ var (
 	_http_proxy_enabled     = "true" //nolint:revive
 	_socks_use_system_proxy = "true" //nolint:revive
 
-	_proxy          = "http://localhost:8081"
+	_proxy          = ""
 	_proxy_username = "" //nolint:revive
 	_proxy_password = "" //nolint:revive
 	_proxy_domain   = "" //nolint:revive
@@ -90,7 +89,7 @@ var (
 
 	_killswitch = "7"
 
-	defaultValues = kong.Vars{
+	defaultValues = map[string]string{
 		"_agePubKey": _agePubKey,
 
 		"_password_cli":    _password_cli,
