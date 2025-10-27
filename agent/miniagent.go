@@ -1,3 +1,5 @@
+//go:build mini
+
 package main
 
 import (
@@ -8,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"Goauld/agent/config"
@@ -22,6 +25,10 @@ var globalCanceler *utils.GlobalCanceler
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
 	config.InitAgent()
+
+	if len(config.Get().IgnoredArgs()) > 0 {
+		log.Warn().Str("Args", strings.Join(config.Get().IgnoredArgs(), " / ")).Msg("ignored arguments")
+	}
 
 	killSwitchDuration := KillSwitchLoop(config.Get().GetKillSwitchDays())
 	// Define an operation function that returns a value and an error.

@@ -376,7 +376,7 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
     tool: '{{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
     binary: jaffa
-    main: ./agent-mini
+    main: ./agent
     env:
       - CGO_ENABLED=0
       - NO_LITERALS=1

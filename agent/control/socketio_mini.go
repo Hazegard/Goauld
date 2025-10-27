@@ -3,7 +3,7 @@
 package control
 
 import (
-	"Goauld/agent-mini/chunkAgent"
+	"Goauld/agent/chunkAgent"
 	"Goauld/agent/config"
 	"Goauld/common/crypto"
 	"Goauld/common/log"

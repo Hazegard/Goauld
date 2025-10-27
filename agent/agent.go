@@ -1,3 +1,5 @@
+//go:build !mini
+
 // Package main holds the agent entrypoint
 package main
 
