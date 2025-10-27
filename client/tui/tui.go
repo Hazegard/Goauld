@@ -469,8 +469,8 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 	height := len(rows)
 	if m.extendedDetails {
 		details := []teatable.Row{
-			{"Last Updated", timeAgo(agent.LastUpdated)},
-			{"Last Ping", timeAgo(agent.LastPing)},
+			{"Last Updated", absTime(agent.LastUpdated)},
+			{"Last Ping", absTime(agent.LastPing)},
 			{"SSH Mode", agent.SSHMode},
 			{"SSHD Port", agent.GetSSHPort()},
 			{"Socks Port", agent.GetSocksPort()},
@@ -491,8 +491,8 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		agent.RemoteAddr,
 		agent.Username,
 		agent.Hostname,
-		timeAgo(agent.LastUpdated),
-		timeAgo(agent.LastPing),
+		absTime(agent.LastUpdated),
+		absTime(agent.LastPing),
 		agent.IPs,
 		agent.Path,
 		agent.SSHMode,
@@ -615,8 +615,8 @@ func AgentsToRow(agents []types.Agent) []table.Row {
 				"ID":           agent.ID,
 				"N":            centerString(strconv.Itoa(i+1), 3),
 				"Name":         centerString(agent.Name, 30),
-				"Last Updated": centerString(timeAgo(agent.LastUpdated), 14),
-				"Last Ping":    centerString(timeAgo(agent.LastPing), 13),
+				"Last Updated": centerString(relTIme(agent.LastUpdated), 14),
+				"Last Ping":    centerString(relTIme(agent.LastPing), 13),
 				"Mode":         centerString(agent.SSHMode, 10),
 				"SSHD Port":    centerString(agent.GetSSHPort(), 13),
 				"Socks Port":   centerString(agent.GetSocksPort(), 13),
@@ -679,8 +679,12 @@ func (m *Model) Delete(agent types.Agent) tea.Cmd {
 	}
 }
 
-// timeAgo converts a date to XXX times ago.
-func timeAgo(t time.Time) string {
+func absTime(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05")
+}
+
+// relTIme converts a date to XXX times ago.
+func relTIme(t time.Time) string {
 	now := time.Now()
 	duration := now.Sub(t)
 
