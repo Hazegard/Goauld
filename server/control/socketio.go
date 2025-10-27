@@ -114,7 +114,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			}
 			if data.Load {
 				// The agent is a loader
-				HandleLoader(socket, data, agentName)
+				sio.HandleLoader(socket, data, agentName)
 
 				return
 			}
@@ -511,7 +511,7 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	return response
 }
 
-func HandleLoader(socket gosio.ServerSocket, data socketio.Register, agentName string) {
+func (sio *SocketIO) HandleLoader(socket gosio.ServerSocket, data socketio.Register, agentName string) {
 	sharedSecret, err := config.Get().Decrypt(data.SharedKey)
 	if err != nil {
 		errorMsg := fmt.Errorf("error decrypting shared secret: %w", err)
@@ -540,6 +540,29 @@ func HandleLoader(socket gosio.ServerSocket, data socketio.Register, agentName s
 			Code:    socketio.RegisterEvent.ID(),
 		})
 		log.Error().Str("Type", "Loader").Str("Agent.name", agentName).Str("Agent.ID", data.ID).Err(err).Msg("socketio.RegisterError decrypting agent data")
+	}
+
+	agentDB, err := sio.db.FindOrCreate(data.ID, agentName)
+	if err != nil {
+		log.Error().Str("Agent.name", "").Str("Agent.ID", data.ID).Err(err).Msg("socketio.RegisterError retrieving agent")
+
+		return
+	}
+	agentDB.Version = agentData.AgentVersion
+	agentDB.Version.Version += "jaffa/"
+
+	agentDB.Name = agentName
+	agentDB.Platform = agentData.Platform
+	agentDB.Architecture = agentData.Architecture
+	agentDB.Path = agentData.Path
+	agentDB.Hostname = agentData.Hostname
+	agentDB.Username = agentData.Username
+
+	agentDB.RemoteAddr = sio.agentStore.GetRemote(data.ID)
+	agentDB.
+		err = sio.db.UpdateAgentField(agentDB, "Version", "Platform", "Architecture", "Path", "Hostname", "Username", "RemoteAddr")
+	if err != nil {
+		log.Error().Err(err).Str("Agent.Name", agentName).Msg("socketio.RegisterError updating agent")
 	}
 	binary := fmt.Sprintf("goauld_%s-%s", agentData.Platform, agentData.Architecture)
 	if agentData.Platform == "windows" {

@@ -263,6 +263,16 @@ func (db *DB) ValidatePasswordAndRotateIfTrue(id string, password string) error 
 // the lastUpdated field.
 // Mainly used to update the last ping field.
 func (db *DB) UpdateAgentFieldShadow(agent *Agent, fields ...string) error {
+	if agent.RemoteAddr == "" {
+		var newFields []string
+		for _, field := range fields {
+			if field == "RemoteAddr" {
+				continue
+			}
+			newFields = append(newFields, field)
+		}
+		fields = newFields
+	}
 	result := db.db.Select(fields).Updates(agent)
 	if result.Error != nil {
 		return fmt.Errorf("could not update agent: %w", result.Error)
@@ -273,6 +283,16 @@ func (db *DB) UpdateAgentFieldShadow(agent *Agent, fields ...string) error {
 
 // UpdateAgentField update the specified field information in the database.
 func (db *DB) UpdateAgentField(agent *Agent, fields ...string) error {
+	if agent.RemoteAddr == "" {
+		var newFields []string
+		for _, field := range fields {
+			if field == "RemoteAddr" {
+				continue
+			}
+			newFields = append(newFields, field)
+		}
+		fields = newFields
+	}
 	agent.LastUpdated = time.Now()
 	fields = append(fields, "LastUpdated")
 	agent.LastPing = time.Now()
