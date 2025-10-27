@@ -41,6 +41,10 @@ func main() {
 
 		return
 	}
+
+	if len(config.Get().IgnoredArgs()) > 0 {
+		log.Warn().Strs("Args", config.Get().IgnoredArgs()).Msg("ignored arguments")
+	}
 	if config.Get().DoPrintVersion() {
 		//nolint:forbidigo
 		fmt.Println(common.GetVersion())

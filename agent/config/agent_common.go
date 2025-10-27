@@ -438,3 +438,7 @@ func (a *Agent) DoGenerateConfig() bool {
 func (a *Agent) GetKillSwitchDays() int {
 	return a.cfg.KillSwitch
 }
+
+func (a *Agent) IgnoredArgs() []string {
+	return a.cfg.Remaining
+}
