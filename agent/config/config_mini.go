@@ -10,6 +10,8 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/url"
+	"os"
+	"os/user"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -350,6 +352,33 @@ func InitAgent() {
 	if err != nil {
 		log.Error().Msg(err.Error())
 	}
+
+	// Generate the agent name if not provided
+	if cfg.Name == "user@hostname" {
+		var name string
+		userName, err := user.Current()
+		if err != nil {
+			log.Error().Err(err).Msg("error getting current user")
+			return
+		}
+		if strings.Contains(userName.Username, "\\") {
+			parts := strings.Split(userName.Username, "\\")
+			if parts[1] != "" {
+				name = parts[1]
+			} else {
+				name = strings.ReplaceAll(userName.Username, "\\", "_")
+			}
+		} else {
+			name = userName.Username
+		}
+
+		hostname, err := os.Hostname()
+		if err != nil {
+			log.Error().Err(err).Msg("error getting hostname")
+		}
+		cfg.Name = fmt.Sprintf("%s@%s", name, hostname)
+	}
+
 	// compute the agent ID used to identify it
 	mid, err := machineid.ID()
 	if err != nil {

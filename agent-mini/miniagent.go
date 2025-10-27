@@ -3,7 +3,6 @@ package main
 import (
 	"Goauld/agent/ssh/transport"
 	"Goauld/agent/vscode"
-	"Goauld/common"
 	"Goauld/common/utils"
 	"context"
 	"fmt"
@@ -23,22 +22,6 @@ var globalCanceler *utils.GlobalCanceler
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
 	config.InitAgent()
-
-	if config.Get().DoPrintVersion() {
-		//nolint:forbidigo
-		fmt.Println(common.GetVersion())
-
-		return
-	}
-
-	if config.Get().ShouldRunInBackground() {
-		err := config.Get().StartInBackground()
-		if err != nil {
-			log.Error().Err(err).Msg("error starting the agent in background")
-		}
-
-		return
-	}
 
 	killSwitchDuration := KillSwitchLoop(config.Get().GetKillSwitchDays())
 	// Define an operation function that returns a value and an error.
