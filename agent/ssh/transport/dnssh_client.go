@@ -12,10 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qdm12/dns/v2/pkg/nameserver"
-
 	miekgDns "github.com/miekg/dns"
-
 	"github.com/xtaci/kcp-go/v5"
 	"github.com/xtaci/smux"
 	"www.bamsoftware.com/git/dnstt.git/dns"
@@ -63,7 +60,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 		return nil, fmt.Errorf("domain %s leaves only %d bytes for payload", domain, mtu)
 	}
 
-	log.Get().Trace().Str("Mode", "DNSSH").Msgf("effective MTU %d (%s)", mtu, domain)
+	log.Trace().Str("Mode", "DNSSH").Msgf("effective MTU %d (%s)", mtu, domain)
 
 	// Open a KCP conn on the PacketConn.
 	conn, err := kcp.NewConn2(remoteAddr, nil, 0, 0, pconn)
@@ -130,7 +127,7 @@ func NewDNSSH() (*DNSSH, error) {
 	port := 53
 	if config.Get().GetDNSCommand() == "" {
 		dnsServers := config.Get().DNSServer()
-		for _, _dns := range nameserver.GetDNSServers() {
+		for _, _dns := range dns2.GetDNSServers() {
 			dnsServers = append(dnsServers, _dns.String())
 		}
 		log.Info().Str("Mode", "DNSSH").Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")

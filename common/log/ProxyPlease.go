@@ -1,3 +1,6 @@
+//go:build !mini
+// +build !mini
+
 // Package log holds the loggers
 package log
 

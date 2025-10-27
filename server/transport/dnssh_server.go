@@ -429,7 +429,7 @@ func responseFor(query *dns.Message, domain dns.Name) (*dns.Message, []byte) {
 	// FORMERR MUST be returned."
 	if payloadSize < maxUDPPayload {
 		resp.Flags |= dns.RcodeFormatError
-		log.Trace().Str("Mode", "DNSSH").Msgf("FORMERR: requester payload size %d is too small (minimum %d)", payloadSize, maxUDPPayload)
+		// log.Trace().Str("Mode", "DNSSH").Msgf("FORMERR: requester payload size %d is too small (minimum %d)", payloadSize, maxUDPPayload)
 
 		return resp, nil
 	}

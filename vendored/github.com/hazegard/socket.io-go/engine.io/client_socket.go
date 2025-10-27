@@ -9,13 +9,13 @@ import (
 	"github.com/hazegard/socket.io-go/internal/sync"
 
 	_websocket "github.com/coder/websocket"
-	_webtransport "github.com/quic-go/webtransport-go"
+	//_webtransport "github.com/quic-go/webtransport-go"
 
 	"github.com/hazegard/socket.io-go/engine.io/parser"
 	"github.com/hazegard/socket.io-go/engine.io/transport"
 	"github.com/hazegard/socket.io-go/engine.io/transport/polling"
 	"github.com/hazegard/socket.io-go/engine.io/transport/websocket"
-	"github.com/hazegard/socket.io-go/engine.io/transport/webtransport"
+	//"github.com/hazegard/socket.io-go/engine.io/transport/webtransport"
 )
 
 var errUpgradeTimeoutExceeded = fmt.Errorf("upgradeTimeout exceeded")
@@ -36,7 +36,7 @@ type clientSocket struct {
 	requestHeader *transport.RequestHeader
 
 	// WebTransport dialer to use on transports
-	webTransportDialer *_webtransport.Dialer
+	//webTransportDialer *_webtransport.Dialer
 
 	// WebSocket dialer to use on transports
 	wsDialOptions *_websocket.DialOptions
@@ -85,15 +85,15 @@ func (s *clientSocket) connect(transports []string) (err error) {
 				s.requestHeader,
 				s.wsDialOptions,
 			)
-		case "webtransport":
-			s.transport = webtransport.NewClientTransport(
-				c,
-				"",
-				ProtocolVersion,
-				*s.url,
-				s.requestHeader,
-				s.webTransportDialer,
-			)
+		/*case "webtransport":
+		s.transport = webtransport.NewClientTransport(
+			c,
+			"",
+			ProtocolVersion,
+			*s.url,
+			s.requestHeader,
+			//s.webTransportDialer,
+		)*/
 		default:
 			err = fmt.Errorf("eio: invalid transport name: %s", name)
 			return
@@ -190,9 +190,9 @@ func (s *clientSocket) maybeUpgrade(transports []string, upgrades []string) {
 		case "websocket":
 			s.debug.Log("maybeUpgrade", "upgrading from", s.TransportName(), "to websocket")
 			t = websocket.NewClientTransport(c, s.sid, ProtocolVersion, *s.url, s.requestHeader, s.wsDialOptions)
-		case "webtransport":
-			s.debug.Log("maybeUpgrade", "upgrading from", s.TransportName(), "to webtransport")
-			t = webtransport.NewClientTransport(c, s.sid, ProtocolVersion, *s.url, s.requestHeader, s.webTransportDialer)
+		//case "webtransport":
+		//	s.debug.Log("maybeUpgrade", "upgrading from", s.TransportName(), "to webtransport")
+		//	t = webtransport.NewClientTransport(c, s.sid, ProtocolVersion, *s.url, s.requestHeader, s.webTransportDialer)
 		default:
 			s.debug.Log("skip", upgradeTo)
 		}

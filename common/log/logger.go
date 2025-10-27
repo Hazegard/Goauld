@@ -1,3 +1,5 @@
+//go:build !mini
+
 package log
 
 import (
@@ -86,6 +88,20 @@ func colorize(s any, c int, disabled bool) string {
 	return fmt.Sprintf("\x1b[%dm%v\x1b[0m", c, s)
 }
 
+func trimSubstr(s string, substr string) string {
+	var t string
+	for {
+		t = strings.TrimPrefix(s, substr)
+		t = strings.TrimSuffix(t, substr)
+		if t == s { // exit if nothing was trimmed from s
+			break
+		}
+		s = t // update to last result
+	}
+
+	return t
+}
+
 func initLoggers() {
 	root := Sources.GetRoot()
 	writer := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339}
@@ -153,6 +169,7 @@ func initLoggers() {
 	ml := zerolog.MultiLevelWriter(writer)
 	l := zerolog.New(ml).Level(zerolog.TraceLevel).With().Timestamp().Caller().Logger()
 	zerolog.CallerMarshalFunc = func(_ uintptr, file string, line int) string {
+		file = trimSubstr(file, "../")
 		if strings.HasSuffix(file, root+"/") {
 			return fmt.Sprintf("%s:%d", strings.TrimPrefix(file, root+"/"), line)
 		}

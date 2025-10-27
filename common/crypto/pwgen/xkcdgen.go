@@ -1,3 +1,5 @@
+//go:build !mini
+
 package pwgen
 
 import (

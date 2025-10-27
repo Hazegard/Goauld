@@ -5,7 +5,7 @@ go 1.25.3
 require (
 	filippo.io/age v1.2.1
 	github.com/hazegard/socket.io-go v0.1.1
-	github.com/hazegard/togettyc v0.3.5
+	github.com/hazegard/togettyc v0.3.6
 	github.com/alecthomas/kong v1.12.1
 	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
@@ -32,7 +32,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20
 	github.com/miekg/dns v1.1.68
 	github.com/pkg/sftp v1.13.9
-	github.com/qdm12/dns/v2 v2.0.0-rc8
 	github.com/quic-go/quic-go v0.55.0
 	github.com/rs/zerolog v1.34.0
 	github.com/things-go/go-socks5 v0.1.0
@@ -51,6 +50,8 @@ require (
 replace github.com/hazegard/socket.io-go => ./vendored/github.com/hazegard/socket.io-go
 
 replace github.com/aus/proxyplease => ./vendored/github.com/aus/proxyplease@v0.1.0
+
+replace github.com/hazegard/togettyc => ./vendored/github.com/hazegard/togettyc
 
 require (
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
@@ -94,9 +95,8 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/petermattis/goid v0.0.0-20250904145737-900bdf8bb490 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/qdm12/gosettings v0.4.4 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	github.com/quic-go/webtransport-go v0.9.0
+	github.com/quic-go/webtransport-go v0.9.0 // indirect
 	github.com/rapid7/go-get-proxied v0.0.0-20250207205329-09112877ac70 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect

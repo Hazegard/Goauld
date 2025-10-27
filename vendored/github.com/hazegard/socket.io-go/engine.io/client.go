@@ -7,7 +7,7 @@ import (
 
 	"github.com/hazegard/socket.io-go/engine.io/transport"
 	"github.com/coder/websocket"
-	"github.com/quic-go/webtransport-go"
+	//"github.com/quic-go/webtransport-go"
 )
 
 type ClientConfig struct {
@@ -36,7 +36,7 @@ type ClientConfig struct {
 	HTTPTransport http.RoundTripper
 
 	// Custom WebTransport dialer to use
-	WebTransportDialer *webtransport.Dialer
+	//WebTransportDialer *webtransport.Dialer
 
 	// Custom WebSocket dialer to use
 	WebSocketDialOptions *websocket.DialOptions
@@ -94,11 +94,11 @@ func dial(rawURL string, callbacks *Callbacks, config *ClientConfig, testWaitUpg
 		socket.upgradeDone = func(transportName string) {}
 	}
 
-	if config.WebTransportDialer != nil {
-		socket.webTransportDialer = config.WebTransportDialer
-	} else {
-		socket.webTransportDialer = &webtransport.Dialer{}
-	}
+	//if config.WebTransportDialer != nil {
+	//	socket.webTransportDialer = config.WebTransportDialer
+	//} else {
+	//	socket.webTransportDialer = &webtransport.Dialer{}
+	//}
 
 	if config.WebSocketDialOptions != nil {
 		socket.wsDialOptions = config.WebSocketDialOptions

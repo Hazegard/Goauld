@@ -1,3 +1,6 @@
+//go:build !mini
+// +build !mini
+
 // Package cli holds the common cli
 package cli
 

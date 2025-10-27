@@ -66,6 +66,8 @@ func (t *ClientTransport) Handshake() (hr *parser.HandshakeResponse, err error) 
 	}
 
 	t.conn, _, err = websocket.Dial(context.Background(), t.url.String(), t.dialOptions)
+	// TODO
+	t.conn.SetReadLimit(-1)
 	if err != nil {
 		return
 	}

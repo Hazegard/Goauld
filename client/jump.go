@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Jump struct {
 	Agent string   `arg:"" name:"agent" yaml:"agent" help:"Agent name to retrieve password."`
 	Print bool     `name:"print" yaml:"print" help:"Print this agent."`
 	Scp   bool     `name:"scp" yaml:"scp" help:"Scp using the Jump."`
-	Args  []string `arg:"" `
+	Args  []string `arg:"" passthrough:"" help:"Additional arguments."`
 }
 
 func (j *Jump) Run(cfg ClientConfig) error {
@@ -17,6 +18,7 @@ func (j *Jump) Run(cfg ClientConfig) error {
 	if err != nil {
 		return err
 	}
+	exe = strings.ReplaceAll(exe, ` `, `\ `)
 	proxyCommand := fmt.Sprintf("%s ssh %s -W %%h:%%p", exe, j.Agent)
 	args := []string{"-oProxycommand=" + proxyCommand}
 	args = append(args, j.Args...)

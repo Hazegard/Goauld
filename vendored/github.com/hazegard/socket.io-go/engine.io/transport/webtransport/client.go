@@ -1,5 +1,6 @@
 package webtransport
 
+/*
 import (
 	"context"
 	"encoding/json"
@@ -32,7 +33,7 @@ func NewClientTransport(
 	protocolVersion int,
 	url url.URL,
 	requestHeader *transport.RequestHeader,
-	dialer *webtransport.Dialer,
+	//dialer *webtransport.Dialer,
 ) *ClientTransport {
 	return &ClientTransport{
 		sid: sid,
@@ -43,7 +44,7 @@ func NewClientTransport(
 
 		callbacks: callbacks,
 
-		dialer: dialer,
+		//dialer: dialer,
 	}
 }
 
@@ -156,3 +157,4 @@ func (t *ClientTransport) close(err error) {
 func (t *ClientTransport) Close() {
 	t.close(nil)
 }
+*/

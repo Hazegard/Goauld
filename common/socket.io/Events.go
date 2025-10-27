@@ -50,4 +50,5 @@ const (
 	PasswordValidationRequestResponse
 	ClipboardContentEvent
 	CopyClipboardRequestEvent
+	ReceiveFatAgent
 )

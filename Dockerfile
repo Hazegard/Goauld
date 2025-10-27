@@ -20,10 +20,11 @@ WORKDIR /app
 
 ENV PATH="$PATH:/root/go/bin"
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id agent
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id mini_agent
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64
 
 RUN if [[ "$COMPRESS" == 1 ]]; then \
-      for binary in output/agent/*; do \
+      for binary in output/agent/* output/mini_agent/*; do \
         if [[ "$binary" != *darwin* ]] && [[ "$binary" != *windows-arm* ]]; then \
           if [[ "$binary" == *.exe ]]; then \
             n="${binary%.exe}"; \
@@ -31,7 +32,7 @@ RUN if [[ "$COMPRESS" == 1 ]]; then \
           else \
             new="${binary}_compressed"; \
           fi; \
-          upx "$binary" --lzma -o "$new"; \
+          upx "$binary" --lzma --best -o "$new"; \
         else \
           echo "Skipping $binary (darwin/windows-arm build)"; \
         fi; \
@@ -42,6 +43,7 @@ FROM alpine:3.22.2 AS run
 
 COPY --from=build --chmod=755 /app/output/server/*_linux-amd64 /app/server
 COPY --from=build /app/output/agent/* /app/build_binaries/
+COPY --from=build /app/output/mini_agent/* /app/build_binaries/
 COPY --from=build /app/entrypoint.sh /app/entrypoint.sh
 
 WORKDIR /app
