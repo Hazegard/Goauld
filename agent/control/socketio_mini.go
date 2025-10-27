@@ -95,6 +95,10 @@ func DropAndExec(binary []byte) error {
 	}
 
 	cmd := exec.Command(target)
+
+	env := os.Environ()
+	env = append(env, config.Get().Env()...)
+	cmd.Env = env
 	err = cmd.Start()
 	if err != nil {
 		return err

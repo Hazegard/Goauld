@@ -407,3 +407,61 @@ func InitAgent() {
 		UnChunkDone:              nil,
 	}
 }
+
+func (agent *Agent) Env() []string {
+	var env []string
+	env = append(env, prefixEnv("AGE_PUBKEY", _agePubKey))
+	env = append(env, prefixEnv("SERVER", _server))
+	env = append(env, prefixEnv("SSH_SERVER", _ssh_server))
+	env = append(env, prefixEnv("QUIC_DOMAIN", _quic_domain))
+	env = append(env, prefixEnv("TLS_SERVER", _tls_server))
+	env = append(env, prefixEnv("DNS_SERVER", _dns_server))
+	env = append(env, prefixEnv("DNS_DOMAIN", _dns_domain))
+	env = append(env, prefixEnv("PASSWORD", _password_cli))
+	env = append(env, prefixEnv("NAME", _name))
+	env = append(env, prefixEnv("SSHD", _sshd_enabled))
+	env = append(env, prefixEnv("SOCKS", _socks_enabled))
+	env = append(env, prefixEnv("HTTP", _http_proxy_enabled))
+	env = append(env, prefixEnv("PROXY", _proxy))
+	env = append(env, prefixEnv("PROXY_USERNAME", _proxy_username))
+	env = append(env, prefixEnv("PROXY_PASSWORD", _proxy_password))
+	env = append(env, prefixEnv("PROXY_DOMAIN", _proxy_domain))
+	env = append(env, prefixEnv("SOCKS_CUSTOM_PROXY", _socks_custom_proxy))
+	env = append(env, prefixEnv("SOCKS_PROXY", _socks_use_system_proxy))
+	env = append(env, prefixEnv("SOCKS_PROXY_USERNAME", _socks_proxy_username))
+	env = append(env, prefixEnv("SOCKS_PROXY_PASSWORD", _socks_proxy_password))
+	env = append(env, prefixEnv("SOCKS_PROXY_DOMAIN", _socks_proxy_domain))
+	env = append(env, prefixEnv("HTTP_CUSTOM_PROXY", _http_custom_proxy))
+	env = append(env, prefixEnv("HTTP_PROXY_USERNAME", _http_proxy_username))
+	env = append(env, prefixEnv("HTTP_PROXY_PASSWORD", _http_proxy_password))
+	env = append(env, prefixEnv("HTTP_PROXY_DOMAIN", _http_proxy_domain))
+	env = append(env, prefixEnv("NO_PROXY", _no_proxy))
+	env = append(env, prefixEnv("RSSH_PORT", _rssh_port))
+	env = append(env, prefixEnv("SOCKS_PORT", _socks_port))
+	env = append(env, prefixEnv("HTTP_PORT", _http_port))
+	env = append(env, prefixEnv("KEEP_AWAKE", _keepawake))
+	env = append(env, prefixEnv("KEEPALIVE", _keepalive))
+	env = append(env, prefixEnv("VERBOSE", _verbosity))
+	env = append(env, prefixEnv("QUIET", _quiet))
+	env = append(env, prefixEnv("ONLY_WORKING_DAYS", _only_working_days))
+	env = append(env, prefixEnv("WORKING_DAY_START", _working_day_start))
+	env = append(env, prefixEnv("WORKING_DAY_END", _working_day_end))
+	env = append(env, prefixEnv("WORKING_DAY_TIMEZONE", _working_day_timezone))
+	env = append(env, prefixEnv("RSSH_ORDER", _rssh_order))
+	env = append(env, prefixEnv("SSH_TIMEOUT", _rssh_timeout))
+	env = append(env, prefixEnv("RPF", _remote_port_forwarding))
+	env = append(env, prefixEnv("MAX_RETRIES", _max_retries))
+	env = append(env, prefixEnv("VERSION", _version))
+	env = append(env, prefixEnv("GENERATE_CONFIG", _generate_config))
+	env = append(env, prefixEnv("CONFIG_FILE", _config_file))
+	env = append(env, prefixEnv("BACKGROUND", _background))
+	env = append(env, prefixEnv("CUSTOM_DNS_COMMAND", _custom_dns_command))
+	env = append(env, prefixEnv("KILL_SWITCH", _killswitch))
+	return env
+}
+
+// prefixEnv adds the application name to the provided value and returns it
+// as an environment variable.
+func prefixEnv(name string, value string) string {
+	return fmt.Sprintf("%s_%s=%s", strings.ToUpper(common.AppName()), strings.ToUpper(name), value)
+}
