@@ -26,7 +26,7 @@ import (
 type ControlPlanClient struct {
 	manager      *sio.Manager
 	socket       sio.ClientSocket
-	configDone   chan<- struct{}
+	configDone   chan<- string
 	ctx          context.Context
 	url          string
 	canceler     *globalcontext.GlobalCanceler
@@ -34,7 +34,7 @@ type ControlPlanClient struct {
 }
 
 // NewControlPlanClient returns a new ControlPlanClient.
-func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, canceler *globalcontext.GlobalCanceler) *ControlPlanClient {
+func NewControlPlanClient(ctx context.Context, configDone chan<- string, canceler *globalcontext.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
 		url:        config.Get().SocketIoURL(),
@@ -56,7 +56,7 @@ type CpcStarter func(*ControlPlanClient, chan<- struct{}, chan<- error) error
 
 // Init tries to connect to the control plan using the different strategies (CpcStarter)
 // A successful connection will send a signal using the configDone channel.
-func Init(ctx context.Context, globalCanceler *globalcontext.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, cpcStarter CpcStarter) (*ControlPlanClient, error) {
+func Init(ctx context.Context, globalCanceler *globalcontext.GlobalCanceler, configDone chan<- string, controlErr chan<- error, cpcStarter CpcStarter) (*ControlPlanClient, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	controlPlanClient := NewControlPlanClient(ctx, configDone, globalCanceler)
 	chanErr := make(chan error)

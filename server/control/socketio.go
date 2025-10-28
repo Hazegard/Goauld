@@ -549,7 +549,7 @@ func (sio *SocketIO) HandleLoader(socket gosio.ServerSocket, data socketio.Regis
 		return
 	}
 	agentDB.Version = agentData.AgentVersion
-	agentDB.Version.Version += "jaffa/"
+	agentDB.Version.Version = "jaffa/" + agentDB.Version.Version
 
 	agentDB.Name = agentName
 	agentDB.Platform = agentData.Platform

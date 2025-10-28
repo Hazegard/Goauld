@@ -390,6 +390,25 @@ func InitAgent() {
 	//nolint:gosec
 	id := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s-%s", mid, cfg.Name))))
 
+	host, err := os.Hostname()
+	if err != nil {
+		log.Warn().Err(err).Msg("error getting hostname")
+	}
+
+	u, err := user.Current()
+	if err != nil {
+		log.Warn().Err(err).Msg("error getting current user")
+	}
+	ips, errs := getIPs()
+	if len(errs) > 0 {
+		log.Error().Err(errs[0]).Msg("error getting ips")
+	}
+
+	currDir, err := os.Getwd()
+	if err != nil {
+		log.Warn().Err(err).Msg("error getting current directory")
+	}
+
 	agent = &Agent{
 		ID:                       id,
 		SSHPrivateKey:            "",
@@ -401,10 +420,10 @@ func InitAgent() {
 		RemotePortForward:        nil,
 		Platform:                 runtime.GOOS,
 		Architecture:             runtime.GOARCH,
-		Username:                 "",
-		Hostname:                 "",
-		IPs:                      nil,
-		Path:                     "",
+		Username:                 u.Username,
+		Hostname:                 host,
+		IPs:                      ips,
+		Path:                     currDir,
 		UnChunkDone:              nil,
 	}
 }

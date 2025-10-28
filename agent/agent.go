@@ -158,7 +158,7 @@ func run() globalcontext.CancelReason {
 	// configDone is a one time chan used to signal that the configuration exchange with the server is completed.
 	// The signal is emitted by the socket.io handler, and the agent waits for it before starting component initialization
 	// (sshd, ssh, socks, etc.)
-	configDone := make(chan struct{})
+	configDone := make(chan string)
 	log.Info().Msg("Agent init done")
 
 	ctx, cancel := context.WithCancel(context.Background())

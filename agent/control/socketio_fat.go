@@ -86,7 +86,7 @@ func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {
 	// As it complete the configuration steps between the agent and the server
 	socket.OnEvent(socketio.SendAgentDataSuccess.ID(), func() {
 		log.Trace().Msg("OnEvent: SendAgentDataSuccess")
-		cpc.configDone <- struct{}{}
+		cpc.configDone <- "Done"
 		log.Trace().Msg("OnEvent: SendAgentDataSuccess done")
 	})
 

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"time"
@@ -20,6 +21,8 @@ import (
 )
 
 var globalCanceler *globalcontext.GlobalCanceler
+
+type Path string
 
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
@@ -46,6 +49,11 @@ func main() {
 			//nolint:nilnil
 			return nil, nil
 		}
+		if cancelReason.Status == globalcontext.Dropped {
+			log.Info().Str("Path", cancelReason.Msg).Msg("Agent dropped")
+			cancel()
+			return Path(cancelReason.Msg), nil
+		}
 		log.Reset().Str("Reason", cancelReason.Msg).Msg("Agent restarting")
 
 		return nil, fmt.Errorf("agent restarting: %s", cancelReason.Msg)
@@ -67,6 +75,11 @@ func main() {
 
 		}),
 	)
+
+	if p, ok := result.(Path); ok {
+		result = nil
+		err = Exec(p, config.Get())
+	}
 	if err != nil {
 		log.Info().Err(err).Msg("Agent shut down")
 
@@ -83,11 +96,16 @@ func run() globalcontext.CancelReason {
 	cancelReason := make(chan globalcontext.CancelReason)
 	controlErr := make(chan error)
 
-	// configDone is a one time chan used to signal that the configuration exchange with the server is completed.
+	// dropDone is a one time chan used to signal that the configuration exchange with the server is completed.
 	// The signal is emitted by the socket.io handler, and the agent waits for it before starting component initialization
 	// (sshd, ssh, socks, etc.)
-	configDone := make(chan struct{})
+	dropDone := make(chan string)
 	log.Info().Msg("Agent init done")
+	defer func() {
+		close(cancelReason)
+		close(dropDone)
+		close(controlErr)
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	globalCanceler = &globalcontext.GlobalCanceler{
@@ -171,7 +189,7 @@ func run() globalcontext.CancelReason {
 			continue
 		}
 		log.Info().Str("ControlMode", initializer.Name).Msg("Trying to connect to the control socket")
-		cpc, err := control.Init(ctx, globalCanceler, configDone, controlErr, initializer.InitFunc)
+		cpc, err := control.Init(ctx, globalCanceler, dropDone, controlErr, initializer.InitFunc)
 		if err == nil {
 			log.Info().Str("SocketMode", initializer.Name).Msg("Control plan started")
 			success = true
@@ -211,6 +229,11 @@ func run() globalcontext.CancelReason {
 
 	case <-ctx.Done():
 		log.Error().Err(ctx.Err())
+	case path := <-dropDone:
+		return globalcontext.CancelReason{
+			Status: globalcontext.Dropped,
+			Msg:    path,
+		}
 	}
 	reason := <-cancelReason
 
@@ -255,4 +278,12 @@ func KillSwitchLoop(days int) time.Duration {
 	}()
 
 	return d
+}
+
+func Exec(p Path, cfg *config.Agent) error {
+	cmd := exec.Command(string(p))
+	cmd.Env = append(os.Environ(), cfg.Env()...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
