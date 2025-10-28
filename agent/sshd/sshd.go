@@ -3,6 +3,7 @@ package sshd
 import (
 	"Goauld/agent/clipboard"
 	"Goauld/agent/config"
+	globalcontext "Goauld/agent/context"
 	"Goauld/agent/sshd/shell"
 	"Goauld/common/log"
 	_ssh "Goauld/common/ssh"
@@ -23,7 +24,7 @@ type Sshd struct {
 }
 
 // NewSshdServer configure and return an SSHD server.
-func NewSshdServer(ctx context.Context) *Sshd {
+func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) *Sshd {
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
@@ -75,6 +76,24 @@ func NewSshdServer(ctx context.Context) *Sshd {
 
 					return false, nil
 				}
+
+				return true, nil
+			},
+			_ssh.Kill: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
+				log.Trace().Str("Event", _ssh.Kill).Str("Content", string(req.Payload)).Msgf("Received KILL from %s", ctx.User())
+				canceler.Exit("Client requested exit")
+
+				return true, nil
+			},
+			_ssh.Restart: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
+				log.Trace().Str("Event", _ssh.Restart).Str("Content", string(req.Payload)).Msgf("Received RESTART from %s", ctx.User())
+				canceler.Exit("Client requested restart")
+
+				return true, nil
+			},
+			_ssh.Delete: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
+				log.Trace().Str("Event", _ssh.Delete).Str("Content", string(req.Payload)).Msgf("Received DELETE from %s", ctx.User())
+				canceler.Delete("Client requested restart")
 
 				return true, nil
 			},

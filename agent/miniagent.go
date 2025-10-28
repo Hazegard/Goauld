@@ -3,8 +3,8 @@
 package main
 
 import (
+	globalcontext "Goauld/agent/context"
 	"Goauld/agent/ssh/transport"
-	"Goauld/common/utils"
 	"context"
 	"fmt"
 	"os"
@@ -19,7 +19,7 @@ import (
 	"github.com/cenkalti/backoff/v5"
 )
 
-var globalCanceler *utils.GlobalCanceler
+var globalCanceler *globalcontext.GlobalCanceler
 
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
@@ -40,7 +40,7 @@ func main() {
 		log.Info().Msg("Starting agent")
 
 		cancelReason := run()
-		if cancelReason.Status == utils.Exit {
+		if cancelReason.Status == globalcontext.Exit {
 			log.Kill().Str("Reason", cancelReason.Msg).Msg("Agent stopped")
 			cancel()
 			//nolint:nilnil
@@ -78,9 +78,9 @@ func main() {
 	}
 }
 
-func run() utils.CancelReason {
+func run() globalcontext.CancelReason {
 	var dnsTransport *transport.DNSSH
-	cancelReason := make(chan utils.CancelReason)
+	cancelReason := make(chan globalcontext.CancelReason)
 	controlErr := make(chan error)
 
 	// configDone is a one time chan used to signal that the configuration exchange with the server is completed.
@@ -90,7 +90,7 @@ func run() utils.CancelReason {
 	log.Info().Msg("Agent init done")
 
 	ctx, cancel := context.WithCancel(context.Background())
-	globalCanceler = &utils.GlobalCanceler{
+	globalCanceler = &globalcontext.GlobalCanceler{
 		Cancel:       cancel,
 		CancelReason: cancelReason,
 	}
@@ -184,8 +184,8 @@ func run() utils.CancelReason {
 
 	// If no strategy was successful, we restart the agent
 	if !success {
-		return utils.CancelReason{
-			Status: utils.Restart,
+		return globalcontext.CancelReason{
+			Status: globalcontext.Restart,
 			Msg:    "unable to init the control plan",
 		}
 	}
@@ -220,7 +220,7 @@ func run() utils.CancelReason {
 // HandleCtrlC intercepts the ctrl-c events.
 // It signals to close all running goroutines and wait one second to allow the agent to signal the disconnection
 // to the server. Then it exits.
-func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.GlobalCanceler) func() {
+func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *globalcontext.GlobalCanceler) func() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {

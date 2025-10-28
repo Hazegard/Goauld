@@ -1,8 +1,8 @@
 package control
 
 import (
+	globalcontext "Goauld/agent/context"
 	"Goauld/agent/proxy"
-	"Goauld/common/utils"
 	"context"
 	"fmt"
 	"strings"
@@ -29,12 +29,12 @@ type ControlPlanClient struct {
 	configDone   chan<- struct{}
 	ctx          context.Context
 	url          string
-	canceler     *utils.GlobalCanceler
+	canceler     *globalcontext.GlobalCanceler
 	errorCounter int
 }
 
 // NewControlPlanClient returns a new ControlPlanClient.
-func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, canceler *utils.GlobalCanceler) *ControlPlanClient {
+func NewControlPlanClient(ctx context.Context, configDone chan<- struct{}, canceler *globalcontext.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
 		url:        config.Get().SocketIoURL(),
@@ -56,7 +56,7 @@ type CpcStarter func(*ControlPlanClient, chan<- struct{}, chan<- error) error
 
 // Init tries to connect to the control plan using the different strategies (CpcStarter)
 // A successful connection will send a signal using the configDone channel.
-func Init(ctx context.Context, globalCanceler *utils.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, cpcStarter CpcStarter) (*ControlPlanClient, error) {
+func Init(ctx context.Context, globalCanceler *globalcontext.GlobalCanceler, configDone chan<- struct{}, controlErr chan<- error, cpcStarter CpcStarter) (*ControlPlanClient, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	controlPlanClient := NewControlPlanClient(ctx, configDone, globalCanceler)
 	chanErr := make(chan error)

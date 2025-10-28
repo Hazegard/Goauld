@@ -1,5 +1,5 @@
 //nolint:revive
-package utils
+package context
 
 import "context"
 
@@ -8,6 +8,7 @@ type CancelStatus int
 const (
 	Restart CancelStatus = iota
 	Exit
+	Delete
 )
 
 // CancelReason allows to pass the cancellation information.
@@ -32,4 +33,10 @@ func (cg *GlobalCanceler) Exit(msg string) {
 func (cg *GlobalCanceler) Restart(msg string) {
 	cg.Cancel()
 	cg.CancelReason <- CancelReason{Restart, msg}
+}
+
+// Delete triggers the cancellation and requires to exit and delete the agent.
+func (cg *GlobalCanceler) Delete(msg string) {
+	cg.Cancel()
+	cg.CancelReason <- CancelReason{Delete, msg}
 }

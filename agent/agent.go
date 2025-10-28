@@ -4,19 +4,21 @@
 package main
 
 import (
+	globalcontext "Goauld/agent/context"
 	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
 	"Goauld/agent/ssh/transport"
 	"Goauld/agent/vscode"
 	"Goauld/common"
-	"Goauld/common/utils"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -31,7 +33,7 @@ import (
 	"github.com/cenkalti/backoff/v5"
 )
 
-var globalCanceler *utils.GlobalCanceler
+var globalCanceler *globalcontext.GlobalCanceler
 
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
@@ -91,7 +93,14 @@ func main() {
 			return nil, backoff.RetryAfter(60)
 		}
 		cancelReason := run()
-		if cancelReason.Status == utils.Exit {
+		if cancelReason.Status == globalcontext.Delete {
+			err := ScheduleDelete()
+			if err != nil {
+				log.Error().Err(err).Msg("error while deleting the agent")
+			}
+		}
+
+		if cancelReason.Status == globalcontext.Exit || cancelReason.Status == globalcontext.Delete {
 			log.Kill().Str("Reason", cancelReason.Msg).Msg("Agent stopped")
 			cancel()
 			err := vscode.Cleanup()
@@ -135,9 +144,9 @@ func main() {
 	}
 }
 
-func run() utils.CancelReason {
+func run() globalcontext.CancelReason {
 	var dnsTransport *transport.DNSSH
-	cancelReason := make(chan utils.CancelReason)
+	cancelReason := make(chan globalcontext.CancelReason)
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
@@ -153,7 +162,7 @@ func run() utils.CancelReason {
 	log.Info().Msg("Agent init done")
 
 	ctx, cancel := context.WithCancel(context.Background())
-	globalCanceler = &utils.GlobalCanceler{
+	globalCanceler = &globalcontext.GlobalCanceler{
 		Cancel:       cancel,
 		CancelReason: cancelReason,
 	}
@@ -249,8 +258,8 @@ func run() utils.CancelReason {
 
 	// If no strategy was successful, we restart the agent
 	if !success {
-		return utils.CancelReason{
-			Status: utils.Restart,
+		return globalcontext.CancelReason{
+			Status: globalcontext.Restart,
 			Msg:    "unable to init the control plan",
 		}
 	}
@@ -285,7 +294,7 @@ func run() utils.CancelReason {
 
 		// If the SSHD server is enabled, start it
 		if config.Get().SshdEnabled() {
-			sshdServer := sshd.NewSshdServer(ctx)
+			sshdServer := sshd.NewSshdServer(ctx, globalCanceler)
 
 			rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedSshdAddress())
 			if err != nil {
@@ -484,7 +493,7 @@ func run() utils.CancelReason {
 // HandleCtrlC intercepts the ctrl-c events.
 // It signals to close all running goroutines and wait one second to allow the agent to signal the disconnection
 // to the server. Then it exits.
-func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.GlobalCanceler) func() {
+func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *globalcontext.GlobalCanceler) func() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -501,7 +510,7 @@ func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *utils.G
 	}
 }
 
-func OnlyWorkingDayLoop(ctx context.Context, canceler *utils.GlobalCanceler) {
+func OnlyWorkingDayLoop(ctx context.Context, canceler *globalcontext.GlobalCanceler) {
 	t := time.NewTicker(1 * time.Minute)
 	defer t.Stop()
 	for {
@@ -545,6 +554,25 @@ func LogNextStart() {
 	} else {
 		log.Warn().Time("Now", now).Time("Next Start", next).Msgf("Agent is out of working day")
 	}
+}
+
+func ScheduleDelete() error {
+	exe, err := os.Executable()
+	if err != nil {
+		log.Error().Err(err).Msg("error getting the exe path")
+
+		return err
+	}
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		//nolint:gosec
+		cmd = exec.Command("cmd", "/c", fmt.Sprintf("timeout /T 5 >nul && del '%s'", exe))
+	} else {
+		//nolint:gosec
+		cmd = exec.Command("sh", "-c", fmt.Sprintf("sleep 5  ; rm -f '%s'", exe))
+	}
+
+	return cmd.Start()
 }
 
 /*func Delay(i int) {
