@@ -101,11 +101,11 @@ func run() globalcontext.CancelReason {
 	// (sshd, ssh, socks, etc.)
 	dropDone := make(chan string)
 	log.Info().Msg("Agent init done")
-	defer func() {
+	/*defer func() {
 		close(cancelReason)
 		close(dropDone)
 		close(controlErr)
-	}()
+	}()*/
 
 	ctx, cancel := context.WithCancel(context.Background())
 	globalCanceler = &globalcontext.GlobalCanceler{

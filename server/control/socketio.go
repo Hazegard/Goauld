@@ -560,6 +560,8 @@ func (sio *SocketIO) HandleLoader(socket gosio.ServerSocket, data socketio.Regis
 
 	agentDB.RemoteAddr = sio.agentStore.GetRemote(data.ID)
 
+	sio.agentStore.SioAddAgent(agentDB, socket)
+
 	err = sio.db.UpdateAgentField(agentDB, "Version", "Platform", "Architecture", "Path", "Hostname", "Username", "RemoteAddr")
 	if err != nil {
 		log.Error().Err(err).Str("Agent.Name", agentName).Msg("socketio.RegisterError updating agent")

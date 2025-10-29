@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	socketio "Goauld/common/socket.io"
 	sio "github.com/hazegard/socket.io-go"
@@ -41,7 +42,7 @@ func (cpc *ControlPlanClient) Start() error {
 
 	cr := &chunkAgent.ChunkedReconstructor{}
 	cpc.socket.OnEvent(socketio.ReceiveFatAgent.ID(), func(data sio.Binary) {
-		log.Info().Msgf("Received chunked reconstructor data: %s")
+		log.Info().Msgf("Received chunked reconstructor data: (%d bytes)", len(data))
 		binary, err := socketio.DecryptChunkedData(data, config.Get().Cryptor)
 		if err != nil {
 			log.Error().Err(err).Msg("Error decrypting chunked data")
@@ -61,6 +62,18 @@ func (cpc *ControlPlanClient) Start() error {
 		}
 	})
 
+	// ExitEvent is sent by the server when the agent is requested to exit
+	cpc.socket.OnEvent(socketio.ExitEvent.ID(), func(doExit bool) {
+		log.Info().Msg("OnEvent: Exit requested")
+		cpc.socket.Emit(socketio.ExitSuccess.ID())
+		cpc.socket.Disconnect()
+		if doExit {
+			cpc.canceler.Exit("Server requested exit")
+		}
+		cpc.canceler.Restart("Server requested restart")
+		cpc.Close()
+	})
+
 	// This will be emitted after the socket is connected.
 	cpc.socket.Emit(socketio.RegisterEvent.ID(), socketio.Register{
 		ID:        config.Get().ID,
@@ -76,11 +89,15 @@ func (cpc *ControlPlanClient) Start() error {
 	log.Debug().Msgf("Connected to the control server %s", cpc.url)
 	log.Trace().Msg("Event send: RegisterEvent")
 	// Waits for an error or the end of the socket
-	<-cpc.ctx.Done()
-	log.Warn().Msgf("Shutting done the socketio control socket")
-	cpc.socket.Emit(socketio.Disconnect.ID(), socketio.DisconnectMessage{})
-	log.Trace().Msg("Event send: Disconnect")
-	cpc.socket.Disconnect()
+	select {
+	case <-cpc.ctx.Done():
+		log.Warn().Msgf("Shutting done the socketio control socket")
+		cpc.socket.Emit(socketio.Disconnect.ID(), socketio.DisconnectMessage{})
+		log.Trace().Msg("Event send: Disconnect")
+		cpc.socket.Disconnect()
+	case <-time.After(120 * time.Second):
+		cpc.canceler.Restart("Timeout waiting for goauld binary")
+	}
 
 	return nil
 }
