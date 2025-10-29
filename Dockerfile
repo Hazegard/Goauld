@@ -19,8 +19,8 @@ COPY . /app
 WORKDIR /app
 
 ENV PATH="$PATH:/root/go/bin"
-RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id agent
-RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id mini_agent
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id agent --gen-agent-password=false
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id mini_agent --gen-agent-password=false
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64
 
 RUN if [[ "$COMPRESS" == 1 ]]; then \

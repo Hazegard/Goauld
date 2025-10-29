@@ -28,6 +28,7 @@ type BuildConfig struct {
 	Goos             string `default:"" help:"[darwin|linux|windows]."`
 	Goarch           string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
 	NoSeed           bool   `default:"false" help:"don't generate seed keys."`
+	NoPass           bool   `default:"false" help:"don't generate password."`
 	Verbose          int    `default:"0" name:"verbose" short:"v" type:"counter" help:"Verbosity of the logs. Repeat -v to increase"`
 }
 
