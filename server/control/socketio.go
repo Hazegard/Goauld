@@ -411,7 +411,7 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, hashA
 	select {
 	case r := <-chanResponse:
 		response = r
-	case <-time.After(5 * time.Second):
+	case <-time.After(10 * time.Second):
 		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Timeout waiting for response")
 		response = false
 	}
@@ -500,7 +500,7 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	select {
 	case r := <-chanResponse:
 		response = r
-	case <-time.After(5 * time.Second):
+	case <-time.After(10 * time.Second):
 		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Timeout waiting for response")
 		response = socketio.ClipboardMessage{
 			Error:    true,
