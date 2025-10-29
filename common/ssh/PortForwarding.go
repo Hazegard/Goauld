@@ -15,9 +15,9 @@ import (
 // RemotePortForwarding holds the port forwarding information.
 type RemotePortForwarding struct {
 	ServerPort int    `json:"serverPort,omitempty" yaml:"serverPort,omitempty"`
-	AgentPort  int    `json:"agentPort,omitempty" yaml:"serverPort,omitempty"`
-	AgentIP    string `json:"agentIP,omitempty" yaml:"serverPort,omitempty"`
-	Tag        string `json:"tag,omitempty" yaml:"serverPort,omitempty"`
+	AgentPort  int    `json:"agentPort,omitempty" yaml:"agentPort,omitempty"`
+	AgentIP    string `json:"agentIP,omitempty" yaml:"agentIP,omitempty"`
+	Tag        string `json:"tag,omitempty" yaml:"tag,omitempty"`
 }
 
 // internalRemotePortForwarding is a struct used to unmarshal RemotePortForwarding as JSON
