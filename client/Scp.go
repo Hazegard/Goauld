@@ -136,6 +136,9 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 	if s.SSHConfFile != "" {
 		cmd.Args = append(cmd.Args, "-F", s.SSHConfFile)
 	}
+	for i := range s.Paths {
+		s.Paths[i] = strings.ReplaceAll(s.Paths[i], agent.Name, fmt.Sprintf("%s@%s", agent.Name, agent.ID))
+	}
 	cmd.Args = append(cmd.Args, s.Paths...)
 	//	cmd.Args = append(cmd.Args, s.Destination)
 	// cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.ID))

@@ -427,13 +427,13 @@ func (e *SSH) buildTunnelSSHCommand(cfg ClientConfig, agent types.Agent, exePath
 }
 
 // buildEnvironments returns the environment variables required to access the agents.
-func buildEnvironments(cfg ClientConfig, _ string, exePath string, target string) []string {
+func buildEnvironments(cfg ClientConfig, typePass string, exePath string, target string) []string {
 	envs := []string{
 		"SSH_ASKPASS_REQUIRE=force",
 		"SSH_ASKPASS=" + exePath,
 		// prefixEnv("SERVER", cfg.Server),
 		// prefixEnv("AGENT", target),
-		// prefixEnv("TYPE", typePass),
+		prefixEnv("TYPE", typePass),
 		// prefixEnv("CONFIG_FILE", cfg.ConfigFile),
 	}
 	envs = append(envs, cfg.EnvVar(target)...)
