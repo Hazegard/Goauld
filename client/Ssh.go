@@ -4,11 +4,14 @@ import (
 	"Goauld/client/api"
 	"Goauld/client/common"
 	"Goauld/client/types"
+	"Goauld/client/wireguard"
 	"Goauld/common/log"
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -333,6 +336,25 @@ func (e *SSH) Execute(clientAPI *api.API, cfg ClientConfig) error {
 	if e.Proxy {
 		return cmd.Execute(cfg, agent.Name, false)
 	}
+	go func() {
+		time.Sleep(10 * time.Second)
+		tcpCon, err := net.Dial("tcp", "127.0.0.1:33333")
+		if err != nil {
+			log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to connect to SSH server")
+
+			return
+		}
+		udpListener, err := wireguard.ListenUDP(tcpCon)
+		if err != nil {
+			log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to listen on UDP")
+
+			return
+		}
+		err = udpListener.Run(context.Background())
+		if err != nil {
+			log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to listen")
+		}
+	}()
 
 	err = cmd.Execute(cfg, agent.Name, false)
 	if err != nil {
@@ -420,6 +442,9 @@ func (e *SSH) buildTunnelSSHCommand(cfg ClientConfig, agent types.Agent, exePath
 	}
 	if e.HTTP && agent.GetHTTPPort() != "0" && agent.GetHTTPPort() != "/" {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.SSH.LocalHTTPPort, agent.GetHTTPPort()))
+	}
+	if true && agent.GetWGPort() != "0" && agent.GetWGPort() != "/" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", 33333, agent.GetWGPort()))
 	}
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
 

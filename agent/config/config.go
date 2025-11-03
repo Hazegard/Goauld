@@ -56,9 +56,10 @@ var (
 
 	_no_proxy = "false" //nolint:revive
 
-	_rssh_port  = "0" //nolint:revive
-	_socks_port = "0" //nolint:revive
-	_http_port  = "0" //nolint:revive
+	_rssh_port  = "0"     //nolint:revive
+	_socks_port = "0"     //nolint:revive
+	_http_port  = "0"     //nolint:revive
+	_wg_port    = "44444" //nolint:revive
 
 	_keepawake = "false"
 	_keepalive = "20"
@@ -126,6 +127,7 @@ var (
 		"_rssh_port":  _rssh_port,
 		"_socks_port": _socks_port,
 		"_http_port":  _http_port,
+		"_wg_port":    _wg_port,
 
 		"_keepawake": _keepawake,
 		"_keepalive": _keepalive,
@@ -205,6 +207,7 @@ type AgentConfig struct {
 	RSSHPort      int `default:"${_rssh_port}" name:"rssh-port" yaml:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
 	SocksPort     int `default:"${_socks_port}"  name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
 	HTTPProxyPort int `default:"${_http_port}" name:"http-port" yaml:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
+	WGPort        int `default:"${_wg_port}" name:"wg-port" yaml:"wg-port" short:"" optional:"" help:"The remote wireguad proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
 
 	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
 	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" yaml:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops (0 => no keepalive)."`

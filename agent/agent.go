@@ -9,7 +9,9 @@ import (
 	"Goauld/agent/proxy"
 	"Goauld/agent/ssh/transport"
 	"Goauld/agent/vscode"
+	"Goauld/agent/wireguard"
 	"Goauld/common"
+	"Goauld/common/wireguard/udptunnel"
 	"context"
 	"errors"
 	"fmt"
@@ -416,6 +418,49 @@ func run() globalcontext.CancelReason {
 			})
 		}
 
+		if true {
+			wg := wireguard.NewWireguard()
+			err := wg.Init()
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the Socks5 server")
+			}
+			rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedWGAddress())
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the Socks5 connection")
+
+				return
+			}
+			config.Get().UpdateWGPort(rPort)
+
+			// go wg.StartRouter()
+			//go wg.StartUDPProxy()
+
+			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Wiregard listener server started")
+			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
+				ServerPort: rPort,
+				AgentPort:  0,
+				AgentIP:    "127.0.0.1",
+				Tag:        "WG",
+			})
+			go func() {
+				for {
+					conn, err := rListener.Accept()
+					if err != nil {
+						log.Error().Err(err).Msg("error accepting connection")
+
+						return
+					}
+
+					go func() {
+						log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote wiregaurd forward started")
+						err := udptunnel.HandleUDP(conn, "127.0.0.1:55555")
+						if err != nil && !errors.Is(err, io.EOF) {
+							log.Error().Err(err).Msg("udptunnel handle error")
+						}
+					}()
+				}
+			}()
+		}
 		// For all porte forwards, launch the forwarding
 		rpf := config.Get().GetRemotePortForwarding()
 		for i := range rpf {
