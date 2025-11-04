@@ -8,13 +8,39 @@ import (
 	"sync"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+// Replace240With127 returns a copy of addr with the first byte changed
+// from 240 to 127 if addr is an IPv4 or IPv4-mapped IPv6 address.
+//
+// For non-IPv4 addresses, or if the first byte is not 240, the same
+// addr is returned unchanged.
+func Replace240With127(addr tcpip.Address) tcpip.Address {
+	v4 := addr.To4()
+	if v4.Len() == 0 {
+		// Not IPv4 or IPv4-mapped IPv6, return unchanged.
+		return addr
+	}
+
+	b := v4.AsSlice()
+	if b[0] != 240 {
+		return addr
+	}
+
+	newAddr := make([]byte, 4)
+	copy(newAddr, b)
+	//nolint:gosec
+	newAddr[0] = 127
+
+	return tcpip.AddrFrom4Slice(newAddr)
+}
+
 func (tun *netTun) acceptTCP(req *tcp.ForwarderRequest) {
-	localAddress := req.ID().LocalAddress
+	localAddress := Replace240With127(req.ID().LocalAddress)
 	log.Trace().Str("RADDR", req.ID().RemoteAddress.String()).
 		Uint16("RPORT", req.ID().RemotePort).
 		Str("LADDR", localAddress.String()).
@@ -51,7 +77,7 @@ func (tun *netTun) acceptTCP(req *tcp.ForwarderRequest) {
 func (tun *netTun) cpy(wg *sync.WaitGroup, dst, src net.Conn) {
 	defer wg.Done()
 
-	//r := NewLimitReader(src, tun.limiter)
+	// r := NewLimitReader(src, tun.limiter)
 	_, err := io.Copy(dst, src)
 	if err != nil {
 		log.Printf("copy %v", err)

@@ -13,18 +13,19 @@ import (
 
 func ICMPHandler(s *stack.Stack) func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 	return func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
-		log.Debug().Str("SRC", id.LocalAddress.String()).Str("DST", id.RemoteAddress.String()).Msg("Receive a icmp package")
+		localAddress := Replace240With127(id.LocalAddress)
+		log.Debug().Str("SRC", localAddress.String()).Str("DST", id.RemoteAddress.String()).Msg("Receive a icmp package")
 
 		// // remote - peer's tunnnel interface address
-		if id.LocalAddress.String() == "100.64.0.1" {
-			log.Debug().Str("SRC", id.RemoteAddress.String()).Str("DST", id.LocalAddress.String()).Msg("[ICMP] handle localy")
+		if localAddress.String() == "100.64.0.1" {
+			log.Debug().Str("SRC", id.RemoteAddress.String()).Str("DST", localAddress.String()).Msg("[ICMP] handle localy")
 			repVV := handleICMP(pkt, 69)
 			s.WritePacketToRemote(1, "", ipv4.ProtocolNumber, repVV.ToBuffer())
 
 			return true
 		}
 
-		success, ttl := Ping(id.LocalAddress.String())
+		success, ttl := Ping(localAddress.String())
 		if success {
 			repVV := handleICMP(pkt, ttl)
 			s.WritePacketToRemote(1, "", ipv4.ProtocolNumber, repVV.ToBuffer())

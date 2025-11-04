@@ -71,10 +71,11 @@ func (cmd *Generate) Run(_ *api.API, _ ClientConfig) error {
 }
 
 type Start struct {
-	Target string `arg:"" name:"agent" help:"The target agent."`
-	Port   int    `default:"${_wg_port}" name:"port" help:"The port to listen on."`
-	Ranges string `name:"range" help:"the ip ranges to route through the Wireguard VPN"`
-	Exec   bool   `name:"exec" help:"Directly executes wireguard commands with privileges."`
+	Target   string `arg:"" name:"agent" help:"The target agent."`
+	Port     int    `default:"${_wg_port}" name:"port" help:"The port to listen on."`
+	Ranges   string `name:"range" help:"the ip ranges to route through the Wireguard VPN"`
+	Loopback bool   `name:"loopback" help:"Whether to use the loopback interface using the 240.0.0.0/8 range."`
+	Exec     bool   `name:"exec" default:"true" help:"Directly executes wireguard commands with privileges."`
 }
 
 func (s *Start) Validate() error {
@@ -84,10 +85,12 @@ func (s *Start) Validate() error {
 	for _, r := range ranges {
 		if net2.IsValidCIDR(r) {
 			newRange = append(newRange, r)
+
 			continue
 		}
 		if net2.IsValidIP(r) {
 			newRange = append(newRange, r+"/32")
+
 			continue
 		}
 		invalid = append(invalid, r)
@@ -95,11 +98,17 @@ func (s *Start) Validate() error {
 	if len(invalid) > 0 {
 		return fmt.Errorf("invalid ranges: %s", strings.Join(invalid, ","))
 	}
+	if s.Loopback {
+		newRange = append(newRange, "240.0.0.0/8")
+	}
 	s.Ranges = strings.Join(newRange, ",")
+
 	return nil
 }
 
 func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	agent, err := clientAPI.GetAgentByName(cfg.Wireguard.Start.Target)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.Wireguard.Start.Target).Str("Target", cfg.Wireguard.Start.Target).Msg("Failed to get agent")
@@ -121,7 +130,7 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 
 		return err
 	}
-	err = os.Chmod(p, 0600)
+	err = os.Chmod(p, 0o600)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", p).Msg("Failed to change file permissions")
 	}
@@ -178,20 +187,6 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 		return err
 	}
 
-	proxy, err := proxyCommand(
-		agent.Name,
-		GenerateServerPassword(cfg.GetStaticPassword(), agent.OneTimePassword),
-		cfg.GetSshdHost(),
-		cfg.GetSshdPort(),
-	)
-	if err != nil {
-		log.Error().Err(err).Str("Host", cfg.GetSshdHost()).Str("Port", cfg.GetSshdPort()).Msg("Failed to connect to sshd server")
-
-		return err
-	}
-
-	defer proxy.Close()
-
 	localListener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", cfg.Wireguard.Start.Port))
 	if err != nil {
 		log.Error().Err(err).Str("Addr", fmt.Sprintf("127.0.0.1:%d", cfg.Wireguard.Start.Port)).Msg("Failed to listen on local port")
@@ -201,41 +196,67 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 
 	go func() {
 		for {
-			conn, err := localListener.Accept()
-			if err != nil {
-				log.Warn().Err(err).Str("Addr", fmt.Sprintf("127.0.0.1:%d", cfg.Wireguard.Start.Port)).Msg("Failed to accept connection")
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				conn, err := localListener.Accept()
+				if err != nil {
+					log.Warn().Err(err).Str("Addr", fmt.Sprintf("127.0.0.1:%d", cfg.Wireguard.Start.Port)).Msg("Failed to accept connection")
 
-				continue
+					continue
+				}
+
+				proxy, err := proxyCommand(
+					agent.Name,
+					GenerateServerPassword(cfg.GetStaticPassword(), agent.OneTimePassword),
+					cfg.GetSshdHost(),
+					cfg.GetSshdPort(),
+				)
+				if err != nil {
+					log.Error().Err(err).Str("Host", cfg.GetSshdHost()).Str("Port", cfg.GetSshdPort()).Msg("Failed to connect to sshd server")
+					proxy.Close()
+
+					return
+				}
+
+				rConn, err := proxy.DialContext(ctx, "tcp", "127.0.0.1:"+agent.GetWGPort())
+				if err != nil {
+					log.Warn().Err(err).Str("Remote", "127.0.0.1:"+agent.GetWGPort()).Msg("Failed to connect to remote")
+					proxy.Close()
+
+					continue
+				}
+				pipe(conn, rConn)
+				proxy.Close()
 			}
-
-			rConn, err := proxy.Dial("tcp", "127.0.0.1:"+agent.GetWGPort())
-			if err != nil {
-				log.Warn().Err(err).Str("Remote", "127.0.0.1:"+agent.GetWGPort()).Msg("Failed to connect to remote")
-
-				continue
-			}
-			pipe(conn, rConn)
 		}
 	}()
 
 	go func() {
 		for {
-			log.Info().Msg("Starting TCP to UDP forwarder")
-			tcpCon, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", cfg.Wireguard.Start.Port))
-			if err != nil {
-				log.Warn().Err(err).Str("target", agent.Name).Msg("Failed to connect to SSH server")
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				log.Info().Msg("Starting TCP to UDP forwarder")
+				dialer := net.Dialer{}
+				tcpCon, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("127.0.0.1:%d", cfg.Wireguard.Start.Port))
+				if err != nil {
+					log.Warn().Err(err).Str("target", agent.Name).Msg("Failed to connect to SSH server")
 
-				continue
-			}
-			udpListener, err := wireguard2.ListenUDP(tcpCon, cfg.Wireguard.Start.Port)
-			if err != nil {
-				log.Warn().Err(err).Str("target", agent.Name).Msg("Failed to listen on UDP")
+					continue
+				}
+				udpListener, err := wireguard2.ListenUDP(tcpCon, cfg.Wireguard.Start.Port)
+				if err != nil {
+					log.Warn().Err(err).Str("target", agent.Name).Msg("Failed to listen on UDP")
 
-				continue
-			}
-			err = udpListener.Run(context.Background())
-			if err != nil {
-				log.Warn().Err(err).Str("target", agent.Name).Msg("Failed to listen")
+					continue
+				}
+				err = udpListener.Run(ctx)
+				if err != nil {
+					log.Warn().Err(err).Str("target", agent.Name).Msg("Failed to listen")
+				}
 			}
 		}
 	}()
@@ -243,20 +264,25 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 	if s.Exec {
 		go func() {
 			for {
-				time.Sleep(1 * time.Second)
-				res, err := cmdHandshakes(tun)
-				if err != nil {
-					log.Debug().Err(err).Str("Target", agent.Name).Msg("Failed to get handshake tunnel")
-				}
-				words := strings.Fields(string(res))
-				timestamp := words[len(words)-1]
-				if timestamp == "0" {
-					continue
-				}
-				log.Debug().Msg("Handshake received")
-				log.Run().Str("Target", agent.Name).Msg("Wireguard tunnel established")
-				return
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					time.Sleep(1 * time.Second)
+					res, err := cmdHandshakes(tun)
+					if err != nil {
+						log.Debug().Err(err).Str("Target", agent.Name).Msg("Failed to get handshake tunnel")
+					}
+					words := strings.Fields(string(res))
+					timestamp := words[len(words)-1]
+					if timestamp == "0" {
+						continue
+					}
+					log.Debug().Msg("Handshake received")
+					log.Run().Str("Target", agent.Name).Msg("Wireguard tunnel established")
 
+					return
+				}
 			}
 		}()
 	} else {
@@ -267,6 +293,7 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 	signal.Notify(c, os.Interrupt)
 	log.Info().Msg("Wireguard tunnel running, CTRL-C to stop")
 	sig := <-c
+	cancel()
 	log.Info().Str("signal", sig.String()).Msg("received signal")
 	log.Info().Msg("Stopping...")
 
@@ -276,7 +303,7 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 func cmdHandshakes(file string) ([]byte, error) {
 	cmd := exec.Command("sudo", "wg", "show", file, "latest-handshakes")
 	cmd.Stdin = os.Stdin
-	//log.Info().Msgf("Running command: sudo wg-quick up %s", file)
+	// log.Info().Msgf("Running command: sudo wg-quick up %s", file)
 
 	return cmd.CombinedOutput()
 }

@@ -18,7 +18,8 @@ const (
 
 func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 	sess := req.ID()
-	log.Trace().Str("LocalAddr", sess.LocalAddress.String()).Str("ReliteAddr", sess.RemoteAddress.String()).Msg("Received UDP packet")
+	localAddress := Replace240With127(sess.LocalAddress)
+	log.Trace().Str("LocalAddr", localAddress.String()).Str("RemoteAddr", sess.RemoteAddress.String()).Msg("Received UDP packet")
 
 	var wq waiter.Queue
 
@@ -31,13 +32,8 @@ func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 	client := gonet.NewUDPConn(&wq, ep)
 
 	clientAddr := &net.UDPAddr{IP: net.IP(sess.RemoteAddress.AsSlice()), Port: int(sess.RemotePort)}
-	remoteAddr := &net.UDPAddr{IP: net.IP(sess.LocalAddress.AsSlice()), Port: int(sess.LocalPort)}
+	remoteAddr := &net.UDPAddr{IP: net.IP(localAddress.AsSlice()), Port: int(sess.LocalPort)}
 	proxyAddr := &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: int(sess.RemotePort)}
-
-	/*if remoteAddr.Port == 53 && tun.isLocal(sess.LocalAddress) {
-		remoteAddr.Port = 53
-		remoteAddr.IP = net.ParseIP("127.0.0.1")
-	}*/
 
 	proxyConn, err := net.ListenUDP("udp", proxyAddr)
 	if err != nil {
