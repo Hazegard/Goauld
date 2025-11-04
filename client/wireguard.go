@@ -215,7 +215,9 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 				)
 				if err != nil {
 					log.Error().Err(err).Str("Host", cfg.GetSshdHost()).Str("Port", cfg.GetSshdPort()).Msg("Failed to connect to sshd server")
-					proxy.Close()
+					if proxy != nil {
+						proxy.Close()
+					}
 
 					return
 				}
@@ -279,7 +281,7 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 						continue
 					}
 					log.Debug().Msg("Handshake received")
-					log.Run().Str("Target", agent.Name).Msg("Wireguard tunnel established")
+					log.Run().Str("Target", agent.Name).Str("Interface", tun).Msg("Wireguard tunnel established")
 
 					return
 				}

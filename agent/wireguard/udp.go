@@ -25,14 +25,14 @@ func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 
 	ep, udpErr := req.CreateEndpoint(&wq)
 	if udpErr != nil {
-		log.Debug().Err(errors.New(udpErr.String())).Msg("Failed to create endpoint")
+		log.Debug().Err(errors.New(udpErr.String())).Msg("Failed to create UDP endpoint")
 
 		return false
 	}
 	client := gonet.NewUDPConn(&wq, ep)
 
 	clientAddr := &net.UDPAddr{IP: net.IP(sess.RemoteAddress.AsSlice()), Port: int(sess.RemotePort)}
-	remoteAddr := &net.UDPAddr{IP: net.IP(localAddress.AsSlice()), Port: int(sess.LocalPort)}
+	targetAddr := &net.UDPAddr{IP: net.IP(localAddress.AsSlice()), Port: int(sess.LocalPort)}
 	proxyAddr := &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: int(sess.RemotePort)}
 
 	proxyConn, err := net.ListenUDP("udp", proxyAddr)
@@ -50,9 +50,9 @@ func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go tun.proxy(ctx, cancel, client, clientAddr, proxyConn)
-	go tun.proxy(ctx, cancel, proxyConn, remoteAddr, client)
+	go tun.proxy(ctx, cancel, proxyConn, targetAddr, client)
 
-	return false
+	return true
 }
 
 func (tun *netTun) proxy(ctx context.Context, cancel context.CancelFunc, dst net.PacketConn, dstAddr net.Addr, src net.PacketConn) {
