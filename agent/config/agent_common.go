@@ -327,6 +327,11 @@ func (a *Agent) RemoteForwardedSocksAddress() string {
 	return fmt.Sprintf("127.0.0.1:%d", a.cfg.SocksPort)
 }
 
+// RemoteForwardedWGAddress returns the remote forwarded wireguard address.
+func (a *Agent) RemoteForwardedWGAddress() string {
+	return fmt.Sprintf("127.0.0.1:%d", a.cfg.WGPort)
+}
+
 // RemoteForwardedHTTPProxyAddress returns the remote forwarded Socks address.
 func (a *Agent) RemoteForwardedHTTPProxyAddress() string {
 	return fmt.Sprintf("127.0.0.1:%d", a.cfg.HTTPProxyPort)
@@ -352,12 +357,17 @@ func (a *Agent) UpdateSocksPort(port int) {
 	a.cfg.SocksPort = port
 }
 
+// UpdateWGPort set the new socks port.
+func (a *Agent) UpdateWGPort(port int) {
+	a.cfg.WGPort = port
+}
+
 // UpdateHTTPProxyPort set the new socks port.
 func (a *Agent) UpdateHTTPProxyPort(port int) {
 	a.cfg.HTTPProxyPort = port
 }
 
-// UpdateSshdPort set the new socks port.
+// UpdateSshdPort set the new sshd port.
 func (a *Agent) UpdateSshdPort(port int) {
 	a.cfg.RSSHPort = port
 }
@@ -380,6 +390,17 @@ func (a *Agent) AddSocksToRpf() {
 		AgentPort:  -1,
 		AgentIP:    "0.0.0.0",
 		Tag:        "socks",
+	}
+	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
+}
+
+// AddWGToRpf adds the SSHD conf to the Remote port forwarding list.
+func (a *Agent) AddWGToRpf(port int) {
+	sshdRpf := ssh.RemotePortForwarding{
+		ServerPort: a.cfg.WGPort,
+		AgentPort:  port,
+		AgentIP:    "0.0.0.0",
+		Tag:        "WG",
 	}
 	a.cfg.RemotePortForwarding = append(a.cfg.RemotePortForwarding, sshdRpf)
 }

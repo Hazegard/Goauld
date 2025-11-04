@@ -5,6 +5,7 @@ import (
 	"Goauld/client/types"
 	common2 "Goauld/common"
 	"Goauld/common/cli"
+	"Goauld/common/wireguard"
 	"Goauld/common/yaml"
 	"errors"
 	"fmt"
@@ -44,9 +45,11 @@ var (
 	_save_static_password   = "false" //nolint:revive
 
 	_ssh_http             = "true"  //nolint:revive
+	_ssh_wg               = "true"  //nolint:revive
 	_ssh_socks            = "true"  //nolint:revive
 	_ssh_local_socks_port = "1080"  //nolint:revive
 	_ssh_local_http_port  = "3128"  //nolint:revive
+	_wg_port              = "51820" //nolint:revive
 	_ssh_ssh              = "true"  //nolint:revive
 	_ssh_print            = "false" //nolint:revive
 	_ssh_proxy            = "false" //nolint:revive
@@ -97,9 +100,11 @@ var (
 		"_save_static_password":   _save_static_password,
 
 		"_ssh_http":             _ssh_http,
+		"_ssh_wg":               _ssh_wg,
 		"_ssh_socks":            _ssh_socks,
 		"_ssh_local_socks_port": _ssh_local_socks_port,
 		"_ssh_local_http_port":  _ssh_local_http_port,
+		"_wg_port":              _wg_port,
 		"_ssh_ssh":              _ssh_ssh,
 		"_ssh_print":            _ssh_print,
 		"_ssh_proxy":            _ssh_proxy,
@@ -167,8 +172,10 @@ type ClientConfig struct {
 	List      List      `cmd:"" name:"list" help:"List all agents."`
 	Compile   Compiler  `cmd:"" name:"compile" help:"Compile the agent."`
 	Admin     Admin     `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
+	Wireguard Wireguard `cmd:"" name:"wireguard" help:"Wireguard configuration file."`
 
-	SearchConfigDir string `hidden:""`
+	SearchConfigDir string             `hidden:""`
+	WGConf          wireguard.WGConfig `name:"wg" help:"Wireguard configuration file." embed:"" `
 }
 
 func (cfg *ClientConfig) EnvVar(target string) []string {

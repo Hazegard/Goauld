@@ -16,6 +16,19 @@ import (
 	sio "github.com/hazegard/socket.io-go"
 )
 
+// ControlPlanClient Handle the socket.io interaction regarding the management of the agent.
+//
+//nolint:revive
+type ControlPlanClient struct {
+	manager      *sio.Manager
+	socket       sio.ClientSocket
+	configDone   chan<- string
+	ctx          context.Context
+	url          string
+	canceler     *globalcontext.GlobalCanceler
+	errorCounter int
+}
+
 func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {}
 
 // Start starts the socket and initiates the configuration exchange with the server.

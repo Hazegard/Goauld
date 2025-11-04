@@ -4,6 +4,7 @@ package control
 import (
 	"Goauld/common"
 	"Goauld/common/crypto"
+	"Goauld/common/wireguard"
 	"errors"
 	"fmt"
 	"net/http"
@@ -260,8 +261,10 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.IPs = agentData.IPs
 			agent.HasStaticPassword = agentData.HasStaticPwd
 			agent.Version = agentData.AgentVersion
+			agent.WireguardPublicKey = agentData.WireguardPubKey
+			agent.WireguardIP = agentData.WireguardIP
 
-			err = sio.db.UpdateAgentField(agent, "SSHPasswd", "Platform", "Architecture", "Username", "Hostname", "Path", "IPs", "HasStaticPassword", "Version")
+			err = sio.db.UpdateAgentField(agent, "SSHPasswd", "Platform", "Architecture", "Username", "Hostname", "Path", "IPs", "HasStaticPassword", "Version", "WireguardPublicKey", "WireguardIP")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.ID", agent.ID).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}
@@ -509,6 +512,31 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	}
 
 	return response
+}
+
+func AddWGPeer(agent *persistence.Agent, socket gosio.Socket, wgPeer wireguard.WGConfig) bool {
+	log.Info().Str("Agent.Name", agent.Name).Str("Wg IP", wgPeer.IP).Msg("Adding WG Peer")
+	cryptor, err := agent.GetCryptor()
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msgf("Error getting crypto for agent (%s)", agent.Name)
+
+		return false
+	}
+	if socket == nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msg("socket is nil")
+
+		return false
+	}
+	data, err := socketio.NewEncryptedWGConfigEventMessage(wgPeer, cryptor)
+	if err != nil {
+		log.Debug().Str("Agent.Name", agent.Name).Err(err).Msg("Error creating clipboard message event")
+
+		return false
+	}
+
+	socket.Emit(socketio.WireguardPeer.ID(), data)
+
+	return true
 }
 
 func (sio *SocketIO) HandleLoader(socket gosio.ServerSocket, data socketio.Register, agentName string) {

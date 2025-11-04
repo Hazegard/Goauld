@@ -37,6 +37,7 @@ var (
 	_sshd_enabled           = "true" //nolint:revive
 	_socks_enabled          = "true" //nolint:revive
 	_http_proxy_enabled     = "true" //nolint:revive
+	_wg_enabled             = "true" //nolint:revive
 	_socks_use_system_proxy = "true" //nolint:revive
 
 	_proxy          = ""
@@ -59,6 +60,7 @@ var (
 	_rssh_port  = "0" //nolint:revive
 	_socks_port = "0" //nolint:revive
 	_http_port  = "0" //nolint:revive
+	_wg_port    = "0" //nolint:revive
 
 	_keepawake = "false"
 	_keepalive = "20"
@@ -98,6 +100,7 @@ var (
 		"_sshd_enabled":           _sshd_enabled,
 		"_socks_enabled":          _socks_enabled,
 		"_http_proxy_enabled":     _http_proxy_enabled,
+		"_wg_enabled":             _wg_enabled,
 		"_socks_use_system_proxy": _socks_use_system_proxy,
 
 		"_no_proxy":       _no_proxy,
@@ -126,6 +129,7 @@ var (
 		"_rssh_port":  _rssh_port,
 		"_socks_port": _socks_port,
 		"_http_port":  _http_port,
+		"_wg_port":    _wg_port,
 
 		"_keepawake": _keepawake,
 		"_keepalive": _keepalive,
@@ -183,6 +187,7 @@ type AgentConfig struct {
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
 	Socks bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Start the Socks proxy server."`
 	HTTP  bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Start the HTTP proxy server."`
+	WG    bool `default:"${_wg_enabled}" name:"wg" yaml:"wg" optional:"" negatable:"" help:"Start the Wireguard server."`
 
 	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username to use with the proxy"`
@@ -205,6 +210,7 @@ type AgentConfig struct {
 	RSSHPort      int `default:"${_rssh_port}" name:"rssh-port" yaml:"rssh-port" optional:"" help:"The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server."`
 	SocksPort     int `default:"${_socks_port}"  name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
 	HTTPProxyPort int `default:"${_http_port}" name:"http-port" yaml:"http-port" short:"" optional:"" help:"The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
+	WGPort        int `default:"${_wg_port}" name:"wg-port" yaml:"wg-port" short:"" optional:"" help:"The remote wireguad proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server."`
 
 	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Keep the system awake (try to prevent from sleep and lock screen)."`
 	KeepAlive int  `default:"${_keepalive}" short:"K"  name:"keepalive" yaml:"keepalive" optional:"" help:"Seconds between two keepalive messages in seconds, reduce this value if the connection drops (0 => no keepalive)."`

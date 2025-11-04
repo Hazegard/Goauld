@@ -52,6 +52,17 @@ func (a *Agent) GetSocksPort() string {
 	return "/"
 }
 
+// GetWGPort returns the socks forwarded port.
+func (a *Agent) GetWGPort() string {
+	for _, rpf := range a.RemotePortForwarding {
+		if strings.EqualFold(rpf.Tag, "wg") {
+			return strconv.Itoa(rpf.ServerPort)
+		}
+	}
+
+	return "/"
+}
+
 // GetHTTPPort returns the socks forwarded port.
 func (a *Agent) GetHTTPPort() string {
 	for _, rpf := range a.RemotePortForwarding {

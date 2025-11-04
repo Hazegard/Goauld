@@ -7,6 +7,7 @@ import (
 	"Goauld/common/cli"
 	"Goauld/common/crypto/pwgen"
 	"Goauld/common/log"
+	"Goauld/common/wireguard"
 	"net"
 	"time"
 
@@ -43,6 +44,7 @@ type Agent struct {
 	IPs                      []string
 	Path                     string
 	WorkingDay               WorkingDay
+	Wireguard                wireguard.WGConfig
 }
 
 var agent *Agent
@@ -254,4 +256,27 @@ func (a *Agent) GenerateYAMLConfig() (string, error) {
 	c.GenerateConfig = false
 
 	return cli.GenerateYAMLWithComments(*c)
+}
+
+// WGEnabled returns whether the wireguard server is enabled.
+func (a *Agent) WGEnabled() bool {
+	return a.cfg.WG
+}
+
+// DisableWG returns whether the http proxy server is enabled.
+func (a *Agent) DisableWG() {
+	a.cfg.WG = false
+}
+func (a *Agent) GenerateWireguardConfig() error {
+	pri, pub, err := wireguard.GenerateWireGuardKeyPair()
+	if err != nil {
+		return err
+	}
+	a.Wireguard = wireguard.WGConfig{
+		PublicKey:  pub,
+		PrivateKey: pri,
+		IP:         "100.64.0.1",
+	}
+
+	return nil
 }

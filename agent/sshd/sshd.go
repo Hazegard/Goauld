@@ -134,6 +134,7 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 	// This is an attempt to use builtin charmbracelet/ssh pty
 	// Without success (see agent/sshd/shell/shell.go)
 	// s.SetOption(ssh.AllocatePty())
+
 	return &Sshd{server: s}
 }
 

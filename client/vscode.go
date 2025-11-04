@@ -30,7 +30,7 @@ func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 
 	configDir := GetConfigDir()
-	userVsCode := filepath.Join(configDir, "User")
+	userVsCode := filepath.Join(configDir, "vscode", "User")
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("ConfigDir", userVsCode).Str("Path", userVsCode).Msg("Generated User VsCode config")
 	err = os.MkdirAll(userVsCode, 0o750)
 	if err != nil {
@@ -162,7 +162,9 @@ func GetConfigDir() string {
 		}
 	}
 	log.Debug().Str("dir", dir).Msg("Using current directory")
-	configDir := filepath.Join(dir, "tealc-vscode")
+	configDir := filepath.Join(dir, "tealc")
+
+	_ = os.MkdirAll(configDir, 0o755)
 
 	return configDir
 }

@@ -5,6 +5,7 @@ import (
 	"Goauld/common"
 	"Goauld/common/log"
 	"Goauld/common/net"
+	"Goauld/common/wireguard"
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
@@ -441,6 +442,31 @@ func (api *API) SetClipboard(id string, password string, clipboard string) error
 	jsBody, err := json.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("error marshalling request body (%s)", clipboard)
+	}
+	res, err := api.post(u, bytes.NewBuffer(jsBody))
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response (%s)", res.Status)
+	}
+	if res.StatusCode != http.StatusOK {
+		return HandleError(body)
+	}
+
+	return nil
+}
+
+// AddWGPeer deprecated.
+func (api *API) AddWGPeer(id string, config wireguard.WGConfig) error {
+	config.PrivateKey = ""
+	u := fmt.Sprintf("/manage/agent/%s/addWGPeer", id)
+
+	jsBody, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("error marshalling request body (%s)", config)
 	}
 	res, err := api.post(u, bytes.NewBuffer(jsBody))
 	if err != nil {

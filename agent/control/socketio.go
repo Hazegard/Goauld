@@ -20,19 +20,6 @@ import (
 	"github.com/coder/websocket"
 )
 
-// ControlPlanClient Handle the socket.io interaction regarding the management of the agent.
-//
-//nolint:revive
-type ControlPlanClient struct {
-	manager      *sio.Manager
-	socket       sio.ClientSocket
-	configDone   chan<- string
-	ctx          context.Context
-	url          string
-	canceler     *globalcontext.GlobalCanceler
-	errorCounter int
-}
-
 // NewControlPlanClient returns a new ControlPlanClient.
 func NewControlPlanClient(ctx context.Context, configDone chan<- string, canceler *globalcontext.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
