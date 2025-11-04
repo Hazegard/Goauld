@@ -82,7 +82,8 @@ func (c *CustomSSH) CustomSSH(clientAPI *api.API, cfg ClientConfig, agentName st
 		return err
 	}
 	proxyUser := agent.Name
-	proxyPass := GenerateServerPassword("", agent.OneTimePassword)
+
+	proxyPass := GenerateServerPassword(cfg.GetStaticPassword(), agent.OneTimePassword)
 
 	proxyHost := cfg.GetSshdHost()
 	proxyPort := cfg.GetSshdPort()

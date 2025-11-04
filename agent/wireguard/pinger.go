@@ -53,6 +53,7 @@ func pingo(target string) (bool, uint8) {
 		return false, 0
 	}
 
+	//nolint:gosec
 	return pinger.PacketsRecv != 0, uint8(pinger.TTL)
 }
 
@@ -63,6 +64,7 @@ func pingc(dstIP netip.Addr) (bool, uint8) {
 	var out []byte
 	switch runtime.GOOS {
 	case "windows":
+		//nolint:gosec
 		out, err = exec.Command("ping", "-n", "1", "-w", "3000", dstIP.String()).CombinedOutput()
 		if err == nil && !windowsPingOutputIsSuccess(dstIP, out) {
 			// TODO(bradfitz,nickkhyl): return the actual ICMP error we heard back to the caller?
@@ -77,22 +79,26 @@ func pingc(dstIP netip.Addr) (bool, uint8) {
 		if dstIP.Is6() {
 			ping = "ping6"
 		}
+		//nolint:gosec
 		out, err = exec.Command(ping, "-c", "1", "-W", "2000", dstIP.String()).CombinedOutput()
 	case "openbsd":
 		ping := "ping"
 		if dstIP.Is6() {
 			ping = "ping6"
 		}
+		//nolint:gosec
 		out, err = exec.Command(ping, "-c", "1", "-w", "3", dstIP.String()).CombinedOutput()
 	case "android":
 		ping := "/system/bin/ping"
 		if dstIP.Is6() {
 			ping = "/system/bin/ping6"
 		}
+		//nolint:gosec
 		out, err = exec.Command(ping, "-c", "1", "-w", "3", dstIP.String()).CombinedOutput()
 	default:
 		ping := "ping"
 
+		//nolint:gosec
 		out, err = exec.Command(ping, "-c", "1", "-W", "3", dstIP.String()).CombinedOutput()
 	}
 	if err != nil {
@@ -103,6 +109,7 @@ func pingc(dstIP netip.Addr) (bool, uint8) {
 		ttl = 64
 	}
 
+	//nolint:gosec
 	return true, uint8(ttl)
 }
 
@@ -150,14 +157,15 @@ func windowsPingOutputIsSuccess(ip netip.Addr, b []byte) bool {
 	// This heuristic seems to match the ping.exe output in any language.
 	sub := fmt.Appendf(nil, " %s: ", ip)
 
-	eqSigns := func(bb []byte) (n int) {
+	eqSigns := func(bb []byte) int {
+		var n int
 		for _, b := range bb {
 			if b == '=' || (b == '<' && n == 1) {
 				n++
 			}
 		}
 
-		return
+		return n
 	}
 
 	for len(b) > 0 {

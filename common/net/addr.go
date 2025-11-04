@@ -67,3 +67,25 @@ func ExtractIP(addr string) (string, error) {
 
 	return ip, nil
 }
+
+func ParseCIDRs(input string) ([]net.IPNet, error) {
+	var result []net.IPNet
+
+	// Split by commas and trim spaces
+	cidrList := strings.Split(input, ",")
+	for _, cidr := range cidrList {
+		cidr = strings.TrimSpace(cidr)
+		if cidr == "" {
+			continue
+		}
+
+		_, ipnet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid CIDR %q: %w", cidr, err)
+		}
+
+		result = append(result, *ipnet)
+	}
+
+	return result, nil
+}

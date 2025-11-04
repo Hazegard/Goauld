@@ -48,6 +48,7 @@ func handleICMP(pkt *stack.PacketBuffer, ttl uint8) *stack.PacketBuffer {
 		DstAddr:  iph.SourceAddress(),
 		Protocol: uint8(header.ICMPv4ProtocolNumber),
 	})
+	//nolint:gosec
 	replyHdr.SetTotalLength(uint16(len(replyHdr) + len(replyData.AsSlice())))
 	replyHdr.SetChecksum(^replyHdr.CalculateChecksum())
 

@@ -2,6 +2,7 @@ package router
 
 import (
 	"Goauld/common"
+	"Goauld/common/wireguard"
 	"Goauld/server/control"
 	"encoding/json"
 	"fmt"
@@ -45,6 +46,7 @@ func NewManageRouter(_db *persistence.DB, agentStore *store.AgentStore) *ManageR
 
 	r.userRouter.HandleFunc("POST /agent/{id}/setClipboard", r.SetClipboard)
 	r.userRouter.HandleFunc("POST /agent/{id}/getClipboard", r.GetClipboard)
+	r.userRouter.HandleFunc("POST /agent/{id}/addWGPeer", r.AddWGPeer)
 
 	return r
 }
@@ -325,22 +327,33 @@ func HasAdminToken(r *http.Request) bool {
 	return authHeader == config.Get().AdminToken
 }
 
-// GetClipboard deprecated.
-func (mr *ManageRouter) GetClipboard(w http.ResponseWriter, r *http.Request) {
+func GetBody[T any](w http.ResponseWriter, r *http.Request, val *T) (T, error) {
 	id := r.PathValue("id")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error reading body")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
-		return
+		return *val, err
 	}
-	jsonBody := socketio.ClipboardMessage{}
-	err = json.Unmarshal(body, &jsonBody)
+	err = json.Unmarshal(body, &val)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error unmarshalling json")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
+		return *val, err
+	}
+
+	return *val, nil
+}
+
+// GetClipboard deprecated.
+func (mr *ManageRouter) GetClipboard(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	jsonBody, err := GetBody(w, r, &socketio.ClipboardMessage{})
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error getting body")
+		// Http response error has already been sent
 		return
 	}
 	socket := mr.store.SioGetSocket(id)
@@ -368,26 +381,38 @@ func (mr *ManageRouter) GetClipboard(w http.ResponseWriter, r *http.Request) {
 // SetClipboard deprecated.
 func (mr *ManageRouter) SetClipboard(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	body, err := io.ReadAll(r.Body)
+	jsonBody, err := GetBody(w, r, &socketio.ClipboardMessage{})
 	if err != nil {
-		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error reading body")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error getting body")
+		// Http response error has already been sent
+		return
+	}
+	socket := mr.store.SioGetSocket(id)
+	agent := mr.store.SioGetAgent(socket)
+
+	res := control.SetClipboard(agent, socket, jsonBody)
+	if !res {
+		http.Error(w, "error setting clipboard", http.StatusInternalServerError)
 
 		return
 	}
-	jsonBody := socketio.ClipboardMessage{}
-	err = json.Unmarshal(body, &jsonBody)
-	if err != nil {
-		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error unmarshalling json")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	w.WriteHeader(http.StatusOK)
+}
 
+// AddWGPeer deprecated.
+func (mr *ManageRouter) AddWGPeer(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	jsonBody, err := GetBody(w, r, &wireguard.WGConfig{})
+	if err != nil {
+		log.Warn().Err(err).Str("Path", r.URL.Path).Str("ID", id).Msg("error getting body")
+		// Http response error has already been sent
 		return
 	}
 
 	socket := mr.store.SioGetSocket(id)
 	agent := mr.store.SioGetAgent(socket)
 
-	res := control.SetClipboard(agent, socket, jsonBody)
+	res := control.AddWGPeer(agent, socket, jsonBody)
 	if !res {
 		http.Error(w, "error setting clipboard", http.StatusInternalServerError)
 

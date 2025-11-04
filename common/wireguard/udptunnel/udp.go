@@ -11,6 +11,7 @@ type UdpPacket struct {
 	Payload []byte
 }
 
+//nolint:gochecknoinits
 func init() {
 	gob.Register(&UdpPacket{})
 }

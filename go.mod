@@ -46,6 +46,7 @@ require (
 	golang.org/x/sys v0.37.0
 	golang.org/x/time v0.12.0
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gorm.io/gorm v1.31.0
 	gvisor.dev/gvisor v0.0.0-20251031020517-ecfcdd2f171c
 	www.bamsoftware.com/git/champa.git v0.20250620.0

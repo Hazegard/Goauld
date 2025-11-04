@@ -33,8 +33,8 @@ import (
 // we must store these mappings (1111-6345, etc) in memory for a length
 // of time, so that when the exit node receives a response on 6345, it
 // knows to return it to 1111.
-func ListenUDP(tcpConn net.Conn) (*UdpListener, error) {
-	a, err := net.ResolveUDPAddr("udp", "127.0.0.1:33333")
+func ListenUDP(tcpConn net.Conn, port int) (*UdpListener, error) {
+	a, err := net.ResolveUDPAddr("udp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return nil, fmt.Errorf("resolve: %w", err)
 	}
@@ -69,8 +69,8 @@ type UdpListener struct {
 func (u *UdpListener) Run(ctx context.Context) error {
 	defer u.inbound.Close()
 	// udp doesnt accept connections,
-	//udp simply forwards packets
-	//and therefore only needs to listen
+	// udp simply forwards packets
+	// and therefore only needs to listen
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		return u.runInbound(ctx)
@@ -101,7 +101,7 @@ func (u *UdpListener) runInbound(ctx context.Context) error {
 			return fmt.Errorf("read error: %w", err)
 		}
 		// upsert ssh channel
-		uc, err := u.getUDPChan(ctx)
+		uc, err := u.getUDPChan()
 		if err != nil {
 			if strings.HasSuffix(err.Error(), "EOF") {
 				continue
@@ -128,7 +128,7 @@ func (u *UdpListener) runInbound(ctx context.Context) error {
 func (u *UdpListener) runOutbound(ctx context.Context) error {
 	for !isDone(ctx) {
 		// upsert ssh channel
-		uc, err := u.getUDPChan(ctx)
+		uc, err := u.getUDPChan()
 		if err != nil {
 			if strings.HasSuffix(err.Error(), "EOF") {
 				continue
@@ -160,7 +160,7 @@ func (u *UdpListener) runOutbound(ctx context.Context) error {
 	return nil
 }
 
-func (u *UdpListener) getUDPChan(ctx context.Context) (*udptunnel.UdpChannel, error) {
+func (u *UdpListener) getUDPChan() (*udptunnel.UdpChannel, error) {
 	u.outboundMut.Lock()
 	defer u.outboundMut.Unlock()
 	// cached

@@ -37,6 +37,7 @@ var (
 	_sshd_enabled           = "true" //nolint:revive
 	_socks_enabled          = "true" //nolint:revive
 	_http_proxy_enabled     = "true" //nolint:revive
+	_wg_enabled             = "true" //nolint:revive
 	_socks_use_system_proxy = "true" //nolint:revive
 
 	_proxy          = ""
@@ -56,10 +57,10 @@ var (
 
 	_no_proxy = "false" //nolint:revive
 
-	_rssh_port  = "0"     //nolint:revive
-	_socks_port = "0"     //nolint:revive
-	_http_port  = "0"     //nolint:revive
-	_wg_port    = "44444" //nolint:revive
+	_rssh_port  = "0" //nolint:revive
+	_socks_port = "0" //nolint:revive
+	_http_port  = "0" //nolint:revive
+	_wg_port    = "0" //nolint:revive
 
 	_keepawake = "false"
 	_keepalive = "20"
@@ -99,6 +100,7 @@ var (
 		"_sshd_enabled":           _sshd_enabled,
 		"_socks_enabled":          _socks_enabled,
 		"_http_proxy_enabled":     _http_proxy_enabled,
+		"_wg_enabled":             _wg_enabled,
 		"_socks_use_system_proxy": _socks_use_system_proxy,
 
 		"_no_proxy":       _no_proxy,
@@ -185,6 +187,7 @@ type AgentConfig struct {
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Start the SSHD server."`
 	Socks bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Start the Socks proxy server."`
 	HTTP  bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Start the HTTP proxy server."`
+	WG    bool `default:"${_wg_enabled}" name:"wg" yaml:"wg" optional:"" negatable:"" help:"Start the Wireguard server."`
 
 	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system"`
 	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username to use with the proxy"`

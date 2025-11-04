@@ -20,6 +20,8 @@ type AgentData struct {
 	Path             string          `json:"path"`
 	HasStaticPwd     bool            `json:"has_static_pwd"`
 	AgentVersion     common.JVersion `json:"agent_version"`
+	WireguardPubKey  string          `json:"wireguard_pub_key"`
+	WireguardIP      string          `json:"wireguard_ip"`
 }
 
 // newAgentSSHPasswordMessage creates a new empty AgentData instance.
@@ -51,6 +53,8 @@ func NewEncryptedAgentSSHPasswordMessage(a *config.Agent, cryptor *crypto.SymCry
 		Path:             a.Path,
 		HasStaticPwd:     a.PrivateSshdPassword() != "",
 		AgentVersion:     a.Version(),
+		WireguardPubKey:  a.Wireguard.PublicKey.String(),
+		WireguardIP:      a.Wireguard.IP,
 	}
 
 	return EncryptAgentSSHPasswordMessage(message, cryptor)

@@ -3,7 +3,7 @@ package wireguard
 import (
 	"Goauld/common/log"
 	"context"
-	"fmt"
+	"errors"
 	"net"
 	"time"
 
@@ -18,19 +18,17 @@ const (
 
 func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 	sess := req.ID()
-	log.Println("acceptUDP>", sess.LocalAddress, sess.RemoteAddress)
+	log.Trace().Str("LocalAddr", sess.LocalAddress.String()).Str("ReliteAddr", sess.RemoteAddress.String()).Msg("Received UDP packet")
 
 	var wq waiter.Queue
 
 	ep, udpErr := req.CreateEndpoint(&wq)
-	fmt.Println("WAIT DONE")
 	if udpErr != nil {
-		log.Printf("udpErr %v", udpErr)
+		log.Debug().Err(errors.New(udpErr.String())).Msg("Failed to create endpoint")
 
 		return false
 	}
 	client := gonet.NewUDPConn(&wq, ep)
-	fmt.Println(" gonet.NewUDPConn(&wq, ep)")
 
 	clientAddr := &net.UDPAddr{IP: net.IP(sess.RemoteAddress.AsSlice()), Port: int(sess.RemotePort)}
 	remoteAddr := &net.UDPAddr{IP: net.IP(sess.LocalAddress.AsSlice()), Port: int(sess.LocalPort)}
@@ -42,14 +40,13 @@ func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 	}*/
 
 	proxyConn, err := net.ListenUDP("udp", proxyAddr)
-	fmt.Println("ListenUDP")
 	if err != nil {
-		log.Printf("Failed to bind local port %d, trying one more time with random port", proxyAddr)
+		log.Debug().Err(err).Str("ProxyAddr", proxyAddr.String()).Msg("Failed to create UDP listener")
 		proxyAddr.Port = 0
 
 		proxyConn, err = net.ListenUDP("udp", proxyAddr)
 		if err != nil {
-			log.Printf("Failed to bind local random port %s", proxyAddr)
+			log.Debug().Err(err).Str("ProxyAddr", proxyAddr.String()).Msg("Failed to create UDP listener")
 
 			return false
 		}
@@ -58,7 +55,6 @@ func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 
 	go tun.proxy(ctx, cancel, client, clientAddr, proxyConn)
 	go tun.proxy(ctx, cancel, proxyConn, remoteAddr, client)
-	fmt.Println("LETSGO")
 
 	return false
 }
@@ -78,16 +74,15 @@ func (tun *netTun) proxy(ctx context.Context, cancel context.CancelFunc, dst net
 				return
 			} else if err != nil {
 				if ctx.Err() == nil {
-					log.Printf("Failed to read packed from %s", srcAddr)
+					log.Debug().Err(err).Str("SrcAddr", srcAddr.String()).Msg("Failed to read packet")
 				}
 
 				return
 			}
-			fmt.Println("READ", src, n)
 			if n > 0 {
 				err := tun.limiter.WaitN(ctx, n)
 				if err != nil {
-					log.Printf("Shaper error: %v", err)
+					log.Debug().Err(err).Str("SrcAddr", srcAddr.String()).Msg("Shaper error")
 
 					return
 				}
@@ -96,7 +91,7 @@ func (tun *netTun) proxy(ctx context.Context, cancel context.CancelFunc, dst net
 			_, err = dst.WriteTo(buf[:n], dstAddr)
 			if err != nil {
 				if ctx.Err() == nil {
-					log.Printf("Failed to write packed to %s", dstAddr)
+					log.Debug().Err(err).Str("DstAddr", dstAddr.String()).Msg("Failed to write packet")
 				}
 
 				return

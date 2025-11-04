@@ -43,16 +43,16 @@ func (tun *netTun) acceptTCP(req *tcp.ForwarderRequest) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	go tun.cpy(&wg, outbound, conn, 1) // conn -> outbound
-	go tun.cpy(&wg, conn, outbound, 2) // outbound -> conn
+	go tun.cpy(&wg, outbound, conn) // conn -> outbound
+	go tun.cpy(&wg, conn, outbound) // outbound -> conn
 	wg.Wait()
 }
 
-func (tun *netTun) cpy(wg *sync.WaitGroup, dst, src net.Conn, i int) {
+func (tun *netTun) cpy(wg *sync.WaitGroup, dst, src net.Conn) {
 	defer wg.Done()
 
-	r := NewLimitReader(src, tun.limiter)
-	_, err := io.Copy(dst, r)
+	//r := NewLimitReader(src, tun.limiter)
+	_, err := io.Copy(dst, src)
 	if err != nil {
 		log.Printf("copy %v", err)
 	}

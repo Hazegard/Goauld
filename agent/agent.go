@@ -170,6 +170,14 @@ func run() globalcontext.CancelReason {
 	}
 	defer cancel()
 
+	if config.Get().WGEnabled() {
+		err := config.Get().GenerateWireguardConfig()
+		if err != nil {
+			log.Error().Err(err).Msg("error initializing the Wireguard configuration")
+			config.Get().DisableWG()
+		}
+	}
+
 	var controlPlanClient *control.ControlPlanClient
 	var err error
 
@@ -418,22 +426,19 @@ func run() globalcontext.CancelReason {
 			})
 		}
 
-		if true {
+		if config.Get().WGEnabled() {
 			wg := wireguard.NewWireguard()
-			err := wg.Init()
+			err := wg.Init(config.Get().Wireguard)
 			if err != nil {
-				log.Error().Err(err).Msg("error initializing the Socks5 server")
+				log.Error().Err(err).Msg("error initializing the wireguard server")
 			}
 			rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedWGAddress())
 			if err != nil {
-				log.Error().Err(err).Msg("error initializing the Socks5 connection")
+				log.Error().Err(err).Msg("error initializing the wireguard connection")
 
 				return
 			}
 			config.Get().UpdateWGPort(rPort)
-
-			// go wg.StartRouter()
-			//go wg.StartUDPProxy()
 
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Wiregard listener server started")
 			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
@@ -453,13 +458,14 @@ func run() globalcontext.CancelReason {
 
 					go func() {
 						log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote wiregaurd forward started")
-						err := udptunnel.HandleUDP(conn, "127.0.0.1:55555")
+						err := udptunnel.HandleUDP(conn, fmt.Sprintf("127.0.0.1:%d", wg.ListenPort))
 						if err != nil && !errors.Is(err, io.EOF) {
 							log.Error().Err(err).Msg("udptunnel handle error")
 						}
 					}()
 				}
 			}()
+			controlPlanClient.Wg = wg
 		}
 		// For all porte forwards, launch the forwarding
 		rpf := config.Get().GetRemotePortForwarding()
@@ -619,15 +625,3 @@ func ScheduleDelete() error {
 
 	return cmd.Start()
 }
-
-/*func Delay(i int) {
-	// Exponential backoff with jitter
-	delay := baseDelay * (1 << i)
-	if delay > maxDelay {
-		delay = maxDelay
-	}
-	jitter := time.Duration(rand.Int63n(int64(delay / 2)))
-	sleepDuration := delay + jitter
-	return sleepDuration
-}
-*/

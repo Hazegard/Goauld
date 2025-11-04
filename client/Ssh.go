@@ -4,14 +4,11 @@ import (
 	"Goauld/client/api"
 	"Goauld/client/common"
 	"Goauld/client/types"
-	"Goauld/client/wireguard"
 	"Goauld/common/log"
 	"bufio"
-	"context"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,8 +25,10 @@ type SSH struct {
 	Target         string   `arg:"" name:"agent" help:"The target agent." optional:""`
 	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
 	HTTP           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:"" optional:"" help:"Forward the HTTP proxy ports on the local host."`
+	WG             bool     `default:"${_ssh_wg}" name:"wg" yaml:"wg" negatable:"" optional:"" help:"Forward the Wireguard proxy ports on the local host."`
 	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
 	LocalHTTPPort  int      `default:"${_ssh_local_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Local port to bind the SOCKS to."`
+	LocalWGPort    int      `default:"${_ssh_local_http_port}" name:"wg-port" yaml:"wg-port" optional:"" help:"Local port to bind the wireguard to."`
 	SSH            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:"" optional:"" help:"Connect to the agent SSHD service."`
 	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
@@ -336,25 +335,6 @@ func (e *SSH) Execute(clientAPI *api.API, cfg ClientConfig) error {
 	if e.Proxy {
 		return cmd.Execute(cfg, agent.Name, false)
 	}
-	go func() {
-		time.Sleep(10 * time.Second)
-		tcpCon, err := net.Dial("tcp", "127.0.0.1:33333")
-		if err != nil {
-			log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to connect to SSH server")
-
-			return
-		}
-		udpListener, err := wireguard.ListenUDP(tcpCon)
-		if err != nil {
-			log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to listen on UDP")
-
-			return
-		}
-		err = udpListener.Run(context.Background())
-		if err != nil {
-			log.Warn().Err(err).Str("target", cfg.SSH.Target).Msg("Failed to listen")
-		}
-	}()
 
 	err = cmd.Execute(cfg, agent.Name, false)
 	if err != nil {
@@ -443,8 +423,8 @@ func (e *SSH) buildTunnelSSHCommand(cfg ClientConfig, agent types.Agent, exePath
 	if e.HTTP && agent.GetHTTPPort() != "0" && agent.GetHTTPPort() != "/" {
 		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.SSH.LocalHTTPPort, agent.GetHTTPPort()))
 	}
-	if true && agent.GetWGPort() != "0" && agent.GetWGPort() != "/" {
-		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", 33333, agent.GetWGPort()))
+	if e.WG && agent.GetWGPort() != "0" && agent.GetWGPort() != "/" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("-L%d:127.0.0.1:%s", cfg.SSH.LocalWGPort, agent.GetWGPort()))
 	}
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, cfg.GetSshdHost()))
 

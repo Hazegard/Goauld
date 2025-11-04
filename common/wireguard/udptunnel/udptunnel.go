@@ -36,10 +36,11 @@ func HandleUDP(rwc io.ReadWriteCloser, hostPort string) error {
 }
 
 type udpHandler struct {
-	hostPort string
 	*UdpChannel
 	*udpConns
-	maxMTU int
+
+	hostPort string
+	maxMTU   int
 }
 
 func (h *udpHandler) handleWrite(p *UdpPacket) error {
@@ -52,10 +53,10 @@ func (h *udpHandler) handleWrite(p *UdpPacket) error {
 		return err
 	}
 	// however, we dont know if we must read...
-	//spawn up to <max-conns> go-routines to wait
-	//for a reply.
-	//TODO configurable
-	//TODO++ dont use go-routines, switch to pollable
+	// spawn up to <max-conns> go-routines to wait
+	// for a reply.
+	// TODO configurable
+	// TODO++ dont use go-routines, switch to pollable
 	//  array of listeners where all listeners are
 	//  sweeped periodically, removing the idle ones
 	const maxConns = 100
@@ -151,6 +152,7 @@ func (cs *udpConns) closeAll() {
 }
 
 type udpConn struct {
-	id string
 	net.Conn
+
+	id string
 }

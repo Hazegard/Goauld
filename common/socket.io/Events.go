@@ -51,4 +51,5 @@ const (
 	ClipboardContentEvent
 	CopyClipboardRequestEvent
 	ReceiveFatAgent
+	WireguardPeer
 )

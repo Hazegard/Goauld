@@ -1,3 +1,4 @@
+// nolint
 package wireguard
 
 /* SPDX-License-Identifier: MIT
@@ -228,9 +229,6 @@ func (tun *netTun) WriteNotify() {
 	}
 
 	view := pkt.ToView()
-	// pkt.DecRef()
-	//data := view.AsSlice()
-	//dumpPacket(data)
 
 	tun.incomingPacket <- view
 }

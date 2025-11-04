@@ -5,6 +5,8 @@ package control
 import (
 	"Goauld/agent/clipboard"
 	"Goauld/agent/config"
+	globalcontext "Goauld/agent/context"
+	"Goauld/agent/wireguard"
 	"Goauld/common"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
@@ -19,6 +21,20 @@ import (
 	sio "github.com/hazegard/socket.io-go"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// ControlPlanClient Handle the socket.io interaction regarding the management of the agent.
+//
+//nolint:revive
+type ControlPlanClient struct {
+	manager      *sio.Manager
+	socket       sio.ClientSocket
+	configDone   chan<- string
+	ctx          context.Context
+	url          string
+	canceler     *globalcontext.GlobalCanceler
+	errorCounter int
+	Wg           *wireguard.Wireguard
+}
 
 func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {
 	// SendSSHPrivateKeyEvent is sent by the server after the client sends the RegisterEvent event
@@ -204,6 +220,20 @@ func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {
 		}
 		socket.Emit(req.EventID, response)
 		log.Trace().Bool("Response", res).Msgf("Emit: %s", req.EventID)
+	})
+
+	socket.OnEvent(socketio.WireguardPeer.ID(), func(data []byte) {
+		wgConfig, err := socketio.DecryptWGConfigEventMessage(data, config.Get().Cryptor)
+		if err != nil {
+			log.Error().Err(err).Msg("OnEvent: DecryptWGConfigEventMessage")
+
+			return
+		}
+		log.Debug().Str("IP", wgConfig.IP).Str("PublicKey", wgConfig.PublicKey.String()).Msg("OnEvent: WireguardPeer")
+		err = cpc.Wg.AddPeer(wgConfig)
+		if err != nil {
+			log.Error().Err(err).Str("PeerPubKey", wgConfig.PublicKey.String()).Str("PeerIP", wgConfig.IP).Msg("unable to add peer AddPeer")
+		}
 	})
 }
 
