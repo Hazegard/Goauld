@@ -1,82 +1,82 @@
-#Age private key to use.
+#Age private key used by the server.
 age-privkey: 
 
-# Domain used to serve HTTP content (HTTP/Websockets).
+# Domains used to serve HTTP and WebSocket traffic.
 http-domain:
 - www.example.com
 
-# Domain used to serve raw TLS content (SSH over TLS).
+# Domains used to serve raw TLS traffic (SSH over TLS).
 tls-domain:
 - app.example.com
 
-# Domain used to serve DNS (SSH over DNS).
-dns-domain: www.example.com
+# Domain used to serve DNS-based traffic (SSH over DNS).
+dns-domain: t.example.com
 
-# HTTP address to bind to, port 0 => Random.
+# Address and port to bind for HTTP connections (port 0 = random).
 http-listen-addr: :80
 
-# HTTPS address to bind to, port 0 => Random.
+# Address and port to bind for HTTPS connections (port 0 = random).
 https-listen-addr: :443
 
-# Remote address to bind to, port 0 => Random.
+# Address and port to bind for SSH connections (port 0 = random).
 ssh-listen-addr: :2222
 
-# Remote address to bind to, port 0 => Random.
+# Address and port to bind for DNS connections (port 0 = random).
 dns-listen-addr: :53
 
-# Remote address to bind to, port 0 => Random.
+# Address and port to bind for QUIC connections (port 0 = random).
 quic-listen-addr: :443
 
-# Verbosity. Repeat to increase
+# Increase log verbosity. Repeat for more detail.
 verbose: 0
 
-# Suppress all logs
+# Suppress all log output.
 quiet: false
 
-# Enable TLS.
+# Enable TLS support.
 tls: true
 
-# Path to TLS certificate key.
+# Path to the TLS private key file.
 tls-key: ""
 
-# Path to TLS certificate.
+# Path to the TLS certificate file.
 tls-cert: ""
 
-# Enable QUIC.
+# Enable QUIC protocol support.
 quic: true
 
-# Enable DNS.
+# Enable DNS server for SSH-over-DNS connections.
 dns: true
 
 # Disable database usage.
 db: false
 
-# Database filename to use.
+# Path or filename of the database to use.
 db-file-name: Goauld.db
 
-# List of IP allowed to access the /manage/ endpoint.
+# List of IP addresses allowed to access the /manage/ endpoint.
 allowed-ips:
 - 127.0.0.1
 - 0.0.0.0/32
 
-# Access token required to access the /manage/ endpoint.
+# Access token required for the /manage/ API endpoint.
 access-token: TODO_TOKEN
 
-# Access token required to access the /manage/ endpoint.
+# Admin token required for the /admin/ API endpoint.
 admin-token: TODO_TOKEN
 
-# HTTP Basic Auth used to access the binaries endpoint.
+# HTTP Basic Auth credentials required to access the binaries endpoint.
 binaries-basic-auth: username:password
 
-# Path where are stored binaries on the filesystem.
+# Filesystem path where agent binaries are stored.
 binaries-path-location: ./binaries
 
-# Show version information
+# Show version information and exit.
 version: false
 
-# Generate configuration file based on the current options.
+# Generate a configuration file from the current settings.
 generate-config: false
 
-# Configuration file to use.
+# Path to the configuration file to use.
 config-file: ""
 

@@ -70,6 +70,7 @@ env:
   - AGENT__SSHD_ENABLED={{ .Env.AGENT__SSHD_ENABLED }}
   - AGENT__SOCKS_ENABLED={{ .Env.AGENT__SOCKS_ENABLED }}
   - AGENT__HTTP_PROXY_ENABLED={{ .Env.AGENT__HTTP_PROXY_ENABLED }}
+  - AGENT__WG_ENABLED={{ .Env.AGENT__WG_ENABLED }}
 
   - AGENT__PROXY={{ .Env.AGENT__PROXY }}
   - AGENT__PROXY_USERNAME={{ .Env.AGENT__PROXY_USERNAME }}
@@ -92,6 +93,7 @@ env:
   - AGENT__RSSH_PORT={{ .Env.AGENT__RSSH_PORT }}
   - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
   - AGENT__HTTP_PORT={{ .Env.AGENT__HTTP_PORT }}
+  - AGENT__WG_PORT={{ .Env.AGENT__WG_PORT }}
 
   - AGENT__KEEPAWAKE={{ .Env.AGENT__KEEPAWAKE }}
   - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
@@ -140,11 +142,14 @@ env:
   - CLIENT__SAVE_STATIC_PASSWORD={{ .Env.CLIENT__SAVE_STATIC_PASSWORD }}
   - CLIENT__SSH_SOCKS={{ .Env.CLIENT__SSH_SOCKS }}
   - CLIENT__SSH_HTTP={{ .Env.CLIENT__SSH_HTTP }}
+  - CLIENT__SSH_WG={{ .Env.CLIENT__SSH_WG }}
   - CLIENT__SSH_LOCAL_SOCKS_PORT={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}
+  - CLIENT__SSH_LOCAL_HTTP_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}
   - CLIENT__SSH_LOCAL_HTTP_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}
   - CLIENT__SSH_SSH={{ .Env.CLIENT__SSH_SSH }}
   - CLIENT__SSH_PRINT={{ .Env.CLIENT__SSH_PRINT }}
   - CLIENT__SSH_PROXY={{ .Env.CLIENT__SSH_PROXY }}
+  - CLIENT__SSH_LOG={{ .Env.CLIENT__SSH_LOG }}
   - CLIENT__SOCKS_SOCKS={{ .Env.CLIENT__SOCKS_SOCKS }}
   - CLIENT__SSH_HTTP={{ .Env.CLIENT__SSH_HTTP }}
   - CLIENT__SOCKS_LOCAL_SOCKS_PORT={{ .Env.CLIENT__SOCKS_LOCAL_SOCKS_PORT }}
@@ -153,8 +158,6 @@ env:
   - CLIENT__SOCKS_PRINT={{ .Env.CLIENT__SOCKS_PRINT }}
   - CLIENT__SOCKS_PROXY={{ .Env.CLIENT__SOCKS_PROXY }}
   - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
-  - CLIENT__SCP_SOURCE={{ .Env.CLIENT__SCP_SOURCE }}
-  - CLIENT__SCP_DESTINATION={{ .Env.CLIENT__SCP_DESTINATION }}
   - CLIENT__COMPILE_ID={{ .Env.CLIENT__COMPILE_ID }}
   - CLIENT__COMPILE_GOOS={{ .Env.CLIENT__COMPILE_GOOS }}
   - CLIENT__COMPILE_GOARCH={{ .Env.CLIENT__COMPILE_GOARCH }}
@@ -166,6 +169,8 @@ env:
   - CLIENT__COMPILE_SEED={{ .Env.CLIENT__COMPILE_SEED }}
   - CLIENT__COMPILE_PRIVATE_PASSWORD={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}
   - CLIENT__COMPILE_NOPASS={{ .Env.CLIENT__COMPILE_NOPASS }}
+  - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
+  - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
 
 # END Dynamic ENV
 
@@ -330,6 +335,7 @@ builds:
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
@@ -352,6 +358,7 @@ builds:
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KEEPAWAKE") }} -X Goauld/agent/config._keepawake={{ .Env.AGENT__KEEPAWAKE }}{{end}}'
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
@@ -433,6 +440,7 @@ builds:
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
@@ -455,6 +463,7 @@ builds:
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KEEPAWAKE") }} -X Goauld/agent/config._keepawake={{ .Env.AGENT__KEEPAWAKE }}{{end}}'
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
@@ -537,11 +546,14 @@ builds:
 
       - '{{ if (index .Env "CLIENT__SSH_SOCKS") }} -X main._ssh_socks={{ .Env.CLIENT__SSH_SOCKS }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_HTTP") }} -X main._ssh_http={{ .Env.CLIENT__SSH_HTTP }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_WG") }} -X main._ssh_wg={{ .Env.CLIENT__SSH_WG }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_LOCAL_SOCKS_PORT") }} -X main._ssh_local_socks_port={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_LOCAL_HTTP_PORT") }} -X main._ssh_local_http_port={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_LOCAL_HTTP_PORT") }} -X main._ssh_local_http_port={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_SSH") }} -X main._ssh_ssh={{ .Env.CLIENT__SSH_SSH }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_PRINT") }} -X main._ssh_print={{ .Env.CLIENT__SSH_PRINT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_PROXY") }} -X main._ssh_proxy={{ .Env.CLIENT__SSH_PROXY }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_LOG") }} -X main._ssh_log={{ .Env.CLIENT__SSH_LOG }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__SOCKS_SOCKS") }} -X main._socks_socks={{ .Env.CLIENT__SOCKS_SOCKS }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_HTTP") }} -X main._ssh_http={{ .Env.CLIENT__SSH_HTTP }}{{end}}'
@@ -552,8 +564,6 @@ builds:
       - '{{ if (index .Env "CLIENT__SOCKS_PROXY") }} -X main._socks_proxy={{ .Env.CLIENT__SOCKS_PROXY }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__SCP_PRINT") }} -X main._scp_print={{ .Env.CLIENT__SCP_PRINT }}{{end}}'
-      - '{{ if (index .Env "CLIENT__SCP_SOURCE") }} -X main._scp_source={{ .Env.CLIENT__SCP_SOURCE }}{{end}}'
-      - '{{ if (index .Env "CLIENT__SCP_DESTINATION") }} -X main._scp_destination={{ .Env.CLIENT__SCP_DESTINATION }}{{end}}'
 
 
       - '{{ if (index .Env "CLIENT__COMPILE_ID") }} -X main._compile_id={{ .Env.CLIENT__COMPILE_ID }}{{end}}'
@@ -567,6 +577,12 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_SEED") }} -X main._compile_seed={{ .Env.CLIENT__COMPILE_SEED }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_PRIVATE_PASSWORD") }} -X main._compile_private_password={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_NOPASS") }} -X main._compile_nopass={{ .Env.CLIENT__COMPILE_NOPASS }}{{end}}'
+
+      - '{{ if (index .Env "CLIENT__WG_PORT") }} -X main._wg_port={{ .Env.CLIENT__WG_PORT }}{{end}}'
+
+
+
+      - '{{ if (index .Env "CLIENT__SCP_PRINT") }} -X main._scp_print={{ .Env.CLIENT__SCP_PRINT }}{{end}}'
 
 # END Dynamic CLIENT
 

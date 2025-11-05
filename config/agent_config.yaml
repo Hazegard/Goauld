@@ -1,120 +1,126 @@
-#Age public key associated to the server. The provided public key should match the server public key
+#Age public key associated with the server. Must match the server’s public key.
 age-pubkey: ""
 
-# The control HTTP server to connect to.
+# Control HTTP server to connect to.
 server: www.example.com
 
-# The SSH server to connect to when using direct SSH connections.
+# SSH server used for direct SSH connections.
 ssh-server: www.example.com:22222
 
-# The QUIC domain used to tunnel the traffic.
+# QUIC domain used to tunnel traffic.
 quic-domain: app.example.com
 
-# The TLS server to connect to when using SSH over TLS connections.
+# TLS server used for SSH-over-TLS connections.
 tls-server: app.example.com
 
-# The DNS server to connect to when using SSH over DNS connections, the magic name 'system' will be replaced by the list of the system DNS servers.
+# DNS servers used for SSH-over-DNS connections. Use 'system' to include the system DNS servers.
 dns-server:
 - tns.example.com
 - 8.8.8.8
 - 1.1.1.1
 - 9.9.9.9
 
-# The DNS domain used to tunnel the traffic.
+# DNS domain used to tunnel SSH-over-DNS traffic.
 dns-domain: t.example.com
 
-# SSH password to access the agent. If no password is provided, a random password is automatically generated.
+# Password for local SSH access. If empty, a random password is generated automatically.
 shared-password: ""
 password: ""
 
-# Nice name to identify the agent. Defaults to 'user@hostname'
+# Friendly name to identify the agent (default: 'user@hostname').
 name: user@hostname
 
-# Start the SSHD server.
+# Enable the SSHD service.
 sshd: true
 
-# Start the Socks proxy server.
+# Enable the SOCKS proxy service.
 socks: true
 
-# Start the HTTP proxy server.
+# Enable the HTTP proxy service.
 http: true
 
-# Use the provided proxy to connect the control server. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
+# Enable the WireGuard service.
+wg: true
+
+# Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured).
 proxy: ""
 
-# Username to use with the proxy
+# Username for the proxy server.
 proxy-username: ""
 
-# Password to use with the proxy
+# Password for the proxy server.
 proxy-password: ""
 
-# Domain to use with the proxy
+# Authentication domain for the proxy server.
 proxy-domain: ""
 
-# Use the provided proxy to use within the socks proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
+# Custom proxy used within the SOCKS proxy. Falls back to the system proxy if not set.
 socks-custom-proxy: ""
 
-# Use the proxy of the underlying system if applicable for all requests going through the socks proxy.
+# Use the system proxy for all SOCKS proxy traffic.
 socks-proxy: true
 
-# Username to use with the socks http upstream proxy
+# Username for the SOCKS upstream proxy.
 socks-proxy-username: ""
 
-# Password to use with the socks http upstream proxy
+# Password for the SOCKS upstream proxy.
 socks-proxy-password: ""
 
-# Domain to use with the socks http upstream proxy
+# Domain for the SOCKS upstream proxy.
 socks-proxy-domain: ""
 
-# Use the provided proxy to use within the http proxy. If no proxy is provided, by default the agent will attempt to use the underlying proxy configured on the system
+# Custom proxy used within the HTTP proxy. Falls back to the system proxy if not set.
 http-custom-proxy: ""
 
-# Username to use with the http upstream proxy
+# Username for the HTTP upstream proxy.
 http-proxy-username: ""
 
-# Password to use with the http upstream proxy
+# Password for the HTTP upstream proxy.
 http-proxy-password: ""
 
-# Domain to use with the http upstream proxy
+# Domain for the HTTP upstream proxy.
 http-proxy-domain: ""
 
-# Do not use the system proxy.
+# Ignore system proxy settings.
 no-proxy: false
 
-# The remote SSH port to bind to on the server.  By default, the port is 0 meaning the port will be random on the server.
+# Remote SSH port to bind on the server (0 = random).
 rssh-port: 0
 
-# The remote SOCKS proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server.
+# Remote SOCKS proxy port to bind on the server (0 = random).
 socks-port: 0
 
-# The remote HTTP proxy port to bind to on the server,  By default, the port is 0 meaning the port will be random on the server.
+# Remote HTTP proxy port to bind on the server (0 = random).
 http-port: 0
 
-# Keep the system awake (try to prevent from sleep and lock screen).
+# Remote WireGuard port to bind on the server (0 = random).
+wg-port: 0
+
+# Prevent the system from sleeping or locking.
 keep-awake: false
 
-# Seconds between two keepalive messages in seconds, reduce this value if the connection drops (0 => no keepalive).
+# Interval in seconds between keepalive messages (0 = disabled).
 keepalive: 20
 
-# Verbosity of the logs. Repeat -v to increase
+# Increase log verbosity. Repeat for more detail.
 verbose: 0
 
-# Suppress all logs
+# Suppress all log output.
 quiet: false
 
-# Only working days.
+# Restrict agent activity to working days only.
 only-working-days: false
 
-# Start time of working day in days.
+# Start time of the working day (e.g. '09:00').
 working-day-start: "8:00"
 
-# End time of working day in days.
+# End time of the working day (e.g. '17:00').
 working-day-end: "19:30"
 
-# Timezone of working day.
+# Timezone used for working day calculations.
 working-day-timezone: Europe/Paris
 
-# Order the SSH tunnels connection attempts.
+# Preferred order of SSH tunnel protocols.
 rssh-order:
 - SSH
 - TLS
@@ -122,28 +128,28 @@ rssh-order:
 - HTTP
 - DNS
 
-# Timeout in second to wait for the SSH tunnel to become available (independent for each protocol attempt), 0 means wait indefinitely.
+# Timeout in seconds to wait for each SSH tunnel attempt (0 = unlimited).
 ssh-timeout: 60
 
-# Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). If REMOTE_PORT is 0, the port will be randomly chosen on the server
+# Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). Use 0 for a random remote port.
 rpf: []
 
-# Max retries connection attempts before giving up
+# Maximum number of connection retries before giving up.
 max-retries: 0
 
-# Show version information
+# Show version information and exit.
 version: false
 
-# Generate configuration file based on the current options.
+# Generate a configuration file from the current settings.
 generate-config: false
 
-# Configuration file to use.
+# Path to the configuration file to use.
 config-file: ""
 
-# Start the agent in the background.
+# Run the agent in the background.
 background: false
 
-# Start the agent in the background.
+# Run the agent in hidden background mode.
 hidden-background: false
 
 # System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.
@@ -153,6 +159,7 @@ hidden-background: false
 #  Linux example:"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p".
 custom-dns-command: ""
 
-# Number of days to stay alive. Afterward, the agent will kill itself. (0 to disable the killswitch)
+# Number of days before the agent self-terminates (0 = disabled).
 kill-switch: 7
+remaining: []
 

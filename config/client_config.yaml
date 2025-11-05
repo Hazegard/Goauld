@@ -1,144 +1,167 @@
-#HTTP Server to connect to.
+#HTTP server address to connect to.
 server: https://www.example.com
 
-# SSH Server to connect to.
+# SSH server address to connect to.
 ssh-server: www.example.com:22222
 
-# Access token required to access the /manage/ endpoint.
+# Access token for the /manage/ API endpoint.
 access-token: a23YiXyAZzrPlc8oWXqlSK2z7d8COQn1gGuti6KLfF5HHhZt
 
-# Admin token required to access the /admin/ endpoint.
+# Admin token for the /admin/ API endpoint.
 admin-token: moVmzz5aTuptalF26SnlCkwdZ5MUyX9h7xRv8BXS79LoRThi
 
-# Suppress all logs
+# Suppress all log output.
 quiet: false
 
-# Verbosity. Repeat to increase
+# Increase verbosity level. Repeat for more detailed logs.
 verbose: 0
 
-# Allow insecure connection (do not validate TLS certificate).
+# Allow insecure connections (skip TLS certificate verification).
 insecure: false
 
-# Show version information
+# Display version information and exit.
 version: false
 
-# Generate configuration file based on the current options.
+# Generate a configuration file based on the current options.
 generate-config: false
 
-# Configuration file to use.
+# Path to configuration file.
 config-file: ""
 
-# Agent password map.
+# Agent password map (internal use only).
 agent-password: {}
 
-# Agent password.
+# Agent private password.
 password: ""
 
-# Prompt for the agent private password.
+# Prompt for the agent's private password.
 prompt: false
 
-# Save the prompted password in the config file.
+# Save the prompted password in the configuration file.
 save: false
 
-# Connect to the agent through SSH.
+# Connect to an agent via SSH.
 ssh:
   target: ""
-  #Forward the SOCKS ports on the local host.
+  #Forward the agent's SOCKS proxy to the local host.
   socks: true
-  #Forward the HTTP proxy ports on the local host.
+  #Forward the agent's HTTP proxy to the local host.
   http: true
-  #Local port to bind the SOCKS to.
+  #Forward the agent's WireGuard interface to the local host.
+  wg: true
+  #Local port to bind the SOCKS proxy.
   socks-port: 1080
-  #Local port to bind the SOCKS to.
+  #Local port to bind the HTTP proxy.
   http-port: 3128
-  #Connect to the agent SSHD service.
+  #Local port to bind the WireGuard proxy.
+  wg-port: 3128
+  #Connect directly to the agent’s SSH service.
   ssh: true
-  #Show the SSH command instead of executing it.
+  #Print the generated SSH command instead of executing it.
   print: false
-  #Enable direct STDIN/STDOUT connections to Allow to use proxycommand.
+  #Use direct STDIN/STDOUT mode for ProxyCommand compatibility.
   proxy: false
+  #Record the SSH session to a log file.
+  log: false
   sshopts: []
   sshconffile: ""
   sshargs: []
 
-# Mount the socks server exposed by the agent.
+# Expose the SOCKS proxy provided by the agent.
 socks:
   target: ""
-  #Forward the SOCKS ports on the local host.
+  #Forward the agent’s SOCKS proxy to the local host.
   socks: true
-  #Forward the HTTP proxy ports on the local host.
+  #Forward the agent’s HTTP proxy to the local host.
   http: true
-  #Local port to bind the SOCKS to.
+  #Local port to bind the SOCKS proxy.
   socks-port: 1080
-  #Local port to bind the SOCKS to.
+  #Local port to bind the HTTP proxy.
   http-port: 3128
-  #Connect to the agent SSHD service.
+  #Connect to the agent’s SSH service.
   ssh: false
-  #Show the SSH command instead of executing it.
+  #Print the generated SSH command instead of executing it.
   print: false
-  #Enable direct STDIN/STDOUT connections to Allow to use proxycommand.
+  #Use direct STDIN/STDOUT mode for ProxyCommand compatibility.
   proxy: false
   sshargs: []
 
-# Transfer files using SCP from/to the agent.
+# Transfer files to/from the agent using SCP.
 scp:
   target: ""
-  #Show the SSH command instead of executing it.
+  #Print the generated SCP command instead of executing it.
   print: false
   sshopts: []
   sshconffile: ""
-  #List of paths to scp
+  #Paths to copy using SCP.
   paths: []
 
-# Transfer files using Rsync from/to the agent.
+# Transfer files to/from the agent using Rsync.
 rsync:
   target: ""
-  #Show the SSH command instead of executing it.
+  #Print the generated rsync command instead of executing it.
   print: false
   args: []
 
-# Start vsCode in remote mode.
+# SSH into a remote host using the agent as a jump server.
+jump:
+  #Target agent to use as a jump host for SSH connections.
+  agent: ""
+  #Print the generated SSH jump command instead of executing it.
+  print: false
+  #Use SCP through the jump host.
+  scp: false
+  args: []
+
+# Launch VS Code in remote mode via the agent.
 vscode:
   target: ""
   remotepath: .
-clipboard:
+
+# Access or modify the agent clipboard.
+clip:
+  #Retrieve the clipboard content from an agent.
   get:
     target: ""
+  #Update the clipboard content on an agent.
   set:
     target: ""
+    #Clipboard text content to set on the target agent.
     content: ""
 
-# TUI used to manage the connected agents
+# Launch the text-based interface for managing connected agents.
 tui: {}
 
-# Retrieve the passwords used to connect to the agent.
+# Retrieve stored passwords used by the agent.
 pass:
-  #Agent name to retrieve password.
+  #Target agent from which to retrieve the password.
   agent: ""
-  #Password to retrieve (OTP/Agent).
+  #Type of password to retrieve (e.g., 'otp' or 'agent').
   type: ""
   args: []
 
-# Kill the agent.
+# Terminate a running agent.
 kill:
   target: ""
+  #Also delete the agent’s binary after termination.
+  delete: false
 
-# Reset the agent.
+# Reset an agent to its default state.
 reset:
   target: ""
 
-# Delete the agent.
+# Delete an agent permanently.
 delete:
   target: ""
 
-# List all agents.
+# List all available agents.
 list: {}
 
-# Compile the agent.
+# Compile a new agent binary.
 compile:
   args: []
 
-# Admin command.
+# Administrative commands (internal use).
 admin:
   dump: {}
   loglevel:
@@ -146,5 +169,25 @@ admin:
   config: {}
   state: {}
 
+# Generate or manage WireGuard configuration.
+wireguard:
+  #Generate Wireguard configuration file.
+  generate: {}
+  #Start Wireguard tunnel.
+  start:
+    #Target agent for which to start the WireGuard service.
+    agent: ""
+    #Port number to listen on for WireGuard connections.
+    port: 51820
+    ranges: ""
+    #Use the loopback interface with the 240.0.0.0/8 address range.
+    loopback: false
+    #Execute WireGuard commands directly with elevated privileges.
+    exec: true
 searchconfigdir: ~/.config/tealc.yaml
+
+wgconf:
+  wg-public-key: ""
+  wg-private-key: ""
+  wg-ip: ""
 

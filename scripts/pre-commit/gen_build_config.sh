@@ -114,6 +114,31 @@ echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
 
+GenConfig "client/wireguard.go" "client/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+GenConfig "client/Clipboard.go" "client/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+
+GenConfig "client/jump.go" "client/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+
+GenConfig "client/Rsync.go" "client/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+
+GenConfig "client/vscode.go" "client/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+
+
 function UpdateContent(){
   # Check if correct number of arguments are provided
   if [ "$#" -ne 3 ]; then

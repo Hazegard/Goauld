@@ -35,7 +35,7 @@ func main() {
 	if config.Get().GenerateConfig {
 		c, err := config.Get().GenerateYAMLConfig()
 		if err != nil {
-			log.Error().Err(err).Msg("error generating the agent config")
+			log.Error().Err(err).Msg("error generating the server config")
 
 			return
 		}

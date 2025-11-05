@@ -215,13 +215,13 @@ type AgentConfig struct {
 	RSSHOrder  []string `default:"${_rssh_order}" short:"O" name:"rssh-order" yaml:"rssh-order" optional:"" help:"Preferred order of SSH tunnel protocols."`
 	SSHTimeout int      `default:"${_rssh_timeout}" name:"ssh-timeout" yaml:"ssh-timeout" optional:"" help:"Timeout in seconds to wait for each SSH tunnel attempt (0 = unlimited)."`
 
-	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" short:"R" name:"rpf" yaml:"rpf" help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). Use 0 for a random remote port."`
+	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" short:"R" name:"rpf" yaml:"rpf" optional:""  help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). Use 0 for a random remote port."`
 
 	MaxRetries int `default:"${_max_retries}" short:"M" name:"max-retries" yaml:"max-retries" help:"Maximum number of connection retries before giving up."`
 
 	Version        bool   `default:"${_version}" short:"V" name:"version" yaml:"version" help:"Show version information and exit."`
 	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" yaml:"generate-config" help:"Generate a configuration file from the current settings."`
-	ConfigFile     string `default:"${_config_file}" short:"c" name:"config-file" yaml:"config-file" help:"Path to the configuration file to use."`
+	ConfigFile     string `default:"${_config_file}" short:"c" name:"config-file" yaml:"config-file" optional:"" help:"Path to the configuration file to use."`
 
 	Background       bool `default:"${_background}" short:"B" name:"background" yaml:"background" negatable:"" optional:"" help:"Run the agent in the background."`
 	HiddenBackground bool `default:"${_hidden_background}" name:"hidden-background" yaml:"hidden-background" hidden:"" negatable:"" optional:"" help:"Run the agent in hidden background mode."`
@@ -230,5 +230,5 @@ type AgentConfig struct {
 
 	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"Number of days before the agent self-terminates (0 = disabled)."`
 
-	Remaining []string `arg:"" passthrough:"" optional:""`
+	Remaining []string `arg:"" passthrough:"" optional:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
 }
