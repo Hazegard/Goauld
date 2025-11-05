@@ -10,12 +10,9 @@ import (
 
 // Rsync wraps the rsync command to copy files between the host and the agent.
 type Rsync struct {
-	Target string `kong:"-"`
-	Print  bool   `default:"${_scp_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	// Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
-	// Destination string   `default:"${_scp_destination}" arg:"" name:"destination" yaml:"destination" help:"Destination to copy."`
-	// RsyncOpts []string `short:"o"`
-	Args []string `arg:"" name:"paths" help:"List of paths to scp" passthrough:""`
+	Target string   `kong:"-"` // internal, not shown in help
+	Print  bool     `default:"${_scp_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated rsync command instead of executing it."`
+	Args   []string `arg:"" name:"paths" help:"Paths to synchronize using rsync." passthrough:""`
 }
 
 func getRawRsyncArgs() []string {

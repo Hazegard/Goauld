@@ -24,8 +24,8 @@ import (
 )
 
 type Wireguard struct {
-	Generate Generate `cmd:"" help:"Generate Wireguard configuration file."`
-	Start    Start    `cmd:"" help:"Start Wireguard tunnel."`
+	Generate Generate `cmd:"" name:"generate" yaml:"generate"  help:"Generate Wireguard configuration file."`
+	Start    Start    `cmd:"" name:"start" yaml:"start" help:"Start Wireguard tunnel."`
 }
 
 func (cmd *Wireguard) Run(_ *api.API, _ ClientConfig) error {
@@ -71,11 +71,11 @@ func (cmd *Generate) Run(_ *api.API, _ ClientConfig) error {
 }
 
 type Start struct {
-	Target   string `arg:"" name:"agent" help:"The target agent."`
-	Port     int    `default:"${_wg_port}" name:"port" help:"The port to listen on."`
-	Ranges   string `name:"range" help:"the ip ranges to route through the Wireguard VPN"`
-	Loopback bool   `name:"loopback" help:"Whether to use the loopback interface using the 240.0.0.0/8 range."`
-	Exec     bool   `name:"exec" default:"true" help:"Directly executes wireguard commands with privileges."`
+	Target   string `arg:"" name:"agent" yaml:"agent" help:"Target agent for which to start the WireGuard service."`
+	Port     int    `default:"${_wg_port}" name:"port" help:"Port number to listen on for WireGuard connections."`
+	Ranges   string `name:"range" help:"IP ranges to route through the WireGuard VPN (comma-separated)."`
+	Loopback bool   `name:"loopback" help:"Use the loopback interface with the 240.0.0.0/8 address range."`
+	Exec     bool   `name:"exec" default:"true" help:"Execute WireGuard commands directly with elevated privileges."`
 }
 
 func (s *Start) Validate() error {

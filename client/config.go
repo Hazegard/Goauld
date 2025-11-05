@@ -138,44 +138,44 @@ var (
 )
 
 type ClientConfig struct {
-	Server    string `default:"${_server}" short:"s" name:"server" yaml:"server"  optional:"" help:"HTTP Server to connect to."`
-	SSHServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH Server to connect to."`
+	Server    string `default:"${_server}" short:"s" name:"server" yaml:"server" optional:"" help:"HTTP server address to connect to."`
+	SSHServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH server address to connect to."`
 
-	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required to access the /manage/ endpoint."`
-	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token required to access the /admin/ endpoint."`
+	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token for the /manage/ API endpoint."`
+	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token for the /admin/ API endpoint."`
 
-	Quiet    bool `default:"${_quiet}" name:"quiet" yaml:"quiet"  short:"q" help:"Suppress all logs"`
-	Verbose  int  `default:"${_verbosity}" name:"verbose" yaml:"verbose"  short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
-	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" yaml:"insecure" help:"Allow insecure connection (do not validate TLS certificate)."`
+	Quiet    bool `default:"${_quiet}" short:"q" name:"quiet" yaml:"quiet" short:"q" help:"Suppress all log output."`
+	Verbose  int  `default:"${_verbosity}" short:"v" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Increase verbosity level. Repeat for more detailed logs."`
+	Insecure bool `default:"${_insecure}" short:"k" name:"insecure" yaml:"insecure" help:"Allow insecure connections (skip TLS certificate verification)."`
 
-	Version        bool   `default:"${_version}" name:"version" yaml:"version" short:"V" help:"Show version information"`
-	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" yaml:"generate-config" help:"Generate configuration file based on the current options."`
-	ConfigFile     string `default:"${_config_file}" name:"config-file" yaml:"config-file" optional:"" short:"c" help:"Configuration file to use."`
+	Version        bool   `default:"${_version}" short:"V" name:"version" yaml:"version" short:"V" help:"Display version information and exit."`
+	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" yaml:"generate-config" help:"Generate a configuration file based on the current options."`
+	ConfigFile     string `default:"${_config_file}" short:"c" name:"config-file" yaml:"config-file" optional:"" short:"c" help:"Path to configuration file."`
 
-	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" hidden:"true" name:"agent-password" yaml:"agent-password" help:"Agent password map."`
-	PrivatePassword string            `default:"" name:"password" yaml:"password" short:"P" help:"Agent password."`
-	PromptPassword  bool              `default:"${_prompt_static_password}" name:"prompt" yaml:"prompt" short:"Q" help:"Prompt for the agent private password."`
-	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" negatable:"" help:"Save the prompted password in the config file."`
+	AgentPassword   map[string]string `default:"${_static_ssh_agent_map}" hidden:"true" name:"agent-password" yaml:"agent-password" help:"Agent password map (internal use only)."`
+	PrivatePassword string            `default:"" short:"P" name:"password" yaml:"password" short:"P" help:"Agent private password."`
+	PromptPassword  bool              `default:"${_prompt_static_password}" short:"Q" name:"prompt" yaml:"prompt" short:"Q" yaml:"prompt" help:"Prompt for the agent's private password."`
+	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" negatable:"" help:"Save the prompted password in the configuration file."`
 
-	SSH       SSH       `cmd:"" name:"ssh" help:"Connect to the agent through SSH."`
-	Socks     Socks     `cmd:"" name:"socks" help:"Mount the socks server exposed by the agent."`
-	SCP       Scp       `cmd:"" name:"scp" help:"Transfer files using SCP from/to the agent."`
-	Rsync     Rsync     `cmd:"" name:"rsync" help:"Transfer files using Rsync from/to the agent."`
-	Jump      Jump      `cmd:"" name:"jump" help:"SSh to a remote server using the agent as jump server."`
-	VsCode    VsCode    `cmd:"" name:"vscode" help:"Start vsCode in remote mode."`
-	Clipboard Clipboard `cmd:"" name:"clip" help:"Interact with agent clipboard."`
-	TUI       Tui       `cmd:"" name:"tui" help:"TUI used to manage the connected agents"`
-	Pass      Password  `cmd:"" default:"withargs" name:"pass"  help:"Retrieve the passwords used to connect to the agent."`
-	Kill      Kill      `cmd:"" name:"kill" help:"Kill the agent."`
-	Reset     Reset     `cmd:"" name:"reset" help:"Reset the agent."`
-	Delete    Delete    `cmd:"" name:"delete" help:"Delete the agent."`
-	List      List      `cmd:"" name:"list" help:"List all agents."`
-	Compile   Compiler  `cmd:"" name:"compile" help:"Compile the agent."`
-	Admin     Admin     `cmd:"" name:"admin" help:"Admin command." hidden:"true"`
-	Wireguard Wireguard `cmd:"" name:"wireguard" help:"Wireguard configuration file."`
+	SSH       SSH       `cmd:"" name:"ssh" help:"Connect to an agent via SSH."`
+	Socks     Socks     `cmd:"" name:"socks" help:"Expose the SOCKS proxy provided by the agent."`
+	SCP       Scp       `cmd:"" name:"scp" help:"Transfer files to/from the agent using SCP."`
+	Rsync     Rsync     `cmd:"" name:"rsync" help:"Transfer files to/from the agent using Rsync."`
+	Jump      Jump      `cmd:"" name:"jump" help:"SSH into a remote host using the agent as a jump server."`
+	VsCode    VsCode    `cmd:"" name:"vscode" help:"Launch VS Code in remote mode via the agent."`
+	Clipboard Clipboard `cmd:"" name:"clip" yaml:"clip" help:"Access or modify the agent clipboard."`
+	TUI       Tui       `cmd:"" name:"tui" help:"Launch the text-based interface for managing connected agents."`
+	Pass      Password  `cmd:"" default:"withargs" name:"pass" help:"Retrieve stored passwords used by the agent."`
+	Kill      Kill      `cmd:"" name:"kill" help:"Terminate a running agent."`
+	Reset     Reset     `cmd:"" name:"reset" help:"Reset an agent to its default state."`
+	Delete    Delete    `cmd:"" name:"delete" help:"Delete an agent permanently."`
+	List      List      `cmd:"" name:"list" help:"List all available agents."`
+	Compile   Compiler  `cmd:"" name:"compile" help:"Compile a new agent binary."`
+	Admin     Admin     `cmd:"" name:"admin" help:"Administrative commands (internal use)." hidden:"true"`
+	Wireguard Wireguard `cmd:"" name:"wireguard" help:"Generate or manage WireGuard configuration."`
 
 	SearchConfigDir string             `hidden:""`
-	WGConf          wireguard.WGConfig `name:"wg" help:"Wireguard configuration file." embed:"" `
+	WGConf          wireguard.WGConfig `name:"wg" help:"WireGuard configuration options." embed:""`
 }
 
 func (cfg *ClientConfig) EnvVar(target string) []string {

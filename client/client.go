@@ -123,7 +123,7 @@ func main() {
 		cfg.GenerateConfig = false
 		c, err := cfg.GenerateYAMLConfig()
 		if err != nil {
-			log.Error().Err(err).Msg("error generating the agent config")
+			log.Error().Err(err).Msg("error generating the client config")
 
 			return
 		}

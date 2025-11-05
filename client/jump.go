@@ -7,10 +7,10 @@ import (
 )
 
 type Jump struct {
-	Agent string   `arg:"" name:"agent" yaml:"agent" help:"Agent name to retrieve password."`
-	Print bool     `name:"print" yaml:"print" help:"Print this agent."`
-	Scp   bool     `name:"scp" yaml:"scp" help:"Scp using the Jump."`
-	Args  []string `arg:"" passthrough:"" help:"Additional arguments."`
+	Agent string   `arg:"" name:"agent" yaml:"agent" help:"Target agent to use as a jump host for SSH connections."`
+	Print bool     `name:"print" yaml:"print" help:"Print the generated SSH jump command instead of executing it."`
+	Scp   bool     `name:"scp" yaml:"scp" help:"Use SCP through the jump host."`
+	Args  []string `arg:"" passthrough:"" help:"Additional arguments passed to the SSH or SCP command."`
 }
 
 func (j *Jump) Run(cfg ClientConfig) error {

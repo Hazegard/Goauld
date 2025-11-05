@@ -15,15 +15,12 @@ import (
 
 // Scp wraps the scp command to copy files between the host and the agent.
 type Scp struct {
-	Target string `kong:"-"`
-	Print  bool   `default:"${_scp_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	// Source      string   `default:"${_scp_source}" arg:"" name:"source" help:"Origin copy."`
-	// Destination string   `default:"${_scp_destination}" arg:"" name:"destination" yaml:"destination" help:"Destination to copy."`
-	SSHOpts     []string `short:"o"`
-	SSHConfFile string   `short:"F"`
-	Paths       []string `arg:"" name:"paths" help:"List of paths to scp" passthrough:""`
+	Target string `kong:"-"` // internal, not shown in help
+	Print  bool   `default:"${_scp_print}" name:"print" yaml:"print" optional:"" help:"Print the generated SCP command instead of executing it."`
 
-	// ScpArgs     []string `arg:"" passthrough:"" optional:""`
+	SSHOpts     []string `short:"o" help:"Additional SSH options (equivalent to '-o')."`
+	SSHConfFile string   `short:"F" help:"Path to an SSH configuration file to use."`
+	Paths       []string `arg:"" name:"paths" help:"Paths to copy using SCP." passthrough:""`
 }
 
 // Run execute the scp command.

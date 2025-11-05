@@ -22,20 +22,20 @@ import (
 )
 
 type SSH struct {
-	Target         string   `arg:"" name:"agent" help:"The target agent." optional:""`
-	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:""  optional:"" help:"Forward the SOCKS ports on the local host."`
-	HTTP           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:"" optional:"" help:"Forward the HTTP proxy ports on the local host."`
-	WG             bool     `default:"${_ssh_wg}" name:"wg" yaml:"wg" negatable:"" optional:"" help:"Forward the Wireguard proxy ports on the local host."`
-	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS to."`
-	LocalHTTPPort  int      `default:"${_ssh_local_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Local port to bind the SOCKS to."`
-	LocalWGPort    int      `default:"${_ssh_local_http_port}" name:"wg-port" yaml:"wg-port" optional:"" help:"Local port to bind the wireguard to."`
-	SSH            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:"" optional:"" help:"Connect to the agent SSHD service."`
-	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:""  optional:"" help:"Show the SSH command instead of executing it."`
-	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Enable direct STDIN/STDOUT connections to Allow to use proxycommand."`
-	Log            bool     `default:"${_ssh_log}" name:"log" yaml:"log" optional:"" help:"Record shell."`
-	SSHOpts        []string `short:"o"`
-	SSHConfFile    string   `short:"F"`
-	SSHArgs        []string `arg:"" passthrough:"" optional:"" help:"Additional args directly passed to the SSH command."`
+	Target         string   `arg:"" name:"agent" help:"Target agent to connect to." optional:""`
+	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:"" optional:"" help:"Forward the agent's SOCKS proxy to the local host."`
+	HTTP           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:"" optional:"" help:"Forward the agent's HTTP proxy to the local host."`
+	WG             bool     `default:"${_ssh_wg}" name:"wg" yaml:"wg" negatable:"" optional:"" help:"Forward the agent's WireGuard interface to the local host."`
+	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS proxy."`
+	LocalHTTPPort  int      `default:"${_ssh_local_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Local port to bind the HTTP proxy."`
+	LocalWGPort    int      `default:"${_ssh_local_http_port}" name:"wg-port" yaml:"wg-port" optional:"" help:"Local port to bind the WireGuard proxy."`
+	SSH            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:"" optional:"" help:"Connect directly to the agent’s SSH service."`
+	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated SSH command instead of executing it."`
+	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Use direct STDIN/STDOUT mode for ProxyCommand compatibility."`
+	Log            bool     `default:"${_ssh_log}" name:"log" yaml:"log" optional:"" help:"Record the SSH session to a log file."`
+	SSHOpts        []string `short:"o" help:"Additional SSH options."`
+	SSHConfFile    string   `short:"F" help:"Path to an SSH configuration file to use."`
+	SSHArgs        []string `arg:"" passthrough:"" optional:"" help:"Extra arguments passed directly to the underlying SSH command."`
 }
 
 type Command struct {
