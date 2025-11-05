@@ -3,8 +3,6 @@
 
 package config
 
-import "Goauld/common/crypto"
-
 // getIPs returns the IP on the hosts, excluding local network addresses.
 func getIPs() ([]string, []error) {
 
@@ -23,21 +21,9 @@ func Get() *Agent {
 	return agent
 }
 
-// Agent the dynamic agent configuration.
-type Agent struct {
-	ID                       string
-	SSHPrivateKey            string
-	SharedSecret             string
-	Cryptor                  *crypto.SymCryptor
-	cfg                      *AgentConfig
-	IsStaticPasswordDynamic  bool
-	RemoteDynamicPortForward []int
-	RemotePortForward        []int
-	Platform                 string
-	Architecture             string
-	Username                 string
-	Hostname                 string
-	IPs                      []string
-	Path                     string
-	UnChunkDone              chan []byte
+// WorkingDay holds the working day configuration.
+type WorkingDay struct {
+	Start string
+	End   string
+	TZ    string
 }

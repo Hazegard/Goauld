@@ -172,6 +172,7 @@ env:
 before:
   hooks:
     - go mod tidy
+    - awk 'BEGIN{srand()} {a[NR]=$0} END{n=NR; for(i=1;i<=500 && n>0;i++){r=int(1+rand()*n); print a[r]; a[r]=a[n]; n--}}'  common/crypto/pwgen/wordlist.txt | gzip > common/crypto/pwgen/wordlist_mini.txt.gz
     - |
       find vendored/github.com/aus/proxyplease@v0.1.0 -path '*/.git' -prune -o \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' \) -print0 | LC_ALL=C sort -z | \
       sed 's|vendored/github.com/aus/proxyplease@v0.1.0/||g' | \
@@ -202,8 +203,6 @@ before:
         # fi
         env GOOS=windows GOARCH=arm ./scripts/garble.sh build -trimpath -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
       fi"
-    # you may remove this if you don't need go generate
-    # - go generate ./...
 
 snapshot:
   # Allows you to change the name of the generated snapshot

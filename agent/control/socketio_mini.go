@@ -5,8 +5,10 @@ package control
 import (
 	"Goauld/agent/chunkAgent"
 	"Goauld/agent/config"
+	globalcontext "Goauld/agent/context"
 	"Goauld/common/crypto"
 	"Goauld/common/log"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"

@@ -418,9 +418,9 @@ affreux
 affront
 affronte
 affronter
-affût
-affûtage
-affûter
+affut
+affutage
+affuter
 afghan
 afghane
 afghans
@@ -430,7 +430,7 @@ africaines
 africains
 agacement
 agacer
-âgees
+agees
 agence
 agencement
 agencer
@@ -456,7 +456,6 @@ agiter
 agneau
 agneler
 agnostique
-agnus dei
 agonie
 agoniser
 agrafe
@@ -544,7 +543,7 @@ alarme
 alarmer
 albanais
 albanaise
-albâtre
+albatre
 albatros
 albertain
 albinos
@@ -811,7 +810,7 @@ aneantir
 anecdote
 anemie
 anemique
-ânerie
+anerie
 anesthesie
 angelique
 angelot
@@ -932,7 +931,7 @@ apathie
 apathique
 apatride
 apercevoir
-aperçu
+apercu
 aperitif
 apesanteur
 aphasie
@@ -950,7 +949,7 @@ apologie
 apologiste
 apostrophe
 apotheose
-apôtre
+apotre
 apparait
 apparaitre
 appareil
@@ -1047,7 +1046,7 @@ appuyee
 appuyer
 appuyes
 apres
-âprete
+aprete
 aptes
 aptitude
 aptitudes
@@ -1131,7 +1130,7 @@ aromates
 aromatique
 aromatise
 aromatiser
-arôme
+arome
 arpenter
 arrache
 arracher
@@ -1170,7 +1169,6 @@ arrose
 arroser
 arsenal
 arsenic
-art huis
 artere
 artesien
 arthrite
@@ -1412,8 +1410,6 @@ attribut
 attriste
 attrister
 atypique
-au courant
-au regime
 aubaine
 auberge
 aubergine
@@ -1439,11 +1435,10 @@ augmentent
 augmenter
 augure
 auguste
-aumône
-aumônier
+aumone
+aumonier
 auparavant
 aupres
-aupres de
 auquel
 auraient
 aurais
@@ -1455,7 +1450,7 @@ auront
 aurore
 auspices
 aussi
-aussitôt
+aussitot
 austere
 austerite
 austral
@@ -1497,8 +1492,6 @@ autoroutes
 autos
 autour
 autre
-autre côte
-autre part
 autrefois
 autrement
 autres
@@ -1559,7 +1552,6 @@ aviateur
 aviation
 aviatrice
 avide
-avide de
 avidement
 avides
 avidite
@@ -1601,7 +1593,7 @@ babouche
 baccara
 bachelier
 bacheliers
-bâcle
+bacle
 bacon
 bacterie
 bacterien
@@ -1609,7 +1601,7 @@ badaud
 badge
 baffe
 bafouiller
-bâfrer
+bafrer
 bagage
 bagages
 bagagiste
@@ -1623,8 +1615,8 @@ baguette
 bahut
 baigner
 baignoire
-bâillement
-bâiller
+baillement
+bailler
 bailleur
 bailleurs
 bains
@@ -1636,7 +1628,6 @@ baisser
 bakchich
 bakelite
 baklava
-bal masque
 balade
 balader
 balafre
@@ -1645,7 +1636,7 @@ balalaika
 balance
 balancer
 balancier
-balançoire
+balancoire
 balatum
 balaye
 balayer
@@ -1751,7 +1742,6 @@ barque
 barrage
 barrages
 barre
-barre fixe
 barreau
 barreaux
 barrer
@@ -1792,17 +1782,17 @@ bataille
 batailles
 bataillon
 bataillons
-bâtard
+batard
 bateau
 bateaux
-bâtiment
-bâtiments
-bâtir
-bâtisse
-bâtisseur
-bâton
-bâtonnier
-bâtons
+batiment
+batiments
+batir
+batisse
+batisseur
+baton
+batonnier
+batons
 battage
 battant
 battants
@@ -1820,7 +1810,6 @@ bavard
 bavarde
 bavarder
 baver
-baver de
 bavure
 bavures
 bazar
@@ -1839,8 +1828,6 @@ becqueter
 begayer
 beige
 beigne
-bel âge
-bel homme
 beler
 belge
 belges
@@ -1887,7 +1874,6 @@ betail
 betes
 betise
 beton
-beton arme
 bette
 betterave
 beurre
@@ -1909,7 +1895,7 @@ bienfait
 biens
 bienseance
 bienseant
-bientôt
+bientot
 bienvenue
 biere
 biffer
@@ -1931,7 +1917,7 @@ billes
 billet
 billets
 binaire
-binôme
+binome
 biographie
 biologie
 biologique
@@ -1962,8 +1948,8 @@ blague
 blaguer
 blair
 blaireau
-blâme
-blâmer
+blame
+blamer
 blanc
 blanche
 blanches
@@ -2030,8 +2016,6 @@ bombance
 bombardier
 bombe
 bombes
-bon cœur
-bon grain
 bonace
 bonasse
 bonasserie
@@ -2073,7 +2057,6 @@ bottes
 bottin
 boucan
 bouche
-bouche bee
 bouchee
 boucher
 boucherie
@@ -2258,12 +2241,12 @@ bruccio
 bruine
 bruit
 bruits
-brûlant
-brûlante
-brûle
-brûlees
-brûler
-brûlure
+brulant
+brulante
+brule
+brulees
+bruler
+brulure
 brume
 brunch
 brune
@@ -2279,10 +2262,10 @@ bruxellois
 bruyant
 buanderie
 buccal
-bûcher
-bûcheron
-bûcherons
-bûcheur
+bucher
+bucheron
+bucherons
+bucheur
 budget
 budgetaire
 budgets
@@ -2314,11 +2297,11 @@ cabaret
 cabine
 cabinet
 cabinets
-câble
-câble
-câbles
-câbles
-câblot
+cable
+cable
+cables
+cables
+cablot
 caboche
 cabot
 caboter
@@ -2385,17 +2368,16 @@ calculee
 calculer
 calculette
 calculs
-cale en
-caleçon
+calecon
 calendrier
 calepin
 caler
 calfeutrer
-câlin
-câline
-câlinement
-câliner
-câlinerie
+calin
+caline
+calinement
+caliner
+calinerie
 calleux
 callosite
 calme
@@ -2478,7 +2460,6 @@ cantonna
 cantons
 caoutchouc
 capable
-capable de
 capables
 capacite
 capacites
@@ -2520,7 +2501,6 @@ cardinal
 cardinaux
 cardite
 carence
-carence de
 carences
 caressant
 caresse
@@ -2737,7 +2717,7 @@ chairs
 chaise
 chaises
 chaland
-châle
+chale
 chalet
 chaleur
 chaleureux
@@ -2839,22 +2819,22 @@ charter
 chartres
 chartreuse
 chasse
-châsse
+chasse
 chasse
 chassent
 chasser
 chasseur
 chasseurs
-châssis
+chassis
 chaste
 chastete
-châtaigne
-châtain
-château
-châteaux
-châtelet
-châtier
-châtiment
+chataigne
+chatain
+chateau
+chateaux
+chatelet
+chatier
+chatiment
 chatoyer
 chats
 chaud
@@ -2923,8 +2903,6 @@ cheville
 chevre
 chevreau
 chevres
-chez nous
-chez soi
 chiant
 chiard
 chicaner
@@ -2963,7 +2941,7 @@ chirurgien
 chlore
 chocolat
 chocs
-chœur
+choeur
 choir
 choisi
 choisie
@@ -2973,9 +2951,9 @@ choisis
 choisit
 choix
 cholera
-chômage
-chômeur
-chômeurs
+chomage
+chomeur
+chomeurs
 chope
 choper
 choquant
@@ -3023,8 +3001,6 @@ cinglant
 cingle
 cingler
 cinoche
-cinq cents
-cinq jours
 cinquante
 cinquieme
 cintre
@@ -3133,8 +3109,8 @@ clope
 cloque
 clore
 close
-clôture
-clôturer
+cloture
+cloturer
 clouer
 clown
 clubs
@@ -3179,7 +3155,7 @@ colere
 colereux
 colerique
 colibri
-colimaçon
+colimacon
 colin
 colis
 collabore
@@ -3261,7 +3237,7 @@ commencee
 commencent
 commencer
 commencera
-commençons
+commencons
 comment
 commentait
 commentant
@@ -3270,7 +3246,7 @@ commente
 commenter
 commerage
 commerages
-commerçant
+commercant
 commerce
 commerces
 commercial
@@ -3435,7 +3411,7 @@ conclus
 conclusif
 conclusion
 conclut
-conçoit
+concoit
 concombre
 concorde
 concorder
@@ -3445,11 +3421,11 @@ concrete
 concretes
 concretion
 concrets
-conçu
-conçue
-conçues
+concu
+concue
+concues
 concurrent
-conçus
+concus
 condamnant
 condamne
 condamne
@@ -3605,7 +3581,7 @@ consistait
 consistant
 consiste
 consiste
-consœur
+consoeur
 consoler
 consolide
 consolider
@@ -3712,7 +3688,7 @@ contraster
 contrat
 contrats
 contre
-contrecœur
+contrecoeur
 contrecoup
 contredire
 contredit
@@ -3723,15 +3699,15 @@ contribue
 contribue
 contribuer
 contrition
-contrôle
-contrôle
-contrôlee
-contrôlees
-contrôlent
-contrôler
-contrôles
-contrôles
-contrôleur
+controle
+controle
+controlee
+controlees
+controlent
+controler
+controles
+controles
+controleur
 controuve
 convainc
 convaincre
@@ -3836,11 +3812,11 @@ cotations
 coteau
 cotee
 cotees
-côtelette
-côtes
-côtes
+cotelette
+cotes
+cotes
 cotisation
-côtoient
+cotoient
 coton
 cotonnade
 cotonnier
@@ -3868,8 +3844,6 @@ coulisser
 coulisses
 couloir
 couloirs
-coup d'œil
-coup monte
 coupable
 coupables
 coupant
@@ -3932,19 +3906,19 @@ cousin
 cousine
 cousins
 coussin
-coûte
-coûte
+coute
+coute
 couteau
 couteaux
 coutelas
-coûtent
-coûter
-coûtera
-coûterait
-coûteuse
-coûteuses
-coûteux
-coûts
+coutent
+couter
+coutera
+couterait
+couteuse
+couteuses
+couteux
+couts
 coutume
 coutumes
 coutumier
@@ -3956,7 +3930,6 @@ couvent
 couver
 couvercle
 couvert
-couvert de
 couverte
 couvertes
 couverts
@@ -3982,10 +3955,10 @@ craintes
 crampe
 crampon
 cramponner
-crâne
-crâner
-crânerie
-crâneur
+crane
+craner
+cranerie
+craneur
 crapule
 craque
 craquer
@@ -4103,7 +4076,7 @@ crotte
 crotter
 crottes
 croupe
-croûte
+croute
 croyaient
 croyait
 croyance
@@ -4120,7 +4093,7 @@ crucifix
 crudite
 cruel
 cruelle
-crûment
+crument
 cubain
 cubains
 cuber
@@ -4146,7 +4119,6 @@ cuivre
 cuivre
 cuivreux
 cuivrique
-cul sec
 culier
 culinaire
 culminant
@@ -4224,7 +4196,7 @@ dauphine
 davantage
 deale
 dealers
-debâcle
+debacle
 deballe!
 debander
 debardeur
@@ -4269,7 +4241,6 @@ debrayages
 debrayer
 debris
 debut
-debut de
 debutant
 debutants
 debute
@@ -4398,8 +4369,8 @@ decrire
 decrit
 decrocher
 decroitre
-deçue
-deçus
+decue
+decus
 dedaigner
 dedaigneux
 dedain
@@ -4473,17 +4444,17 @@ degager
 degages
 degaine
 degarni
-degât
-degâts
+degat
+degats
 degauchir
 degel
 degenerer
 degoter
 degouliner
 degourdi
-degoût
-degoûtant
-degoûter
+degout
+degoutant
+degouter
 degoutter
 degrader
 degre
@@ -4611,7 +4582,7 @@ denombre
 denombrer
 denomme
 denommer
-denonçait
+denoncait
 denonce
 denonce
 denoncee
@@ -4670,7 +4641,6 @@ depeupler
 depistage
 depister
 depit
-depit de
 deplace
 deplace
 deplacee
@@ -4703,8 +4673,8 @@ deposer
 deposes
 deposition
 deposseder
-depôt
-depôts
+depot
+depots
 depouiller
 depouilles
 depourvu
@@ -4805,7 +4775,7 @@ desirent
 desirer
 desireux
 desirs
-desœuvre
+desoeuvre
 desolation
 desole
 desoler
@@ -4831,7 +4801,7 @@ dessinees
 dessinent
 dessiner
 dessins
-dessoûler
+dessouler
 dessous
 dessus
 destin
@@ -5065,10 +5035,10 @@ diocese
 diplomate
 diplomates
 diplomatie
-diplôme
-diplôme
-diplômes
-diplômes
+diplome
+diplome
+diplomes
+diplomes
 dirais
 dirait
 direct
@@ -5127,7 +5097,7 @@ discutent
 discuter
 disent
 disette
-disgrâce
+disgrace
 disons
 disparait
 disparite
@@ -5222,8 +5192,6 @@ divisions
 divorce
 divorcer
 divulguer
-dix ans
-dix jours
 dixieme
 dizaine
 dizaines
@@ -5375,14 +5343,14 @@ droitier
 droitiere
 droits
 droiture
-drôle
-drôlerie
-drôles
+drole
+drolerie
+droles
 dromadaire
 dualisme
 dualite
 dubitatif
-dûment
+dument
 dunes
 dunkerque
 duper
@@ -5412,7 +5380,6 @@ dynamiser
 dynamisme
 dynamite
 dynastie
-eau de mer
 ebahi
 ebahir
 ebauche
@@ -5485,9 +5452,9 @@ eclope
 eclore
 ecluse
 ecluser
-ecœurant
-ecœurement
-ecœurer
+ecoeurant
+ecoeurement
+ecoeurer
 ecole
 ecoles
 ecolier
@@ -5822,9 +5789,6 @@ emprunte
 emprunter
 emprunts
 emulation
-en bas
-en face
-en haut
 encadre
 enceinte
 enceintes
@@ -5917,7 +5881,7 @@ enjamber
 enjeu
 enjeux
 enjoindre
-enjôler
+enjoler
 enjoliver
 enjoue
 enlacer
@@ -5946,7 +5910,7 @@ enregistre
 enregistre
 enrichi
 enrichir
-enrôler
+enroler
 enrouler
 enseignant
 enseigne
@@ -6017,8 +5981,8 @@ entrees
 entrefilet
 entrent
 entreposer
-entrepôt
-entrepôts
+entrepot
+entrepots
 entreprend
 entrepris
 entreprise
@@ -6062,8 +6026,8 @@ envoi
 envoie
 envol
 envolee
-envoûtant
-envoûter
+envoutant
+envouter
 envoye
 envoyee
 envoyees
@@ -6299,7 +6263,7 @@ etame
 etamer
 etanche
 etancher
-etançonner
+etanconner
 etang
 etant
 etape
@@ -6664,9 +6628,9 @@ fabuleux
 faces
 facetie
 facettes
-fâche
-fâcher
-fâcheux
+fache
+facher
+facheux
 facial
 facile
 facilement
@@ -6676,9 +6640,9 @@ facilite
 facilitee
 faciliter
 facilites
-façon
-façonner
-façons
+facon
+faconner
+facons
 facteur
 facteurs
 faction
@@ -6749,8 +6713,8 @@ fange
 fantaisie
 fantasme
 fantasmes
-fantôme
-fantômes
+fantome
+fantomes
 farce
 farcir
 fardeau
@@ -6792,15 +6756,12 @@ faussement
 fausser
 fausses
 faute
-faute de
 fautes
 fauteuil
 fauteuils
 fautif
 fauve
 fauves
-faux jeton
-faux pas
 faveur
 faveurs
 favorable
@@ -7022,7 +6983,7 @@ flamme
 flammes
 flanc
 flanelle
-flâner
+flaner
 flanquer
 flaque
 flash
@@ -7062,13 +7023,12 @@ flous
 fluctuer
 fluide
 fluidite
-flux de
-fœtus
+foetus
 foire
 foires
 foison
 foisonner
-folâtre
+folatre
 folie
 folies
 folklore
@@ -7174,7 +7134,6 @@ fossile
 fossiles
 fossiliser
 fossoyeur
-fou rire
 foudre
 foudroyant
 fouet
@@ -7190,7 +7149,6 @@ fouir
 foulard
 foulards
 foule
-foule de
 foulee
 fouler
 foules
@@ -7248,9 +7206,9 @@ fraiseur
 fraiseuse
 framboise
 franc
-français
-française
-françaises
+francais
+francaise
+francaises
 franche
 franchi
 franchie
@@ -7328,8 +7286,8 @@ froide
 froidement
 froideur
 froisser
-frôle
-frôler
+frole
+froler
 fromage
 fromages
 froment
@@ -7389,14 +7347,14 @@ future
 futures
 futurs
 fuyant
-gâcher
-gâchette
-gâchis
+gacher
+gachette
+gachis
 gadget
 gadgets
 gadoue
 gaffe
-gager 
+gager
 gages
 gageure
 gagnage
@@ -7447,8 +7405,8 @@ garantir
 garantis
 garantit
 garce
-garçon
-garçons
+garcon
+garcons
 gardait
 gardant
 garde
@@ -7467,8 +7425,8 @@ garnir
 garnison
 gaspillage
 gaspiller
-gâteau
-gâter
+gateau
+gater
 gauche
 gaucher
 gauchere
@@ -7537,7 +7495,7 @@ geodesie
 geodesique
 geographe
 geographie
-geôle
+geole
 geologie
 geometrie
 georgien
@@ -7589,7 +7547,7 @@ glacer
 glacial
 glacier
 glaciere
-glaçon
+glacon
 glaise
 glaive
 glande
@@ -7662,16 +7620,16 @@ goulot
 goulu
 gourmand
 gousse
-goûter
-goûts
+gouter
+gouts
 goutte
 goutter
 gouttes
 gouvernail
 gouverner
 gouverneur
-grâce
-grâces
+grace
+graces
 gracier
 gracieux
 grade
@@ -7779,7 +7737,6 @@ grogne
 grommeler
 grondement
 gronder
-gros mot
 groseille
 grosse
 grosses
@@ -7828,7 +7785,6 @@ guinde
 guinee
 guirlande
 guise
-guise de
 guitare
 guitariste
 gypaete
@@ -7856,7 +7812,7 @@ habituel
 habituelle
 habituels
 habitues
-hâbleur
+hableur
 hache
 hacher
 hachette
@@ -7865,7 +7821,7 @@ haine
 haineux
 haleine
 haler
-hâler
+haler
 haleter
 halle
 hallebarde
@@ -7902,7 +7858,7 @@ harpiste
 hasard
 hasardeux
 hasards
-hâter
+hater
 hausse
 hausser
 hausses
@@ -8031,8 +7987,8 @@ honore
 honorer
 honte
 honteux
-hôpital
-hôpitaux
+hopital
+hopitaux
 hoqueter
 horaire
 horaires
@@ -8051,13 +8007,13 @@ hostile
 hostiles
 hostilite
 hostilites
-hôtel
-hôtelier
-hôteliere
-hôteliers
-hôtellerie
-hôtels
-hôtes
+hotel
+hotelier
+hoteliere
+hoteliers
+hotellerie
+hotels
+hotes
 houille
 houle
 houlette
@@ -8073,7 +8029,6 @@ huilerie
 huileux
 huissier
 huissiers
-huit cents
 huitieme
 huitre
 huitres
@@ -8124,8 +8079,7 @@ hysterie
 hysterique
 iceberg
 iceux
-ici peu
-icône
+icone
 ictere
 ideal
 ideale
@@ -8144,8 +8098,8 @@ ideologues
 idiot
 idiote
 idiotie
-idolâtrer
-idolâtrie
+idolatrer
+idolatrie
 ignare
 ignoble
 ignominie
@@ -8288,9 +8242,9 @@ imposes
 imposition
 impossible
 imposteur
-impôt
+impot
 impotent
-impôts
+impots
 imprecis
 imprenable
 impression
@@ -8460,7 +8414,7 @@ inexact
 inexerce
 inexpert
 infaisable
-infâme
+infame
 infamie
 infanterie
 infantile
@@ -8642,7 +8596,7 @@ instituts
 instruire
 instruit
 instrument
-insu 
+insu
 insucces
 insulaire
 insuline
@@ -8881,7 +8835,6 @@ jeannette
 jeans
 jesuite
 jesus
-jet eau
 jetait
 jetant
 jetee
@@ -8893,7 +8846,7 @@ jette
 jettent
 jeudi
 jeune
-jeûne
+jeune
 jeunes
 jeunesse
 jeunesses
@@ -9021,10 +8974,10 @@ labyrinthe
 lacerer
 lacet
 lacez
-lâche
-lâche
-lâcher
-lâchete
+lache
+lache
+lacher
+lachete
 laconique
 lacte
 lactifere
@@ -9087,7 +9040,7 @@ lanceur
 lancinant
 lancinante
 lanciner
-länder
+lander
 landes
 langage
 langages
@@ -9146,8 +9099,8 @@ leadership
 leasing
 lecanium
 lecher
-leçon
-leçons
+lecon
+lecons
 lecteur
 lecteurs
 lectrice
@@ -9283,7 +9236,7 @@ lignes
 ligoter
 ligue
 lilas
-limaçon
+limacon
 limer
 liminaire
 limitant
@@ -9397,7 +9350,7 @@ longueurs
 lopin
 loquace
 loque
-lorgner 
+lorgner
 loriot
 lorraine
 lorsque
@@ -9433,7 +9386,6 @@ lucidite
 luciole
 luette
 lueur
-lueur vive
 lugubre
 luire
 luisant
@@ -9473,18 +9425,18 @@ maboul
 macaroni
 macedoine
 macerer
-mâcher
+macher
 machin
 machinal
 machine
 machines
-mâchoire
-mâchonner
+machoire
+machonner
 macintosh
-maçon
-maçonnerie
-maçonnique
-maçons
+macon
+maconnerie
+maconnique
+macons
 macro
 madame
 madeleine
@@ -9572,7 +9524,7 @@ malavise
 malchance
 maldonne
 malentendu
-malfaçon
+malfacon
 malfaiteur
 malgre
 malhabile
@@ -9630,8 +9582,8 @@ manipuler
 manne
 mannequin
 mannequins
-manœuvre
-manœuvres
+manoeuvre
+manoeuvres
 manouche
 manquaient
 manquait
@@ -9881,7 +9833,6 @@ melodies
 melodieux
 melodique
 melon
-melon eau
 membrane
 membre
 membres
@@ -10184,9 +10135,9 @@ modifient
 modifier
 modifies
 module
-mœlle
+moelle
 moelleux
-mœurs
+moeurs
 moindre
 moindres
 moine
@@ -10229,7 +10180,7 @@ moniteurs
 monnaie
 monnaies
 monologue
-monôme
+monome
 monopole
 monopoles
 monotone
@@ -10355,7 +10306,7 @@ mouvemente
 mouvements
 mouvoir
 moyen
-moyenâgeux
+moyenageux
 moyennant
 moyenne
 moyennes
@@ -10382,9 +10333,9 @@ munis
 munitions
 muqueuse
 muraille
-mûres
+mures
 muret
-mûrir
+murir
 murmure
 murmurer
 musarder
@@ -10539,7 +10490,6 @@ nettoye
 nettoyer
 nettoyeur
 nettoyeuse
-neuf cents
 neufs
 neural
 neutralite
@@ -10574,7 +10524,7 @@ noblesse
 noces
 nocturne
 nocturnes
-nœuds
+noeuds
 noire
 noires
 noirs
@@ -10617,7 +10567,6 @@ norme
 normes
 norvegien
 norvegiens
-nos jours
 nostalgie
 notable
 notables
@@ -10637,8 +10586,8 @@ notoire
 notons
 notoriete
 notre
-nôtre
-nôtres
+notre
+notres
 nouer
 nouilles
 nounou
@@ -10676,7 +10625,6 @@ nuisances
 nuisible
 nuits
 nulle
-nulle part
 nullement
 nullite
 numeral
@@ -10783,11 +10731,11 @@ odeur
 odeurs
 odorant
 odorat
-œillere
-œsophage
-œuvre
-œuvrer
-œuvres
+oeillere
+oesophage
+oeuvre
+oeuvrer
+oeuvres
 offensant
 offense
 offenser
@@ -10862,7 +10810,7 @@ operee
 operees
 operer
 operes
-opiniâtre
+opiniatre
 opinion
 opinions
 opiomane
@@ -11053,7 +11001,6 @@ paient
 paillasson
 paille
 paillettes
-pain epice
 paire
 paires
 pairs
@@ -11063,7 +11010,7 @@ palais
 paletot
 palette
 palier
-pâlir
+palir
 palis
 palissade
 pallier
@@ -11111,7 +11058,7 @@ papoter
 paprika
 papule
 paquebot
-pâques
+paques
 paquet
 paquets
 parabellum
@@ -11140,7 +11087,6 @@ parapher
 parapluie
 parasol
 parce
-parce que
 parcelle
 parcelles
 parcourir
@@ -11299,7 +11245,7 @@ pastoureau
 patate
 patates
 patauger
-pâtee
+patee
 patelin
 pateliner
 patent
@@ -11308,7 +11254,7 @@ patere
 paternel
 paternelle
 paternite
-pâtes
+pates
 pathetique
 patiemment
 patience
@@ -11317,11 +11263,11 @@ patiente
 patienter
 patients
 patiner
-pâtir
-pâtisserie
+patir
+patisserie
 patois
 patoisant
-pâtre
+patre
 patriarche
 patrice
 patrie
@@ -11338,7 +11284,7 @@ patronyme
 patrouille
 patte
 pattes
-pâturage
+paturage
 paume
 paumer
 paupiere
@@ -11465,11 +11411,11 @@ percer
 percevoir
 perche
 percher
-perçoit
-perçoivent
-perçu
-perçue
-perçus
+percoit
+percoivent
+percu
+percue
+percus
 perdait
 perdant
 perdent
@@ -11697,7 +11643,7 @@ pique
 piquer
 piquet
 piquets
-piqûre
+piqure
 pirates
 pires
 piscine
@@ -11784,9 +11730,9 @@ plate
 plateau
 plateaux
 plates
-plâtras
-plâtre
-plâtrer
+platras
+platre
+platrer
 plats
 plausible
 plebe
@@ -11826,10 +11772,8 @@ pluralisme
 pluraliste
 pluralite
 pluriel
-plus bas
-plus cher
 plusieurs
-plutôt
+plutot
 pluvial
 pluvieux
 pneumonie
@@ -11851,7 +11795,7 @@ poids
 poignard
 poignee
 poignet
-poinçon
+poincon
 poindre
 poing
 point
@@ -11880,7 +11824,7 @@ polar
 polemique
 polemiquer
 polemiques
-pôles
+poles
 police
 polices
 policier
@@ -12116,7 +12060,7 @@ precises
 precision
 precisions
 precoce
-preconçu
+preconcu
 preconise
 preconise
 preconiser
@@ -12274,7 +12218,7 @@ previsions
 prevoient
 prevoir
 prevoit
-prevôt
+prevot
 prevoyait
 prevoyance
 prevoyant
@@ -12320,7 +12264,6 @@ privatisee
 privatiser
 prive
 prive
-prive air
 privee
 privees
 priver
@@ -12350,7 +12293,6 @@ prochaine
 prochaines
 prochains
 proche
-proche de
 proches
 proclamait
 proclamant
@@ -12389,7 +12331,6 @@ profil
 profile
 profils
 profit
-profit de
 profitable
 profitant
 profite
@@ -12454,9 +12395,9 @@ promu
 promulgue
 promulguer
 promus
-prônant
-prône
-prôner
+pronant
+prone
+proner
 pronom
 pronominal
 prononce
@@ -12529,7 +12470,7 @@ prouvent
 prouver
 provenance
 provenant
-provençal
+provencal
 provenir
 proverbe
 providence
@@ -12755,7 +12696,6 @@ radiner
 radio
 radios
 radis
-radis noir
 radius
 rafale
 raffinage
@@ -12783,7 +12723,7 @@ ralenti
 ralentie
 ralentir
 ralentit
-râler
+raler
 rallie
 ralliement
 rallier
@@ -12804,9 +12744,9 @@ rampante
 rampe
 ramper
 rancard
-rancœur
-rancœurs
-rançon
+rancoeur
+rancoeurs
+rancon
 rancunier
 randonnee
 range
@@ -12819,7 +12759,7 @@ rangs
 ranimer
 rapace
 rapatries
-râper
+raper
 rapetisser
 rapide
 rapidement
@@ -12869,8 +12809,8 @@ rassure
 rassure
 rassurer
 rassures
-râteau
-râtelier
+rateau
+ratelier
 rater
 rates
 ratifie
@@ -12994,8 +12934,8 @@ reclament
 reclamer
 reclus
 reclusion
-reçoit
-reçoivent
+recoit
+recoivent
 recolte
 recolter
 recoltes
@@ -13040,14 +12980,14 @@ recteur
 recteurs
 rectifier
 rectorat
-reçue
+recue
 recueil
 recueille
 recueilli
 recueillir
 recueillis
 recueils
-reçues
+recues
 recul
 reculade
 recule
@@ -13056,10 +12996,10 @@ reculer
 recupere
 recupere
 recuperer
-reçus
+recus
 recuse
 recuser
-reçut
+recut
 recyclage
 redacteur
 redacteurs
@@ -13090,7 +13030,6 @@ redresser
 reduction
 reductions
 reduire
-reduire en
 reduisant
 reduit
 reduite
@@ -13242,9 +13181,9 @@ rejoints
 rejoui
 rejouir
 rejouit
-relâche
-relâcher
-relâches
+relache
+relacher
+relaches
 relais
 relance
 relance
@@ -13812,7 +13751,7 @@ rigoureuse
 rigoureux
 rigueur
 rincer
-rincer 
+rincer
 ringard
 riper
 riposte
@@ -13860,12 +13799,12 @@ roche
 rochelle
 rocher
 rocheux
-rôder
-rôdeur
+roder
+rodeur
 rogatoire
 rognon
 roitelet
-rôles
+roles
 rolliers
 romain
 romaine
@@ -13902,8 +13841,8 @@ rosser
 rossignol
 rotatif
 rotation
-rôtir
-rôtissoire
+rotir
+rotissoire
 rouages
 roublard
 roubles
@@ -13981,7 +13920,6 @@ rutabaga
 rutilant
 rythme
 rythmes
-sa vie
 sabine
 sabir
 sable
@@ -14075,7 +14013,6 @@ sanction
 sanctions
 sanctuaire
 sandwich
-sang verse
 sanglant
 sanglante
 sanglants
@@ -14114,7 +14051,7 @@ satisfaits
 satisfont
 saturation
 saturer
-satyre 
+satyre
 sauce
 saucisse
 saucisson
@@ -14329,7 +14266,6 @@ separement
 separent
 separer
 separes
-sept cents
 septembre
 septennat
 septieme
@@ -14388,7 +14324,6 @@ servie
 serviette
 servile
 servir
-servir de
 servira
 serviront
 servis
@@ -14499,7 +14434,7 @@ sirene
 sirenes
 sirop
 sites
-sitôt
+sitot
 situant
 situation
 situations
@@ -14533,7 +14468,7 @@ sociologie
 sociologue
 socle
 sodium
-sœurs
+soeurs
 software
 soient
 soigne
@@ -14617,7 +14552,6 @@ sortait
 sortant
 sortants
 sorte
-sorte que
 sortent
 sortes
 sorti
@@ -14671,8 +14605,8 @@ souillon
 souillure
 soulage
 soulager
-soûlard
-soûlerie
+soulard
+soulerie
 souleve
 souleve
 soulevee
@@ -14693,12 +14627,12 @@ soumises
 soumission
 soupape
 soupapes
-soupçon
-soupçonne
-soupçonne
-soupçonner
-soupçonnes
-soupçons
+soupcon
+soupconne
+soupconne
+soupconner
+soupconnes
+soupcons
 soupe
 souper
 soupeser
@@ -15022,14 +14956,14 @@ surannes
 surcharge
 surchauffe
 surclasser
-surcoût
+surcout
 surcroit
 surdite
-sûrement
+surement
 surenchere
-sûres
+sures
 surestimer
-sûrete
+surete
 surevaluer
 surface
 surfaces
@@ -15106,8 +15040,8 @@ sympathie
 sympathies
 symphonie
 symposium
-symptôme
-symptômes
+symptome
+symptomes
 synagogue
 syndical
 syndicale
@@ -15141,9 +15075,9 @@ tablier
 tabou
 tabous
 tache
-tâche
+tache
 tacher
-tâches
+taches
 tacite
 taciturne
 tactique
@@ -15182,7 +15116,7 @@ tanneur
 tannin
 tannique
 tante
-tantôt
+tantot
 tapage
 tapageur
 taper
@@ -15214,11 +15148,10 @@ tassa
 tasse
 tasse
 tasser
-tâter
-tâter de
+tater
 tatillon
-tâtonner
-tâtons
+tatonner
+tatons
 taulard
 taule
 taupe
@@ -15261,11 +15194,8 @@ televises
 television
 telex
 telle
-telle que
 tellement
 telles
-telles que
-tels que
 telson
 temeraire
 temoignage
@@ -15330,7 +15260,6 @@ tentent
 tenter
 tentera
 tentes
-tenu de
 tenue
 tenues
 tenus
@@ -15376,11 +15305,11 @@ textes
 textile
 textiles
 textuel
-theâtral
-theâtrale
-theâtrales
-theâtre
-theâtres
+theatral
+theatrale
+theatrales
+theatre
+theatres
 theiere
 thematique
 theme
@@ -15410,7 +15339,7 @@ tiennent
 tiennes
 tiens
 tient
-tierçage
+tiercage
 tiers
 tigre
 tigre
@@ -15503,7 +15432,6 @@ torgnole
 tornade
 torrefier
 torrent
-torrent de
 torrentiel
 torride
 torse
@@ -15747,7 +15675,6 @@ trivial
 trochet
 trochile
 trois
-trois mâts
 troisieme
 troisiemes
 trolley
@@ -15762,7 +15689,7 @@ trompeur
 tronc
 tronche
 troncs
-trône
+trone
 tropical
 tropicale
 tropique
@@ -15826,7 +15753,6 @@ tunnel
 tunnels
 turbo
 turbulent
-turc turcs
 turnover
 turpitude
 turque
@@ -16191,7 +16117,6 @@ vignoble
 vigoureuse
 vigoureux
 vigueur
-vil prix
 vilain
 vilaine
 vilenie
@@ -16348,8 +16273,8 @@ votee
 voter
 votes
 votre
-vôtre
-vôtres
+votre
+votres
 voudra
 voudraient
 voudrais
@@ -16367,7 +16292,7 @@ voulons
 voulu
 voulue
 voulut
-voûte
+voute
 voyage
 voyager
 voyages

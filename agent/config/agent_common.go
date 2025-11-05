@@ -3,8 +3,10 @@ package config
 import (
 	"Goauld/agent/ssh/transport/dns"
 	"Goauld/common"
+	"Goauld/common/crypto"
 	"Goauld/common/ssh"
 	"Goauld/common/utils"
+	"Goauld/common/wireguard"
 	"fmt"
 	"net/url"
 	"os"
@@ -12,6 +14,27 @@ import (
 	"strings"
 	"time"
 )
+
+// Agent the dynamic agent configuration.
+type Agent struct {
+	ID                       string
+	SSHPrivateKey            string
+	SharedSecret             string
+	Cryptor                  *crypto.SymCryptor
+	cfg                      *AgentConfig
+	IsStaticPasswordDynamic  bool
+	RemoteDynamicPortForward []int
+	RemotePortForward        []int
+	Platform                 string
+	Architecture             string
+	Username                 string
+	Hostname                 string
+	IPs                      []string
+	Path                     string
+	UnChunkDone              chan []byte
+	WorkingDay               WorkingDay
+	Wireguard                wireguard.WGConfig
+}
 
 // LocalSSHDPassword returns the current ssh password allowing to connect.
 func (a *Agent) LocalSSHDPassword() string {

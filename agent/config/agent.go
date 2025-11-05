@@ -27,26 +27,6 @@ import (
 	"github.com/keygen-sh/machineid"
 )
 
-// Agent the dynamic agent configuration.
-type Agent struct {
-	ID                       string
-	SSHPrivateKey            string
-	SharedSecret             string
-	Cryptor                  *crypto.SymCryptor
-	cfg                      *AgentConfig
-	IsStaticPasswordDynamic  bool
-	RemoteDynamicPortForward []int
-	RemotePortForward        []int
-	Platform                 string
-	Architecture             string
-	Username                 string
-	Hostname                 string
-	IPs                      []string
-	Path                     string
-	WorkingDay               WorkingDay
-	Wireguard                wireguard.WGConfig
-}
-
 var agent *Agent
 
 // InitAgent parses the command lines arguments and initializes the temporary values (shared secret,etc...)

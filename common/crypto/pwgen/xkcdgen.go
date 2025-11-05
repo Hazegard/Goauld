@@ -5,7 +5,6 @@ package pwgen
 import (
 	"bytes"
 	"compress/gzip"
-	"embed"
 	"errors"
 	"fmt"
 	"io"
@@ -26,11 +25,8 @@ func GetXKCDPassword() (string, error) {
 	return g.GeneratePasswordString(), nil
 }
 
-//go:embed wordlist.txt.gz
-var sources embed.FS
-
 func getWordList() ([]string, error) {
-	content, err := sources.ReadFile("wordlist.txt.gz")
+	content, err := sources.ReadFile(wl_name)
 	if err != nil {
 		return nil, fmt.Errorf("could not read file wordlist: %w", err)
 	}
