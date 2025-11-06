@@ -29,6 +29,9 @@ shared-password: ""
 # Password required to access the agent.
 password: ""
 
+# Disable the local password generation if no static password is provided.
+disable-password: false
+
 # Friendly name to identify the agent (default: 'user@hostname').
 name: user@hostname
 
@@ -42,7 +45,7 @@ socks: true
 http: true
 
 # Enable the WireGuard service.
-wg: true
+wg: false
 
 # Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured).
 proxy: ""

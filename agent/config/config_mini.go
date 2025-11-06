@@ -257,6 +257,7 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("BACKGROUND", _background))
 	env = append(env, prefixEnv("CUSTOM_DNS_COMMAND", _custom_dns_command))
 	env = append(env, prefixEnv("KILL_SWITCH", _killswitch))
+	env = append(env, prefixEnv("DISABLE_PASSWORD", _disable_password))
 	return env
 }
 

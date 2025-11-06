@@ -153,17 +153,21 @@ func (a *Agent) PrivateSshdPassword() string {
 	if a.cfg.PrivatePassword != "" {
 		return a.cfg.PrivatePassword
 	}
-	if _private_password == "" {
-		p, err := pwgen.GetXKCDPassword()
-		if err != nil {
-			p, err = crypto.GeneratePassword(30)
-			if err != nil {
-				panic(err)
-			}
-		}
-		a.IsStaticPasswordDynamic = true
-		_private_password = p
+	if _private_password != "" {
+		return _private_password
 	}
+	if a.cfg.DisablePassword {
+		return ""
+	}
+	p, err := pwgen.GetXKCDPassword()
+	if err != nil {
+		p, err = crypto.GeneratePassword(30)
+		if err != nil {
+			panic(err)
+		}
+	}
+	a.IsStaticPasswordDynamic = true
+	_private_password = p
 
 	return _private_password
 }

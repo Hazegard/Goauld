@@ -136,6 +136,8 @@ jump:
   print: false
   #Use SCP through the jump host.
   scp: false
+  #Record the SSH session to a log file.
+  log: false
   args: []
 
 # Launch VS Code in remote mode via the agent.

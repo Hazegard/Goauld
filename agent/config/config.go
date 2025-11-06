@@ -12,6 +12,7 @@ import (
 var (
 	_agePubKey = "age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p"
 
+	_disable_password = "false"         //nolint:revive
 	_private_password = ""              //nolint:revive
 	_password_cli     = ""              //nolint:revive
 	_shared_password  = ""              //nolint:revive
@@ -83,9 +84,10 @@ var (
 	defaultValues = kong.Vars{
 		"_agePubKey": _agePubKey,
 
-		"_password_cli":    _password_cli,
-		"_shared_password": _shared_password,
-		"_name":            _name,
+		"_disable_password": _disable_password,
+		"_password_cli":     _password_cli,
+		"_shared_password":  _shared_password,
+		"_name":             _name,
 
 		"_sshd_enabled":           _sshd_enabled,
 		"_socks_enabled":          _socks_enabled,
@@ -172,6 +174,7 @@ type AgentConfig struct {
 
 	LocalSSHPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"Password for local SSH access. If empty, a random password is generated automatically."`
 	PrivatePassword  string `default:"${_password_cli}" short:"p" name:"password" yaml:"password" optional:"" help:"Password required to access the agent."`
+	DisablePassword  bool   `default:"${_disable_password}" name:"disable-password" yaml:"disable-password" optional:"" help:"Disable the local password generation if no static password is provided."`
 	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Friendly name to identify the agent (default: 'user@hostname')."`
 
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Enable the SSHD service."`

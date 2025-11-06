@@ -65,6 +65,7 @@ env:
   - AGENT__DNS_DOMAIN={{ .Env.AGENT__DNS_DOMAIN }}
 
   - AGENT__SHARED_PASSWORD={{ .Env.AGENT__SHARED_PASSWORD }}
+  - AGENT__DISABLE_PASSWORD={{ .Env.AGENT__DISABLE_PASSWORD }}
   - AGENT__NAME={{ .Env.AGENT__NAME }}
 
   - AGENT__SSHD_ENABLED={{ .Env.AGENT__SSHD_ENABLED }}
@@ -331,6 +332,7 @@ builds:
       - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__DISABLE_PASSWORD") }} -X Goauld/agent/config._disable_password={{ .Env.AGENT__DISABLE_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__NAME") }} -X Goauld/agent/config._name={{ .Env.AGENT__NAME }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
@@ -436,6 +438,7 @@ builds:
       - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__DISABLE_PASSWORD") }} -X Goauld/agent/config._disable_password={{ .Env.AGENT__DISABLE_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__NAME") }} -X Goauld/agent/config._name={{ .Env.AGENT__NAME }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
