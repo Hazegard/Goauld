@@ -24,11 +24,11 @@ var (
 	_dns_server  = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9" //nolint:revive
 	_dns_domain  = "t.example.com"                           //nolint:revive
 
-	_sshd_enabled           = "true" //nolint:revive
-	_socks_enabled          = "true" //nolint:revive
-	_http_proxy_enabled     = "true" //nolint:revive
-	_wg_enabled             = "true" //nolint:revive
-	_socks_use_system_proxy = "true" //nolint:revive
+	_sshd_enabled           = "true"  //nolint:revive
+	_socks_enabled          = "true"  //nolint:revive
+	_http_proxy_enabled     = "true"  //nolint:revive
+	_wg_enabled             = "false" //nolint:revive
+	_socks_use_system_proxy = "true"  //nolint:revive
 
 	_proxy          = ""
 	_proxy_username = "" //nolint:revive
