@@ -39,6 +39,9 @@ func Goreleaser(cfg Compiler) error {
 		env = append(env, "VERSION=")
 		env = append(env, "DATE=")
 	}
+	if cfg.Compress {
+		env = append(env, "COMPRESS=true")
+	}
 	//nolint:gosec
 	cmd := exec.Command(c[0], c[1:]...)
 

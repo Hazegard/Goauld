@@ -78,6 +78,7 @@ var (
 	_compile_seed             = "__generate" //nolint:revive
 	_compile_private_password = ""           //nolint:revive
 	_compile_nopass           = "false"      //nolint:revive
+	_compile_compress         = "false"      //nolint:revive
 
 	defaultValues = kong.Vars{
 		"AppName":       AppName,
@@ -134,6 +135,7 @@ var (
 		"_compile_seed":             _compile_seed,
 		"_compile_private_password": _compile_private_password,
 		"_compile_nopass":           _compile_nopass,
+		"_compile_compress":         _compile_compress,
 	}
 )
 

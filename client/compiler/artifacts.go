@@ -4,6 +4,7 @@ package compiler
 import (
 	"Goauld/common/log"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -74,14 +75,57 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 		if err != nil {
 			return fmt.Errorf("error creating dir: %w", err)
 		}
-		outFile := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, artifact.Extra.Ext)
-		outPath := filepath.Join(outDir, outFile)
-		err = CopyFile(filepath.Join(source, artifact.Path), outPath)
-		if err != nil {
-			return fmt.Errorf("error copying files: %w", err)
+		file := filepath.Join(source, artifact.Path)
+		fatFile := file + ".fat"
+		upx := true
+		if _, err := os.Stat(fatFile); errors.Is(err, os.ErrNotExist) {
+			upx = false
 		}
-		log.Info().Str("Source", filepath.Join(source, artifact.Path)).Str("Dest", outPath).Msg("moved artifact")
+
+		upxFailed, err := isFileSameSize(file, fatFile)
+
+		if upx && !upxFailed && err == nil {
+			// default file is compressed
+			outFile := fmt.Sprintf("%s_%s-%s_%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, "compressed", artifact.Extra.Ext)
+			outPath := filepath.Join(outDir, outFile)
+			err = CopyFile(file, outPath)
+			if err != nil {
+				return fmt.Errorf("error copying files: %w", err)
+			}
+			log.Info().Str("Source", file).Str("Dest", outPath).Msg("moved artifact")
+
+			// .fat file is not compressed
+			outFileFat := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, artifact.Extra.Ext)
+			outPathFat := filepath.Join(outDir, outFileFat)
+			err = CopyFile(fatFile, outPathFat)
+			if err != nil {
+				return fmt.Errorf("error copying files: %w", err)
+			}
+			log.Info().Str("Source", file).Str("Dest", outPathFat).Msg("moved fat artifact")
+		} else {
+			outFile := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, artifact.Extra.Ext)
+			outPath := filepath.Join(outDir, outFile)
+			err = CopyFile(file, outPath)
+			if err != nil {
+				return fmt.Errorf("error copying files: %w", err)
+			}
+			log.Info().Str("Source", file).Str("Dest", outPath).Msg("moved artifact")
+		}
+
 	}
 
 	return nil
+}
+
+func isFileSameSize(path1, path2 string) (bool, error) {
+	f1, err := os.Stat(path1)
+	if err != nil {
+		return false, err
+	}
+	f2, err := os.Stat(path2)
+	if err != nil {
+		return false, err
+	}
+	sameSize := f1.Size() == f2.Size()
+	return sameSize, nil
 }

@@ -38,6 +38,7 @@ type Compiler struct {
 	Seed          string `default:"${_compile_seed}" name:"seed" yaml:"seed" help:"Seed to use to obfuscate agent."`
 	AgentPassword string `default:"${_compile_private_password}" name:"agent-password" yaml:"agent-password" short:"p" help:"Static agent password."`
 	NoPass        bool   `default:"${_compile_nopass}" name:"nopass" yaml:"nopass" help:"Do not set the agent password."`
+	Compress      bool   `default:"${_compile_compress}" name:"compress" yaml:"compress" help:"Pack the binaries with upx."`
 	ClientBuild   bool   `default:"true" hidden:"true"`
 }
 
@@ -49,7 +50,6 @@ const (
 var requiredCommands = []string{
 	"go",
 	"goreleaser",
-	"garble",
 }
 
 // Run execute the compiler command.
@@ -223,6 +223,12 @@ func InitCompilerConfig(appName string, defaultValues kong.Vars) (*kong.Context,
 // run execute the compiler.
 func run(config Compiler) error {
 	log.Info().Msgf("compiling %s", config.ID)
+	if config.Seed != "" {
+		requiredCommands = append(requiredCommands, "garble")
+	}
+	if config.Compress {
+		requiredCommands = append(requiredCommands, "upx")
+	}
 	missingCommands := CheckCommands(requiredCommands)
 	if len(missingCommands) > 0 {
 		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.Appname)).Str("commands", strings.Join(missingCommands, ", ")).Msg("Missing required commands")

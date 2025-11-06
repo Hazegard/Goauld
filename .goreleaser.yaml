@@ -170,11 +170,18 @@ env:
   - CLIENT__COMPILE_SEED={{ .Env.CLIENT__COMPILE_SEED }}
   - CLIENT__COMPILE_PRIVATE_PASSWORD={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}
   - CLIENT__COMPILE_NOPASS={{ .Env.CLIENT__COMPILE_NOPASS }}
+  - CLIENT__COMPILE_COMPRESS={{ .Env.CLIENT__COMPILE_COMPRESS }}
   - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
 
   - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
 
 # END Dynamic ENV
+upx:
+  - enabled: true #'{{if index .Env "COMPRESS"}}.Env.COMPRESS{{else}}false{{end}}'
+    ids: ["mini_agent", "agent"]
+    compress: "9"
+    lzma: true
+    brute: false
 
 before:
   hooks:
@@ -399,6 +406,11 @@ builds:
     tool: '{{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
     binary: jaffa
     main: ./agent
+    hooks:
+      post:
+        # Make an UPX copy only when UPX=true
+        - cmd: sh -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; fi'
+
     env:
       - CGO_ENABLED=0
       - NO_LITERALS=1
@@ -581,6 +593,7 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_SEED") }} -X main._compile_seed={{ .Env.CLIENT__COMPILE_SEED }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_PRIVATE_PASSWORD") }} -X main._compile_private_password={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_NOPASS") }} -X main._compile_nopass={{ .Env.CLIENT__COMPILE_NOPASS }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_COMPRESS") }} -X main._compile_compress={{ .Env.CLIENT__COMPILE_COMPRESS }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__WG_PORT") }} -X main._wg_port={{ .Env.CLIENT__WG_PORT }}{{end}}'
 

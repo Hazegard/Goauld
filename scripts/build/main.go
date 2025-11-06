@@ -29,6 +29,7 @@ type BuildConfig struct {
 	Goarch           string `default:"" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
 	NoSeed           bool   `default:"false" help:"don't generate seed keys."`
 	NoPass           bool   `default:"false" help:"don't generate password."`
+	Compress         bool   `default:"false" help:"Pack with UPX."`
 	Verbose          int    `default:"0" name:"verbose" short:"v" type:"counter" help:"Verbosity of the logs. Repeat -v to increase"`
 }
 
@@ -70,6 +71,7 @@ func main() {
 		ClientBuild: false,
 		NoPass:      !cfg.GenAgentPassword,
 		Verbose:     cfg.Verbose,
+		Compress:    cfg.Compress,
 	}
 
 	err = cpl.Run()
