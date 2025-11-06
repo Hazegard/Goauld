@@ -38,9 +38,9 @@ func (p PrivateKey) Hex() (PrivateKeyHex, error) {
 }
 
 type WGConfig struct {
-	PublicKey  PublicKey  `json:"wg-public-key" omitempty:"" name:"wg-public-key" yaml:"wg-public-key" optional:"" help:"Wireguard configuration file."`
-	PrivateKey PrivateKey `json:"wg-private-key" omitempty:"" name:"wg-private-key" yaml:"wg-private-key" optional:"" help:"Wireguard configuration file."`
-	IP         string     `json:"wg-ip" name:"wg-ip" omitempty:"" yaml:"wg-ip" optional:"" help:"Wireguard configuration file."`
+	PublicKey  PublicKey  `default:"" json:"wg-public-key" omitempty:"" name:"wg-public-key" yaml:"wg-public-key" optional:"" help:"Wireguard configuration file."`
+	PrivateKey PrivateKey `default:"" json:"wg-private-key" omitempty:"" name:"wg-private-key" yaml:"wg-private-key" optional:"" help:"Wireguard configuration file."`
+	IP         string     `default:"" json:"wg-ip" name:"wg-ip" omitempty:"" yaml:"wg-ip" optional:"" help:"Wireguard configuration file."`
 }
 
 func getHexPublicKey(pubKey PublicKey) (PublicKeyHex, error) {

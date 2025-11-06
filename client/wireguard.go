@@ -71,11 +71,12 @@ func (cmd *Generate) Run(_ *api.API, _ ClientConfig) error {
 }
 
 type Start struct {
-	Target   string `arg:"" name:"agent" yaml:"agent" help:"Target agent for which to start the WireGuard service."`
-	Port     int    `default:"${_wg_port}" name:"port" help:"Port number to listen on for WireGuard connections."`
-	Ranges   string `name:"range" help:"IP ranges to route through the WireGuard VPN (comma-separated)."`
-	Loopback bool   `name:"loopback" help:"Use the loopback interface with the 240.0.0.0/8 address range."`
-	Exec     bool   `name:"exec" default:"true" help:"Execute WireGuard commands directly with elevated privileges."`
+	Target   string             `arg:"" name:"agent" yaml:"agent" help:"Target agent for which to start the WireGuard service."`
+	Port     int                `default:"${_wg_port}" name:"port" help:"Port number to listen on for WireGuard connections."`
+	Ranges   string             `name:"range" optional:"" help:"IP ranges to route through the WireGuard VPN (comma-separated)."`
+	Loopback bool               `name:"loopback" help:"Use the loopback interface with the 240.0.0.0/8 address range."`
+	Exec     bool               `name:"exec" default:"true" help:"Execute WireGuard commands directly with elevated privileges."`
+	WGConf   wireguard.WGConfig `name:"wg" help:"WireGuard configuration options." embed:""`
 }
 
 func (s *Start) Validate() error {
@@ -175,9 +176,9 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 
 	wgConf := wireguard.WGConfig{
-		PublicKey:  cfg.WGConf.PublicKey,
+		PublicKey:  cfg.Wireguard.Start.WGConf.PublicKey,
 		PrivateKey: "",
-		IP:         cfg.WGConf.IP,
+		IP:         cfg.Wireguard.Start.WGConf.IP,
 	}
 
 	err = clientAPI.AddWGPeer(agent.ID, wgConf)
@@ -348,7 +349,7 @@ Address=%s/24
 Endpoint=127.0.0.1:%d
 AllowedIps=%s
 PublicKey=%s
-Persistentkeepalive=25`, cfg.WGConf.PrivateKey, cfg.WGConf.IP, cfg.Wireguard.Start.Port, strings.Join(ranges, ","), agent.WireguardPublicKey)
+Persistentkeepalive=25`, cfg.Wireguard.Start.WGConf.PrivateKey, cfg.Wireguard.Start.WGConf.IP, cfg.Wireguard.Start.Port, strings.Join(ranges, ","), agent.WireguardPublicKey)
 
 	return conf
 }
