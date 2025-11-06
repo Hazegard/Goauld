@@ -12,7 +12,7 @@ import (
 type Rsync struct {
 	Target string   `kong:"-"` // internal, not shown in help
 	Print  bool     `default:"${_scp_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated rsync command instead of executing it."`
-	Args   []string `arg:"" name:"paths" help:"Paths to synchronize using rsync." passthrough:""`
+	Args   []string `arg:"" name:"paths" yaml:"paths" help:"Paths to synchronize using rsync." passthrough:""`
 }
 
 func getRawRsyncArgs() []string {

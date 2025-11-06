@@ -8,7 +8,7 @@ import (
 )
 
 type Delete struct {
-	Target string `arg:"" name:"agent" help:"Target agent to delete."`
+	Target string `arg:"" name:"agent" yaml:"agent" help:"Target agent to delete."`
 }
 
 func (d *Delete) Run(clientAPI *api.API, cfg ClientConfig) error {
@@ -21,7 +21,7 @@ func (d *Delete) Run(clientAPI *api.API, cfg ClientConfig) error {
 }
 
 type Reset struct {
-	Target string `arg:"" name:"agent" help:"Target agent to reset."`
+	Target string `arg:"" name:"agent" yaml:"agent" help:"Target agent to reset."`
 }
 
 func (reset *Reset) Run(clientAPI *api.API, cfg ClientConfig) error {
@@ -51,8 +51,8 @@ func (reset *Reset) Run(clientAPI *api.API, cfg ClientConfig) error {
 }
 
 type Kill struct {
-	Target string `arg:"" name:"agent" help:"Target agent to terminate."`
-	Delete bool   `name:"delete" help:"Also delete the agent’s binary after termination."`
+	Target string `arg:"" name:"agent" yaml:"agent"  help:"Target agent to terminate."`
+	Delete bool   `name:"delete" yaml:"delete" help:"Also delete the agent’s binary after termination."`
 }
 
 func (kill *Kill) Run(clientAPI *api.API, cfg ClientConfig) error {

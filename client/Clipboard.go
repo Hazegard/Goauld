@@ -12,12 +12,12 @@ type Clipboard struct {
 }
 
 type GetClipboard struct {
-	Target string `arg:"" name:"agent" help:"Target agent from which to retrieve the clipboard content."`
+	Target string `arg:"" name:"agent" yaml:"agent" help:"Target agent from which to retrieve the clipboard content."`
 }
 
 type SetClipboard struct {
-	Target  string `arg:"" name:"agent" help:"Target agent on which to set the clipboard content."`
-	Content string `arg:"" name:"content" help:"Clipboard text content to set on the target agent."`
+	Target  string `arg:"" name:"agent" yaml:"agent" help:"Target agent on which to set the clipboard content."`
+	Content string `arg:"" name:"content" yaml:"content" help:"Clipboard text content to set on the target agent."`
 }
 
 func (gc *GetClipboard) Run(clientAPI *api.API, cfg ClientConfig) error {

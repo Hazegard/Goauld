@@ -18,9 +18,9 @@ type Scp struct {
 	Target string `kong:"-"` // internal, not shown in help
 	Print  bool   `default:"${_scp_print}" name:"print" yaml:"print" optional:"" help:"Print the generated SCP command instead of executing it."`
 
-	SSHOpts     []string `short:"o" help:"Additional SSH options (equivalent to '-o')."`
-	SSHConfFile string   `short:"F" help:"Path to an SSH configuration file to use."`
-	Paths       []string `arg:"" name:"paths" help:"Paths to copy using SCP." passthrough:""`
+	SSHOpts     []string `short:"o" name:"ssh-opts" yaml:"ssh-opts" help:"Additional SSH options (equivalent to '-o')."`
+	SSHConfFile string   `short:"F" name:"ssh-config-file" yaml:"ssh-config-file" help:"Path to an SSH configuration file to use."`
+	Paths       []string `arg:"" name:"paths" yaml:"paths" help:"Paths to copy using SCP." passthrough:""`
 }
 
 // Run execute the scp command.

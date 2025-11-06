@@ -171,7 +171,7 @@ type AgentConfig struct {
 	DNSServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
 
 	LocalSSHPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"Password for local SSH access. If empty, a random password is generated automatically."`
-	PrivatePassword  string `default:"${_password_cli}" short:"p" name:"password" optional:"" help:"Password required to access the agent."`
+	PrivatePassword  string `default:"${_password_cli}" short:"p" name:"password" yaml:"password" optional:"" help:"Password required to access the agent."`
 	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Friendly name to identify the agent (default: 'user@hostname')."`
 
 	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Enable the SSHD service."`
@@ -230,5 +230,5 @@ type AgentConfig struct {
 
 	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"Number of days before the agent self-terminates (0 = disabled)."`
 
-	Remaining []string `arg:"" passthrough:"" optional:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
+	Remaining []string `arg:"" name:"remaining" yaml:"remaining" passthrough:"" optional:"" hidden:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
 }

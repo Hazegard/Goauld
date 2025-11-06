@@ -27,17 +27,17 @@ import (
 
 // Compiler holds the information used to compile the binaries.
 type Compiler struct {
-	ID            string `default:"${_compile_id}" help:"[client|server|agent|mini_agent]."`
-	Goos          string `default:"${_compile_goos}" enum:",windows,linux,darwin" short:"O" help:"[darwin|linux|windows]."`
-	Goarch        string `default:"${_compile_goarch}" enum:",amd64,arm64,arm,386" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
-	Source        string `default:"${_compile_source}" help:"Source goauld directory."`
-	EnvFile       string `default:"${_compile_env_file}" name:"env" help:"File containing environment variables."`
-	Output        string `default:"${_compile_output}" short:"o" help:"Folder containing compiled agents."`
-	Verbose       int    `default:"${_verbosity}" name:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
-	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" help:"Show then environment files required to compile the agent."`
-	Seed          string `default:"${_compile_seed}" name:"seed" help:"Seed to use to obfuscate agent."`
-	AgentPassword string `default:"${_compile_private_password}" short:"p" help:"Static agent password."`
-	NoPass        bool   `default:"${_compile_nopass}" name:"nopass" help:"Do not set the agent password."`
+	ID            string `default:"${_compile_id}" name:"id" yaml:"id" help:"[client|server|agent|mini_agent]."`
+	Goos          string `default:"${_compile_goos}" name:"goos" yaml:"goos" enum:",windows,linux,darwin" short:"O" help:"[darwin|linux|windows]."`
+	Goarch        string `default:"${_compile_goarch}" name:"goarch" yaml:"goarch" enum:",amd64,arm64,arm,386" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
+	Source        string `default:"${_compile_source}" name:"source" yaml:"source" help:"Source goauld directory."`
+	EnvFile       string `default:"${_compile_env_file}" name:"env" yaml:"env" help:"File containing environment variables."`
+	Output        string `default:"${_compile_output}" name:"output" yaml:"output" short:"o" help:"Folder containing compiled agents."`
+	Verbose       int    `default:"${_verbosity}" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
+	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" yaml:"drop-env" help:"Show then environment files required to compile the agent."`
+	Seed          string `default:"${_compile_seed}" name:"seed" yaml:"seed" help:"Seed to use to obfuscate agent."`
+	AgentPassword string `default:"${_compile_private_password}" name:"agent-password" yaml:"agent-password" short:"p" help:"Static agent password."`
+	NoPass        bool   `default:"${_compile_nopass}" name:"nopass" yaml:"nopass" help:"Do not set the agent password."`
 	ClientBuild   bool   `default:"true" hidden:"true"`
 }
 

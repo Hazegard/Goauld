@@ -96,46 +96,46 @@ UpdateBlocCode Readme.md 'SCP' <(echo '$ tealc scp --help'; COLUMNS=10000 go run
 
 echo 'SOCKS'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'SOCKS' <(echo '$ tealc socks --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'SOCKS' <(echo '$ tealc socks --help'; COLUMNS=10000 go run ./client socks --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'RSYNC'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'RSYNC' <(echo '$ tealc rsync --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'RSYNC' <(echo '$ tealc rsync --help'; COLUMNS=10000 go run ./client rsync --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'JUMP'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'JUMP' <(echo '$ tealc jump --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'JUMP' <(echo '$ tealc jump --help'; COLUMNS=10000 go run ./client jump --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'CLIP GET'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'CLIP GET' <(echo '$ tealc clip get --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'CLIP GET' <(echo '$ tealc clip get --help'; COLUMNS=10000 go run ./client clip get --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'CLIP SET'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'CLIP SET' <(echo '$ tealc clip set --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'CLIP SET' <(echo '$ tealc clip set --help'; COLUMNS=10000 go run ./client clip set --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'KILL'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'KILL' <(echo '$ tealc kill --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'KILL' <(echo '$ tealc kill --help'; COLUMNS=10000 go run ./client kill --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 echo 'DELETE'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'DELETE' <(echo '$ tealc delete --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'DELETE' <(echo '$ tealc delete --help'; COLUMNS=10000 go run ./client delete --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'LIST'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'LIST' <(echo '$ tealc list --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'LIST' <(echo '$ tealc list --help'; COLUMNS=10000 go run ./client list --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'WIREGUARD GENERATE'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'WIREGUARD GENERATE' <(echo '$ tealc wireguard generate --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'WIREGUARD GENERATE' <(echo '$ tealc wireguard generate --help'; COLUMNS=10000 go run ./client wireguard generate --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'WIREGUARD START'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'WIREGUARD START' <(echo '$ tealc wireguard start --help'; COLUMNS=10000 go run ./client scp --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'WIREGUARD START' <(echo '$ tealc wireguard start --help'; COLUMNS=10000 go run ./client wireguard start --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'Compile'
 # shellcheck disable=SC2016
-UpdateBlocCode Readme.md 'Compile' <(echo '$ tealc compile --help'; COLUMNS=10000 go run ./client compile --help || true | cat| sed -n '/^Usage:/,$p' | sed 's/Usage: tealc \[flags\]/Usage: tealc compile [flags]/g' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+UpdateBlocCode Readme.md 'Compile' <(echo '$ tealc compile --help'; COLUMNS=10000 go run ./client compile -O darwin --help | cat| sed -n '/^Usage:/,$p' |grep -v "@" | sed 's/Usage: tealc \[flags\]/Usage: tealc compile [flags]/g' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'Server'
 # shellcheck disable=SC2016

@@ -22,7 +22,7 @@ import (
 )
 
 type SSH struct {
-	Target         string   `arg:"" name:"agent" help:"Target agent to connect to." optional:""`
+	Target         string   `arg:"" name:"agent" yaml:"agent" optional:"" help:"Target agent to connect to."`
 	Socks          bool     `default:"${_ssh_socks}" name:"socks" yaml:"socks" negatable:"" optional:"" help:"Forward the agent's SOCKS proxy to the local host."`
 	HTTP           bool     `default:"${_ssh_http}" name:"http" yaml:"http" negatable:"" optional:"" help:"Forward the agent's HTTP proxy to the local host."`
 	WG             bool     `default:"${_ssh_wg}" name:"wg" yaml:"wg" negatable:"" optional:"" help:"Forward the agent's WireGuard interface to the local host."`
@@ -33,9 +33,9 @@ type SSH struct {
 	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Use direct STDIN/STDOUT mode for ProxyCommand compatibility."`
 	Log            bool     `default:"${_ssh_log}" name:"log" yaml:"log" optional:"" help:"Record the SSH session to a log file."`
-	SSHOpts        []string `short:"o" help:"Additional SSH options."`
-	SSHConfFile    string   `short:"F" help:"Path to an SSH configuration file to use."`
-	SSHArgs        []string `arg:"" passthrough:"" optional:"" help:"Extra arguments passed directly to the underlying SSH command."`
+	SSHOpts        []string `short:"o" name:"ssh-opts" yaml:"ssh-opts" hidden:"" optional:"" help:"Additional SSH options."`
+	SSHConfFile    string   `short:"F" name:"ssh-config-file" yaml:"ssh-config-file" optional:"" help:"Path to an SSH configuration file to use."`
+	SSHArgs        []string `arg:"" name:"ssh-args" yaml:"ssh-args" passthrough:"" optional:"" help:"Extra arguments passed directly to the underlying SSH command."`
 }
 
 type Command struct {

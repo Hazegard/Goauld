@@ -9,10 +9,10 @@ import (
 )
 
 type Admin struct {
-	Dump     Dump     `cmd:""`
-	Loglevel Loglevel `cmd:""`
-	Config   Config   `cmd:""`
-	State    State    `cmd:""`
+	Dump     Dump     `cmd:"" name:"dump" yaml:"dump" help:"Dump all the agent information."`
+	Loglevel Loglevel `cmd:"" name:"log-level" yaml:"log-level" help:"Update the server log level."`
+	Config   Config   `cmd:"" name:"config" yaml:"config" help:"Display the server configuration"`
+	State    State    `cmd:"" name:"state" yaml:"state" help:"Display the full server state (agents, configuration,etc...)"`
 }
 
 type Dump struct{}
@@ -21,7 +21,7 @@ type Config struct{}
 type State struct {
 }
 type Loglevel struct {
-	Level string `arg:"" help:"Log level"`
+	Level string `arg:"" name:"level" yaml:"level" help:"Log level"`
 }
 
 // dump dumps the information regading the agents currently connected to the server.

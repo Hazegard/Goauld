@@ -170,6 +170,7 @@ env:
   - CLIENT__COMPILE_PRIVATE_PASSWORD={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}
   - CLIENT__COMPILE_NOPASS={{ .Env.CLIENT__COMPILE_NOPASS }}
   - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
+
   - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
 
 # END Dynamic ENV
@@ -579,6 +580,7 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_NOPASS") }} -X main._compile_nopass={{ .Env.CLIENT__COMPILE_NOPASS }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__WG_PORT") }} -X main._wg_port={{ .Env.CLIENT__WG_PORT }}{{end}}'
+
 
 
 

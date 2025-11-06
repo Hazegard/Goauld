@@ -17,8 +17,8 @@ import (
 )
 
 type VsCode struct {
-	Target     string `arg:"" name:"agent" help:"Target agent to open in VS Code remote mode."`
-	RemotePath string `arg:"" default:"." help:"Remote path to open in VS Code (default: current directory)."`
+	Target     string `arg:"" name:"agent" yaml:"agent" help:"Target agent to open in VS Code remote mode."`
+	RemotePath string `arg:"" yaml:"remote-path" default:"." help:"Remote path to open in VS Code (default: current directory)."`
 }
 
 func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {

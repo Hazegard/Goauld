@@ -157,22 +157,22 @@ type ClientConfig struct {
 	PromptPassword  bool              `default:"${_prompt_static_password}" short:"Q" name:"prompt" yaml:"prompt" short:"Q" yaml:"prompt" help:"Prompt for the agent's private password."`
 	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" negatable:"" help:"Save the prompted password in the configuration file."`
 
-	SSH       SSH       `cmd:"" name:"ssh" help:"Connect to an agent via SSH.\n This command supports SSH cli flags, however, these flags must be placed at the end of the command line, e.g:\n $ ${AppName} ssh [TEALC OPTIONS] AGENT [SSH OPTIONS]"`
-	Socks     Socks     `cmd:"" name:"socks" help:"Expose the SOCKS proxy provided by the agent.\n $ ${AppName} socks [TEALC OPTIONS] AGENT"`
-	SCP       Scp       `cmd:"" name:"scp" help:"Transfer files to/from the agent using SCP.\n- AGENT=>Client:\n $ ${AppName} scp AGENT:/remote/path /local/path\n- CLIENT=>AGENT:\n $ ${AppName} scp /local/path AGENT:/remote/path\n/!\\ On windows agent, the path must use \"/\" instead of \"\\\"\n - $ ${AppName} scp AGENT:C:/remote/path /local/path"`
-	Rsync     Rsync     `cmd:"" name:"rsync" help:"Transfer files to/from the agent using Rsync.\n- AGENT=>Client:\n $ ${AppName} rsync AGENT:/remote/path /local/path\n- CLIENT=>AGENT:\n $ ${AppName} rsync /local/path AGENT:/remote/path\n/!\\ On windows agents, the path must use \"/\" instead of \"\\\"\n - $ ${AppName} scp AGENT:C:/remote/path /local/path"`
-	Jump      Jump      `cmd:"" name:"jump" help:"SSH into a remote host using the agent as a jump server (similar to ssh -J option).\nIt supports arbitrary SSH flags (SSH keys, etc.) placed at the end of the command line.\n ${AppName} jump AGENT REMOTE_HOST [SSH_OPTIONS]"`
-	VsCode    VsCode    `cmd:"" name:"vscode" help:"Launch VS Code in remote mode via the agent.\n /!\\ It downloads and executes the VSCode remote server on the agent in the folder executing the agent, so it may trigger events.\n Moreover, the cleaning system in place that should delete the VSCode folder when the agent exits might not work properly.\n So it is required to manually cleans the folder. "`
+	SSH       SSH       `cmd:"" name:"ssh" yaml:"ssh" help:"Connect to an agent via SSH.\n This command supports SSH cli flags, however, these flags must be placed at the end of the command line, e.g:\n $ ${AppName} ssh [TEALC OPTIONS] AGENT [SSH OPTIONS]"`
+	Socks     Socks     `cmd:"" name:"socks" yaml:"socks" help:"Expose the SOCKS proxy provided by the agent.\n $ ${AppName} socks [TEALC OPTIONS] AGENT"`
+	SCP       Scp       `cmd:"" name:"scp" yaml:"scp" help:"Transfer files to/from the agent using SCP.\n- AGENT=>Client:\n $ ${AppName} scp AGENT:/remote/path /local/path\n- CLIENT=>AGENT:\n $ ${AppName} scp /local/path AGENT:/remote/path\n/!\\ On windows agent, the path must use \"/\" instead of \"\\\"\n - $ ${AppName} scp AGENT:C:/remote/path /local/path"`
+	Rsync     Rsync     `cmd:"" name:"rsync" yaml:"rsync" help:"Transfer files to/from the agent using Rsync.\n- AGENT=>Client:\n $ ${AppName} rsync AGENT:/remote/path /local/path\n- CLIENT=>AGENT:\n $ ${AppName} rsync /local/path AGENT:/remote/path\n/!\\ On windows agents, the path must use \"/\" instead of \"\\\"\n - $ ${AppName} scp AGENT:C:/remote/path /local/path"`
+	Jump      Jump      `cmd:"" name:"jump" yaml:"jump" help:"SSH into a remote host using the agent as a jump server (similar to ssh -J option).\nIt supports arbitrary SSH flags (SSH keys, etc.) placed at the end of the command line.\n ${AppName} jump AGENT REMOTE_HOST [SSH_OPTIONS]"`
+	VsCode    VsCode    `cmd:"" name:"vscode" yaml:"vscode" help:"Launch VS Code in remote mode via the agent.\n /!\\ It downloads and executes the VSCode remote server on the agent in the folder executing the agent, so it may trigger events.\n Moreover, the cleaning system in place that should delete the VSCode folder when the agent exits might not work properly.\n So it is required to manually cleans the folder."`
 	Clipboard Clipboard `cmd:"" name:"clip" yaml:"clip" help:"Access or modify the agent clipboard."`
-	TUI       Tui       `cmd:"" name:"tui" help:"Launch the text-based interface for managing connected agents."`
-	Pass      Password  `cmd:"" default:"withargs" name:"pass" help:"Retrieve stored passwords used by the agent."`
-	Kill      Kill      `cmd:"" name:"kill" help:"Terminate a running agent."`
-	Reset     Reset     `cmd:"" name:"reset" help:"Reset an agent to its default state."`
-	Delete    Delete    `cmd:"" name:"delete" help:"Delete an agent permanently."`
-	List      List      `cmd:"" name:"list" help:"List all available agents."`
-	Compile   Compiler  `cmd:"" name:"compile" help:"Compile a new agent binary.\n $ ${AppName} compile -O windows -A amd64"`
-	Admin     Admin     `cmd:"" name:"admin" help:"Administrative commands (internal use)." hidden:"true"`
-	Wireguard Wireguard `cmd:"" name:"wireguard" help:"Generate or manage WireGuard configuration."`
+	TUI       Tui       `cmd:"" name:"tui" yaml:"tui" help:"Launch the text-based interface for managing connected agents."`
+	Pass      Password  `cmd:"" default:"withargs" name:"pass" yaml:"pass" help:"Retrieve stored passwords used by the agent."`
+	Kill      Kill      `cmd:"" name:"kill" yaml:"kill" help:"Terminate a running agent."`
+	Reset     Reset     `cmd:"" name:"reset" yaml:"reset" help:"Reset an agent to its default state."`
+	Delete    Delete    `cmd:"" name:"delete" yaml:"delete" help:"Delete an agent permanently."`
+	List      List      `cmd:"" name:"list" yaml:"list" help:"List all available agents."`
+	Compile   Compiler  `cmd:"" name:"compile" yaml:"compile" help:"Compile a new agent binary.\n $ ${AppName} compile -O windows -A amd64"`
+	Admin     Admin     `cmd:"" name:"admin" yaml:"admin" help:"Administrative commands (internal use)." hidden:"true"`
+	Wireguard Wireguard `cmd:"" name:"wireguard" yaml:"wireguard" help:"Generate or manage WireGuard configuration."`
 
 	SearchConfigDir string `hidden:""`
 }

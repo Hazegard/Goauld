@@ -14,7 +14,7 @@ import (
 type Password struct {
 	Agent string   `name:"agent" yaml:"agent" help:"Target agent from which to retrieve the password."`
 	Type  string   `name:"type" yaml:"type" help:"Type of password to retrieve (e.g., 'otp' or 'agent')."`
-	Args  []string `arg:"" optional:"" help:"Additional arguments, if required by the password type."`
+	Args  []string `arg:"" yaml:"args" optional:"" help:"Additional arguments, if required by the password type."`
 }
 
 // Run executes the pass subcommand.

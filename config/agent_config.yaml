@@ -25,6 +25,8 @@ dns-domain: t.example.com
 
 # Password for local SSH access. If empty, a random password is generated automatically.
 shared-password: ""
+
+# Password required to access the agent.
 password: ""
 
 # Friendly name to identify the agent (default: 'user@hostname').
@@ -153,13 +155,13 @@ background: false
 hidden-background: false
 
 # System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.
-
 #  Powershell example: "((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '' -replace '\s+', '' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )"
-
 #  Linux example:"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p".
 custom-dns-command: ""
 
 # Number of days before the agent self-terminates (0 = disabled).
 kill-switch: 7
+
+# Extra arguments that will be trashed, required when launching the agent in some contexts.
 remaining: []
 

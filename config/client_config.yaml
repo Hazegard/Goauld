@@ -41,8 +41,11 @@ prompt: false
 save: false
 
 # Connect to an agent via SSH.
+#  This command supports SSH cli flags, however, these flags must be placed at the end of the command line, e.g:
+#  $ ${AppName} ssh [TEALC OPTIONS] AGENT [SSH OPTIONS]
 ssh:
-  target: ""
+  #Target agent to connect to.
+  agent: ""
   #Forward the agent's SOCKS proxy to the local host.
   socks: true
   #Forward the agent's HTTP proxy to the local host.
@@ -63,13 +66,18 @@ ssh:
   proxy: false
   #Record the SSH session to a log file.
   log: false
-  sshopts: []
-  sshconffile: ""
-  sshargs: []
+  #Additional SSH options.
+  ssh-opts: []
+  #Path to an SSH configuration file to use.
+  ssh-config-file: ""
+  #Extra arguments passed directly to the underlying SSH command.
+  ssh-args: []
 
 # Expose the SOCKS proxy provided by the agent.
+#  $ ${AppName} socks [TEALC OPTIONS] AGENT
 socks:
-  target: ""
+  #Target agent to connect to.
+  agent: ""
   #Forward the agent’s SOCKS proxy to the local host.
   socks: true
   #Forward the agent’s HTTP proxy to the local host.
@@ -84,26 +92,43 @@ socks:
   print: false
   #Use direct STDIN/STDOUT mode for ProxyCommand compatibility.
   proxy: false
-  sshargs: []
+  ssh-args: []
 
 # Transfer files to/from the agent using SCP.
+# - AGENT=>Client:
+#  $ ${AppName} scp AGENT:/remote/path /local/path
+# - CLIENT=>AGENT:
+#  $ ${AppName} scp /local/path AGENT:/remote/path
+# /!\ On windows agent, the path must use "/" instead of "\"
+#  - $ ${AppName} scp AGENT:C:/remote/path /local/path
 scp:
   target: ""
   #Print the generated SCP command instead of executing it.
   print: false
-  sshopts: []
-  sshconffile: ""
+  #Additional SSH options (equivalent to '-o').
+  ssh-opts: []
+  #Path to an SSH configuration file to use.
+  ssh-config-file: ""
   #Paths to copy using SCP.
   paths: []
 
 # Transfer files to/from the agent using Rsync.
+# - AGENT=>Client:
+#  $ ${AppName} rsync AGENT:/remote/path /local/path
+# - CLIENT=>AGENT:
+#  $ ${AppName} rsync /local/path AGENT:/remote/path
+# /!\ On windows agents, the path must use "/" instead of "\"
+#  - $ ${AppName} scp AGENT:C:/remote/path /local/path
 rsync:
   target: ""
   #Print the generated rsync command instead of executing it.
   print: false
-  args: []
+  #Paths to synchronize using rsync.
+  paths: []
 
-# SSH into a remote host using the agent as a jump server.
+# SSH into a remote host using the agent as a jump server (similar to ssh -J option).
+# It supports arbitrary SSH flags (SSH keys, etc.) placed at the end of the command line.
+#  ${AppName} jump AGENT REMOTE_HOST [SSH_OPTIONS]
 jump:
   #Target agent to use as a jump host for SSH connections.
   agent: ""
@@ -114,18 +139,24 @@ jump:
   args: []
 
 # Launch VS Code in remote mode via the agent.
+#  /!\ It downloads and executes the VSCode remote server on the agent in the folder executing the agent, so it may trigger events.
+#  Moreover, the cleaning system in place that should delete the VSCode folder when the agent exits might not work properly.
+#  So it is required to manually cleans the folder.
 vscode:
-  target: ""
-  remotepath: .
+  #Target agent to open in VS Code remote mode.
+  agent: ""
+  remote-path: .
 
 # Access or modify the agent clipboard.
 clip:
   #Retrieve the clipboard content from an agent.
   get:
-    target: ""
+    #Target agent from which to retrieve the clipboard content.
+    agent: ""
   #Update the clipboard content on an agent.
   set:
-    target: ""
+    #Target agent on which to set the clipboard content.
+    agent: ""
     #Clipboard text content to set on the target agent.
     content: ""
 
@@ -142,31 +173,40 @@ pass:
 
 # Terminate a running agent.
 kill:
-  target: ""
+  #Target agent to terminate.
+  agent: ""
   #Also delete the agent’s binary after termination.
   delete: false
 
 # Reset an agent to its default state.
 reset:
-  target: ""
+  #Target agent to reset.
+  agent: ""
 
 # Delete an agent permanently.
 delete:
-  target: ""
+  #Target agent to delete.
+  agent: ""
 
 # List all available agents.
 list: {}
 
 # Compile a new agent binary.
+#  $ ${AppName} compile -O windows -A amd64
 compile:
   args: []
 
 # Administrative commands (internal use).
 admin:
+  #Dump all the agent information.
   dump: {}
-  loglevel:
+  #Update the server log level.
+  log-level:
+    #Log level
     level: ""
+  #Display the server configuration
   config: {}
+  #Display the full server state (agents, configuration,etc...)
   state: {}
 
 # Generate or manage WireGuard configuration.
@@ -184,10 +224,14 @@ wireguard:
     loopback: false
     #Execute WireGuard commands directly with elevated privileges.
     exec: true
-searchconfigdir: ~/.config/tealc.yaml
+    #WireGuard configuration options.
+    conf:
+      #Wireguard configuration file.
+      wg-public-key: ""
+      #Wireguard configuration file.
+      wg-private-key: ""
+      #Wireguard configuration file.
+      wg-ip: ""
 
-wgconf:
-  wg-public-key: ""
-  wg-private-key: ""
-  wg-ip: ""
+searchconfigdir: ~/.config/tealc.yaml
 
