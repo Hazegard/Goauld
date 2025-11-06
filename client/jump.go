@@ -10,6 +10,7 @@ type Jump struct {
 	Agent string   `arg:"" name:"agent" yaml:"agent" help:"Target agent to use as a jump host for SSH connections."`
 	Print bool     `name:"print" yaml:"print" help:"Print the generated SSH jump command instead of executing it."`
 	Scp   bool     `name:"scp" yaml:"scp" help:"Use SCP through the jump host."`
+	Log   bool     `default:"false" name:"log" yaml:"log" optional:"" help:"Record the SSH session to a log file."`
 	Args  []string `arg:"" yaml:"args" passthrough:"" help:"Additional arguments passed to the SSH or SCP command."`
 }
 
@@ -31,6 +32,8 @@ func (j *Jump) Run(cfg ClientConfig) error {
 		Executable: exeCmd,
 		Args:       args,
 		Env:        cfg.EnvVar(j.Agent),
+		Log:        j.Log,
+		Agent:      j.Agent,
 	}
 	if j.Print {
 		//nolint:forbidigo

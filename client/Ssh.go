@@ -42,6 +42,8 @@ type Command struct {
 	Executable string
 	Args       []string
 	Env        []string
+	Log        bool
+	Agent      string
 }
 
 // InlineEnv modify the command to use the env binary to load the environment variables.
@@ -139,8 +141,8 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 			return cmd.Wait()
 		}
 	} else {
-		if cfg.SSH.Log {
-			out := fmt.Sprintf("%s-%s.log", cfg.SSH.Target, time.Now().Format("2006-01-02_15-04-05"))
+		if c.Log {
+			out := fmt.Sprintf("%s-%s.log", c.Agent, time.Now().Format("2006-01-02_15-04-05"))
 			e, err := ttyencoder.NewEncoder().
 				WithAppend(true).
 				WithCompress(true).
