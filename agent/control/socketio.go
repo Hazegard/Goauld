@@ -24,13 +24,13 @@ import (
 func NewControlPlanClient(ctx context.Context, configDone chan<- string, canceler *globalcontext.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
 		ctx:        ctx,
-		url:        config.Get().SocketIoURL(),
+		url:        config.Get().SocketIoURL(config.Get().ID),
 		configDone: configDone,
 		canceler:   canceler,
 	}
 }
 
-// InitStrategy is a struc holding the name of the transport as well
+// InitStrategy is a struct holding the name of the transport as well
 // as the function that will be used to initialize the socket.io connection.
 type InitStrategy struct {
 	Name     string
@@ -99,7 +99,7 @@ func (cpc *ControlPlanClient) InitPolling(success chan<- struct{}, chanErr chan<
 func (cpc *ControlPlanClient) InitOverDNS(session *smux.Stream, success chan<- struct{}, chanErr chan<- error) error {
 	_, err := session.Write([]byte(config.Get().ID))
 	// DNS MODE means we are using http to simplify the exchanges
-	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoURL(), "https://"), "http://")
+	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoURL(config.Get().ID), "https://"), "http://")
 	cpc.url = "http://" + u
 	if err != nil {
 		return fmt.Errorf("error writing id to DNS tunnelled session: %w", err)

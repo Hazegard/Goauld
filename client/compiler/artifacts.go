@@ -111,7 +111,6 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 			}
 			log.Info().Str("Source", file).Str("Dest", outPath).Msg("moved artifact")
 		}
-
 	}
 
 	return nil
@@ -127,5 +126,6 @@ func isFileSameSize(path1, path2 string) (bool, error) {
 		return false, err
 	}
 	sameSize := f1.Size() == f2.Size()
+
 	return sameSize, nil
 }

@@ -79,6 +79,8 @@ var (
 
 	_custom_dns_command = "" //nolint:revive
 
+	_relay = ""
+
 	_killswitch = "7"
 
 	defaultValues = kong.Vars{
@@ -150,6 +152,8 @@ var (
 		"_custom_dns_command": _custom_dns_command,
 
 		"_killswitch": _killswitch,
+
+		"_relay": _relay,
 
 		"version": common.GetVersion(),
 	}
@@ -232,6 +236,8 @@ type AgentConfig struct {
 	CustomDNSCommand string `default:"${_custom_dns_command}" name:"custom-dns-command" yaml:"custom-dns-command" help:"System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.\n Powershell example: \"((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '\x00' -replace '\\s+', '\x00' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )\"\n Linux example:\"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p\"."`
 
 	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"Number of days before the agent self-terminates (0 = disabled)."`
+
+	Relay string `default:"${_relay}" name:"relay" yaml:"relay" help:"Use another agent to relay the connection to the server."`
 
 	Remaining []string `arg:"" name:"remaining" yaml:"remaining" passthrough:"" optional:"" hidden:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
 }

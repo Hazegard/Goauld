@@ -27,7 +27,7 @@ func (s *StreamConn) LocalAddr() net.Addr { return s.lAddr }
 func (s *StreamConn) RemoteAddr() net.Addr { return s.rAddr }
 
 // GetQuicConn dials a QUIC connection and opens a stream, all respecting ctx.
-func GetQuicConn(ctx context.Context) (*StreamConn, error) {
+func GetQuicConn(ctx context.Context, id string) (*StreamConn, error) {
 	// 1) Prepare TLS and QUIC configs
 	tlsConf := proxy.NewTLSConfig()
 	tlsConf.NextProtos = []string{"quic"}
@@ -55,7 +55,7 @@ func GetQuicConn(ctx context.Context) (*StreamConn, error) {
 		// quic-go streams implement SetWriteDeadline
 		_ = stream.SetWriteDeadline(dl)
 	}
-	header := []byte(config.Get().ID)
+	header := []byte(id)
 	if _, err := stream.Write(header); err != nil {
 		_ = conn.CloseWithError(0, "header write failed")
 

@@ -12,7 +12,7 @@ import (
 
 // GetTLSConn returns a TLS connection and will abort dialing,
 // handshake or header write if ctx is cancelled.
-func GetTLSConn(ctx context.Context) (net.Conn, error) {
+func GetTLSConn(ctx context.Context, id string) (net.Conn, error) {
 	// 1) Dial the TCP connection with context
 	dialer := &net.Dialer{}
 	rawConn, err := dialer.DialContext(ctx, "tcp", config.Get().TLSURL())
@@ -39,7 +39,7 @@ func GetTLSConn(ctx context.Context) (net.Conn, error) {
 		_ = tlsConn.SetWriteDeadline(dl)
 	}
 
-	header := []byte(config.Get().ID)
+	header := []byte(id)
 	if _, err := tlsConn.Write(header); err != nil {
 		_ = tlsConn.Close()
 

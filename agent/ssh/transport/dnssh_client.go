@@ -23,7 +23,7 @@ import (
 type DNSSH struct {
 	udpConn       net.PacketConn
 	pconn         net.PacketConn
-	session       *smux.Session
+	Session       *smux.Session
 	SSHStream     *smux.Stream
 	ControlStream *smux.Stream
 	kcpConn       *kcp.UDPSession
@@ -68,7 +68,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 		return nil, fmt.Errorf("opening KCP conn: %w", err)
 	}
 
-	log.Trace().Str("Mode", "DNSSH").Msgf("opening session %08x", conn.GetConv())
+	log.Trace().Str("Mode", "DNSSH").Msgf("opening Session %08x", conn.GetConv())
 	// Permit coalescing the payloads of consecutive sending.
 	//nolint:staticcheck // SA1019
 	conn.SetStreamMode(true)
@@ -85,14 +85,14 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 		return nil, errors.New("setting mtu failed")
 	}
 
-	// Start a smux session on the Noise channel.
+	// Start a smux Session on the Noise channel.
 	smuxConfig := smux.DefaultConfig()
 	smuxConfig.Version = 2
 	smuxConfig.KeepAliveTimeout = idleTimeout
 	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65 536
 	sess, err := smux.Client( /*rw*/ conn, smuxConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error opening smux session: %w", err)
+		return nil, fmt.Errorf("error opening smux Session: %w", err)
 	}
 
 	sshStream, err := sess.OpenStream()
@@ -108,7 +108,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	a := &DNSSH{
 		udpConn:       pconn,
 		pconn:         pconn,
-		session:       sess,
+		Session:       sess,
 		SSHStream:     sshStream,
 		ControlStream: controlStream,
 		kcpConn:       conn,
@@ -255,7 +255,7 @@ func TestDNSServer(ip string, port int, d string) bool {
 func (d *DNSSH) Close() error {
 	return errors.Join(
 		d.kcpConn.Close(),
-		d.session.Close(),
+		d.Session.Close(),
 		d.udpConn.Close(),
 		d.pconn.Close(),
 		d.SSHStream.Close(),

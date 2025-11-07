@@ -181,6 +181,10 @@ func run() globalcontext.CancelReason {
 	var controlPlanClient *control.ControlPlanClient
 	var err error
 
+	if config.Get().UseRelay() {
+		config.Get().SetRSSHOrder([]string{"relay"})
+	}
+
 	// Define the different strategies to initialize the control socket
 	//  Currently, all strategies are tried in order.
 	socketOrder := []string{
@@ -242,6 +246,9 @@ func run() globalcontext.CancelReason {
 		if order[0] == "ws" {
 			socketOrder = []string{"Websocket"}
 		}
+		if order[0] == "relay" {
+			
+		}
 	}
 
 	success := false
@@ -265,6 +272,8 @@ func run() globalcontext.CancelReason {
 		}
 		log.Error().Err(err).Str("ControlMode", initializer.Name).Msg("error initializing the control plan")
 	}
+
+	config.Get().ControlTunnelMode = controlMode
 
 	// If no strategy was successful, we restart the agent
 	if !success {
@@ -295,6 +304,7 @@ func run() globalcontext.CancelReason {
 		// defer sshAgent.Close()
 		// Initialize the client SSH
 		err = sshAgent.Init(ctx, dnsTransport)
+		config.Get().SSHTunnelMode = sshAgent.Mode
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
 			globalCanceler.Restart("unable to init the SSH connection")

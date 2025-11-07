@@ -12,8 +12,8 @@ import (
 )
 
 // GetWebsocketConn returns a net.Conn wrapping a websocket connection.
-func GetWebsocketConn(localCtx context.Context, globalCtx context.Context) (net.Conn, error) {
-	url := config.Get().WSshURL()
+func GetWebsocketConn(localCtx context.Context, globalCtx context.Context, id string) (net.Conn, error) {
+	url := config.Get().WSshURL(id)
 
 	httpclient := proxy.NewHTTPClientProxy(nil)
 

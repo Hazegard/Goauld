@@ -34,6 +34,8 @@ type Agent struct {
 	UnChunkDone              chan []byte
 	WorkingDay               WorkingDay
 	Wireguard                wireguard.WGConfig
+	SSHTunnelMode            string
+	ControlTunnelMode        string
 }
 
 // LocalSSHDPassword returns the current ssh password allowing to connect.
@@ -222,18 +224,30 @@ func (a *Agent) ServerURL() string {
 }
 
 // WSshURL return the SSH over Websocket connection URL.
-func (a *Agent) WSshURL() string {
-	return fmt.Sprintf("%s/wssh/%s", a.ServerURL(), a.ID)
+func (a *Agent) WSshURL(id string) string {
+	if id == "" {
+		id = a.ID
+	}
+
+	return fmt.Sprintf("%s/wssh/%s", a.ServerURL(), id)
 }
 
 // SocketIoURL return the control connection URL.
-func (a *Agent) SocketIoURL() string {
-	return fmt.Sprintf("%s/live/%s/", a.ServerURL(), a.ID)
+func (a *Agent) SocketIoURL(id string) string {
+	if id == "" {
+		id = a.ID
+	}
+
+	return fmt.Sprintf("%s/live/%s/", a.ServerURL(), id)
 }
 
 // SSHTTPURL return the SSH over HTTP connection URL.
-func (a *Agent) SSHTTPURL() string {
-	return fmt.Sprintf("%s/sshttp/%s", a.ServerURL(), a.ID)
+func (a *Agent) SSHTTPURL(id string) string {
+	if id == "" {
+		id = a.ID
+	}
+
+	return fmt.Sprintf("%s/sshttp/%s", a.ServerURL(), id)
 }
 
 // TLSURL return the SSH over TLS connection URL.

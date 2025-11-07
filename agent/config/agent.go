@@ -143,6 +143,13 @@ func Get() *Agent {
 	return agent
 }
 
+func (a *Agent) UseRelay() bool {
+	return a.cfg.Relay != ""
+}
+func (a *Agent) Relay() string {
+	return a.cfg.Relay
+}
+
 // Verbosity returns the current log verbosity.
 func (a *Agent) Verbosity() int {
 	return a.cfg.Verbose

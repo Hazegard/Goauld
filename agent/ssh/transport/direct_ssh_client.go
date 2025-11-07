@@ -90,3 +90,42 @@ func DirectSSHConnect(ctx context.Context, sshConfig *ssh.ClientConfig) (*ssh.Cl
 	// 5) Build the high‐level SSH client
 	return ssh.NewClient(conn, chans, reqs), nil
 }
+
+// SSHConnectOverRelay performs an SSH connection to the server through another agent
+// and will abort dialing or handshaking if ctx is cancelled.
+func SSHConnectOverRelay(ctx context.Context, sshConfig *ssh.ClientConfig, relay string) (*ssh.Client, error) {
+	// addr := config.Get().ControlSSHServer()
+
+	if err := CheckDirectSSHAccess(relay); err != nil {
+		return nil, fmt.Errorf(
+			"unable to access the SSH server through the relay agent (%s): %w",
+			relay, err,
+		)
+	}
+
+	// 2) Dial TCP with context
+	dialer := &net.Dialer{}
+	rawConn, err := dialer.DialContext(ctx, "tcp", relay)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial relay agent %s: %w", relay, err)
+	}
+
+	// If the context has a deadline, use it to bound the handshake
+	if dl, ok := ctx.Deadline(); ok {
+		_ = rawConn.SetDeadline(dl)
+	}
+
+	// 3) Upgrade to SSH (this does the SSH handshake)
+	conn, chans, reqs, err := ssh.NewClientConn(rawConn, config.Get().ControlSSHServer(), sshConfig)
+	if err != nil {
+		_ = rawConn.Close()
+
+		return nil, fmt.Errorf("SSH handshake with %s failed (relay: %s): %w", config.Get().ControlSSHServer(), relay, err)
+	}
+
+	// 4) Clear the deadline so further I/O isn’t accidentally limited
+	_ = rawConn.SetDeadline(time.Time{})
+
+	// 5) Build the high‐level SSH client
+	return ssh.NewClient(conn, chans, reqs), nil
+}
