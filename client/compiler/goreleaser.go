@@ -47,6 +47,7 @@ func Goreleaser(cfg Compiler) error {
 
 	_env, err := ParseEnvFile(cfg.EnvFile)
 
+	_env = append(_env, env...)
 	env = append(env, _env...)
 	if err != nil {
 		return err
