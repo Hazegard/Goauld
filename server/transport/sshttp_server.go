@@ -112,8 +112,8 @@ func (s *SSHHttpServer) acceptStreams(conn *kcp.UDPSession, upstream string) err
 	for {
 		stream, err := sess.AcceptStream()
 		if err != nil {
-			var err net.Error
-			if errors.As(err, &err) {
+			var netErr net.Error
+			if errors.As(err, &netErr) {
 				continue
 			}
 			if errors.Is(err, io.ErrClosedPipe) {
@@ -143,8 +143,8 @@ func (s *SSHHttpServer) acceptSessions(ln *kcp.Listener, upstream string) error 
 	for {
 		conn, err := ln.AcceptKCP()
 		if err != nil {
-			var err net.Error
-			if errors.As(err, &err) {
+			var netErr net.Error
+			if errors.As(err, &netErr) {
 				continue
 			}
 

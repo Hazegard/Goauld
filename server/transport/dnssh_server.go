@@ -150,8 +150,8 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 	for {
 		stream, err := sess.AcceptStream()
 		if err != nil {
-			var err net.Error
-			if errors.As(err, &err) {
+			var netErr net.Error
+			if errors.As(err, &netErr) {
 				continue
 			}
 
@@ -222,8 +222,8 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 	for {
 		conn, err := ln.AcceptKCP()
 		if err != nil {
-			var err net.Error
-			if errors.As(err, &err) {
+			var netErr net.Error
+			if errors.As(err, &netErr) {
 				continue
 			}
 
@@ -457,8 +457,8 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 		var buf [4096]byte
 		n, addr, err := dnsConn.ReadFrom(buf[:])
 		if err != nil {
-			var err net.Error
-			if errors.As(err, &err) {
+			var netErr net.Error
+			if errors.As(err, &netErr) {
 				log.Trace().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
 
 				continue
@@ -643,8 +643,8 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 		// Now we actually send the message as a UDP packet.
 		_, err = dnsConn.WriteTo(buf, rec.Addr)
 		if err != nil {
-			var err net.Error
-			if errors.As(err, &err) {
+			var netErr net.Error
+			if errors.As(err, &netErr) {
 				log.Trace().Str("Mode", "DNSSH").Msgf("WriteTo temporary error: %v", err)
 
 				continue
