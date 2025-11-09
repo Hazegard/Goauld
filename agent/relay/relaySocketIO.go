@@ -73,6 +73,7 @@ func (sio *ControlRouter) Setup(ctx context.Context, root *gosio.Namespace) {
 			cfg, err := control.GetRelayEioConfig(sio.Mode, sio.DnsTransport)
 			if err != nil {
 				log.Error().Err(err).Msgf("Error getting relay config")
+				agent2Relay.Disconnect(true)
 
 				return
 			}
@@ -147,6 +148,11 @@ func SetupProxy(relay2Server gosio.ClientSocket, agent2Relay gosio.ServerSocket,
 	agent2Relay.OnEvent(socketio.Disconnect.ID(), func(data []byte) {
 		log.Trace().Str("Event", "Disconnect").Str("From", "Agent").Msg("Relay Event")
 		relay2Server.Emit(socketio.Disconnect.ID(), data)
+	})
+
+	relay2Server.OnEvent(socketio.PongEvent.ID(), func(data any) {
+		log.Trace().Str("Event", "PongEvent").Str("From", "Server").Msg("Relay Event")
+		agent2Relay.Emit(socketio.PongEvent.ID(), data)
 	})
 
 	relay2Server.OnEvent(socketio.SendSSHPrivateKeyEvent.ID(), func(data any) {
