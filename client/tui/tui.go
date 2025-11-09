@@ -72,7 +72,7 @@ func NewTui(apiClient *api.API, agentPwd map[string]string) Model {
 		return Model{}
 	}
 	m := Model{
-		agentsTable:    GenerateAgentTable().WithRows(AgentsToRow(agents)),
+		agentsTable:    GenerateAgentTable(false).WithRows(AgentsToRow(agents, false)),
 		agents:         agents,
 		statusText:     ti,
 		api:            apiClient,
@@ -341,6 +341,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// return m, m.UpdateAgents(m.agents)
 		case actionPlus:
 			m.extendedDetails = !m.extendedDetails
+			m.agentsTable = GenerateAgentTable(m.extendedDetails).WithRows(AgentsToRow(m.agents, m.extendedDetails))
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		default:
@@ -364,7 +365,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	// Handle updates agent list
 	case updateMessage:
-		rows := AgentsToRow(msg.agents)
+		rows := AgentsToRow(msg.agents, m.extendedDetails)
 		m.agents = msg.agents
 		m.agentsTable = m.agentsTable.WithRows(rows)
 
@@ -464,7 +465,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		{"OS", agent.Platform},
 		{"Archi", agent.Architecture},
 		{"Public Ip", agent.RemoteAddr},
-		{"IPs", agent.IPs},
+		{"IPs", strings.ReplaceAll(agent.IPs, ",", ", ")},
 	}
 	height := len(rows)
 	if m.extendedDetails {
@@ -475,6 +476,8 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 			{"SSHD Port", agent.GetSSHPort()},
 			{"Socks Port", agent.GetSocksPort()},
 			{"HTTP Port", agent.GetHTTPPort()},
+			{"WG Port", agent.GetWGPort()},
+			{"Relay Port", fmt.Sprintf("(%s)", agent.GetRelayPort())},
 			{"Other Port", agent.GetOtherPort()},
 		}
 		rows = append(rows, details...)
@@ -493,7 +496,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		agent.Hostname,
 		absTime(agent.LastUpdated),
 		absTime(agent.LastPing),
-		agent.IPs,
+		strings.ReplaceAll(agent.IPs, ",", ", "),
 		agent.Path,
 		agent.SSHMode,
 		agent.GetSSHPort(),
@@ -559,7 +562,7 @@ func NewCenterColumn(key string, title string, width int) table.Column {
 }
 
 // GenerateAgentTable initialize the agent table.
-func GenerateAgentTable() table.Model {
+func GenerateAgentTable(detail bool) table.Model {
 	columns := []table.Column{
 		NewCenterColumn("N", "N", 3),
 		NewCenterColumn("Name", "Name", 30),
@@ -569,6 +572,10 @@ func GenerateAgentTable() table.Model {
 		NewCenterColumn("SSHD Port", "SSHD Port", 13),
 		NewCenterColumn("HTTP Port", "HTTP Port", 13),
 		NewCenterColumn("Socks Port", "Socks Port", 14),
+	}
+	if detail {
+		columns = append(columns, NewCenterColumn("WG Port", "WG Port", 13))
+		columns = append(columns, NewCenterColumn("Relay Port", "Relay Port", 13))
 	}
 	t := table.New(columns).
 		Focused(true).
@@ -600,29 +607,39 @@ func (m *Model) GetAgents() []table.Row {
 		panic(err)
 	}
 
-	return AgentsToRow(agents)
+	return AgentsToRow(agents, m.extendedDetails)
 }
 
 // AgentsToRow converts a slice of agents to a slice of rows to be used in the table component.
-func AgentsToRow(agents []types.Agent) []table.Row {
+func AgentsToRow(agents []types.Agent, details bool) []table.Row {
 	var rows []table.Row
 	sort.Slice(agents, func(i, j int) bool {
 		return agents[i].LastUpdated.After(agents[j].LastUpdated)
 	})
 	for i, agent := range agents {
-		row := table.NewRow(
-			table.RowData{
-				"ID":           agent.ID,
-				"N":            centerString(strconv.Itoa(i+1), 3),
-				"Name":         centerString(agent.Name, 30),
-				"Last Updated": centerString(relTIme(agent.LastUpdated), 14),
-				"Last Ping":    centerString(relTIme(agent.LastPing), 13),
-				"Mode":         centerString(agent.SSHMode, 10),
-				"SSHD Port":    centerString(agent.GetSSHPort(), 13),
-				"Socks Port":   centerString(agent.GetSocksPort(), 13),
-				"HTTP Port":    centerString(agent.GetHTTPPort(), 14),
-				"Other Port":   agent.GetOtherPort(),
-			})
+
+		data := table.RowData{
+			"ID":           agent.ID,
+			"N":            centerString(strconv.Itoa(i+1), 3),
+			"Name":         centerString(agent.Name, 30),
+			"Last Updated": centerString(relTIme(agent.LastUpdated), 14),
+			"Last Ping":    centerString(relTIme(agent.LastPing), 13),
+			"Mode":         centerString(agent.SSHMode, 10),
+			"SSHD Port":    centerString(agent.GetSSHPort(), 13),
+			"Socks Port":   centerString(agent.GetSocksPort(), 13),
+			"HTTP Port":    centerString(agent.GetHTTPPort(), 14),
+			"Other Port":   agent.GetOtherPort(),
+		}
+		if details {
+			data["WG Port"] = centerString(agent.GetWGPort(), 13)
+			relayPort := agent.GetRelayPort()
+			if relayPort == "/" {
+				data["Relay Port"] = centerString(agent.GetRelayPort(), 13)
+			} else {
+				data["Relay Port"] = centerString(fmt.Sprintf("(%s)", agent.GetRelayPort()), 13)
+			}
+		}
+		row := table.NewRow(data)
 
 		rows = append(rows, row)
 	}

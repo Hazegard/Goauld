@@ -73,3 +73,14 @@ func (a *Agent) GetHTTPPort() string {
 
 	return "/"
 }
+
+// GetHTTPPort returns the socks forwarded port.
+func (a *Agent) GetRelayPort() string {
+	for _, rpf := range a.RemotePortForwarding {
+		if strings.EqualFold(rpf.Tag, "relay") {
+			return strconv.Itoa(rpf.AgentPort)
+		}
+	}
+
+	return "/"
+}

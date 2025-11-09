@@ -503,10 +503,18 @@ func run() globalcontext.CancelReason {
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the relay router")
 			} else {
+				forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
+					ServerPort: -1,
+					AgentPort:  relayer.Port,
+					AgentIP:    "",
+					Tag:        "RELAY",
+				})
 				go func() {
+					log.Info().Int("Port", relayer.Port).Msg("Relay listening on port")
 					err := relayer.Serve()
 					if err != nil {
 						log.Error().Err(err).Msg("error serving the relay router")
+						return
 					}
 				}()
 			}

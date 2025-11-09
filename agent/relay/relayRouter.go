@@ -3,7 +3,6 @@ package relay
 import (
 	"Goauld/agent/config"
 	"Goauld/agent/ssh/transport"
-	"Goauld/common/log"
 	"context"
 	"fmt"
 	"net"
@@ -16,9 +15,11 @@ type RelayRouter struct {
 	SSHRouter     *SSHRouter
 	Muxex         *http.ServeMux
 	Server        *http.Server
+	Port          int
+	listener      net.Listener
 }
 
-func (router *RelayRouter) Serve() error {
+func (router *RelayRouter) Init() error {
 	addr := fmt.Sprintf(":%d", config.Get().RelayPort())
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -26,9 +27,14 @@ func (router *RelayRouter) Serve() error {
 	}
 	//nolint:forcetypeassert
 	port := listener.Addr().(*net.TCPAddr).Port
-	log.Info().Int("Port", port).Msgf("Relay listening on port %d", port)
+	router.Port = port
+	router.listener = listener
+	return nil
+}
 
-	return router.Server.Serve(listener)
+func (router *RelayRouter) Serve() error {
+
+	return router.Server.Serve(router.listener)
 }
 
 func NewRelayRouter(ctx context.Context, controlMode string, sshMode string, dnsTransport *transport.DNSSH) (*RelayRouter, error) {
@@ -58,10 +64,15 @@ func NewRelayRouter(ctx context.Context, controlMode string, sshMode string, dns
 		WriteTimeout: controlRouter.Server.HTTPWriteTimeout(),
 	}
 
-	return &RelayRouter{
+	relayer := &RelayRouter{
 		ControlRouter: controlRouter,
 		SSHRouter:     sshRouter,
 		Muxex:         muxer,
 		Server:        server,
-	}, nil
+	}
+	err = relayer.Init()
+	if err != nil {
+		return nil, err
+	}
+	return relayer, nil
 }
