@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"strconv"
@@ -467,8 +468,21 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		{"Public Ip", agent.RemoteAddr},
 		{"IPs", strings.ReplaceAll(agent.IPs, ",", ", ")},
 	}
-	height := len(rows)
+	height := len(rows) + 1
 	if m.extendedDetails {
+		agentRelay, ok := GetRelay(agent, m.agents)
+		if !ok {
+			rows = append(rows, teatable.Row{"Relay", "/"})
+		} else {
+			rows = append(rows, teatable.Row{"Relay", agentRelay.Name + " (" + agentRelay.ID + ")"})
+		}
+		height++
+		portRelay := ""
+		if agent.GetRelayPort() == "/" {
+			portRelay = "/"
+		} else {
+			portRelay = fmt.Sprintf("(%s)", agent.GetRelayPort())
+		}
 		details := []teatable.Row{
 			{"Last Updated", absTime(agent.LastUpdated)},
 			{"Last Ping", absTime(agent.LastPing)},
@@ -477,7 +491,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 			{"Socks Port", agent.GetSocksPort()},
 			{"HTTP Port", agent.GetHTTPPort()},
 			{"WG Port", agent.GetWGPort()},
-			{"Relay Port", fmt.Sprintf("(%s)", agent.GetRelayPort())},
+			{"Relay Port", portRelay},
 			{"Other Port", agent.GetOtherPort()},
 		}
 		rows = append(rows, details...)
@@ -719,4 +733,28 @@ func relTIme(t time.Time) string {
 	default:
 		return fmt.Sprintf("%.0f years ago", duration.Hours()/(24*365))
 	}
+}
+
+func GetRelay(agent types.Agent, agents []types.Agent) (types.Agent, bool) {
+	split := strings.Split(agent.Relay, ":")
+	if len(split) != 2 {
+		return types.Agent{}, false
+	}
+	ipStr := split[0]
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return types.Agent{}, false
+	}
+	port := split[1]
+	for _, ag := range agents {
+		if ag.GetRelayPort() == port {
+			if ip.IsLoopback() {
+				return ag, true
+			}
+			if strings.Contains(ipStr, ag.IPs) {
+				return ag, true
+			}
+		}
+	}
+	return types.Agent{}, false
 }

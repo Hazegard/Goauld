@@ -28,7 +28,11 @@ func (a *Agent) GetSSHPort() string {
 func (a *Agent) GetOtherPort() string {
 	var ports []string
 	for _, rpf := range a.RemotePortForwarding {
-		if strings.EqualFold(rpf.Tag, "socks") || strings.EqualFold(rpf.Tag, "sshd") || strings.EqualFold(rpf.Tag, "http") || rpf.ServerPort == 0 {
+		if strings.EqualFold(rpf.Tag, "socks") ||
+			strings.EqualFold(rpf.Tag, "sshd") ||
+			strings.EqualFold(rpf.Tag, "http") ||
+			strings.EqualFold(rpf.Tag, "wg") ||
+			strings.EqualFold(rpf.Tag, "relay") || rpf.ServerPort == 0 {
 			continue
 		}
 		ports = append(ports, rpf.String())

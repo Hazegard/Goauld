@@ -263,8 +263,9 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			agent.Version = agentData.AgentVersion
 			agent.WireguardPublicKey = agentData.WireguardPubKey
 			agent.WireguardIP = agentData.WireguardIP
+			agent.Relay = agentData.Relay
 
-			err = sio.db.UpdateAgentField(agent, "SSHPasswd", "Platform", "Architecture", "Username", "Hostname", "Path", "IPs", "HasStaticPassword", "Version", "WireguardPublicKey", "WireguardIP")
+			err = sio.db.UpdateAgentField(agent, "SSHPasswd", "Platform", "Architecture", "Username", "Hostname", "Path", "IPs", "HasStaticPassword", "Version", "WireguardPublicKey", "WireguardIP", "Relay")
 			if err != nil {
 				log.Error().Err(err).Str("Agent.ID", agent.ID).Str("Agent.Name", agent.Name).Msg("socketio.RegisterError updating agent")
 			}

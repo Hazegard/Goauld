@@ -22,6 +22,7 @@ type AgentData struct {
 	AgentVersion     common.JVersion `json:"agent_version"`
 	WireguardPubKey  string          `json:"wireguard_pub_key"`
 	WireguardIP      string          `json:"wireguard_ip"`
+	Relay            string          `json:"relay"`
 }
 
 // newAgentSSHPasswordMessage creates a new empty AgentData instance.
@@ -55,6 +56,7 @@ func NewEncryptedAgentSSHPasswordMessage(a *config.Agent, cryptor *crypto.SymCry
 		AgentVersion:     a.Version(),
 		WireguardPubKey:  a.Wireguard.PublicKey.String(),
 		WireguardIP:      a.Wireguard.IP,
+		Relay:            a.Relay(),
 	}
 
 	return EncryptAgentSSHPasswordMessage(message, cryptor)
