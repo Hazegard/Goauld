@@ -49,7 +49,7 @@ func (s *eventHandler) ack() (ok bool, err error) {
 	return
 }
 
-func (s *eventHandler) call(args ...reflect.Value) (ret []reflect.Value, err error) {
+func (f *eventHandler) call(args ...reflect.Value) (ret []reflect.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
@@ -60,7 +60,7 @@ func (s *eventHandler) call(args ...reflect.Value) (ret []reflect.Value, err err
 		}
 	}()
 
-	ret = s.rv.Call(args)
+	ret = f.rv.Call(args)
 	return
 }
 
