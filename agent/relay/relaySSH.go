@@ -5,49 +5,51 @@ import (
 	"Goauld/agent/ssh/transport"
 	"Goauld/agent/ssh/transport/http"
 	"Goauld/common/log"
+	commonnet "Goauld/common/net"
 	"context"
 	"errors"
 	"io"
 	"net"
+	netHttp "net/http"
 	"strings"
+
+	"github.com/coder/websocket"
 )
 
-func ListenSSHRelay(mode string, ctx context.Context, dnsTransport *transport.DNSSH) error {
-	listener, err := net.ListenTCP("tcp", nil)
+type SSHRouter struct {
+	mode         string
+	dnsTransport *transport.DNSSH
+	ctx          context.Context
+}
+
+func (r *SSHRouter) handleSSHRelay(conn net.Conn, id string) {
+	serverConn, err := GetSSHCon(r.mode, id, r.ctx, r.dnsTransport)
 	if err != nil {
-		return err
+		log.Debug().Err(err).Str("Mode", r.mode).Msg("Error relaying SSH connection")
+
+		return
 	}
+	defer func() {
+		_ = serverConn.Close()
+	}()
+	switch strings.ToLower(r.mode) {
+	case "tls", "quic", "dns", "http":
+		_, err := serverConn.Write([]byte(id))
+		if err != nil {
+			log.Debug().Err(err).Msg("Error relaying SSH connection")
 
-	addr, ok := listener.Addr().(*net.TCPAddr)
-	if !ok {
-		return errors.New("invalid addr")
+			return
+		}
 	}
-	log.Info().Str("Mode", "Relay").Int("Port", addr.Port).Msg("SSH Relay listening")
-
-	for {
-		agentConn, err := listener.Accept()
+	if r.mode == "dns" {
+		_, err := serverConn.Write([]byte{'S'})
 		if err != nil {
-			log.Debug().Err(err).Msg("SSH Relay Accept error")
+			log.Debug().Err(err).Msg("Error relaying SSH connection")
 
-			continue
+			return
 		}
-		rawID := make([]byte, 32)
-		n, err := agentConn.Read(rawID)
-		if err != nil {
-			log.Error().Err(err).Msg("Error reading agent ID")
-			agentConn.Close()
-
-			continue
-		}
-		id := string(rawID[:n])
-		serverConn, err := GetSSHCon(mode, id, ctx, dnsTransport)
-		if err != nil {
-			log.Debug().Err(err).Str("Mode", mode).Msg("Error relaying SSH connection")
-
-			continue
-		}
-		go relay(agentConn, serverConn)
 	}
+	relay(conn, serverConn)
 }
 
 // relay connects agent <-> server and ensures cleanup.
@@ -68,6 +70,40 @@ func relay(agentConn, serverConn net.Conn) {
 
 	// Wait for one side to close, then clean up
 	<-done
+}
+
+func (router *SSHRouter) ServeHTTP(w netHttp.ResponseWriter, r *netHttp.Request) {
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	id := r.PathValue("agentId")
+	r = commonnet.HTTP10ToHTTP11FakeUpgrader(r)
+
+	wsConn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+		InsecureSkipVerify: true,
+		OriginPatterns:     []string{"*"},
+	})
+	if err != nil {
+		log.Error().Err(err).Str("Mode", "Relay").Str("AgentID", id).Msg("websocket.Accept")
+
+		return
+	}
+	defer func(wsConn *websocket.Conn) {
+		err := wsConn.CloseNow()
+		if err != nil {
+			log.Warn().Err(err).Str("ID", id).Str("Mode", "Relay").Msg("error closing connection")
+		}
+	}(wsConn)
+
+	// Convert the websocket connection to a raw net.Conn connection
+	conn := websocket.NetConn(ctx, wsConn, websocket.MessageBinary)
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
+			log.Warn().Err(err).Str("ID", id).Err(err).Str("Mode", "Relay").Msg("failed to close websocket connection")
+		}
+	}(conn)
+
+	router.handleSSHRelay(conn, id)
 }
 
 type result struct {

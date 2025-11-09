@@ -221,6 +221,8 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("NAME", _name))
 	env = append(env, prefixEnv("SSHD", _sshd_enabled))
 	env = append(env, prefixEnv("SOCKS", _socks_enabled))
+	env = append(env, prefixEnv("WG", _wg_enabled))
+	env = append(env, prefixEnv("RELAY", _relay_enabled))
 	env = append(env, prefixEnv("HTTP", _http_proxy_enabled))
 	env = append(env, prefixEnv("PROXY", _proxy))
 	env = append(env, prefixEnv("PROXY_USERNAME", _proxy_username))
@@ -239,6 +241,7 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("RSSH_PORT", _rssh_port))
 	env = append(env, prefixEnv("SOCKS_PORT", _socks_port))
 	env = append(env, prefixEnv("HTTP_PORT", _http_port))
+	env = append(env, prefixEnv("RELAY_PORT", _relay_port))
 	env = append(env, prefixEnv("KEEP_AWAKE", _keepawake))
 	env = append(env, prefixEnv("KEEPALIVE", _keepalive))
 	env = append(env, prefixEnv("VERBOSE", _verbosity))
@@ -258,6 +261,7 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("CUSTOM_DNS_COMMAND", _custom_dns_command))
 	env = append(env, prefixEnv("KILL_SWITCH", _killswitch))
 	env = append(env, prefixEnv("DISABLE_PASSWORD", _disable_password))
+	env = append(env, prefixEnv("RELAY_ADDR", _relay_addr))
 	return env
 }
 

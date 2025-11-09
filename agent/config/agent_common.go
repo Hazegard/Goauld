@@ -294,6 +294,14 @@ func (a *Agent) SetRSSHOrder(order []string) {
 	a.cfg.RSSHOrder = order
 }
 
+func (a *Agent) SetRelayServerAsTarget() {
+	a.cfg.Server = a.cfg.RelayAddr
+}
+
+func (a *Agent) UseRelay() bool {
+	return a.cfg.RelayAddr != ""
+}
+
 // GetRSSHOrder returns the order that the agent should follow to attempt to connect
 // to the SSHD server.
 func (a *Agent) GetRSSHOrder() []string {

@@ -96,12 +96,12 @@ func DirectSSHConnect(ctx context.Context, sshConfig *ssh.ClientConfig) (*ssh.Cl
 func SSHConnectOverRelay(ctx context.Context, sshConfig *ssh.ClientConfig, relay string) (*ssh.Client, error) {
 	// addr := config.Get().ControlSSHServer()
 
-	if err := CheckDirectSSHAccess(relay); err != nil {
+	/*if err := CheckDirectSSHAccess(relay); err != nil {
 		return nil, fmt.Errorf(
 			"unable to access the SSH server through the relay agent (%s): %w",
 			relay, err,
 		)
-	}
+	}*/
 
 	// 2) Dial TCP with context
 	dialer := &net.Dialer{}
@@ -109,6 +109,8 @@ func SSHConnectOverRelay(ctx context.Context, sshConfig *ssh.ClientConfig, relay
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial relay agent %s: %w", relay, err)
 	}
+	rawConn.Write([]byte(config.Get().ID))
+	rawConn.Write([]byte{'S'})
 
 	// If the context has a deadline, use it to bound the handshake
 	if dl, ok := ctx.Deadline(); ok {

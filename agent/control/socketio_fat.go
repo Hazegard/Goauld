@@ -281,7 +281,7 @@ func (cpc *ControlPlanClient) SendPorts(rpf []ssh.RemotePortForwarding) error {
 	success := make(chan struct{}, 1)
 	// SendRemotePortForwardingDataError is sent by the server when the forwarding ports
 	// are successfully received by the server
-	cpc.socket.OnEvent(socketio.SendRemotePortForwardingDataSuccess.ID(), func() {
+	cpc.socket.OnceEvent(socketio.SendRemotePortForwardingDataSuccess.ID(), func() {
 		log.Info().Msgf("SendRemotePortForwardingDataSuccess successfully sent")
 		success <- struct{}{}
 	})

@@ -52,4 +52,6 @@ const (
 	CopyClipboardRequestEvent
 	ReceiveFatAgent
 	WireguardPeer
+	PasswordValidationRequestEventRelay
+	CopyClipboardRequestEventRelay
 )

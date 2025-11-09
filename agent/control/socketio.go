@@ -3,7 +3,9 @@ package control
 import (
 	globalcontext "Goauld/agent/context"
 	"Goauld/agent/proxy"
+	"Goauld/agent/ssh/transport"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -192,7 +194,7 @@ func (cpc *ControlPlanClient) Close() {
 }
 
 // getEioConfig return the socket.io underlying configuration.
-func getEioConfig(transport []string) *sio.ManagerConfig {
+func getEioConfig(tr []string) *sio.ManagerConfig {
 	return &sio.ManagerConfig{
 		EIO: eio.ClientConfig{
 			UpgradeDone: func(transportName string) {
@@ -203,9 +205,31 @@ func getEioConfig(transport []string) *sio.ManagerConfig {
 				HTTPClient: proxy.NewHTTPClientProxy(nil),
 				HTTPHeader: proxy.NewHeaderMap(),
 			},
-			Transports: transport,
+			Transports: tr,
 		},
 	}
+}
+
+func GetRelayEioConfig(mode string, dnsTransport *transport.DNSSH) (*sio.ManagerConfig, error) {
+	switch mode {
+	case "Websocket":
+		return getEioConfig([]string{"websocket"}), nil
+	case "Upgrade":
+		return getEioConfig([]string{"polling", "websocket"}), nil
+	case "Polling":
+		return getEioConfig([]string{"polling"}), nil
+	case "DNS":
+		stream, err := dnsTransport.Session.OpenStream()
+		if err != nil {
+			log.Error().Err(err).Msg("Error opening stream")
+
+			return nil, err
+		}
+
+		return getDNSEioConfig(stream), nil
+	}
+
+	return nil, errors.New("unable to open Relay Socket.IO config")
 }
 
 // getEioConfig return the socket.io underlying configuration.

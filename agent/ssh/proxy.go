@@ -97,7 +97,6 @@ func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTrans
 				} else {
 					cancel()
 				}
-
 			}
 		}()
 
@@ -144,6 +143,8 @@ func relaySSH(ctx context.Context, sshConfig *ssh.ClientConfig, relay string) *s
 }
 
 // proxyTLS proxies the SSH traffic using a TLS connection to the server.
+//
+//nolint:dupl
 func proxyTLS(ctx context.Context, sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn) {
 	log.Info().Str("Mode", "TLSSH").Str("Target", config.Get().TLSURL()).Msgf("Trying to proxify SSH using TLS")
 	tlsConn, err := transport.GetTLSConn(ctx, id)
@@ -165,6 +166,8 @@ func proxyTLS(ctx context.Context, sshConfig *ssh.ClientConfig, id string) (*ssh
 }
 
 // proxyQuic proxies the SSH traffic using a Quic connection to the server.
+//
+//nolint:dupl
 func proxyQuic(ctx context.Context, sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn) {
 	log.Info().Str("Mode", "QUIC").Str("Target", config.Get().QuicURL()).Msgf("Trying to proxify SSH using Quic")
 	stream, err := transport.GetQuicConn(ctx, id)

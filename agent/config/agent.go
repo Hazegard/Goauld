@@ -143,11 +143,15 @@ func Get() *Agent {
 	return agent
 }
 
-func (a *Agent) UseRelay() bool {
-	return a.cfg.Relay != ""
+func (a *Agent) RelayPort() int {
+	return a.cfg.RelayPort
 }
-func (a *Agent) Relay() string {
+func (a *Agent) IsRelay() bool {
 	return a.cfg.Relay
+}
+
+func (a *Agent) Relay() string {
+	return a.cfg.RelayAddr
 }
 
 // Verbosity returns the current log verbosity.

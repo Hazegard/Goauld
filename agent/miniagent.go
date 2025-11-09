@@ -167,6 +167,13 @@ func run() globalcontext.CancelReason {
 			},
 		},
 	}
+
+	if config.Get().UseRelay() {
+		config.Get().SetRSSHOrder([]string{"ws"})
+
+		config.Get().SetRelayServerAsTarget()
+	}
+
 	order := config.Get().GetRSSHOrder()
 	if len(order) == 1 {
 		if order[0] == "dns" {

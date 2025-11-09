@@ -388,7 +388,7 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, hashA
 	id := uuid.NewString()
 	eventID := fmt.Sprintf("%s@%s", socketio.PasswordValidationRequestResponse.ID(), id)
 	chanResponse := make(chan bool, 1)
-	socket.OnEvent(eventID, func(data []byte) {
+	socket.OnceEvent(eventID, func(data []byte) {
 		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Event received")
 		response, err := socketio.DecryptPasswordValidationResponse(data, cryptor)
 		if err != nil {
@@ -408,6 +408,11 @@ func ValidateStaticPassword(agent *persistence.Agent, socket gosio.Socket, hashA
 
 		return false
 	}
+
+	socket.Emit(socketio.PasswordValidationRequestEventRelay.ID(), socketio.RelayEvent{
+		ID:   eventID,
+		Data: encryptedPasswordValidationRequest,
+	})
 
 	socket.Emit(socketio.PasswordValidationRequestEvent.ID(), encryptedPasswordValidationRequest)
 	var response bool
@@ -466,7 +471,7 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	id := uuid.NewString()
 	eventID := fmt.Sprintf("%s@%s", socketio.ClipboardContentEvent.ID(), id)
 	chanResponse := make(chan socketio.ClipboardMessage, 1)
-	socket.OnEvent(eventID, func(data []byte) {
+	socket.OnceEvent(eventID, func(data []byte) {
 		log.Debug().Str("Event", eventID).Str("Agent", agent.Name).Msg("Event received")
 		response, err := socketio.DecryptClipboardMessageEventMessage(data, cryptor)
 		if err != nil {
@@ -499,6 +504,10 @@ func GetClipboard(agent *persistence.Agent, socket gosio.Socket, hashAgentPwd st
 	}
 
 	socket.Emit(socketio.CopyClipboardRequestEvent.ID(), encryptedClipboardRequest)
+	socket.Emit(socketio.CopyClipboardRequestEventRelay.ID(), socketio.RelayEvent{
+		ID:   eventID,
+		Data: encryptedClipboardRequest,
+	})
 	var response socketio.ClipboardMessage
 	select {
 	case r := <-chanResponse:

@@ -7,6 +7,7 @@ import (
 	globalcontext "Goauld/agent/context"
 	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
+	"Goauld/agent/relay"
 	"Goauld/agent/ssh/transport"
 	"Goauld/agent/vscode"
 	"Goauld/agent/wireguard"
@@ -22,6 +23,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"Goauld/agent/config"
@@ -181,10 +183,6 @@ func run() globalcontext.CancelReason {
 	var controlPlanClient *control.ControlPlanClient
 	var err error
 
-	if config.Get().UseRelay() {
-		config.Get().SetRSSHOrder([]string{"relay"})
-	}
-
 	// Define the different strategies to initialize the control socket
 	//  Currently, all strategies are tried in order.
 	socketOrder := []string{
@@ -235,6 +233,13 @@ func run() globalcontext.CancelReason {
 			},
 		},
 	}
+
+	if config.Get().UseRelay() {
+		config.Get().SetRSSHOrder([]string{"ws"})
+
+		config.Get().SetRelayServerAsTarget()
+	}
+
 	order := config.Get().GetRSSHOrder()
 	if len(order) == 1 {
 		if order[0] == "dns" {
@@ -245,9 +250,6 @@ func run() globalcontext.CancelReason {
 		}
 		if order[0] == "ws" {
 			socketOrder = []string{"Websocket"}
-		}
-		if order[0] == "relay" {
-			
 		}
 	}
 
@@ -304,7 +306,7 @@ func run() globalcontext.CancelReason {
 		// defer sshAgent.Close()
 		// Initialize the client SSH
 		err = sshAgent.Init(ctx, dnsTransport)
-		config.Get().SSHTunnelMode = sshAgent.Mode
+		config.Get().SSHTunnelMode = strings.ToLower(sshAgent.Mode)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
 			globalCanceler.Restart("unable to init the SSH connection")
@@ -489,6 +491,25 @@ func run() globalcontext.CancelReason {
 			rpf[i].ServerPort = port
 			forwardedPorts = append(forwardedPorts, rpf[i])
 			log.Info().Str("Local", rpf[i].GetLocal()).Str("Remote", rpf[i].GetRemote()).Msg("Port forwarding started")
+		}
+
+		if config.Get().IsRelay() {
+			relayer, err := relay.NewRelayRouter(
+				ctx,
+				config.Get().ControlTunnelMode,
+				config.Get().SSHTunnelMode,
+				dnsTransport,
+			)
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the relay router")
+			} else {
+				go func() {
+					err := relayer.Serve()
+					if err != nil {
+						log.Error().Err(err).Msg("error serving the relay router")
+					}
+				}()
+			}
 		}
 
 		err := controlPlanClient.SendPorts(forwardedPorts)

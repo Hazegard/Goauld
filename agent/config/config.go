@@ -29,6 +29,7 @@ var (
 	_socks_enabled          = "true"  //nolint:revive
 	_http_proxy_enabled     = "true"  //nolint:revive
 	_wg_enabled             = "false" //nolint:revive
+	_relay_enabled          = "false" //nolint:revive
 	_socks_use_system_proxy = "true"  //nolint:revive
 
 	_proxy          = ""
@@ -52,6 +53,7 @@ var (
 	_socks_port = "0" //nolint:revive
 	_http_port  = "0" //nolint:revive
 	_wg_port    = "0" //nolint:revive
+	_relay_port = "0" //nolint:revive
 
 	_keepawake = "false"
 	_keepalive = "20"
@@ -79,7 +81,7 @@ var (
 
 	_custom_dns_command = "" //nolint:revive
 
-	_relay = ""
+	_relay_addr = ""
 
 	_killswitch = "7"
 
@@ -95,6 +97,7 @@ var (
 		"_socks_enabled":          _socks_enabled,
 		"_http_proxy_enabled":     _http_proxy_enabled,
 		"_wg_enabled":             _wg_enabled,
+		"_relay_enabled":          _relay_enabled,
 		"_socks_use_system_proxy": _socks_use_system_proxy,
 
 		"_no_proxy":       _no_proxy,
@@ -124,6 +127,7 @@ var (
 		"_socks_port": _socks_port,
 		"_http_port":  _http_port,
 		"_wg_port":    _wg_port,
+		"_relay_port": _relay_port,
 
 		"_keepawake": _keepawake,
 		"_keepalive": _keepalive,
@@ -153,7 +157,7 @@ var (
 
 		"_killswitch": _killswitch,
 
-		"_relay": _relay,
+		"_relay_addr": _relay_addr,
 
 		"version": common.GetVersion(),
 	}
@@ -185,6 +189,7 @@ type AgentConfig struct {
 	Socks bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Enable the SOCKS proxy service."`
 	HTTP  bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Enable the HTTP proxy service."`
 	WG    bool `default:"${_wg_enabled}" name:"wg" yaml:"wg" optional:"" negatable:"" help:"Enable the WireGuard service."`
+	Relay bool `default:"${_relay_enabled}" name:"relay" yaml:"relay" optional:"" negatable:"" help:"Enable the Relay service."`
 
 	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured)."`
 	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username for the proxy server."`
@@ -208,6 +213,7 @@ type AgentConfig struct {
 	SocksPort     int `default:"${_socks_port}" name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"Remote SOCKS proxy port to bind on the server (0 = random)."`
 	HTTPProxyPort int `default:"${_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Remote HTTP proxy port to bind on the server (0 = random)."`
 	WGPort        int `default:"${_wg_port}" name:"wg-port" yaml:"wg-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
+	RelayPort     int `default:"${_relay_port}" name:"relay-port" yaml:"relay-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
 
 	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Prevent the system from sleeping or locking."`
 	KeepAlive int  `default:"${_keepalive}" short:"K" name:"keepalive" yaml:"keepalive" optional:"" help:"Interval in seconds between keepalive messages (0 = disabled)."`
@@ -237,7 +243,7 @@ type AgentConfig struct {
 
 	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"Number of days before the agent self-terminates (0 = disabled)."`
 
-	Relay string `default:"${_relay}" name:"relay" yaml:"relay" help:"Use another agent to relay the connection to the server."`
+	RelayAddr string `default:"${_relay_addr}" name:"relay-addr" yaml:"relay-addr" help:"Use another agent to relay the connection to the server."`
 
 	Remaining []string `arg:"" name:"remaining" yaml:"remaining" passthrough:"" optional:"" hidden:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
 }
