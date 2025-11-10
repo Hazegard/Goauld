@@ -211,14 +211,14 @@ func getEioConfig(tr []string) *sio.ManagerConfig {
 }
 
 func GetRelayEioConfig(mode string, dnsTransport *transport.DNSSH) (*sio.ManagerConfig, error) {
-	switch mode {
-	case "Websocket":
+	switch strings.ToLower(mode) {
+	case "websocket":
 		return getEioConfig([]string{"websocket"}), nil
-	case "Upgrade":
+	case "upgrade":
 		return getEioConfig([]string{"polling", "websocket"}), nil
-	case "Polling":
+	case "polling":
 		return getEioConfig([]string{"polling"}), nil
-	case "DNS":
+	case "dns":
 		stream, err := dnsTransport.Session.OpenStream()
 		if err != nil {
 			log.Error().Err(err).Msg("Error opening stream")
@@ -226,6 +226,15 @@ func GetRelayEioConfig(mode string, dnsTransport *transport.DNSSH) (*sio.Manager
 			return nil, err
 		}
 
+		_, err = stream.Write([]byte(config.Get().ID))
+		if err != nil {
+			log.Error().Err(err).Msg("Error writing to stream")
+			return nil, err
+		}
+		_, err = stream.Write([]byte{'C'})
+		if err != nil {
+			return nil, fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
+		}
 		return getDNSEioConfig(stream), nil
 	}
 
