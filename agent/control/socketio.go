@@ -121,24 +121,24 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 	socket := manager.Socket("/", nil)
 
 	socket.OnConnect(func() {
-		log.Trace().Msg("OnConnect")
+		log.Debug().Msg("OnConnect")
 		log.Info().Msgf("Connected to the control server %s", cpc.url)
 		success <- struct{}{}
 	})
 	socket.OnConnectError(func(err any) {
-		log.Trace().Msg("OnConnectError")
+		log.Debug().Msg("OnConnectError")
 		log.Error().Msgf("Error occurred connecting to %s (%v)", cpc.url, err)
 		chanErr <- fmt.Errorf("error connecting to %s (%v)", cpc.url, err)
 	})
 
 	manager.OnError(func(err error) {
-		log.Trace().Msg("OnError")
+		log.Debug().Msg("OnError")
 		log.Error().Err(err).Msgf("Error occurred  %s", cpc.url)
 		cpc.ErrorPlusPlus()
 	})
 	manager.OnReconnect(func(attempt uint32) {
 		cpc.canceler.Restart("Control socket disconnected")
-		log.Trace().Msg("OnReconnect")
+		log.Debug().Msg("OnReconnect")
 		log.Warn().Msgf("Reconnected to the control server %s, attempts N° %d", cpc.url, attempt)
 	})
 
@@ -155,7 +155,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 // to keep alive the connection.
 func (cpc *ControlPlanClient) keepAliveLoop(ctx context.Context) {
 	cpc.socket.OnEvent(socketio.PongEvent.ID(), func(_ []byte) {
-		log.Trace().Msg("OnEvent: PongEvent")
+		log.Debug().Msg("OnEvent: PongEvent")
 	})
 	if config.Get().GetKeepalive() == 0 {
 		return

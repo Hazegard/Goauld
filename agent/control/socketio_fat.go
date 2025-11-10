@@ -42,7 +42,7 @@ func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {
 	// SSHD server.
 	// Once received, the agent sends its SSHD password to the server using the SendAgentDataEvent event
 	socket.OnEvent(socketio.SendSSHPrivateKeyEvent.ID(), func(data []byte) {
-		log.Trace().Msg("OnEvent: SendSSHPrivateKeyEvent")
+		log.Debug().Msg("OnEvent: SendSSHPrivateKeyEvent")
 		log.Trace().Msgf("SshPrivateKeyEvent: data received")
 		// Decrypt the SSH private key
 		privateKey, err := socketio.DecryptSSHPrivateKeyMessage(data, config.Get().Cryptor)
@@ -79,8 +79,8 @@ func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {
 		agentVersion := common.JSONVersion()
 		if agentVersion.Compare(srvVersion) != 0 {
 			log.Warn().Err(errors.New("mismatch version")).Str("Server", srvVersion.Version).Str("Agent", agentVersion.Version).Msgf("Version mismatch")
-			log.Trace().Str("ServerCommit", srvVersion.Commit).Str("AgentCommit", agentVersion.Commit).Msgf("Version mismatch")
-			log.Trace().Str("ServerDate", srvVersion.Date).Str("AgentDate", agentVersion.Date).Msgf("Version mismatchs")
+			log.Debug().Str("ServerCommit", srvVersion.Commit).Str("AgentCommit", agentVersion.Commit).Msgf("Version mismatch")
+			log.Debug().Str("ServerDate", srvVersion.Date).Str("AgentDate", agentVersion.Date).Msgf("Version mismatchs")
 		}
 	})
 

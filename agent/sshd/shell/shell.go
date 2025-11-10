@@ -88,7 +88,7 @@ func GivePty(globalCtx context.Context, s ssh.Session, c []string, rawCommand st
 			for win := range winCh {
 				err := pseudo.Resize(win.Width, win.Height)
 				if err != nil {
-					log.Trace().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while resizing pty")
+					log.Debug().Err(err).Str("ID", s.User()).Str("Remote", s.RemoteAddr().String()).Msg("error while resizing pty")
 				}
 			}
 		}()

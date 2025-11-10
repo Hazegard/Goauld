@@ -65,7 +65,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 	case "tcpip-forward":
 		var reqPayload remoteForwardRequest
 		if err := gossh.Unmarshal(req.Payload, &reqPayload); err != nil {
-			log.Trace().Err(err).Str("Payload", string(req.Payload)).Msg("Failed to unmarshal payload")
+			log.Debug().Err(err).Str("Payload", string(req.Payload)).Msg("Failed to unmarshal payload")
 
 			return false, []byte{}, nil
 		}
@@ -75,7 +75,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 		addr := net.JoinHostPort(reqPayload.BindAddr, strconv.Itoa(int(reqPayload.BindPort)))
 		ln, err := net.Listen("tcp", addr)
 		if err != nil {
-			log.Trace().Err(err).Str("Payload", string(req.Payload)).IPAddr("Addr", net.IP(addr)).Msg("Failed to listen")
+			log.Debug().Err(err).Str("Payload", string(req.Payload)).IPAddr("Addr", net.IP(addr)).Msg("Failed to listen")
 
 			return false, []byte{}, nil
 		}
@@ -97,7 +97,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 			for {
 				c, err := ln.Accept()
 				if err != nil {
-					log.Trace().Err(err).Str("Payload", string(req.Payload)).Msg("Failed to accept connection")
+					log.Debug().Err(err).Str("Payload", string(req.Payload)).Msg("Failed to accept connection")
 
 					break
 				}
@@ -114,7 +114,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 				go func() {
 					ch, reqs, err := conn.OpenChannel(forwardedTCPChannelType, payload)
 					if err != nil {
-						log.Trace().Err(err).Str("Payload", string(payload)).Msg("Failed to open forwarded channel")
+						log.Debug().Err(err).Str("Payload", string(payload)).Msg("Failed to open forwarded channel")
 						_ = c.Close()
 
 						return
@@ -147,7 +147,7 @@ func (h *ForwardedTCPHandler) HandleSSHRequest(ctx ssh.Context, srv *ssh.Server,
 	case "cancel-tcpip-forward":
 		var reqPayload remoteForwardCancelRequest
 		if err := gossh.Unmarshal(req.Payload, &reqPayload); err != nil {
-			log.Trace().Err(err).Str("Payload", string(req.Payload)).Msg("Failed to unmarshal payload")
+			log.Debug().Err(err).Str("Payload", string(req.Payload)).Msg("Failed to unmarshal payload")
 
 			return false, []byte{}, nil
 		}

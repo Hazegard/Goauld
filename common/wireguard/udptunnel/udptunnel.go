@@ -26,7 +26,7 @@ func HandleUDP(rwc io.ReadWriteCloser, hostPort string) error {
 		udpConns: conns,
 		maxMTU:   9012, // settings.EnvInt("UDP_MAX_SIZE", 9012),
 	}
-	log.Trace().Int("MTU", h.maxMTU).Msgf("Starting UDP connection")
+	log.Debug().Int("MTU", h.maxMTU).Msgf("Starting UDP connection")
 	for {
 		p := UdpPacket{}
 		if err := h.handleWrite(&p); err != nil {

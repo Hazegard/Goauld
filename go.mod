@@ -26,7 +26,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gopasspw/clipboard v0.0.4
 	github.com/jellydator/ttlcache/v2 v2.11.1
-	github.com/jpillora/chisel v1.11.3
 	github.com/kevinburke/ssh_config v1.4.0
 	github.com/keygen-sh/machineid v1.1.1
 	github.com/mattn/go-colorable v0.1.14

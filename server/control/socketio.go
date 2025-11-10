@@ -287,7 +287,7 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 		// PingEvent is sent at a regular interval by the agent to keep the connection active
 		socket.OnEvent(socketio.PingEvent.ID(), func(_ socketio.Deregister) {
 			agent := sio.agentStore.SioGetAgent(socket)
-			log.Trace().Str("Agent.name", agent.Name).Str("Agent.ID", agent.ID).Msg("Received socketio.PingEvent")
+			log.Debug().Str("Agent.name", agent.Name).Str("Agent.ID", agent.ID).Msg("Received socketio.PingEvent")
 			socket.Emit(socketio.PongEvent.ID())
 			agent.LastPing = time.Now()
 			// We update the lastUpdated field in the database to show clients

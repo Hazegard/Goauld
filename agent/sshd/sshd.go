@@ -80,19 +80,19 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 				return true, nil
 			},
 			_ssh.Kill: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
-				log.Trace().Str("Event", _ssh.Kill).Str("Content", string(req.Payload)).Msgf("Received KILL from %s", ctx.User())
+				log.Debug().Str("Event", _ssh.Kill).Str("Content", string(req.Payload)).Msgf("Received KILL from %s", ctx.User())
 				canceler.Exit("Client requested exit")
 
 				return true, nil
 			},
 			_ssh.Restart: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
-				log.Trace().Str("Event", _ssh.Restart).Str("Content", string(req.Payload)).Msgf("Received RESTART from %s", ctx.User())
+				log.Debug().Str("Event", _ssh.Restart).Str("Content", string(req.Payload)).Msgf("Received RESTART from %s", ctx.User())
 				canceler.Exit("Client requested restart")
 
 				return true, nil
 			},
 			_ssh.Delete: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
-				log.Trace().Str("Event", _ssh.Delete).Str("Content", string(req.Payload)).Msgf("Received DELETE from %s", ctx.User())
+				log.Debug().Str("Event", _ssh.Delete).Str("Content", string(req.Payload)).Msgf("Received DELETE from %s", ctx.User())
 				canceler.Delete("Client requested restart")
 
 				return true, nil
@@ -117,12 +117,12 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 		},
 		// Allows opening a shell
 		PtyCallback: func(ctx ssh.Context, _ ssh.Pty) bool {
-			log.Trace().Msgf("Received pty request from user: %s", ctx.User())
+			log.Debug().Msgf("Received pty request from user: %s", ctx.User())
 
 			return true
 		},
 		SessionRequestCallback: func(sess ssh.Session, _ string) bool {
-			log.Trace().Msgf("Received session request from user: %s", sess.User())
+			log.Debug().Msgf("Received session request from user: %s", sess.User())
 
 			return true
 		},

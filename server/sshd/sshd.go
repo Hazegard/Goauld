@@ -132,7 +132,7 @@ func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentS
 			log.Debug().Str("User", id).Str("Remote", remote).Msgf("SSH Connection attempt")
 			agent, err := db.FindAgentByID(id)
 			if err != nil {
-				log.Debug().Msgf("Agent not found (%s)", id)
+				log.Debug().Err(err).Msgf("Agent not found (%s)", id)
 
 				return false
 			}
@@ -161,9 +161,9 @@ func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentS
 		},
 		PasswordHandler: func(ctx ssh.Context, inPwd string) bool {
 			sourceIP := strings.Split(ctx.RemoteAddr().String(), ":")[0]
-			log.Trace().Str("User", ctx.User()).Str("IP", sourceIP).Msg("SSH Connection attempt")
+			log.Debug().Str("User", ctx.User()).Str("IP", sourceIP).Msg("SSH Connection attempt")
 			if !_net.IsIPAllowed(sourceIP, config.Get().AllowedIPs) {
-				log.Trace().Str("Remote", sourceIP).Msg("Connection attempt from non whitelisted IP address")
+				log.Debug().Str("Remote", sourceIP).Msg("Connection attempt from non whitelisted IP address")
 
 				return false
 			}
@@ -179,7 +179,7 @@ func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentS
 			agentName := ctx.User()
 			agent, err := db.FindAgentByName(agentName)
 			if err != nil {
-				log.Debug().Msgf("Agent not found (%s)", agentName)
+				log.Debug().Err(err).Msgf("Agent not found (%s)", agentName)
 
 				return false
 			}
@@ -208,7 +208,7 @@ func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentS
 
 				return false
 			}
-			log.Trace().Str("Agent.Name", agentName).Msg("Password accepted")
+			log.Debug().Str("Agent.Name", agentName).Msg("Password accepted")
 
 			return true
 		},

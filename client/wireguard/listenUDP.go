@@ -14,8 +14,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jpillora/chisel/share/cio"
-	"github.com/jpillora/chisel/share/settings"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/sync/errgroup"
 )
@@ -47,16 +45,14 @@ func ListenUDP(tcpConn net.Conn, port int) (*UdpListener, error) {
 		tcpConn: tcpConn,
 		//remote:  remote,
 		inbound: conn,
-		maxMTU:  settings.EnvInt("UDP_MAX_SIZE", 9012),
+		maxMTU:  9012, //settings.EnvInt("UDP_MAX_SIZE", 9012),
 	}
-	log.Trace().Int("MTU", u.maxMTU).Msg("ListenUDP MTU")
+	log.Debug().Int("MTU", u.maxMTU).Msg("ListenUDP MTU")
 
 	return u, nil
 }
 
 type UdpListener struct {
-	*cio.Logger
-
 	tcpConn net.Conn
 	// remote      *settings.Remote
 	inbound     *net.UDPConn

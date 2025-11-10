@@ -68,7 +68,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 		return nil, fmt.Errorf("opening KCP conn: %w", err)
 	}
 
-	log.Trace().Str("Mode", "DNSSH").Msgf("opening Session %08x", conn.GetConv())
+	log.Debug().Str("Mode", "DNSSH").Msgf("opening Session %08x", conn.GetConv())
 	// Permit coalescing the payloads of consecutive sending.
 	//nolint:staticcheck // SA1019
 	conn.SetStreamMode(true)

@@ -12,7 +12,7 @@ import (
 )
 
 func HandleRsync(s ssh.Session) {
-	log.Trace().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("Handling Rsync command")
+	log.Debug().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("Handling Rsync command")
 	l := log.Get().With().Str("Module", "rsync").Logger()
 	ll := stdlog.New(log.CustomSlog{L: &l}, "", 0)
 

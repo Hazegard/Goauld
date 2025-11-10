@@ -75,7 +75,7 @@ func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 
 		return err
 	}
-	log.Trace().Str("Path", srcAbsBin).Msg("Generated absolute path")
+	log.Debug().Str("Path", srcAbsBin).Msg("Generated absolute path")
 	err = utils.CreateOrReplaceFileSymlink(srcAbsBin, sshPath)
 	if err != nil {
 		log.Error().Err(err).Str("Agent", cfg.VsCode.Target).Str("Target", srcAbsBin).Str("Link", sshPath).Msg("Failed to create or replace ssh file")
@@ -117,7 +117,7 @@ func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 
 		return err
 	}
-	log.Trace().Str("Agent", cfg.VsCode.Target).Str("Path", settingsPath).Msg("VSCode settings written")
+	log.Debug().Str("Agent", cfg.VsCode.Target).Str("Path", settingsPath).Msg("VSCode settings written")
 
 	//nolint:gosec
 	cmd := exec.Command("code", "--user-data-dir", configDir, "--remote", "ssh-remote+"+cfg.VsCode.Target, cfg.VsCode.RemotePath)

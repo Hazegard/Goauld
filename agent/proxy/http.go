@@ -52,7 +52,9 @@ func InitHTTPProxy() *HTTPProxy {
 	proxy.Proxy.ConnectDialWithReq = func(req *http.Request, network, addr string) (net.Conn, error) {
 		log.Trace().Str("Addr", addr).Str("Network", network).Msg("CONNECT DIAL")
 		conn, err := proxy.Dialer.ProxyDialer("https", addr, config.Get().HTTPProxy())(req.Context(), network, addr)
-		log.Trace().Err(err).Str("Addr", addr).Str("Network", network).Msg("CONNECT DIAL ERROR DONE")
+		if err != nil {
+			log.Debug().Err(err).Str("Addr", addr).Str("Network", network).Msg("CONNECT DIAL ERROR DONE")
+		}
 
 		return conn, err
 	}
