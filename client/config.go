@@ -269,11 +269,13 @@ func (cfg *ClientConfig) IsFlagInCommandLine(long string, short string) bool {
 	return false
 }
 
-type Tui struct{}
+type Tui struct {
+	AuditMode bool `default:"false" name:"audit-mode" yaml:"audit-mode" help:"Redact all information in the TUI."`
+}
 
 // Run executes the tui subcommand.
 func (t *Tui) Run(clientAPI *api.API, cfg ClientConfig) error {
-	tt := tui.NewTui(clientAPI, cfg.AgentPassword)
+	tt := tui.NewTui(clientAPI, cfg.AgentPassword, t.AuditMode)
 	agent, mode, err := tt.Run()
 
 	if err != nil {

@@ -61,7 +61,7 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 // NewTui returns the Model holding the TUI.
-func NewTui(apiClient *api.API, agentPwd map[string]string) Model {
+func NewTui(apiClient *api.API, agentPwd map[string]string, auditMide bool) Model {
 	ti := textinput.New()
 	ti.Width = 100
 
@@ -73,11 +73,12 @@ func NewTui(apiClient *api.API, agentPwd map[string]string) Model {
 		return Model{}
 	}
 	m := Model{
-		agentsTable:    GenerateAgentTable(false).WithRows(AgentsToRow(agents, false)),
+		agentsTable:    GenerateAgentTable(false).WithRows(AgentsToRow(agents, false, auditMide)),
 		agents:         agents,
 		statusText:     ti,
 		api:            apiClient,
 		_agentPassword: agentPwd,
+		auditMode:      auditMide,
 	}
 	if len(m.agents) == 0 {
 		m.agentInfoTable = m.GenerateInfoTable(types.Agent{})
@@ -87,6 +88,32 @@ func NewTui(apiClient *api.API, agentPwd map[string]string) Model {
 	m.agentInfoTable = m.GenerateInfoTable(agents[0])
 
 	return m
+}
+
+func MaskString(s string, hide bool) string {
+	if !hide {
+		return s
+	}
+	n := len(s)
+	if n == 0 {
+		return s
+	}
+
+	switch {
+	case n < 4:
+		// Show first 3 (or all if shorter)
+		if n < 3 {
+			return s
+		}
+
+		return s[:3]
+	case n < 6:
+		// Show first 2 and last 2
+		return s[:2] + strings.Repeat("*", n-4) + s[n-2:]
+	default:
+		// Show first 3 and last 3
+		return s[:3] + strings.Repeat("*", n-6) + s[n-3:]
+	}
 }
 
 // Model holds the TUI model.
@@ -105,6 +132,13 @@ type Model struct {
 	promptedAction  string
 	extendedDetails bool
 	execMode        string
+	auditMode       bool
+}
+
+// MaskString replaces all characters in a string with '*'
+// except the first and last few based on string length.
+func (m *Model) MaskString(s string) string {
+	return MaskString(s, m.auditMode)
 }
 
 // Run run the Model.
@@ -192,14 +226,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.confirmAction {
 			case "":
 				m.confirmAction = actionKill
-				text = fmt.Sprintf("Confirm killing %s? (%s to confirm)", selectedAgent.Name, actionKill)
+				text = fmt.Sprintf("Confirm killing %s? (%s to confirm)", m.MaskString(selectedAgent.Name), actionKill)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
 			case actionKill:
 				if selectedAgent.ID != "" {
 					m.confirmAction = ""
 					// if selectedAgent.Connected {
-					text = fmt.Sprintf("Killing %s (%s)...", selectedAgent.Name, selectedAgent.ID)
+					text = fmt.Sprintf("Killing %s (%s)...", m.MaskString(selectedAgent.Name), m.MaskString(selectedAgent.ID))
 					m.statusText.TextStyle = textError
 					if selectedAgent.HasStaticPassword {
 						pwd, ok := m._agentPassword[selectedAgent.Name]
@@ -227,14 +261,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.confirmAction {
 			case "":
 				m.confirmAction = actionReset
-				text = fmt.Sprintf("Confirm reset %s? (%s to confirm)", selectedAgent.Name, actionReset)
+				text = fmt.Sprintf("Confirm reset %s? (%s to confirm)", m.MaskString(selectedAgent.Name), actionReset)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
 			case actionReset:
 				if selectedAgent.ID != "" {
 					m.confirmAction = actionReset
 					// if selectedAgent.Connected {
-					text = fmt.Sprintf("Resetting %s (%s)...", selectedAgent.Name, selectedAgent.ID)
+					text = fmt.Sprintf("Resetting %s (%s)...", m.MaskString(selectedAgent.Name), selectedAgent.ID)
 					m.statusText.TextStyle = textError
 					if selectedAgent.HasStaticPassword {
 						pwd, ok := m._agentPassword[selectedAgent.Name]
@@ -263,13 +297,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.confirmAction {
 			case "":
 				m.confirmAction = actionDelete
-				text = fmt.Sprintf("Confirm deleting %s? (%s to confirm)", selectedAgent.Name, actionDelete)
+				text = fmt.Sprintf("Confirm deleting %s? (%s to confirm)", m.MaskString(selectedAgent.Name), actionDelete)
 				m.statusText.TextStyle = textError
 				m.statusText.SetValue(text)
 			case actionDelete:
 				if selectedAgent.ID != "" {
 					m.confirmAction = actionDelete
-					text = fmt.Sprintf("Deleting %s (%s)...", selectedAgent.Name, selectedAgent.ID)
+					text = fmt.Sprintf("Deleting %s (%s)...", m.MaskString(selectedAgent.Name), m.MaskString(selectedAgent.ID))
 					m.statusText.TextStyle = textError
 					if selectedAgent.HasStaticPassword && selectedAgent.Connected {
 						pwd, ok := m._agentPassword[selectedAgent.Name]
@@ -317,13 +351,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.confirmAction {
 			case "":
 				m.confirmAction = actionVSCode
-				text = fmt.Sprintf("Confirm launching remote VSCode on %s? (%s to confirm)", selectedAgent.Name, actionVSCode)
+				text = fmt.Sprintf("Confirm launching remote VSCode on %s? (%s to confirm)", m.MaskString(selectedAgent.Name), actionVSCode)
 				m.statusText.TextStyle = textWarning
 				m.statusText.SetValue(text)
 			case actionVSCode:
 				if selectedAgent.ID != "" {
 					m.confirmAction = actionVSCode
-					text = fmt.Sprintf("Starting remote VSCode on %s (%s)...", selectedAgent.Name, selectedAgent.ID)
+					text = fmt.Sprintf("Starting remote VSCode on %s (%s)...", m.MaskString(selectedAgent.Name), m.MaskString(selectedAgent.ID))
 					m.statusText.TextStyle = textOk
 					m.execMode = "vscode"
 					m.agent = selectedAgent.Name
@@ -342,7 +376,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// return m, m.UpdateAgents(m.agents)
 		case actionPlus:
 			m.extendedDetails = !m.extendedDetails
-			m.agentsTable = GenerateAgentTable(m.extendedDetails).WithRows(AgentsToRow(m.agents, m.extendedDetails))
+			m.agentsTable = GenerateAgentTable(m.extendedDetails).WithRows(AgentsToRow(m.agents, m.extendedDetails, m.auditMode))
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		default:
@@ -366,7 +400,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	// Handle updates agent list
 	case updateMessage:
-		rows := AgentsToRow(msg.agents, m.extendedDetails)
+		rows := AgentsToRow(msg.agents, m.extendedDetails, m.auditMode)
 		m.agents = msg.agents
 		m.agentsTable = m.agentsTable.WithRows(rows)
 
@@ -378,7 +412,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		batch = append(batch, m.doUpdate(m.agents), m.doTick())
 	case promptPassword:
 		ti := textinput.New()
-		ti.Prompt = fmt.Sprintf("(%s) Password: ", selectedAgent.Name)
+		ti.Prompt = fmt.Sprintf("(%s) Password: ", m.MaskString(selectedAgent.Name))
 		ti.Placeholder = ""
 		ti.EchoMode = textinput.EchoPassword
 		ti.PromptStyle = textWarning
@@ -457,16 +491,30 @@ func (m *Model) doTick() tea.Cmd {
 
 // GenerateInfoTable populate the info table to show the details of the currently selected agent.
 func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
+	ips := agent.IPs
+	if m.auditMode {
+		split := strings.Split(ips, ",")
+		var _ips []string
+		for _, ip := range split {
+			ipRange := strings.Split(ip, "/")
+			if len(ipRange) == 1 {
+				_ips = append(_ips, m.MaskString(ipRange[0])+"/32")
+			} else {
+				_ips = append(_ips, m.MaskString(ipRange[0])+"/"+ipRange[1])
+			}
+		}
+		ips = strings.Join(_ips, ",")
+	}
 	rows := []teatable.Row{
-		{"ID", agent.ID},
-		{"Username", agent.Username},
-		{"Hostname", agent.Hostname},
-		{"Path", agent.Path},
+		{"ID", m.MaskString(agent.ID)},
+		{"Username", m.MaskString(agent.Username)},
+		{"Hostname", m.MaskString(agent.Hostname)},
+		{"Path", m.MaskString(agent.Path)},
 		{"Version", agent.Version.String()},
 		{"OS", agent.Platform},
 		{"Archi", agent.Architecture},
-		{"Public Ip", agent.RemoteAddr},
-		{"IPs", strings.ReplaceAll(agent.IPs, ",", ", ")},
+		{"Public Ip", m.MaskString(agent.RemoteAddr)},
+		{"IPs", strings.ReplaceAll(ips, ",", ", ")},
 	}
 	height := len(rows) + 1
 	if m.extendedDetails {
@@ -530,7 +578,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 
 	columns := []teatable.Column{
 		{Title: "Name", Width: 12},
-		{Title: agent.Name, Width: length},
+		{Title: m.MaskString(agent.Name), Width: length},
 	}
 	t := teatable.New(
 		teatable.WithColumns(columns),
@@ -621,11 +669,11 @@ func (m *Model) GetAgents() []table.Row {
 		panic(err)
 	}
 
-	return AgentsToRow(agents, m.extendedDetails)
+	return AgentsToRow(agents, m.extendedDetails, m.auditMode)
 }
 
 // AgentsToRow converts a slice of agents to a slice of rows to be used in the table component.
-func AgentsToRow(agents []types.Agent, details bool) []table.Row {
+func AgentsToRow(agents []types.Agent, details bool, hide bool) []table.Row {
 	var rows []table.Row
 	sort.Slice(agents, func(i, j int) bool {
 		return agents[i].LastUpdated.After(agents[j].LastUpdated)
@@ -634,7 +682,7 @@ func AgentsToRow(agents []types.Agent, details bool) []table.Row {
 		data := table.RowData{
 			"ID":           agent.ID,
 			"N":            centerString(strconv.Itoa(i+1), 3),
-			"Name":         centerString(agent.Name, 30),
+			"Name":         centerString(MaskString(agent.Name, hide), 30),
 			"Last Updated": centerString(relTIme(agent.LastUpdated), 14),
 			"Last Ping":    centerString(relTIme(agent.LastPing), 13),
 			"Mode":         centerString(agent.SSHMode, 10),
@@ -676,14 +724,14 @@ func (m *Model) Kill(agent types.Agent, doExit bool, doDelete bool, password str
 
 			return cmdResponse{
 				Success: false,
-				Message: fmt.Sprintf("Error %s %s (%s): %s", killing, agent.Name, agent.ID, err),
+				Message: fmt.Sprintf("Error %s %s (%s): %s", killing, m.MaskString(agent.Name), agent.ID, err),
 				Action:  "kill",
 			}
 		}
 
 		return cmdResponse{
 			Success: false,
-			Message: fmt.Sprintf("%s %s (%s)", reset, agent.Name, agent.ID),
+			Message: fmt.Sprintf("%s %s (%s)", reset, m.MaskString(agent.Name), agent.ID),
 			Action:  "kill",
 		}
 	}
@@ -696,7 +744,7 @@ func (m *Model) Delete(agent types.Agent) tea.Cmd {
 		if err != nil {
 			return cmdResponse{
 				Success: false,
-				Message: fmt.Sprintf("Error deleting %s (%s): %s", agent.Name, agent.ID, err),
+				Message: fmt.Sprintf("Error deleting %s (%s): %s", m.MaskString(agent.Name), agent.ID, err),
 				Action:  "delete",
 			}
 		}

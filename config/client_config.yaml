@@ -163,7 +163,9 @@ clip:
     content: ""
 
 # Launch the text-based interface for managing connected agents.
-tui: {}
+tui:
+  #Redact all information in the TUI.
+  audit-mode: false
 
 # Retrieve stored passwords used by the agent.
 pass:
