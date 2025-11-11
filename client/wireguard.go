@@ -4,6 +4,7 @@ import (
 	"Goauld/client/api"
 	"Goauld/client/types"
 	wireguard2 "Goauld/client/wireguard"
+	"Goauld/common/cmd"
 	"Goauld/common/log"
 	net2 "Goauld/common/net"
 	"Goauld/common/utils"
@@ -28,13 +29,13 @@ type Wireguard struct {
 	Start    Start    `cmd:"" name:"start" yaml:"start" help:"Start Wireguard tunnel."`
 }
 
-func (cmd *Wireguard) Run(_ *api.API, _ ClientConfig) error {
+func (wg *Wireguard) Run(_ *api.API, _ ClientConfig) error {
 	return nil
 }
 
 type Generate struct{}
 
-func (cmd *Generate) Run(_ *api.API, _ ClientConfig) error {
+func (gen *Generate) Run(_ *api.API, _ ClientConfig) error {
 	pri, pub, err := wireguard.GenerateWireGuardKeyPair()
 	if err != nil {
 		return err
@@ -109,6 +110,10 @@ func (s *Start) Validate() error {
 }
 
 func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
+	notFound := cmd.CheckCommands([]string{wireguard2.WGCommand})
+	if len(notFound) > 0 {
+		return fmt.Errorf("command not found: %s", strings.Join(notFound, ","))
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	agent, err := clientAPI.GetAgentByName(cfg.Wireguard.Start.Target)
@@ -140,18 +145,18 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 		log.Warn().Err(err).Str("Path", p).Msg("Failed to change file permissions")
 	}
 
-	defer func(dir string) {
+	defer func() {
+		strCmd := wireguard2.DownCmdString(p)
 		if s.Exec {
 			err := cmdEnd(p)
 			if err != nil {
 				log.Debug().Err(err).Str("Path", p).Msg("Failed to end Wireguard agent")
-				log.Debug().Str("Cmd", "sudo wg-quick down "+dir).Msg("Please manually run the command in the directory")
+				log.Debug().Str("Cmd", strCmd).Msg("Please manually run the command in the directory")
 			}
 		} else {
-			cmd := "sudo wg-quick down " + p
-			log.Info().Str("Command", cmd).Msg("Execute the command to stop the Wireguard agent")
+			log.Info().Str("Command", strCmd).Msg("Execute the command to stop the Wireguard agent")
 		}
-	}(dir)
+	}()
 
 	tun := ""
 	if s.Exec {
@@ -175,8 +180,7 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 			return err
 		}
 	} else {
-		cmd := "sudo wg-quick up " + p
-		log.Info().Str("Command", cmd).Msg("Execute the command to start the Wireguard agent")
+		log.Info().Str("Command", wireguard2.UpCmdString(p)).Msg("Execute the command to start the Wireguard agent")
 	}
 
 	wgConf := wireguard.WGConfig{
@@ -308,31 +312,36 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 }
 
 func cmdHandshakes(file string) ([]byte, error) {
-	cmd := exec.Command("sudo", "wg", "show", file, "latest-handshakes")
-	cmd.Stdin = os.Stdin
-	// log.Info().Msgf("Running command: sudo wg-quick up %s", file)
+	latestHSCmd := wireguard2.LatestHandshakes(file)
+	//nolint:gosec
+	c := exec.Command(latestHSCmd[0], latestHSCmd[1:]...)
+	c.Stdin = os.Stdin
 
-	return cmd.CombinedOutput()
+	return c.CombinedOutput()
 }
 
 func cmdStart(file string) ([]byte, error) {
-	cmd := exec.Command("sudo", "wg-quick", "up", file)
+	wgCmd := wireguard2.UpCmd(file)
+	//nolint:gosec
+	c := exec.Command(wgCmd[0], wgCmd[1:]...)
 	// cmd.Stdout = os.Stdout
 	// cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	log.Info().Msgf("Running command: sudo wg-quick up %s", file)
+	c.Stdin = os.Stdin
+	log.Info().Msgf("Running command: %s", wireguard2.UpCmdString(file))
 
-	return cmd.CombinedOutput()
+	return c.CombinedOutput()
 }
 
 func cmdEnd(file string) error {
-	cmd := exec.Command("sudo", "wg-quick", "down", file)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	log.Info().Msgf("Running command: sudo wg-quick down %s", file)
+	wgCmd := wireguard2.DownCmd(file)
+	//nolint:gosec
+	c := exec.Command(wgCmd[0], wgCmd[1:]...)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	c.Stdin = os.Stdin
+	log.Info().Msgf("Running command: %s", wireguard2.DownCmdString(file))
 
-	return cmd.Run()
+	return c.Run()
 }
 
 func (s *Start) GenerateWGConf(cfg ClientConfig, agent types.Agent) string {

@@ -5,6 +5,7 @@ import (
 	"Goauld/client/common"
 	goauldcommon "Goauld/common"
 	"Goauld/common/cli"
+	commonCmd "Goauld/common/cmd"
 	"Goauld/common/crypto/pwgen"
 	"Goauld/common/log"
 	"archive/tar"
@@ -229,7 +230,7 @@ func run(config Compiler) error {
 	if config.Compress {
 		requiredCommands = append(requiredCommands, "upx")
 	}
-	missingCommands := CheckCommands(requiredCommands)
+	missingCommands := commonCmd.CheckCommands(requiredCommands)
 	if len(missingCommands) > 0 {
 		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.Appname)).Str("commands", strings.Join(missingCommands, ", ")).Msg("Missing required commands")
 

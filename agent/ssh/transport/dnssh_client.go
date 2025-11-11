@@ -262,6 +262,7 @@ func (d *DNSSH) OpenStream() (*smux.Stream, error) {
 	d.streamsMutex.Lock()
 	defer d.streamsMutex.Unlock()
 	d.streams = append(d.streams, s)
+
 	return s, nil
 }
 func (d *DNSSH) CloseStream() error {
@@ -272,6 +273,7 @@ func (d *DNSSH) CloseStream() error {
 		errs = append(errs, stream.Close())
 	}
 	d.streams = nil
+
 	return errors.Join(errs...)
 }
 
