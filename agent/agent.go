@@ -11,8 +11,8 @@ import (
 	"Goauld/agent/ssh/transport"
 	"Goauld/agent/vscode"
 	"Goauld/agent/wireguard"
+	"Goauld/agent/wireguard/udptunnel"
 	"Goauld/common"
-	"Goauld/common/wireguard/udptunnel"
 	"context"
 	"errors"
 	"fmt"
@@ -514,6 +514,7 @@ func run() globalcontext.CancelReason {
 					err := relayer.Serve()
 					if err != nil {
 						log.Error().Err(err).Msg("error serving the relay router")
+
 						return
 					}
 				}()

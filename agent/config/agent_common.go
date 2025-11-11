@@ -508,3 +508,7 @@ func (a *Agent) GetKillSwitchDays() int {
 func (a *Agent) IgnoredArgs() []string {
 	return a.cfg.Remaining
 }
+
+func (a *Agent) Relay() string {
+	return a.cfg.RelayAddr
+}

@@ -150,10 +150,6 @@ func (a *Agent) IsRelay() bool {
 	return a.cfg.Relay
 }
 
-func (a *Agent) Relay() string {
-	return a.cfg.RelayAddr
-}
-
 // Verbosity returns the current log verbosity.
 func (a *Agent) Verbosity() int {
 	return a.cfg.Verbose

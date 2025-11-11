@@ -74,7 +74,7 @@ type Start struct {
 	Target     string             `arg:"" name:"agent" yaml:"agent" help:"Target agent for which to start the WireGuard service."`
 	Port       int                `default:"${_wg_port}" yaml:"port" name:"port" help:"Port number to listen on for WireGuard connections."`
 	Ranges     string             `default:"" name:"range" yaml:"ranges" optional:"" help:"IP ranges to route through the WireGuard VPN (comma-separated)."`
-	AutoRanges bool               `default:"" name:"auto-range" yaml:"auto-ranges" optional:"" help:"Set by default the ranges of the agent"`
+	AutoRanges bool               `default:"false" name:"auto-range" yaml:"auto-ranges" optional:"" help:"Set by default the ranges of the agent"`
 	Loopback   bool               `name:"loopback" yaml:"loopback" help:"Use the loopback interface with the 240.0.0.0/8 address range."`
 	Exec       bool               `name:"exec" yaml:"exec" default:"true" help:"Execute WireGuard commands directly with elevated privileges."`
 	WGConf     wireguard.WGConfig `name:"conf" yaml:"conf" embed:"" help:"WireGuard configuration options."`

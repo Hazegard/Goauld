@@ -229,12 +229,14 @@ func GetRelayEioConfig(mode string, dnsTransport *transport.DNSSH) (*sio.Manager
 		_, err = stream.Write([]byte(config.Get().ID))
 		if err != nil {
 			log.Error().Err(err).Msg("Error writing to stream")
+
 			return nil, err
 		}
 		_, err = stream.Write([]byte{'C'})
 		if err != nil {
 			return nil, fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
 		}
+
 		return getDNSEioConfig(stream), nil
 	}
 

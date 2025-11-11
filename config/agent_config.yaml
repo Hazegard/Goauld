@@ -47,6 +47,9 @@ http: true
 # Enable the WireGuard service.
 wg: false
 
+# Enable the Relay service.
+relay: false
+
 # Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured).
 proxy: ""
 
@@ -100,6 +103,9 @@ http-port: 0
 
 # Remote WireGuard port to bind on the server (0 = random).
 wg-port: 0
+
+# Remote WireGuard port to bind on the server (0 = random).
+relay-port: 0
 
 # Prevent the system from sleeping or locking.
 keep-awake: false
@@ -164,6 +170,9 @@ custom-dns-command: ""
 
 # Number of days before the agent self-terminates (0 = disabled).
 kill-switch: 7
+
+# Use another agent to relay the connection to the server.
+relay-addr: ""
 
 # Extra arguments that will be trashed, required when launching the agent in some contexts.
 remaining: []

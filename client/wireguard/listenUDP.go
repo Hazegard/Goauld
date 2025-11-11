@@ -1,8 +1,8 @@
 package wireguard
 
 import (
+	"Goauld/agent/wireguard/udptunnel"
 	"Goauld/common/log"
-	"Goauld/common/wireguard/udptunnel"
 	"context"
 	"encoding/gob"
 	"errors"
@@ -45,7 +45,7 @@ func ListenUDP(tcpConn net.Conn, port int) (*UdpListener, error) {
 		tcpConn: tcpConn,
 		//remote:  remote,
 		inbound: conn,
-		maxMTU:  9012, //settings.EnvInt("UDP_MAX_SIZE", 9012),
+		maxMTU:  9012, // settings.EnvInt("UDP_MAX_SIZE", 9012),
 	}
 	log.Debug().Int("MTU", u.maxMTU).Msg("ListenUDP MTU")
 

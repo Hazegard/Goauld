@@ -74,6 +74,7 @@ env:
   - AGENT__SOCKS_ENABLED={{ .Env.AGENT__SOCKS_ENABLED }}
   - AGENT__HTTP_PROXY_ENABLED={{ .Env.AGENT__HTTP_PROXY_ENABLED }}
   - AGENT__WG_ENABLED={{ .Env.AGENT__WG_ENABLED }}
+  - AGENT__RELAY_ENABLED={{ .Env.AGENT__RELAY_ENABLED }}
 
   - AGENT__PROXY={{ .Env.AGENT__PROXY }}
   - AGENT__PROXY_USERNAME={{ .Env.AGENT__PROXY_USERNAME }}
@@ -97,6 +98,7 @@ env:
   - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
   - AGENT__HTTP_PORT={{ .Env.AGENT__HTTP_PORT }}
   - AGENT__WG_PORT={{ .Env.AGENT__WG_PORT }}
+  - AGENT__RELAY_PORT={{ .Env.AGENT__RELAY_PORT }}
 
   - AGENT__KEEPAWAKE={{ .Env.AGENT__KEEPAWAKE }}
   - AGENT__KEEPALIVE={{ .Env.AGENT__KEEPALIVE }}
@@ -125,6 +127,8 @@ env:
   - AGENT__CUSTOM_DNS_COMMAND={{ .Env.AGENT__CUSTOM_DNS_COMMAND }}
 
   - AGENT__KILLSWITCH={{ .Env.AGENT__KILLSWITCH }}
+
+  - AGENT__RELAY_ADDR={{ .Env.AGENT__RELAY_ADDR }}
   - CLIENT__SERVER={{ .Env.CLIENT__SERVER }}
   - CLIENT__SSH_SERVER={{ .Env.CLIENT__SSH_SERVER }}
 
@@ -348,6 +352,7 @@ builds:
       - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__RELAY_ENABLED") }} -X Goauld/agent/config._relay_enabled={{ .Env.AGENT__RELAY_ENABLED }}{{end}}'
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
@@ -371,6 +376,7 @@ builds:
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__RELAY_PORT") }} -X Goauld/agent/config._relay_port={{ .Env.AGENT__RELAY_PORT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KEEPAWAKE") }} -X Goauld/agent/config._keepawake={{ .Env.AGENT__KEEPAWAKE }}{{end}}'
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
@@ -399,6 +405,8 @@ builds:
       - '{{ if (index .Env "AGENT__CUSTOM_DNS_COMMAND") }} -X Goauld/agent/config._custom_dns_command={{ .Env.AGENT__CUSTOM_DNS_COMMAND }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KILLSWITCH") }} -X Goauld/agent/config._killswitch={{ .Env.AGENT__KILLSWITCH }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__RELAY_ADDR") }} -X Goauld/agent/config._relay_addr={{ .Env.AGENT__RELAY_ADDR }}{{end}}'
 
 # END Dynamic AGENT
 
@@ -459,6 +467,7 @@ builds:
       - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__RELAY_ENABLED") }} -X Goauld/agent/config._relay_enabled={{ .Env.AGENT__RELAY_ENABLED }}{{end}}'
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
@@ -482,6 +491,7 @@ builds:
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__RELAY_PORT") }} -X Goauld/agent/config._relay_port={{ .Env.AGENT__RELAY_PORT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KEEPAWAKE") }} -X Goauld/agent/config._keepawake={{ .Env.AGENT__KEEPAWAKE }}{{end}}'
       - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
@@ -510,6 +520,8 @@ builds:
       - '{{ if (index .Env "AGENT__CUSTOM_DNS_COMMAND") }} -X Goauld/agent/config._custom_dns_command={{ .Env.AGENT__CUSTOM_DNS_COMMAND }}{{end}}'
 
       - '{{ if (index .Env "AGENT__KILLSWITCH") }} -X Goauld/agent/config._killswitch={{ .Env.AGENT__KILLSWITCH }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__RELAY_ADDR") }} -X Goauld/agent/config._relay_addr={{ .Env.AGENT__RELAY_ADDR }}{{end}}'
 
   # END Dynamic AGENT
 

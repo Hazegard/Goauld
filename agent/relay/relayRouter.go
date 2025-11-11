@@ -29,11 +29,11 @@ func (router *RelayRouter) Init() error {
 	port := listener.Addr().(*net.TCPAddr).Port
 	router.Port = port
 	router.listener = listener
+
 	return nil
 }
 
 func (router *RelayRouter) Serve() error {
-
 	return router.Server.Serve(router.listener)
 }
 
@@ -74,5 +74,6 @@ func NewRelayRouter(ctx context.Context, controlMode string, sshMode string, dns
 	if err != nil {
 		return nil, err
 	}
+
 	return relayer, nil
 }

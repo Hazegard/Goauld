@@ -241,6 +241,7 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("RSSH_PORT", _rssh_port))
 	env = append(env, prefixEnv("SOCKS_PORT", _socks_port))
 	env = append(env, prefixEnv("HTTP_PORT", _http_port))
+	env = append(env, prefixEnv("WG_PORT", _wg_port))
 	env = append(env, prefixEnv("RELAY_PORT", _relay_port))
 	env = append(env, prefixEnv("KEEP_AWAKE", _keepawake))
 	env = append(env, prefixEnv("KEEPALIVE", _keepalive))

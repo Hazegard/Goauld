@@ -222,6 +222,7 @@ wireguard:
     #Port number to listen on for WireGuard connections.
     port: 51820
     ranges: ""
+    auto-ranges: false
     #Use the loopback interface with the 240.0.0.0/8 address range.
     loopback: false
     #Execute WireGuard commands directly with elevated privileges.

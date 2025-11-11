@@ -477,7 +477,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 			rows = append(rows, teatable.Row{"Relay", agentRelay.Name + " (" + agentRelay.ID + ")"})
 		}
 		height++
-		portRelay := ""
+		var portRelay string
 		if agent.GetRelayPort() == "/" {
 			portRelay = "/"
 		} else {
@@ -631,7 +631,6 @@ func AgentsToRow(agents []types.Agent, details bool) []table.Row {
 		return agents[i].LastUpdated.After(agents[j].LastUpdated)
 	})
 	for i, agent := range agents {
-
 		data := table.RowData{
 			"ID":           agent.ID,
 			"N":            centerString(strconv.Itoa(i+1), 3),
@@ -756,5 +755,6 @@ func GetRelay(agent types.Agent, agents []types.Agent) (types.Agent, bool) {
 			}
 		}
 	}
+
 	return types.Agent{}, false
 }
