@@ -219,7 +219,7 @@ func GetRelayEioConfig(mode string, dnsTransport *transport.DNSSH) (*sio.Manager
 	case "polling":
 		return getEioConfig([]string{"polling"}), nil
 	case "dns":
-		stream, err := dnsTransport.Session.OpenStream()
+		stream, err := dnsTransport.OpenStream()
 		if err != nil {
 			log.Error().Err(err).Msg("Error opening stream")
 

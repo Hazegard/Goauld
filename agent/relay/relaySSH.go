@@ -139,7 +139,7 @@ func GetSSHCon(mode string, id string, ctx context.Context, dnsTransport *transp
 
 		case strings.HasPrefix(mode, "dns"):
 			if dnsTransport != nil {
-				res.conn, res.err = dnsTransport.Session.OpenStream()
+				res.conn, res.err = dnsTransport.OpenStream()
 			} else {
 				res.err = errors.New("DNS transport is unavailable")
 			}

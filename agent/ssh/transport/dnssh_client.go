@@ -10,6 +10,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	miekgDns "github.com/miekg/dns"
@@ -23,10 +24,12 @@ import (
 type DNSSH struct {
 	udpConn       net.PacketConn
 	pconn         net.PacketConn
-	Session       *smux.Session
+	session       *smux.Session
 	SSHStream     *smux.Stream
 	ControlStream *smux.Stream
 	kcpConn       *kcp.UDPSession
+	streamsMutex  *sync.Mutex
+	streams       []*smux.Stream
 }
 
 // smux streams will be closed after this much time without receiving data.
@@ -108,7 +111,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	a := &DNSSH{
 		udpConn:       pconn,
 		pconn:         pconn,
-		Session:       sess,
+		session:       sess,
 		SSHStream:     sshStream,
 		ControlStream: controlStream,
 		kcpConn:       conn,
@@ -251,14 +254,36 @@ func TestDNSServer(ip string, port int, d string) bool {
 	return false
 }
 
+func (d *DNSSH) OpenStream() (*smux.Stream, error) {
+	s, err := d.session.OpenStream()
+	if err != nil {
+		return nil, err
+	}
+	d.streamsMutex.Lock()
+	defer d.streamsMutex.Unlock()
+	d.streams = append(d.streams, s)
+	return s, nil
+}
+func (d *DNSSH) CloseStream() error {
+	d.streamsMutex.Lock()
+	defer d.streamsMutex.Unlock()
+	errs := []error{}
+	for _, stream := range d.streams {
+		errs = append(errs, stream.Close())
+	}
+	d.streams = nil
+	return errors.Join(errs...)
+}
+
 // Close closes all the connection used in the SSH over DNS.
 func (d *DNSSH) Close() error {
 	return errors.Join(
 		d.kcpConn.Close(),
-		d.Session.Close(),
+		d.session.Close(),
 		d.udpConn.Close(),
 		d.pconn.Close(),
 		d.SSHStream.Close(),
 		d.ControlStream.Close(),
+		d.CloseStream(),
 	)
 }
