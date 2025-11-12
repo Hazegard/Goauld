@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"Goauld/common/socket.io/monkeypatch"
 	"github.com/hazegard/socket.io-go/internal/sync"
 
 	"github.com/hazegard/socket.io-go/engine.io/parser"
@@ -66,14 +67,14 @@ func (t *ClientTransport) Handshake() (hr *parser.HandshakeResponse, err error) 
 	}
 
 	t.conn, _, err = websocket.Dial(context.Background(), t.url.String(), t.dialOptions)
-	// TODO
-	if t.conn != nil {
-		t.conn.SetReadLimit(-1)
-	}
+
 	if err != nil {
 		return
 	}
-
+	// monkeypatch only if mini agent
+	if t.conn != nil {
+		t.conn = monkeypatch.SetReadLimit(t.conn)
+	}
 	// If sid is set this means that we have already connected and
 	// we're using this transport for upgrade purposes.
 
