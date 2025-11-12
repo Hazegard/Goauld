@@ -241,6 +241,7 @@ func proxyHTTP(sshConfig *ssh.ClientConfig, id string) (*ssh.Client, *http.SSHTT
 func proxyDNS(sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH, id string) (*ssh.Client, net.Conn) {
 	log.Debug().Str("Mode", "DNSSH").Str("Target", config.Get().DNSDomain()).Msg("Trying send agent ID over the DNS connection")
 	// Write S tag to inform the incoming SSH traffic
+
 	_, err := dnsTransport.SSHStream.Write([]byte(id))
 	if err != nil {
 		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")

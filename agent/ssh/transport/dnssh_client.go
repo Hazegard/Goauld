@@ -28,7 +28,7 @@ type DNSSH struct {
 	SSHStream     *smux.Stream
 	ControlStream *smux.Stream
 	kcpConn       *kcp.UDPSession
-	streamsMutex  *sync.Mutex
+	streamsMutex  sync.Mutex
 	streams       []*smux.Stream
 }
 
@@ -115,6 +115,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 		SSHStream:     sshStream,
 		ControlStream: controlStream,
 		kcpConn:       conn,
+		streamsMutex:  sync.Mutex{},
 	}
 
 	return a, nil
