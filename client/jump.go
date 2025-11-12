@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Goauld/client/api"
 	"fmt"
 	"os"
 	"strings"
@@ -14,7 +15,11 @@ type Jump struct {
 	Args  []string `arg:"" yaml:"args" passthrough:"" help:"Additional arguments passed to the SSH or SCP command."`
 }
 
-func (j *Jump) Run(cfg ClientConfig) error {
+func (j *Jump) Run(clientAPI *api.API, cfg ClientConfig) error {
+	agent, err := clientAPI.GetAgentByName(j.Agent)
+	if err != nil {
+		return err
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return err
@@ -33,7 +38,7 @@ func (j *Jump) Run(cfg ClientConfig) error {
 		Args:       args,
 		Env:        cfg.EnvVar(j.Agent),
 		Log:        j.Log,
-		Agent:      j.Agent,
+		Agent:      agent,
 	}
 	if j.Print {
 		//nolint:forbidigo

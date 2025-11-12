@@ -85,6 +85,7 @@ func (r *Rsync) Run(clientAPI *api.API, cfg ClientConfig) error {
 		Executable: "rsync",
 		Args:       rsyncArgs,
 		Env:        nil,
+		Agent:      agent,
 	}
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 

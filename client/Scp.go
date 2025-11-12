@@ -118,7 +118,9 @@ func (s *Scp) Execute(clientAPI *api.API, cfg ClientConfig) error {
 func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	proxyCmd := s.buildTunnelSSHCommand(cfg, agent, exePath)
 
-	cmd := Command{}
+	cmd := Command{
+		Agent: agent,
+	}
 	cmd.Executable = "scp"
 	cmd.Args = append([]string{"-r"}, buildAllSSHOptions(cfg)...)
 	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.SCP.Target)
@@ -156,6 +158,7 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 func (s *Scp) buildTunnelSSHCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	cmd := Command{
 		Executable: "ssh",
+		Agent:      agent,
 	}
 	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.SCP.Target)
 	for i := range cmd.Env {

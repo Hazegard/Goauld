@@ -43,7 +43,7 @@ type Command struct {
 	Args       []string
 	Env        []string
 	Log        bool
-	Agent      string
+	Agent      types.Agent
 }
 
 // InlineEnv modify the command to use the env binary to load the environment variables.
@@ -142,7 +142,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 		}
 	} else {
 		if c.Log {
-			out := fmt.Sprintf("%s-%s.log", c.Agent, time.Now().Format("2006-01-02_15-04-05"))
+			out := fmt.Sprintf("%s-%s.log", c.Agent.Name, time.Now().Format("2006-01-02_15-04-05"))
 			e, err := ttyencoder.NewEncoder().
 				WithAppend(true).
 				WithCompress(true).
@@ -215,6 +215,8 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 
 	// Scanner for stderr to detect failure
 	wg := sync.WaitGroup{}
+	PermissionDenied := fmt.Sprintf("%s@%s: Permission denied", c.Agent.Name, cfg.GetSshdHost())
+	AgentPermissionDenied := fmt.Sprintf("%s@%s: Permission denied", c.Agent.Name, c.Agent.ID)
 
 	wg.Add(1)
 	go func() {
@@ -225,7 +227,8 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 				break
 			}
 			line := scanner.Text()
-			if strings.Contains(line, "Permission denied, please try again.") {
+			//fmt.Println("Err", line)
+			if strings.Contains(line, "Permission denied, please try again.") || strings.Contains(line, PermissionDenied) || strings.Contains(line, AgentPermissionDenied) {
 				hasAuthFailed.Store(true)
 
 				break
@@ -241,7 +244,8 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 		scanner := bufio.NewScanner(prOut)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.Contains(line, "Permission denied, please try again.") {
+			// fmt.Println("Out", line)
+			if strings.Contains(line, "Permission denied, please try again.") || strings.Contains(line, PermissionDenied) || strings.Contains(line, AgentPermissionDenied) {
 				hasAuthFailed.Store(true)
 			}
 			if !hasAuthFailed.Load() && cfg.SavePassword {
@@ -382,7 +386,9 @@ func (e *SSH) buildCommand(cfg ClientConfig, agent types.Agent, exePath string) 
 // through the ProxyCommand.
 func (e *SSH) buildOuterSSHCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	innerCmd := e.buildTunnelSSHCommand(cfg, agent, exePath)
-	cmd := Command{}
+	cmd := Command{
+		Agent: agent,
+	}
 	cmd.Executable = "ssh"
 	cmd.Args = buildAllSSHOptions(cfg)
 	cmd.Env = buildEnvironments(cfg, "agent", exePath, cfg.SSH.Target)
@@ -415,6 +421,7 @@ func (e *SSH) buildOuterSSHCommand(cfg ClientConfig, agent types.Agent, exePath 
 func (e *SSH) buildTunnelSSHCommand(cfg ClientConfig, agent types.Agent, exePath string) Command {
 	cmd := Command{
 		Executable: "ssh",
+		Agent:      agent,
 	}
 	cmd.Env = buildEnvironments(cfg, "otp", exePath, cfg.SSH.Target)
 	for i := range cmd.Env {
@@ -469,6 +476,7 @@ func buildAllSSHOptions(cfg ClientConfig) []string {
 		"-oPreferredAuthentications=password",
 		"-oLogLevel=ERROR",
 		"-oExitOnForwardFailure=no",
+		"-oNumberOfPasswordPrompts=1",
 	}
 
 	if cfg.Verbose > 0 {
