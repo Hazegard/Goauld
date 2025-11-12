@@ -2,6 +2,7 @@ package main
 
 import (
 	"Goauld/client/api"
+	"Goauld/common/log"
 	"fmt"
 	"os"
 
@@ -67,6 +68,12 @@ func (r *Rsync) Run(clientAPI *api.API, cfg ClientConfig) error {
 	exePath, err := getPath()
 	if err != nil {
 		return err
+	}
+	if cfg.ShouldPrompt(agent) {
+		err = cfg.Prompt(agent.Name)
+		if err != nil {
+			log.Warn().Err(err).Msg("error while retrieving password from command line, ignoring...")
+		}
 	}
 
 	proxyCmd := cfg.SSH.buildCommand(cfg, agent, exePath)

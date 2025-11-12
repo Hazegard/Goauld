@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Goauld/common/log"
 	"fmt"
 	"os"
 	"os/exec"
@@ -91,6 +92,13 @@ func (s *Scp) Execute(clientAPI *api.API, cfg ClientConfig) error {
 	exePath, err := getPath()
 	if err != nil {
 		return err
+	}
+
+	if cfg.ShouldPrompt(agent) {
+		err = cfg.Prompt(agent.Name)
+		if err != nil {
+			log.Warn().Err(err).Msg("error while retrieving password from command line, ignoring...")
+		}
 	}
 
 	cmd := s.buildScpCommand(cfg, agent, exePath)

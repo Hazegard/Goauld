@@ -77,7 +77,6 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fatih/structs v1.1.0 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/google/btree v1.1.2 // indirect

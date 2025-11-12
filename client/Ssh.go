@@ -221,6 +221,9 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 		defer wg.Done()
 		scanner := bufio.NewScanner(prErr)
 		for scanner.Scan() {
+			if hasAuthFailed.Load() {
+				break
+			}
 			line := scanner.Text()
 			if strings.Contains(line, "Permission denied, please try again.") {
 				hasAuthFailed.Store(true)
@@ -237,6 +240,10 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 		defer wg.Done()
 		scanner := bufio.NewScanner(prOut)
 		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.Contains(line, "Permission denied, please try again.") {
+				hasAuthFailed.Store(true)
+			}
 			if !hasAuthFailed.Load() && cfg.SavePassword {
 				err = cfg.UpdatePassConfigFile()
 				if err != nil {
@@ -250,13 +257,12 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 	}()
 
 	err = run()
+	wg.Wait()
 	if err != nil {
 		return hasAuthFailed.Load(), err
 	}
 
 	err = wait()
-
-	wg.Wait()
 
 	return hasAuthFailed.Load(), err
 }

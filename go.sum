@@ -91,8 +91,6 @@ github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga
 github.com/flynn/noise v1.0.1-0.20220214164934-d803f5c4b0f4/go.mod h1:xbMo+0i6+IGbYdJhF31t2eR1BIU0CYc12+BNAKwUTag=
 github.com/francoispqt/gojay v1.2.13 h1:d2m3sFjloqoIUQU3TsHBgj6qg/BVGlTBeHDUmyJnXKk=
 github.com/francoispqt/gojay v1.2.13/go.mod h1:ehT5mTG4ua4581f1++1WLG0vPdaA9HaiDsoyrBGkyDY=
-github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
-github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 h1:f5UyyCnv3o2EHy+zsqOyYa8jB5bZR/N9ZEideqeDYag=
 github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066/go.mod h1:YnCP1lAyul0ITv9nT/OqXseZmGeaqvMVa2uvl8ssQvE=
 github.com/glebarez/go-sqlite v1.22.0 h1:uAcMJhaA6r3LHMTFgP0SifzgXg46yJkgxqyuyec+ruQ=
@@ -145,8 +143,6 @@ github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
 github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
-github.com/jpillora/chisel v1.11.3 h1:TWN/WjWLsUr/uhE1HzuNJZkgCHLdCUrZIgxVfST8UT0=
-github.com/jpillora/chisel v1.11.3/go.mod h1:8GZhM4xXpYZGCwAk88cOQhtv9IlfZS8cu01lYOpvMNE=
 github.com/karagenc/yeast v0.1.1 h1:Zv9gOmz7Gp+E90KRIwJVFO4GFXbE7jEqrceXFrBSvy0=
 github.com/karagenc/yeast v0.1.1/go.mod h1:rLE1GH1CTdNXp7Z5fZpOnUCcfI9iW1BShs3uij0EMZ0=
 github.com/kevinburke/ssh_config v1.4.0 h1:6xxtP5bZ2E4NF5tuQulISpTO2z8XbtH8cg1PWkxoFkQ=
