@@ -37,7 +37,6 @@ func (j *Jump) Run(clientAPI *api.API, cfg ClientConfig) error {
 		Executable: exeCmd,
 		Args:       args,
 		Env:        cfg.EnvVar(j.Agent),
-		Log:        j.Log,
 		Agent:      agent,
 	}
 	if j.Print {
@@ -47,5 +46,5 @@ func (j *Jump) Run(clientAPI *api.API, cfg ClientConfig) error {
 		return nil
 	}
 
-	return cmd.Execute(cfg, j.Agent, j.Scp)
+	return cmd.Execute(cfg, j.Agent, j.Scp, j.Log)
 }

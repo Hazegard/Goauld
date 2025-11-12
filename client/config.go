@@ -61,6 +61,7 @@ var (
 	_socks_proxy            = "false" //nolint:revive
 
 	_scp_print       = "false" //nolint:revive
+	_scp_log         = "false" //nolint:revive
 	_scp_source      = ""      //nolint:revive
 	_scp_destination = ""      //nolint:revive
 	_scp_args        = ""      //nolint:revive
@@ -118,6 +119,7 @@ var (
 		"_socks_proxy":            _socks_proxy,
 
 		"_scp_print":       _scp_print,
+		"_scp_log":         _scp_log,
 		"_scp_source":      _scp_source,
 		"_scp_destination": _scp_destination,
 		"_scp_args":        _scp_args,

@@ -18,6 +18,7 @@ import (
 type Scp struct {
 	Target string `kong:"-"` // internal, not shown in help
 	Print  bool   `default:"${_scp_print}" name:"print" yaml:"print" optional:"" help:"Print the generated SCP command instead of executing it."`
+	Log    bool   `default:"${_ssh_log}" name:"log" yaml:"log" optional:"" help:"Record the SSH session to a log file."`
 
 	SSHOpts     []string `short:"o" name:"ssh-opts" yaml:"ssh-opts" help:"Additional SSH options (equivalent to '-o')."`
 	SSHConfFile string   `short:"F" name:"ssh-config-file" yaml:"ssh-config-file" help:"Path to an SSH configuration file to use."`
@@ -110,7 +111,7 @@ func (s *Scp) Execute(clientAPI *api.API, cfg ClientConfig) error {
 	}
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
-	return cmd.Execute(cfg, agent.Name, isTerminal)
+	return cmd.Execute(cfg, agent.Name, isTerminal, s.Log)
 }
 
 // buildScpCommand build the outer SSH command. This SSH command will be executed in second

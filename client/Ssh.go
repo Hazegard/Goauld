@@ -42,7 +42,6 @@ type Command struct {
 	Executable string
 	Args       []string
 	Env        []string
-	Log        bool
 	Agent      types.Agent
 }
 
@@ -73,11 +72,11 @@ func (c *Command) StringShell() string {
 	return fmt.Sprintf("%s %s", c.Executable, strings.Join(args, " "))
 }
 
-func (c *Command) Execute(cfg ClientConfig, target string, inPty bool) error {
+func (c *Command) Execute(cfg ClientConfig, target string, inPty bool, doLog bool) error {
 	var err error
 	for attempt := range 4 {
 		var hasFailed bool
-		hasFailed, err = c.execute(cfg, inPty)
+		hasFailed, err = c.execute(cfg, inPty, doLog)
 		if !hasFailed {
 			return err
 		}
@@ -107,7 +106,7 @@ func (c *Command) UpdatePwd(newPwd string) {
 }
 
 // Execute executes the command and adds the environment variables if needed.
-func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
+func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error) {
 	var err error
 	var stdoutPipe io.ReadCloser
 	var stderrPipe io.ReadCloser
@@ -141,25 +140,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 			return cmd.Wait()
 		}
 	} else {
-		if c.Log {
-			out := fmt.Sprintf("%s-%s.log", c.Agent.Name, time.Now().Format("2006-01-02_15-04-05"))
-			e, err := ttyencoder.NewEncoder().
-				WithAppend(true).
-				WithCompress(true).
-				WithOutput(out).
-				Open()
-			if err != nil {
-				return false, err
-			}
 
-			encoder = e
-			defer func() {
-				_ = e.Close()
-				if hasAuthFailed.Load() {
-					_ = os.Remove(out)
-				}
-			}()
-		}
 		//nolint:gosec
 		cmd := exec.Command(c.Executable, c.Args...)
 		if len(c.Env) > 0 {
@@ -181,6 +162,27 @@ func (c *Command) execute(cfg ClientConfig, inPty bool) (bool, error) {
 		wait = func() error {
 			return cmd.Wait()
 		}
+	}
+
+	if doLog {
+		out := fmt.Sprintf("%s-%s.log", c.Agent.Name, time.Now().Format("2006-01-02_15-04-05"))
+		e, err := ttyencoder.NewEncoder().
+			WithAppend(true).
+			WithCompress(true).
+			WithOutput(out).
+			Open()
+		if err != nil {
+			return false, err
+		}
+
+		encoder = e
+		defer func() {
+			_ = e.Close()
+			if hasAuthFailed.Load() {
+				fmt.Println("Remove", out)
+				_ = os.Remove(out)
+			}
+		}()
 	}
 
 	// Tee stdout
@@ -345,10 +347,11 @@ func (e *SSH) Execute(clientAPI *api.API, cfg ClientConfig) error {
 		return nil
 	}
 	if e.Proxy {
-		return cmd.Execute(cfg, agent.Name, false)
+		// We never log a proxy
+		return cmd.Execute(cfg, agent.Name, false, false)
 	}
 
-	err = cmd.Execute(cfg, agent.Name, false)
+	err = cmd.Execute(cfg, agent.Name, false, e.Log)
 	if err != nil {
 		var exitError *exec.ExitError
 		ok := errors.As(err, &exitError)

@@ -12,14 +12,18 @@ import (
 // Rsync wraps the rsync command to copy files between the host and the agent.
 type Rsync struct {
 	Target string   `kong:"-"` // internal, not shown in help
+	Log    bool     `default:"${_scp_log}" name:"log" yaml:"log" optional:"" help:"Record the SSH session to a log file."`
 	Print  bool     `default:"${_scp_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated rsync command instead of executing it."`
 	Args   []string `arg:"" name:"paths" yaml:"paths" help:"Paths to synchronize using rsync." passthrough:""`
 }
 
 func getRawRsyncArgs() []string {
 	isRsyncParam := false
-	params := []string{}
+	params := []string{"-r", "-v", "-P"}
 	for _, arg := range os.Args {
+		if arg == "--log" {
+			continue
+		}
 		if isRsyncParam {
 			params = append(params, arg)
 
@@ -89,5 +93,5 @@ func (r *Rsync) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
-	return rsyncCommand.Execute(cfg, target, isTerminal)
+	return rsyncCommand.Execute(cfg, target, isTerminal, r.Log)
 }
