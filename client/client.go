@@ -157,7 +157,7 @@ func CheckAPIVersion(clientAPI *api.API) {
 		return
 	}
 	clientVersion := _common.JSONVersion()
-	if srvVersion.Compare(clientVersion) != 0 {
+	if srvVersion.Compare(clientVersion) > 0 {
 		log.Warn().Str("Server", srvVersion.Version).Str("Client", clientVersion.Version).Msg("version mismatch")
 		log.Debug().Str("Server Commit", srvVersion.Commit).Str("Client Commit", clientVersion.Commit).Msg("version mismatch")
 		log.Debug().Str("Server Date", srvVersion.Date).Str("Client Date", clientVersion.Date).Msg("version mismatch")

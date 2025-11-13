@@ -255,7 +255,6 @@ func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error
 		scanner := bufio.NewScanner(prOut)
 		for scanner.Scan() {
 			line := scanner.Text()
-			// fmt.Println("Out", line)
 			if strings.Contains(line, GenericPermissionDenied) || strings.Contains(line, ServerPermissionDenied) || strings.Contains(line, AgentPermissionDenied) {
 				hasAuthFailed.Store(true)
 			}
