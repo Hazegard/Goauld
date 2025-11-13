@@ -19,6 +19,7 @@ import (
 
 	"github.com/hazegard/togettyc/ttyencoder"
 	"github.com/aymanbagabas/go-pty"
+	"golang.org/x/term"
 )
 
 type SSH struct {
@@ -126,6 +127,16 @@ func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error
 		if len(c.Env) > 0 {
 			cmd.Env = append(os.Environ(), c.Env...)
 		}
+		// Set stdin in raw mode.
+		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+		if err != nil {
+			log.Warn().Err(err).Msg("error while opening pty")
+		}
+		defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+
+		go func() {
+			io.Copy(ptyFile, os.Stdin)
+		}()
 
 		//nolint:errcheck
 		defer ptyFile.Close()
@@ -140,7 +151,6 @@ func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error
 			return cmd.Wait()
 		}
 	} else {
-
 		//nolint:gosec
 		cmd := exec.Command(c.Executable, c.Args...)
 		if len(c.Env) > 0 {
@@ -179,7 +189,6 @@ func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error
 		defer func() {
 			_ = e.Close()
 			if hasAuthFailed.Load() {
-				fmt.Println("Remove", out)
 				_ = os.Remove(out)
 			}
 		}()
@@ -217,7 +226,8 @@ func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error
 
 	// Scanner for stderr to detect failure
 	wg := sync.WaitGroup{}
-	PermissionDenied := fmt.Sprintf("%s@%s: Permission denied", c.Agent.Name, cfg.GetSshdHost())
+	GenericPermissionDenied := "Permission denied, please try again."
+	ServerPermissionDenied := fmt.Sprintf("%s@%s: Permission denied", c.Agent.Name, cfg.GetSshdHost())
 	AgentPermissionDenied := fmt.Sprintf("%s@%s: Permission denied", c.Agent.Name, c.Agent.ID)
 
 	wg.Add(1)
@@ -229,8 +239,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error
 				break
 			}
 			line := scanner.Text()
-			//fmt.Println("Err", line)
-			if strings.Contains(line, "Permission denied, please try again.") || strings.Contains(line, PermissionDenied) || strings.Contains(line, AgentPermissionDenied) {
+			if strings.Contains(line, GenericPermissionDenied) || strings.Contains(line, ServerPermissionDenied) || strings.Contains(line, AgentPermissionDenied) {
 				hasAuthFailed.Store(true)
 
 				break
@@ -247,7 +256,7 @@ func (c *Command) execute(cfg ClientConfig, inPty bool, doLog bool) (bool, error
 		for scanner.Scan() {
 			line := scanner.Text()
 			// fmt.Println("Out", line)
-			if strings.Contains(line, "Permission denied, please try again.") || strings.Contains(line, PermissionDenied) || strings.Contains(line, AgentPermissionDenied) {
+			if strings.Contains(line, GenericPermissionDenied) || strings.Contains(line, ServerPermissionDenied) || strings.Contains(line, AgentPermissionDenied) {
 				hasAuthFailed.Store(true)
 			}
 			if !hasAuthFailed.Load() && cfg.SavePassword {
