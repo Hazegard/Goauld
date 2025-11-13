@@ -247,6 +247,16 @@ func SetupProxy(relay2Server gosio.ClientSocket, agent2Relay gosio.ServerSocket,
 		})
 	})
 
+	relay2Server.OnEvent(socketio.PingIsAliveRelay.ID(), func(data socketio.RelayEvent) {
+		log.Trace().Str("Event", "PingIsAliveRelay").Str("From", "Server").Msg("Relay Event")
+		agent2Relay.Emit(socketio.PingIsAlive.ID(), data)
+
+		agent2Relay.OnceEvent(data.ID, func(resp any) {
+			log.Trace().Str("Event", "OnEvent").Str("From", "Agent").Msg("Relay Event")
+			relay2Server.Emit(data.ID, resp)
+		})
+	})
+
 	relay2Server.OnEvent(socketio.WireguardPeer.ID(), func(data []byte) {
 		log.Trace().Str("Event", "WireguardPeer").Str("From", "Server").Msg("Relay Event")
 		agent2Relay.Emit(socketio.WireguardPeer.ID(), data)

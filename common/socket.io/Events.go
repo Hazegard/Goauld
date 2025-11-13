@@ -54,4 +54,7 @@ const (
 	WireguardPeer
 	PasswordValidationRequestEventRelay
 	CopyClipboardRequestEventRelay
+	PingIsAlive
+	PingIsAliveRelay
+	PongIsAlive
 )

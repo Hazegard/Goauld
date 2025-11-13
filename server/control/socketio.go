@@ -13,10 +13,10 @@ import (
 	"regexp"
 	"time"
 
+	commonnet "Goauld/common/net"
+
 	eio "github.com/hazegard/socket.io-go/engine.io"
 	"github.com/google/uuid"
-
-	commonnet "Goauld/common/net"
 
 	"Goauld/common/log"
 	"Goauld/server/config"
@@ -120,6 +120,18 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				return
 			}
 
+			// Try to retrieve the current socket associated to the agent id
+			// And ping it to see whether the agent is still connected.
+			// If the agent is still connected, we emit an AlreadyConnectedEvent
+			// Otherwise, we continue the registration process
+			oldSocket := sio.agentStore.SioGetSocket(data.ID)
+			if oldSocket != nil && CheckIsAlive(data.ID, oldSocket) {
+				log.Error().Str("Agent.name", "").Str("Agent.ID", data.ID).Err(err).Msg("agent already connected... emitting kill")
+				socket.Emit(socketio.AlreadyConnectedEvent.ID())
+
+				return
+			}
+
 			// Retrieve the agent from the database
 			// If no agent corresponding to this ID exists,
 			// an empty one that will be populated later is returned
@@ -134,12 +146,12 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 
 				return
 			}
-			if agent.Connected || agent.SocketID != "" {
+			/*if agent.Connected || agent.SocketID != "" {
 				log.Error().Str("Agent.name", "").Str("Agent.ID", data.ID).Err(err).Msg("agent already connected... emitting kill")
 				socket.Emit(socketio.AlreadyConnectedEvent.ID())
 
 				return
-			}
+			}*/
 
 			// Decrypting the shared key using the age private key
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.ID", agent.ID).Msg("START socketio.RegisterEvent decrypting shared key")
@@ -370,6 +382,37 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			}
 		})
 	})
+}
+
+func CheckIsAlive(id string, socket gosio.Socket) bool {
+	if socket == nil {
+		return false
+	}
+
+	eventID := fmt.Sprintf("%s@%s", socketio.PingIsAlive.ID(), uuid.NewString())
+	chanResponse := make(chan bool, 1)
+	socket.OnceEvent(eventID, func() {
+		log.Debug().Str("Event", eventID).Str("Agent", id).Msg("Event received")
+		chanResponse <- true
+	})
+	defer socket.OffEvent(eventID)
+
+	socket.Emit(socketio.PingIsAliveRelay.ID(), socketio.RelayEvent{
+		ID: eventID,
+	})
+
+	socket.Emit(socketio.PingIsAlive.ID(), socketio.RelayEvent{
+		ID: eventID,
+	})
+
+	select {
+	case <-chanResponse:
+		return true
+	case <-time.After(10 * time.Second):
+		log.Debug().Str("Event", eventID).Str("Agent", id).Msg("Timeout waiting for response")
+
+		return false
+	}
 }
 
 // ValidateStaticPassword validate the provided agent matches the agent password

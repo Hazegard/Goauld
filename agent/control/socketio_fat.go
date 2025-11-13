@@ -235,6 +235,10 @@ func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {
 			log.Error().Err(err).Str("PeerPubKey", wgConfig.PublicKey.String()).Str("PeerIP", wgConfig.IP).Msg("unable to add peer AddPeer")
 		}
 	})
+
+	socket.OnEvent(socketio.PingIsAlive.ID(), func(data socketio.RelayEvent) {
+		socket.Emit(data.ID)
+	})
 }
 
 // Start starts the socket and initiates the configuration exchange with the server.
