@@ -172,14 +172,6 @@ func run() globalcontext.CancelReason {
 	}
 	defer cancel()
 
-	if config.Get().WGEnabled() {
-		err := config.Get().GenerateWireguardConfig()
-		if err != nil {
-			log.Error().Err(err).Msg("error initializing the Wireguard configuration")
-			config.Get().DisableWG()
-		}
-	}
-
 	var controlPlanClient *control.ControlPlanClient
 	var err error
 
@@ -296,6 +288,14 @@ func run() globalcontext.CancelReason {
 
 	cancelCtrlC := HandleCtrlC(controlPlanClient, globalCanceler)
 	defer cancelCtrlC()
+
+	if config.Get().WGEnabled() {
+		err := config.Get().GenerateWireguardConfig()
+		if err != nil {
+			log.Error().Err(err).Msg("error initializing the Wireguard configuration")
+			config.Get().DisableWG()
+		}
+	}
 
 	go func() {
 		// Waiting for the configuration to be completed

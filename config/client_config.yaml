@@ -105,6 +105,8 @@ scp:
   target: ""
   #Print the generated SCP command instead of executing it.
   print: false
+  #Record the SSH session to a log file.
+  log: false
   #Additional SSH options (equivalent to '-o').
   ssh-opts: []
   #Path to an SSH configuration file to use.
@@ -121,6 +123,8 @@ scp:
 #  - $ ${AppName} scp AGENT:C:/remote/path /local/path
 rsync:
   target: ""
+  #Record the SSH session to a log file.
+  log: false
   #Print the generated rsync command instead of executing it.
   print: false
   #Paths to synchronize using rsync.

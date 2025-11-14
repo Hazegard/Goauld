@@ -31,6 +31,8 @@ type BuildConfig struct {
 	NoPass           bool   `default:"false" help:"don't generate password."`
 	Compress         bool   `default:"false" help:"Pack with UPX."`
 	Verbose          int    `default:"0" name:"verbose" short:"v" type:"counter" help:"Verbosity of the logs. Repeat -v to increase"`
+	Tiny             bool   `default:"true"  name:"tiny" yaml:"tiny" negatable:"" help:"Tiny garble flag (reduce size, but no stacktrace)."`
+	Literals         bool   `default:"true"  name:"literals" yaml:"literals" negatable:"" help:"Literals garble flag (obfuscate string variable, but take more space)."`
 }
 
 func main() {
@@ -72,6 +74,8 @@ func main() {
 		NoPass:      !cfg.GenAgentPassword,
 		Verbose:     cfg.Verbose,
 		Compress:    cfg.Compress,
+		Tiny:        cfg.Tiny,
+		Literals:    cfg.Literals,
 	}
 
 	err = cpl.Run()

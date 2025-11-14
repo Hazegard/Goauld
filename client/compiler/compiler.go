@@ -40,6 +40,8 @@ type Compiler struct {
 	AgentPassword string `default:"${_compile_private_password}" name:"agent-password" yaml:"agent-password" short:"p" help:"Static agent password."`
 	NoPass        bool   `default:"${_compile_nopass}" name:"nopass" yaml:"nopass" help:"Do not set the agent password."`
 	Compress      bool   `default:"${_compile_compress}" name:"compress" yaml:"compress" help:"Pack the binaries with upx."`
+	Tiny          bool   `default:"true"  name:"tiny" yaml:"tiny" negatable:"" help:"Tiny garble flag (reduce size, but no stacktrace)."`
+	Literals      bool   `default:"true"  name:"literals" yaml:"literals" negatable:"" help:"Literals garble flag (obfuscate string variable, but take more space)."`
 	ClientBuild   bool   `default:"true" hidden:"true"`
 }
 

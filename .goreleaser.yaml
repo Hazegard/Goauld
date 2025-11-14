@@ -16,6 +16,8 @@ env:
   - HTTPS_PORT={{ .Env.HTTPS_PORT }}
 
   - COMPRESS={{ if index .Env "COMPRESS" }}{{.Env.COMPRESS}}{{else}}false{{end}}
+  - TINY={{ if index .Env "TINY" }}{{.Env.TINY}}{{else}}false{{end}}
+  - LITERALS={{ if index .Env "LITERALS" }}{{.Env.LITERALS}}{{else}}false{{end}}
 
 
 # BEGIN Dynamic ENV
@@ -165,6 +167,7 @@ env:
   - CLIENT__SOCKS_PRINT={{ .Env.CLIENT__SOCKS_PRINT }}
   - CLIENT__SOCKS_PROXY={{ .Env.CLIENT__SOCKS_PROXY }}
   - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
+  - CLIENT__SSH_LOG={{ .Env.CLIENT__SSH_LOG }}
   - CLIENT__COMPILE_ID={{ .Env.CLIENT__COMPILE_ID }}
   - CLIENT__COMPILE_GOOS={{ .Env.CLIENT__COMPILE_GOOS }}
   - CLIENT__COMPILE_GOARCH={{ .Env.CLIENT__COMPILE_GOARCH }}
@@ -179,6 +182,7 @@ env:
   - CLIENT__COMPILE_COMPRESS={{ .Env.CLIENT__COMPILE_COMPRESS }}
   - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
 
+  - CLIENT__SCP_LOG={{ .Env.CLIENT__SCP_LOG }}
   - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
 
 # END Dynamic ENV
@@ -594,6 +598,7 @@ builds:
       - '{{ if (index .Env "CLIENT__SOCKS_PROXY") }} -X main._socks_proxy={{ .Env.CLIENT__SOCKS_PROXY }}{{end}}'
 
       - '{{ if (index .Env "CLIENT__SCP_PRINT") }} -X main._scp_print={{ .Env.CLIENT__SCP_PRINT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_LOG") }} -X main._ssh_log={{ .Env.CLIENT__SSH_LOG }}{{end}}'
 
 
       - '{{ if (index .Env "CLIENT__COMPILE_ID") }} -X main._compile_id={{ .Env.CLIENT__COMPILE_ID }}{{end}}'
@@ -614,6 +619,7 @@ builds:
 
 
 
+      - '{{ if (index .Env "CLIENT__SCP_LOG") }} -X main._scp_log={{ .Env.CLIENT__SCP_LOG }}{{end}}'
       - '{{ if (index .Env "CLIENT__SCP_PRINT") }} -X main._scp_print={{ .Env.CLIENT__SCP_PRINT }}{{end}}'
 
 # END Dynamic CLIENT

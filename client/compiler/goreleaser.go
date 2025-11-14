@@ -42,6 +42,12 @@ func Goreleaser(cfg Compiler) error {
 	if cfg.Compress {
 		env = append(env, "COMPRESS=true")
 	}
+	if cfg.Tiny {
+		env = append(env, "TINY=true")
+	}
+	if cfg.Literals {
+		env = append(env, "LITERALS=true")
+	}
 	//nolint:gosec
 	cmd := exec.Command(c[0], c[1:]...)
 

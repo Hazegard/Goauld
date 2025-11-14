@@ -1,6 +1,11 @@
 #!/bin/sh
-if [[ "$NO_LITERALS" == 1 ]]; then
-  garble -seed="$CLIENT__COMPILE_SEED" "$@"
+TINY_FLAG=()
+if [[ "$TINY" == "true" ]];then
+  TINY_FLAG=(-tiny)
+fi
+
+if [[ "$LITERALS" == "true" ]]; then
+  garble -literals -seed="$CLIENT__COMPILE_SEED" ${TINY_FLAG[@]+"${TINY_FLAG[@]}"} "$@"
 else
-  garble -literals -seed="$CLIENT__COMPILE_SEED" "$@"
+  garble -seed="$CLIENT__COMPILE_SEED" ${TINY_FLAG[@]+"${TINY_FLAG[@]}"} "$@"
 fi
