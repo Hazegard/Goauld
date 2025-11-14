@@ -28,7 +28,7 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 	forwardHandler := &ssh.ForwardedTCPHandler{}
 	s := &ssh.Server{
 		Handler: ssh.Handler(func(s ssh.Session) {
-			log.Info().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("New connection from %s with username %s", s.RemoteAddr(), s.User())
+			log.Info().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("New shell from %s with username %s", s.RemoteAddr(), s.User())
 			if strings.Contains(s.RawCommand(), "rsync --server") || (len(s.Command()) > 0 && s.Command()[0] == "rsync") {
 				HandleRsync(s)
 
@@ -39,6 +39,7 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 				log.Error().Err(err).Msg("error spawning pty")
 			}
 			_ = s.Close()
+			log.Info().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("End shell from %s with username %s", s.RemoteAddr(), s.User())
 		}),
 		// Allows Local Port Forwarding
 		// Note: this might be unnecessary as users should only perform reverse port forwarding
