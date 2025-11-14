@@ -30,6 +30,7 @@ type DNSSH struct {
 	kcpConn       *kcp.UDPSession
 	streamsMutex  sync.Mutex
 	streams       []*smux.Stream
+	Started       bool
 }
 
 // smux streams will be closed after this much time without receiving data.
@@ -56,11 +57,17 @@ func dnsNameCapacity(domain dns.Name) int {
 	return capacity
 }
 
+func NewDNSSH() *DNSSH {
+	return &DNSSH{
+		Started: false,
+	}
+}
+
 // Init initialize the DNS connection over DNS.
-func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, error) {
+func (dnssh *DNSSH) Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) error {
 	mtu := dnsNameCapacity(domain) - 8 - 1 - numPadding - 1 // clientid + padding length prefix + padding + data length prefix
 	if mtu < 80 {
-		return nil, fmt.Errorf("domain %s leaves only %d bytes for payload", domain, mtu)
+		return fmt.Errorf("domain %s leaves only %d bytes for payload", domain, mtu)
 	}
 
 	log.Trace().Str("Mode", "DNSSH").Msgf("effective MTU %d (%s)", mtu, domain)
@@ -68,7 +75,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	// Open a KCP conn on the PacketConn.
 	conn, err := kcp.NewConn2(remoteAddr, nil, 0, 0, pconn)
 	if err != nil {
-		return nil, fmt.Errorf("opening KCP conn: %w", err)
+		return fmt.Errorf("opening KCP conn: %w", err)
 	}
 
 	log.Debug().Str("Mode", "DNSSH").Msgf("opening Session %08x", conn.GetConv())
@@ -85,7 +92,7 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	)
 	conn.SetWindowSize(turbotunnel.QueueSize/2, turbotunnel.QueueSize/2)
 	if rc := conn.SetMtu(mtu); !rc {
-		return nil, errors.New("setting mtu failed")
+		return errors.New("setting mtu failed")
 	}
 
 	// Start a smux Session on the Noise channel.
@@ -95,34 +102,32 @@ func Init(domain dns.Name, remoteAddr net.Addr, pconn net.PacketConn) (*DNSSH, e
 	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65 536
 	sess, err := smux.Client( /*rw*/ conn, smuxConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error opening smux Session: %w", err)
+		return fmt.Errorf("error opening smux Session: %w", err)
 	}
 
 	sshStream, err := sess.OpenStream()
 	if err != nil {
-		return nil, fmt.Errorf("error opening stream: %w", err)
+		return fmt.Errorf("error opening stream: %w", err)
 	}
 
 	controlStream, err := sess.OpenStream()
 	if err != nil {
-		return nil, fmt.Errorf("error opening stream: %w", err)
+		return fmt.Errorf("error opening stream: %w", err)
 	}
 
-	a := &DNSSH{
-		udpConn:       pconn,
-		pconn:         pconn,
-		session:       sess,
-		SSHStream:     sshStream,
-		ControlStream: controlStream,
-		kcpConn:       conn,
-		streamsMutex:  sync.Mutex{},
-	}
+	dnssh.udpConn = pconn
+	dnssh.pconn = pconn
+	dnssh.session = sess
+	dnssh.SSHStream = sshStream
+	dnssh.ControlStream = controlStream
+	dnssh.kcpConn = conn
+	dnssh.streamsMutex = sync.Mutex{}
 
-	return a, nil
+	return nil
 }
 
 // NewDNSSH returns a new DNSSH.
-func NewDNSSH() (*DNSSH, error) {
+func (dnssh *DNSSH) Start() error {
 	var domain dns.Name
 
 	var remoteAddr net.Addr
@@ -169,7 +174,7 @@ func NewDNSSH() (*DNSSH, error) {
 		if err != nil {
 			log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
 
-			return nil, err
+			return err
 		}
 		log.Info().Str("Mode", "DNSSH").Str("Domain", config.Get().DNSDomain()).Msg("DNS tunneling")
 
@@ -178,11 +183,11 @@ func NewDNSSH() (*DNSSH, error) {
 
 		remoteAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", d, port))
 		if err != nil {
-			return nil, fmt.Errorf("error resolving remote address: %w", err)
+			return fmt.Errorf("error resolving remote address: %w", err)
 		}
 		udpConn, err = net.ListenUDP("udp", nil)
 		if err != nil {
-			return nil, fmt.Errorf("error creating UDP connection: %w", err)
+			return fmt.Errorf("error creating UDP connection: %w", err)
 		}
 	} else {
 		// We are performing DNS request using an external system command.
@@ -193,22 +198,23 @@ func NewDNSSH() (*DNSSH, error) {
 		if err != nil {
 			log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
 
-			return nil, err
+			return err
 		}
 		remoteAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", d, port))
 		if err != nil {
-			return nil, fmt.Errorf("error resolving remote address: %w", err)
+			return fmt.Errorf("error resolving remote address: %w", err)
 		}
 	}
 
 	pconn := NewDNSPacketConn(udpConn, remoteAddr, domain)
-	dnsConn, err := Init( /*pubkey,*/ domain, remoteAddr, pconn)
+	err := dnssh.Init( /*pubkey,*/ domain, remoteAddr, pconn)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing DNS tunnel: %w", err)
+		return fmt.Errorf("error initializing DNS tunnel: %w", err)
 	}
-	dnsConn.pconn = pconn
+	dnssh.pconn = pconn
+	dnssh.Started = true
 
-	return dnsConn, nil
+	return nil
 }
 
 // TestDNSServer return whether the server DNS is reachable.
@@ -255,38 +261,38 @@ func TestDNSServer(ip string, port int, d string) bool {
 	return false
 }
 
-func (d *DNSSH) OpenStream() (*smux.Stream, error) {
-	s, err := d.session.OpenStream()
+func (dnssh *DNSSH) OpenStream() (*smux.Stream, error) {
+	s, err := dnssh.session.OpenStream()
 	if err != nil {
 		return nil, err
 	}
-	d.streamsMutex.Lock()
-	defer d.streamsMutex.Unlock()
-	d.streams = append(d.streams, s)
+	dnssh.streamsMutex.Lock()
+	defer dnssh.streamsMutex.Unlock()
+	dnssh.streams = append(dnssh.streams, s)
 
 	return s, nil
 }
-func (d *DNSSH) CloseStream() error {
-	d.streamsMutex.Lock()
-	defer d.streamsMutex.Unlock()
+func (dnssh *DNSSH) CloseStream() error {
+	dnssh.streamsMutex.Lock()
+	defer dnssh.streamsMutex.Unlock()
 	errs := []error{}
-	for _, stream := range d.streams {
+	for _, stream := range dnssh.streams {
 		errs = append(errs, stream.Close())
 	}
-	d.streams = nil
+	dnssh.streams = nil
 
 	return errors.Join(errs...)
 }
 
 // Close closes all the connection used in the SSH over DNS.
-func (d *DNSSH) Close() error {
+func (dnssh *DNSSH) Close() error {
 	return errors.Join(
-		d.kcpConn.Close(),
-		d.session.Close(),
-		d.udpConn.Close(),
-		d.pconn.Close(),
-		d.SSHStream.Close(),
-		d.ControlStream.Close(),
-		d.CloseStream(),
+		dnssh.kcpConn.Close(),
+		dnssh.session.Close(),
+		dnssh.udpConn.Close(),
+		dnssh.pconn.Close(),
+		dnssh.SSHStream.Close(),
+		dnssh.ControlStream.Close(),
+		dnssh.CloseStream(),
 	)
 }
