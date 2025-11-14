@@ -208,8 +208,8 @@ func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
 		dbAgents = append(dbAgents, agent)
 	}
 	c := *config.Get()
-	c.AccessToken = "[REDACTED]"
-	c.AdminToken = "[REDACTED]"
+	c.AccessToken = []string{"[REDACTED]"}
+	c.AdminToken = []string{"[REDACTED]"}
 	c.BinariesBasicAuth = "[REDACTED]"
 	c.PrivKey = "[REDACTED]"
 

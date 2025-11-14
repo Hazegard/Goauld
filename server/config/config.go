@@ -136,8 +136,8 @@ type ServerConfig struct {
 	DbFileName string `default:"${_db_name}" name:"db-file-name" yaml:"db-file-name" help:"Path or filename of the database to use."`
 
 	AllowedIPs  []string `default:"${_allowed_ips}" name:"allowed-ips" yaml:"allowed-ips" help:"List of IP addresses allowed to access the /manage/ endpoint."`
-	AccessToken string   `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required for the /manage/ API endpoint."`
-	AdminToken  string   `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token required for the /admin/ API endpoint."`
+	AccessToken []string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token required for the /manage/ API endpoint."`
+	AdminToken  []string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token required for the /admin/ API endpoint."`
 
 	BinariesBasicAuth    string `default:"${_binaries_basicauth}" name:"binaries-basic-auth" yaml:"binaries-basic-auth" help:"HTTP Basic Auth credentials required to access the binaries endpoint."`
 	BinariesPathLocation string `default:"${_binaries_path}" name:"binaries-path-location" yaml:"binaries-path-location" help:"Filesystem path where agent binaries are stored."`
@@ -305,8 +305,8 @@ func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
 func (s *ServerConfig) GenerateSafeYAMLConfig() (string, error) {
 	ss := *s
 	ss.GenerateConfig = false
-	ss.AdminToken = ""
-	ss.AccessToken = ""
+	ss.AdminToken = []string{}
+	ss.AccessToken = []string{}
 	ss.PrivKey = ""
 
 	return cli.GenerateYAMLWithComments(ss)

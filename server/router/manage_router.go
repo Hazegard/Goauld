@@ -2,6 +2,7 @@ package router
 
 import (
 	"Goauld/common"
+	"Goauld/common/utils"
 	"Goauld/common/wireguard"
 	"Goauld/server/control"
 	"encoding/json"
@@ -324,7 +325,7 @@ func HasAdminToken(r *http.Request) bool {
 	}
 	authHeader = split[1]
 
-	return authHeader == config.Get().AdminToken
+	return utils.Contains(config.Get().AdminToken, authHeader)
 }
 
 func GetBody[T any](w http.ResponseWriter, r *http.Request, val *T) (T, error) {
