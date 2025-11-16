@@ -30,9 +30,10 @@ var srvCfg *ServerConfig
 var (
 	_age_privKey = "" //nolint:revive
 
-	_http_domain = "www.example.com" //nolint:revive
-	_tls_domain  = "app.example.com" //nolint:revive
-	_dns_domain  = "t.example.com"                //nolint:revive
+	_http_domain    = "www.example.com" //nolint:revive
+	_tls_domain     = "app.example.com" //nolint:revive
+	_dns_domain     = "t.example.com"                //nolint:revive
+	_dns_domain_alt = "s.example.com"                //nolint:revive
 
 	_http_listen_addr  = ":80"   //nolint:revive
 	_https_listen_addr = ":443"  //nolint:revive
@@ -67,9 +68,10 @@ var (
 	defaultValues = kong.Vars{
 		"_age_privKey": _age_privKey,
 
-		"_http_domain": _http_domain,
-		"_tls_domain":  _tls_domain,
-		"_dns_domain":  _dns_domain,
+		"_http_domain":    _http_domain,
+		"_tls_domain":     _tls_domain,
+		"_dns_domain":     _dns_domain,
+		"_dns_domain_alt": _dns_domain_alt,
 
 		"_http_listen_addr":  _http_listen_addr,
 		"_https_listen_addr": _https_listen_addr,
@@ -113,9 +115,10 @@ var (
 type ServerConfig struct {
 	PrivKey string `default:"${_age_privKey}" name:"age-privkey" yaml:"age-privkey" optional:"" help:"Age private key used by the server."`
 
-	HTTPDomain []string `default:"${_http_domain}" name:"http-domain" yaml:"http-domain" optional:"" help:"Domains used to serve HTTP and WebSocket traffic."`
-	TLSDomain  []string `default:"${_tls_domain}" name:"tls-domain" yaml:"tls-domain" optional:"" help:"Domains used to serve raw TLS traffic (SSH over TLS)."`
-	DNSDomain  string   `default:"${_dns_domain}" name:"dns-domain" yaml:"dns-domain" optional:"" help:"Domain used to serve DNS-based traffic (SSH over DNS)."`
+	HTTPDomain   []string `default:"${_http_domain}" name:"http-domain" yaml:"http-domain" optional:"" help:"Domains used to serve HTTP and WebSocket traffic."`
+	TLSDomain    []string `default:"${_tls_domain}" name:"tls-domain" yaml:"tls-domain" optional:"" help:"Domains used to serve raw TLS traffic (SSH over TLS)."`
+	DNSDomain    string   `default:"${_dns_domain}" name:"dns-domain" yaml:"dns-domain" optional:"" help:"Domain used to serve DNS-based traffic (SSH over DNS)."`
+	DNSDomainAlt string   `default:"${_dns_domain_alt}" name:"dns-domain-alt" yaml:"dns-domain-alt" optional:"" help:"Domain used to serve DNS-based traffic (SSH over DNS-ALT)."`
 
 	HTTPAddr  string `default:"${_http_listen_addr}" name:"http-listen-addr" yaml:"http-listen-addr" optional:"" help:"Address and port to bind for HTTP connections (port 0 = random)."`
 	HTTPSAddr string `default:"${_https_listen_addr}" name:"https-listen-addr" yaml:"https-listen-addr" optional:"" help:"Address and port to bind for HTTPS connections (port 0 = random)."`

@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	miekgDns "github.com/miekg/dns"
 	"github.com/xtaci/kcp-go/v5"
 	"github.com/xtaci/smux"
 	"www.bamsoftware.com/git/dnstt.git/dns"
@@ -31,8 +32,10 @@ type DNSSHServer struct {
 	sshUpstream   string
 	httpUpstream  string
 	domain        dns.Name
+	blindDomain   dns.Name
 	kcpAddr       string
 	clientIDIPMap *sync.Map
+	blindServer   *DNSServer
 }
 
 const (
@@ -452,7 +455,7 @@ type record struct {
 // the incoming DNS queries, and puts them on ttConn's incoming queue. Whenever
 // a query calls for a response, constructs a partial response and passes it to
 // sendLoop over ch.
-func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch chan<- *record) error {
+func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch chan<- *record) error {
 	for {
 		var buf [4096]byte
 		n, addr, err := dnsConn.ReadFrom(buf[:])
@@ -473,6 +476,26 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, dnsConn net.PacketConn, ttConn *
 			log.Trace().Str("Mode", "DNSSH").Msgf("Error parsing query: %v", err)
 
 			continue
+		}
+
+		if len(query.Question) > 0 {
+			question := query.Question[0]
+			_, ok := question.Name.TrimSuffix(blindDomain)
+			if ok {
+				msg := &miekgDns.Msg{}
+				raw, err := query.WireFormat()
+				if err == nil {
+					err = msg.Unpack(raw)
+					if err == nil {
+						d.blindServer.handleDNSRequest(dnsConn, msg, addr)
+						return nil
+					} else {
+						log.Trace().Str("Mode", "DNSSH2").Msgf("Error parsing query: %v", err)
+					}
+				} else {
+					log.Trace().Str("Mode", "DNSSH2").Msgf("Error parsing query: %v", err)
+				}
+			}
 		}
 
 		resp, payload := responseFor(&query, domain)
@@ -805,7 +828,7 @@ func (d *DNSSHServer) Run() error {
 		}
 	}()
 
-	return d.recvLoop(d.domain, d.dnsConn, ttConn, ch)
+	return d.recvLoop(d.domain, d.blindDomain, d.dnsConn, ttConn, ch)
 }
 
 // NewDNSSHServer returns a DNSSHServer
@@ -820,7 +843,10 @@ func NewDNSSHServer(agentStore *store.AgentStore, db *persistence.DB) (*DNSSHSer
 	// an error or warning at startup, rather than only when the
 	// first stream occurs, we apply some parsing and name
 	// resolution checks here.
-
+	blindDomain, err := dns.ParseName(config.Get().DNSDomainAlt)
+	if err != nil {
+		return nil, fmt.Errorf("invalid domain %s: %w", config.Get().DNSDomain, err)
+	}
 	dnsConn, err := net.ListenPacket("udp", config.Get().DNSAddr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot listen for DNS packets: %w", err)
@@ -834,6 +860,8 @@ func NewDNSSHServer(agentStore *store.AgentStore, db *persistence.DB) (*DNSSHSer
 		store:         agentStore,
 		db:            db,
 		domain:        domain,
+		blindDomain:   blindDomain,
+		blindServer:   NewDNSServer(config.Get().LocalSSHAddr(), true),
 		sshUpstream:   config.Get().LocalSSHAddr(),
 		httpUpstream:  config.Get().LocalHTTPAddr(),
 		dnsConn:       dnsConn,

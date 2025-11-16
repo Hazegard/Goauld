@@ -86,6 +86,7 @@ func main() {
 		"",
 		"",
 		db,
+		agentStore,
 	)
 
 	// Initialize the HTTP router

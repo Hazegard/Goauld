@@ -18,12 +18,13 @@ var (
 	_shared_password  = ""              //nolint:revive
 	_name             = "user@hostname" //nolint:revive
 
-	_server      = "www.example.com"
-	_ssh_server  = "www.example.com:22222"      //nolint:revive
-	_tls_server  = "app.example.com"            //nolint:revive
-	_quic_domain = "app.example.com"            //nolint:revive
-	_dns_server  = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9" //nolint:revive
-	_dns_domain  = "t.example.com"                           //nolint:revive
+	_server         = "www.example.com"
+	_ssh_server     = "www.example.com:22222"      //nolint:revive
+	_tls_server     = "app.example.com"            //nolint:revive
+	_quic_domain    = "app.example.com"            //nolint:revive
+	_dns_server     = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9" //nolint:revive
+	_dns_domain     = "t.example.com"                           //nolint:revive
+	_dns_domain_alt = "t.example.com"                           //nolint:revive
 
 	_sshd_enabled           = "true"  //nolint:revive
 	_socks_enabled          = "true"  //nolint:revive
@@ -116,12 +117,13 @@ var (
 		"_http_proxy_password": _http_proxy_password,
 		"_http_proxy_domain":   _http_proxy_domain,
 
-		"_server":      _server,
-		"_ssh_server":  _ssh_server,
-		"_tls_server":  _tls_server,
-		"_quic_domain": _quic_domain,
-		"_dns_server":  _dns_server,
-		"_dns_domain":  _dns_domain,
+		"_server":         _server,
+		"_ssh_server":     _ssh_server,
+		"_tls_server":     _tls_server,
+		"_quic_domain":    _quic_domain,
+		"_dns_server":     _dns_server,
+		"_dns_domain":     _dns_domain,
+		"_dns_domain_alt": _dns_domain_alt,
 
 		"_rssh_port":  _rssh_port,
 		"_socks_port": _socks_port,
@@ -173,12 +175,13 @@ var (
 type AgentConfig struct {
 	AgePubKey string `default:"${_agePubKey}" name:"age-pubkey" yaml:"age-pubkey" short:"A" help:"Age public key associated with the server. Must match the server’s public key."`
 
-	Server          string   `default:"${_server}" short:"s" name:"server" yaml:"server" optional:"" help:"Control HTTP server to connect to."`
-	SSHServer       string   `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH server used for direct SSH connections."`
-	QuicServer      string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" yaml:"quic-domain" optional:"" help:"QUIC domain used to tunnel traffic."`
-	TLSServer       string   `default:"${_tls_server}" short:"T" name:"tls-server" yaml:"tls-server" optional:"" help:"TLS server used for SSH-over-TLS connections."`
-	DNSServer       []string `default:"${_dns_server}" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"DNS servers used for SSH-over-DNS connections. Use 'system' to include the system DNS servers."`
-	DNSServerDomain string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
+	Server             string   `default:"${_server}" short:"s" name:"server" yaml:"server" optional:"" help:"Control HTTP server to connect to."`
+	SSHServer          string   `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH server used for direct SSH connections."`
+	QuicServer         string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" yaml:"quic-domain" optional:"" help:"QUIC domain used to tunnel traffic."`
+	TLSServer          string   `default:"${_tls_server}" short:"T" name:"tls-server" yaml:"tls-server" optional:"" help:"TLS server used for SSH-over-TLS connections."`
+	DNSServer          []string `default:"${_dns_server}" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"DNS servers used for SSH-over-DNS connections. Use 'system' to include the system DNS servers."`
+	DNSServerDomain    string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
+	DNSServerDomainAlt string   `default:"${_dns_domain_alt}" name:"dns-domain-alt" yaml:"dns-domain-alt" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
 
 	LocalSSHPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"Password for local SSH access. If empty, a random password is generated automatically."`
 	PrivatePassword  string `default:"${_password_cli}" short:"p" name:"password" yaml:"password" optional:"" help:"Password required to access the agent."`

@@ -2,7 +2,9 @@
 package ssh
 
 import (
+	"Goauld/agent/ssh/transport/blind"
 	"Goauld/agent/ssh/transport/darkflare"
+	"Goauld/agent/ssh/transport/dns"
 	"Goauld/agent/ssh/transport/http"
 	"context"
 	"errors"
@@ -91,6 +93,16 @@ func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTrans
 						_ = ssHTTP.Close()
 					}
 					cancel()
+				}
+			case strings.HasPrefix(proto, "dns-alt"):
+				if dnsTransport != nil {
+					client, conn = proxyDNS(sshConfig, dnsTransport, id)
+					if client != nil {
+						closer = conn
+						resultChan <- "DNS"
+					} else {
+						cancel()
+					}
 				}
 			case strings.HasPrefix(proto, "dns"):
 				if dnsTransport != nil {
@@ -248,6 +260,43 @@ func proxyHTTP(sshConfig *ssh.ClientConfig, id string) (*ssh.Client, *http.SSHTT
 	log.Info().Str("Mode", "SSHTTP").Msg("Proxy using HTTP succeeded")
 
 	return client, httpConn
+}
+
+// proxyDNSAlt proxies the SSH traffic using a DNS connection to the server.
+func proxyDNSAlt(sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn) {
+	log.Debug().Str("Mode", "DNSSH").Str("Target", config.Get().DNSDomain()).Msg("Trying send agent ID over the DNS connection")
+	// Write S tag to inform the incoming SSH traffic
+
+	dnsServers := dns.GetDNSServers()
+	if len(dnsServers) == 0 {
+		return nil, nil
+	}
+
+	dnsClient, err := blind.NewDNSClient(dnsServers[0].String(), config.Get().DNSDomainAlt(), true)
+	if err != nil {
+		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
+
+		return nil, nil
+	}
+	conn1, conn2 := net.Pipe()
+	dnsClient.Tunnel(conn2)
+	log.Debug().Str("Mode", "DNSSH").Msg("Trying to mount SSH over the DNS connection")
+	// Write S tag to inform the incoming SSH traffic
+	_, err = conn2.Write([]byte{'S'})
+	if err != nil {
+		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
+
+		return nil, nil
+	}
+	client, err := tryProxySSH(sshConfig, conn1, id)
+	if err != nil {
+		log.Error().Str("Mode", "DNSSH").Err(err).Msg("failed to proxy ssh connection using DNS")
+
+		return nil, nil
+	}
+	log.Info().Str("Mode", "DNSSH").Msg("Proxy using DNS succeeded")
+
+	return client, conn1
 }
 
 // proxyDNS proxies the SSH traffic using a DNS connection to the server.

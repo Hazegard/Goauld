@@ -356,6 +356,11 @@ func (a *Agent) DNSDomain() string {
 	return a.cfg.DNSServerDomain
 }
 
+// DNSDomainAlt returns the DNS domain that will be used to query the DNS server.
+func (a *Agent) DNSDomainAlt() string {
+	return a.cfg.DNSServerDomainAlt
+}
+
 // ControlSSHServer returns the SSHD server.
 func (a *Agent) ControlSSHServer() string {
 	return a.cfg.SSHServer
