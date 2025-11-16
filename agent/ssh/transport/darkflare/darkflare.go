@@ -1,29 +1,25 @@
-package main
+package darkflare
 
 import (
+	"Goauld/agent/proxy"
 	"bytes"
 	"context"
 	cryptorand "crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
-	"flag"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
-	"net/url"
-	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"crypto/x509"
 
-	"golang.org/x/net/proxy"
 	"golang.org/x/time/rate"
 )
 
@@ -89,7 +85,7 @@ func NewClient(cloudflareHost string, destPort int, scheme string, destAddr stri
 		rateLimiter:     rate.NewLimiter(rate.Every(time.Millisecond*100), 1000),
 		readBufferSize:  32 * 1024,
 		writeBufferSize: 32 * 1024,
-		pollInterval:    50 * time.Millisecond,
+		pollInterval:    500 * time.Millisecond,
 		batchSize:       32 * 1024,
 		proxyURL:        proxyURL,
 		username:        username,
@@ -140,76 +136,79 @@ func NewClient(cloudflareHost string, destPort int, scheme string, destAddr stri
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	// Configure proxy support
-	if proxyURL != "" {
-		if client.debug {
-			client.debugLog("Configuring proxy: %s", proxyURL)
-		}
-
-		proxyURLParsed, err := url.Parse(proxyURL)
-		if err != nil {
-			log.Printf("Invalid proxy URL: %v", err)
-			return nil
-		}
-
-		switch proxyURLParsed.Scheme {
-		case "socks5", "socks5h":
-			// Extract auth if present
-			var auth *proxy.Auth
-			if proxyURLParsed.User != nil {
-				auth = &proxy.Auth{
-					User: proxyURLParsed.User.Username(),
-				}
-				if password, ok := proxyURLParsed.User.Password(); ok {
-					auth.Password = password
-				}
+	/*
+		// Configure proxy support
+		if proxyURL != "" {
+			if client.debug {
+				client.debugLog("Configuring proxy: %s", proxyURL)
 			}
 
-			// Create SOCKS5 dialer
-			dialer, err := proxy.SOCKS5("tcp", proxyURLParsed.Host, auth, proxy.Direct)
+			proxyURLParsed, err := url.Parse(proxyURL)
 			if err != nil {
-				log.Printf("Failed to create SOCKS5 dialer: %v", err)
+				log.Printf("Invalid proxy URL: %v", err)
 				return nil
 			}
 
-			transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-				if client.debug {
-					client.debugLog("SOCKS5 dialing %s via %s", addr, proxyURLParsed.Host)
+			switch proxyURLParsed.Scheme {
+			case "socks5", "socks5h":
+				// Extract auth if present
+				var auth *proxy.Auth
+				if proxyURLParsed.User != nil {
+					auth = &proxy.Auth{
+						User: proxyURLParsed.User.Username(),
+					}
+					if password, ok := proxyURLParsed.User.Password(); ok {
+						auth.Password = password
+					}
 				}
-				return dialer.Dial(network, addr)
-			}
 
-		case "http", "https":
-			transport.Proxy = http.ProxyURL(proxyURLParsed)
-
-			// Add proxy authentication if present
-			if proxyURLParsed.User != nil {
-				basicAuth := "Basic " + base64.StdEncoding.EncodeToString(
-					[]byte(proxyURLParsed.User.String()))
-				transport.ProxyConnectHeader = http.Header{
-					"Proxy-Authorization": []string{basicAuth},
+				// Create SOCKS5 dialer
+				dialer, err := proxy.SOCKS5("tcp", proxyURLParsed.Host, auth, proxy.Direct)
+				if err != nil {
+					log.Printf("Failed to create SOCKS5 dialer: %v", err)
+					return nil
 				}
-			}
 
-		default:
-			log.Printf("Unsupported proxy scheme: %s", proxyURLParsed.Scheme)
-			return nil
+				transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+					if client.debug {
+						client.debugLog("SOCKS5 dialing %s via %s", addr, proxyURLParsed.Host)
+					}
+					return dialer.Dial(network, addr)
+				}
+
+			case "http", "https":
+				transport.Proxy = http.ProxyURL(proxyURLParsed)
+
+				// Add proxy authentication if present
+				if proxyURLParsed.User != nil {
+					basicAuth := "Basic " + base64.StdEncoding.EncodeToString(
+						[]byte(proxyURLParsed.User.String()))
+					transport.ProxyConnectHeader = http.Header{
+						"Proxy-Authorization": []string{basicAuth},
+					}
+				}
+
+			default:
+				log.Printf("Unsupported proxy scheme: %s", proxyURLParsed.Scheme)
+				return nil
+			}
 		}
-	}
+	*/
 
+	// We apply our own proxy logic
 	client.httpClient = &http.Client{
-		Transport: transport,
+		Transport: proxy.ProxyTransport(transport),
 		Timeout:   30 * time.Second,
 	}
-
-	// Apply insecureTLS flag
-	if insecureTLS {
-		if client.debug {
-			client.debugLog("TLS certificate verification is disabled due to -insecure flag.")
+	/*
+		// Apply insecureTLS flag
+		if insecureTLS {
+			if client.debug {
+				client.debugLog("TLS certificate verification is disabled due to -insecure flag.")
+			}
+			transport.TLSClientConfig.InsecureSkipVerify = true
 		}
-		transport.TLSClientConfig.InsecureSkipVerify = true
-	}
-
+	*/
 	return client
 }
 
@@ -289,8 +288,8 @@ func (c *Client) createDebugRequest(method, baseURL string, body io.Reader, clos
 	return req, nil
 }
 
-func (c *Client) handleConnection(conn net.Conn) {
-	ctx, cancel := context.WithTimeout(context.Background(), 24*time.Hour)
+func (c *Client) HandleConnection(conn net.Conn, ctx context.Context) {
+	ctx, cancel := context.WithTimeout(ctx, 24*time.Hour)
 	defer cancel()
 	defer conn.Close()
 
@@ -520,157 +519,158 @@ func (c *Client) pollData(ctx context.Context, sessionID string, conn net.Conn) 
 	return nil
 }
 
-func main() {
-	var localAddr string
-	var targetURL string
-	var destAddr string
-	var debug bool
-	var proxyURL string
-	var insecureTLS bool // Added for -insecure flag
+/*
+	func main() {
+		var localAddr string
+		var targetURL string
+		var destAddr string
+		var debug bool
+		var proxyURL string
+		var insecureTLS bool // Added for -insecure flag
 
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "DarkFlare Client - TCP-over-CDN tunnel client component\n")
-		fmt.Fprintf(os.Stderr, "(c) 2024 Barrett Lyon\n\n")
-		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  %s [options]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Options:\n")
-		fmt.Fprintf(os.Stderr, "  -l        Local port or stdin:stdout for ProxyCommand mode\n")
-		fmt.Fprintf(os.Stderr, "            Format: <port> or stdin:stdout\n")
-		fmt.Fprintf(os.Stderr, "            Examples: 2222 or stdin:stdout\n\n")
-		fmt.Fprintf(os.Stderr, "  -t        Target URL of your cdn-protected darkflare-server\n")
-		fmt.Fprintf(os.Stderr, "            Format: [http(s)://]hostname[:port]\n")
-		fmt.Fprintf(os.Stderr, "            Default scheme: https, Default ports: 80/443\n")
-		fmt.Fprintf(os.Stderr, "            This server will receive and forward your traffic\n\n")
-		fmt.Fprintf(os.Stderr, "  -d        Destination address for the final connection\n")
-		fmt.Fprintf(os.Stderr, "            Format: hostname:port\n")
-		fmt.Fprintf(os.Stderr, "            This is where your traffic will ultimately be sent\n\n")
-		fmt.Fprintf(os.Stderr, "  -debug    Enable detailed debug logging\n")
-		fmt.Fprintf(os.Stderr, "            Shows connection details, data transfer, and errors\n\n")
-		fmt.Fprintf(os.Stderr, "  -p        Proxy URL for outbound connections\n")
-		fmt.Fprintf(os.Stderr, "            Format: scheme://[user:pass@]host:port\n")
-		fmt.Fprintf(os.Stderr, "            Supported schemes: http, https, socks5, socks5h\n\n")
-		fmt.Fprintf(os.Stderr, "  -insecure Disable TLS certificate verification (use with caution)\n\n")
-		fmt.Fprintf(os.Stderr, "Examples:\n")
-		fmt.Fprintf(os.Stderr, "  Basic SSH tunnel:\n")
-		fmt.Fprintf(os.Stderr, "    %s -l 2222 -t cdn.example.com -d ssh.target.com:22\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  SSH ProxyCommand mode:\n")
-		fmt.Fprintf(os.Stderr, "    ssh -o ProxyCommand=\"%s -l stdin:stdout -t cdn.example.com -d localhost:22\" user@remote\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  Usage with SSH ProxyCommand:\n")
-		fmt.Fprintf(os.Stderr, "    Add to ~/.ssh/config:\n")
-		fmt.Fprintf(os.Stderr, "      Host remote.example.com\n")
-		fmt.Fprintf(os.Stderr, "        ProxyCommand %s -l stdin:stdout -t cdn.example.com -d localhost:22\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "    Then simply: ssh remote.example.com\n\n")
-		fmt.Fprintf(os.Stderr, "Notes:\n")
-		fmt.Fprintf(os.Stderr, "  - Proxy authentication is supported via URL format user:pass@host\n")
-		fmt.Fprintf(os.Stderr, "  - SOCKS5 variant will resolve hostnames through the proxy\n")
-		fmt.Fprintf(os.Stderr, "  - Debug mode will show proxy connection details and errors\n\n")
-		fmt.Fprintf(os.Stderr, "For more information: https://github.com/doxx/darkflare\n")
-	}
+		flag.Usage = func() {
+			fmt.Fprintf(os.Stderr, "DarkFlare Client - TCP-over-CDN tunnel client component\n")
+			fmt.Fprintf(os.Stderr, "(c) 2024 Barrett Lyon\n\n")
+			fmt.Fprintf(os.Stderr, "Usage:\n")
+			fmt.Fprintf(os.Stderr, "  %s [options]\n\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "Options:\n")
+			fmt.Fprintf(os.Stderr, "  -l        Local port or stdin:stdout for ProxyCommand mode\n")
+			fmt.Fprintf(os.Stderr, "            Format: <port> or stdin:stdout\n")
+			fmt.Fprintf(os.Stderr, "            Examples: 2222 or stdin:stdout\n\n")
+			fmt.Fprintf(os.Stderr, "  -t        Target URL of your cdn-protected darkflare-server\n")
+			fmt.Fprintf(os.Stderr, "            Format: [http(s)://]hostname[:port]\n")
+			fmt.Fprintf(os.Stderr, "            Default scheme: https, Default ports: 80/443\n")
+			fmt.Fprintf(os.Stderr, "            This server will receive and forward your traffic\n\n")
+			fmt.Fprintf(os.Stderr, "  -d        Destination address for the final connection\n")
+			fmt.Fprintf(os.Stderr, "            Format: hostname:port\n")
+			fmt.Fprintf(os.Stderr, "            This is where your traffic will ultimately be sent\n\n")
+			fmt.Fprintf(os.Stderr, "  -debug    Enable detailed debug logging\n")
+			fmt.Fprintf(os.Stderr, "            Shows connection details, data transfer, and errors\n\n")
+			fmt.Fprintf(os.Stderr, "  -p        Proxy URL for outbound connections\n")
+			fmt.Fprintf(os.Stderr, "            Format: scheme://[user:pass@]host:port\n")
+			fmt.Fprintf(os.Stderr, "            Supported schemes: http, https, socks5, socks5h\n\n")
+			fmt.Fprintf(os.Stderr, "  -insecure Disable TLS certificate verification (use with caution)\n\n")
+			fmt.Fprintf(os.Stderr, "Examples:\n")
+			fmt.Fprintf(os.Stderr, "  Basic SSH tunnel:\n")
+			fmt.Fprintf(os.Stderr, "    %s -l 2222 -t cdn.example.com -d ssh.target.com:22\n\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "  SSH ProxyCommand mode:\n")
+			fmt.Fprintf(os.Stderr, "    ssh -o ProxyCommand=\"%s -l stdin:stdout -t cdn.example.com -d localhost:22\" user@remote\n\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "  Usage with SSH ProxyCommand:\n")
+			fmt.Fprintf(os.Stderr, "    Add to ~/.ssh/config:\n")
+			fmt.Fprintf(os.Stderr, "      Host remote.example.com\n")
+			fmt.Fprintf(os.Stderr, "        ProxyCommand %s -l stdin:stdout -t cdn.example.com -d localhost:22\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "    Then simply: ssh remote.example.com\n\n")
+			fmt.Fprintf(os.Stderr, "Notes:\n")
+			fmt.Fprintf(os.Stderr, "  - Proxy authentication is supported via URL format user:pass@host\n")
+			fmt.Fprintf(os.Stderr, "  - SOCKS5 variant will resolve hostnames through the proxy\n")
+			fmt.Fprintf(os.Stderr, "  - Debug mode will show proxy connection details and errors\n\n")
+			fmt.Fprintf(os.Stderr, "For more information: https://github.com/doxx/darkflare\n")
+		}
 
-	flag.StringVar(&localAddr, "l", "", "")
-	flag.StringVar(&targetURL, "t", "", "")
-	flag.StringVar(&destAddr, "d", "", "")
-	flag.BoolVar(&debug, "debug", false, "")
-	flag.StringVar(&proxyURL, "p", "", "Proxy URL (http://host:port or socks5://host:port)")
-	flag.BoolVar(&insecureTLS, "insecure", false, "Disable TLS certificate verification (use with caution)")
-	flag.Parse()
+		flag.StringVar(&localAddr, "l", "", "")
+		flag.StringVar(&targetURL, "t", "", "")
+		flag.StringVar(&destAddr, "d", "", "")
+		flag.BoolVar(&debug, "debug", false, "")
+		flag.StringVar(&proxyURL, "p", "", "Proxy URL (http://host:port or socks5://host:port)")
+		flag.BoolVar(&insecureTLS, "insecure", false, "Disable TLS certificate verification (use with caution)")
+		flag.Parse()
 
-	if len(os.Args) == 1 {
-		flag.Usage()
-		os.Exit(1)
-	}
+		if len(os.Args) == 1 {
+			flag.Usage()
+			os.Exit(1)
+		}
 
-	if localAddr == "" || targetURL == "" || destAddr == "" {
-		fmt.Fprintf(os.Stderr, "Error: -l, -t, and -d parameters are required\n\n")
-		flag.Usage()
-		os.Exit(1)
-	}
+		if localAddr == "" || targetURL == "" || destAddr == "" {
+			fmt.Fprintf(os.Stderr, "Error: -l, -t, and -d parameters are required\n\n")
+			flag.Usage()
+			os.Exit(1)
+		}
 
-	// Parse the target URL
-	if !strings.Contains(targetURL, "://") {
-		targetURL = "https://" + targetURL
-	}
-	u, err := url.Parse(targetURL)
-	if err != nil {
-		log.Fatalf("Invalid target URL: %v", err)
-	}
-
-	// Extract scheme
-	scheme := strings.ToLower(u.Scheme)
-	if scheme != "http" && scheme != "https" {
-		log.Fatal("Scheme must be either 'http' or 'https'")
-	}
-
-	// Extract host and port
-	host := u.Hostname()
-	port := u.Port()
-	destPort := 443
-	if port != "" {
-		destPort, err = strconv.Atoi(port)
+		// Parse the target URL
+		if !strings.Contains(targetURL, "://") {
+			targetURL = "https://" + targetURL
+		}
+		u, err := url.Parse(targetURL)
 		if err != nil {
-			log.Fatalf("Invalid port number: %v", err)
-		}
-	} else if scheme == "http" {
-		destPort = 80
-	}
-
-	if debug {
-		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
-		log.Printf("Debug mode enabled")
-	}
-
-	// 获取认证信息
-	username := ""
-	password := ""
-	if u.User != nil {
-		username = u.User.Username()
-		password, _ = u.User.Password()
-	}
-
-	if localAddr == "stdin:stdout" {
-		// Create client in stdin/stdout mode
-		client := NewClient(host, destPort, scheme, destAddr, debug, proxyURL, username, password, insecureTLS)
-		// Use os.Stdin and os.Stdout as the connection
-		stdinStdout := &StdinStdoutConn{
-			Reader: os.Stdin,
-			Writer: os.Stdout,
-		}
-		client.handleConnection(stdinStdout)
-	} else {
-		// Parse port number for traditional mode
-		localPort, err := strconv.Atoi(localAddr)
-		if err != nil {
-			log.Fatalf("Invalid local port: %v", err)
+			log.Fatalf("Invalid target URL: %v", err)
 		}
 
-		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", localPort))
-		if err != nil {
-			log.Fatal(err)
+		// Extract scheme
+		scheme := strings.ToLower(u.Scheme)
+		if scheme != "http" && scheme != "https" {
+			log.Fatal("Scheme must be either 'http' or 'https'")
 		}
 
-		log.Printf("DarkFlare client listening on port %d", localPort)
-		log.Printf("Connecting via %s://%s:%d", scheme, host, destPort)
-
-		for {
-			conn, err := listener.Accept()
+		// Extract host and port
+		host := u.Hostname()
+		port := u.Port()
+		destPort := 443
+		if port != "" {
+			destPort, err = strconv.Atoi(port)
 			if err != nil {
-				log.Printf("Error accepting connection: %v", err)
-				continue
+				log.Fatalf("Invalid port number: %v", err)
+			}
+		} else if scheme == "http" {
+			destPort = 80
+		}
+
+		if debug {
+			log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+			log.Printf("Debug mode enabled")
+		}
+
+		// 获取认证信息
+		username := ""
+		password := ""
+		if u.User != nil {
+			username = u.User.Username()
+			password, _ = u.User.Password()
+		}
+
+		if localAddr == "stdin:stdout" {
+			// Create client in stdin/stdout mode
+			client := NewClient(host, destPort, scheme, destAddr, debug, proxyURL, username, password, insecureTLS)
+			// Use os.Stdin and os.Stdout as the connection
+			stdinStdout := &StdinStdoutConn{
+				Reader: os.Stdin,
+				Writer: os.Stdout,
+			}
+			client.HandleConnection(stdinStdout, context.Background())
+		} else {
+			// Parse port number for traditional mode
+			localPort, err := strconv.Atoi(localAddr)
+			if err != nil {
+				log.Fatalf("Invalid local port: %v", err)
 			}
 
-			client := NewClient(host, destPort, scheme, destAddr, debug, proxyURL, username, password, insecureTLS)
-			go client.handleConnection(conn)
+			listener, err := net.Listen("tcp", fmt.Sprintf(":%d", localPort))
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			log.Printf("DarkFlare client listening on port %d", localPort)
+			log.Printf("Connecting via %s://%s:%d", scheme, host, destPort)
+
+			for {
+				conn, err := listener.Accept()
+				if err != nil {
+					log.Printf("Error accepting connection: %v", err)
+					continue
+				}
+
+				client := NewClient(host, destPort, scheme, destAddr, debug, proxyURL, username, password, insecureTLS)
+				go client.HandleConnection(conn, context.Background())
+			}
 		}
 	}
-}
 
-func min(a, b int) int {
-	if a < b {
-		return a
+	func min(a, b int) int {
+		if a < b {
+			return a
+		}
+		return b
 	}
-	return b
-}
-
+*/
 func randomString(min, max int) string {
 	if min < 0 || max < min {
 		min, max = 1, 15

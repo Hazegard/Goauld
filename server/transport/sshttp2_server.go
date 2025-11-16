@@ -1,17 +1,15 @@
-package main
+package transport
 
 import (
+	"Goauld/server/persistence"
+	"Goauld/server/store"
 	"bufio"
-	"crypto/tls"
-	"encoding/base64"
 	"encoding/hex"
-	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -40,9 +38,11 @@ type Server struct {
 	overrideDest string
 	username     string // 新增
 	password     string // 新增
+	db           *persistence.DB
+	store        *store.AgentStore
 }
 
-func NewServer(destHost, destPort string, appCommand string, debug bool, allowDirect bool, silent bool, redirect string, overrideDest string, username string, password string) *Server {
+func NewServer(destHost, destPort string, appCommand string, debug bool, allowDirect bool, silent bool, redirect string, overrideDest string, username string, password string, db *persistence.DB, store *store.AgentStore) *Server {
 	s := &Server{
 		destHost:     destHost,
 		destPort:     destPort,
@@ -55,6 +55,8 @@ func NewServer(destHost, destPort string, appCommand string, debug bool, allowDi
 		overrideDest: overrideDest,
 		username:     username, // 新增
 		password:     password, // 新增
+		db:           db,
+		store:        store,
 	}
 
 	if s.isAppMode && s.debug && !s.silent {
@@ -155,7 +157,7 @@ func (s *Server) handleApplication(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	// 添加认证检查
 	if s.username != "" || s.password != "" {
 		username, password, ok := r.BasicAuth()
@@ -210,20 +212,22 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var destination string
-	if s.overrideDest != "" {
-		destination = s.overrideDest
-		if s.debug {
-			log.Printf("Using override destination: %s", destination)
+	destination = s.overrideDest
+	/*
+		if s.overrideDest != "" {
+			destination = s.overrideDest
+			if s.debug {
+				log.Printf("Using override destination: %s", destination)
+			}
+		} else {
+			destBytes, err := base64.StdEncoding.DecodeString(encodedDest)
+			if err != nil {
+				http.Error(w, "Invalid destination encoding", http.StatusBadRequest)
+				return
+			}
+			destination = string(destBytes)
 		}
-	} else {
-		destBytes, err := base64.StdEncoding.DecodeString(encodedDest)
-		if err != nil {
-			http.Error(w, "Invalid destination encoding", http.StatusBadRequest)
-			return
-		}
-		destination = string(destBytes)
-	}
-
+	*/
 	// Check for connection termination
 	if r.Header.Get("X-Connection-Close") == "true" {
 		sessionDisplay := "no-session"
@@ -238,13 +242,14 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Always log basic connection info
-	sessionDisplay := "no-session"
-	if sessionID != "" {
-		sessionDisplay = sessionID[:8] // First 8 chars of session ID
-	}
-	s.logf("Connection: %s [%s] → %s", clientIP, sessionDisplay, destination)
-
+	/*
+		// Always log basic connection info
+		sessionDisplay := "no-session"
+		if sessionID != "" {
+			sessionDisplay = sessionID[:8] // First 8 chars of session ID
+		}
+		s.logf("Connection: %s [%s] → %s", clientIP, sessionDisplay, destination)
+	*/
 	// Debug logging only when enabled
 	if s.debug {
 		log.Printf("Headers: %+v", r.Header)
@@ -358,6 +363,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	var session *Session
 	sessionInterface, exists := s.sessions.Load(sessionID)
 	if !exists {
+
 		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", host, port))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -370,6 +376,12 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 			buffer:     make([]byte, 0),
 		}
 		s.sessions.Store(sessionID, session)
+		id := r.PathValue("agentId")
+		err = s.db.SetAgentSSHMode(id, "CDN", r.RemoteAddr)
+		if err != nil {
+			log.Printf("Error setting agent SSH mode: %v", err)
+		}
+		s.store.SSHCDNAddAgent(conn, id)
 	} else {
 		session = sessionInterface.(*Session)
 	}
@@ -451,208 +463,209 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func main() {
-	var origin string
-	var certFile string
-	var keyFile string
-	var debug bool
-	var allowDirect bool
-	var appCommand string
-	var silent bool
-	var redirect string
-	var overrideDest string
-	var auth string
+/*
+	func main() {
+		var origin string
+		var certFile string
+		var keyFile string
+		var debug bool
+		var allowDirect bool
+		var appCommand string
+		var silent bool
+		var redirect string
+		var overrideDest string
+		var auth string
 
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "DarkFlare Server - TCP-over-CDN tunnel server component\n")
-		fmt.Fprintf(os.Stderr, "(c) 2024 Barrett Lyon\n\n")
-		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  %s [options]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Options:\n")
-		fmt.Fprintf(os.Stderr, "  -o        Listen address for the server\n")
-		fmt.Fprintf(os.Stderr, "            Format: proto://[host]:port\n")
-		fmt.Fprintf(os.Stderr, "            Default: http://0.0.0.0:8080\n\n")
-		fmt.Fprintf(os.Stderr, "  -allow-direct\n")
-		fmt.Fprintf(os.Stderr, "            Allow direct connections not coming through Cloudflare\n")
-		fmt.Fprintf(os.Stderr, "            Default: false (only allow Cloudflare IPs)\n\n")
-		fmt.Fprintf(os.Stderr, "  -c        Path to TLS certificate file\n")
-		fmt.Fprintf(os.Stderr, "            Default: Auto-generated self-signed cert\n\n")
-		fmt.Fprintf(os.Stderr, "  -k        Path to TLS private key file\n")
-		fmt.Fprintf(os.Stderr, "            Default: Auto-generated with cert\n\n")
-		fmt.Fprintf(os.Stderr, "  -debug    Enable detailed debug logging\n")
-		fmt.Fprintf(os.Stderr, "            Shows connection details and errors\n\n")
-		fmt.Fprintf(os.Stderr, "  -s        Silent mode\n")
-		fmt.Fprintf(os.Stderr, "            Suppresses all non-error output\n\n")
-		fmt.Fprintf(os.Stderr, "  -redirect Custom URL to redirect unauthorized requests\n")
-		fmt.Fprintf(os.Stderr, "            Default: GitHub project page\n\n")
-		fmt.Fprintf(os.Stderr, "  -override-dest\n")
-		fmt.Fprintf(os.Stderr, "            Override client destination with server-side setting\n")
-		fmt.Fprintf(os.Stderr, "            Format: host:port\n")
-		fmt.Fprintf(os.Stderr, "            Default: Use client-provided destination\n\n")
-		fmt.Fprintf(os.Stderr, "Examples:\n")
-		fmt.Fprintf(os.Stderr, "  Basic setup:\n")
-		fmt.Fprintf(os.Stderr, "    %s -o http://0.0.0.0:8080\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  With custom TLS certificates:\n")
-		fmt.Fprintf(os.Stderr, "    %s -o https://0.0.0.0:443 -c /path/to/cert.pem -k /path/to/key.pem\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "  Debug mode with metrics:\n")
-		fmt.Fprintf(os.Stderr, "    %s -o http://0.0.0.0:8080 -debug\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Notes:\n")
-		fmt.Fprintf(os.Stderr, "  - Server accepts destination from client via X-Requested-With header\n")
-		fmt.Fprintf(os.Stderr, "  - Destination validation is performed for security\n")
-		fmt.Fprintf(os.Stderr, "  - Use with Cloudflare as reverse proxy for best security\n\n")
-		fmt.Fprintf(os.Stderr, "For more information: https://github.com/doxx/darkflare\n")
-		fmt.Fprintf(os.Stderr, "  -auth     Basic authentication credentials\n")
-	}
-	flag.StringVar(&auth, "auth", "", "Basic auth (user:pass)")
-	flag.StringVar(&origin, "o", "http://0.0.0.0:8080", "")
-	flag.StringVar(&certFile, "c", "", "")
-	flag.StringVar(&keyFile, "k", "", "")
-	flag.StringVar(&appCommand, "a", "", "")
-	flag.BoolVar(&debug, "debug", false, "")
-	flag.BoolVar(&allowDirect, "allow-direct", false, "")
-	flag.BoolVar(&silent, "s", false, "")
-	flag.StringVar(&redirect, "redirect", "", "Custom URL to redirect unauthorized requests (default: GitHub project page)")
-	flag.StringVar(&overrideDest, "override-dest", "", "Override destination address (format: host:port)")
-	flag.Parse()
-
-	// Parse origin URL
-	originURL, err := url.Parse(origin)
-	if err != nil {
-		log.Fatalf("Invalid origin URL: %v", err)
-	}
-
-	// Validate scheme
-	if originURL.Scheme != "http" && originURL.Scheme != "https" {
-		log.Fatal("Origin scheme must be either 'http' or 'https'")
-	}
-
-	// Validate and extract host/port
-	originHost, originPort, err := net.SplitHostPort(originURL.Host)
-	if err != nil {
-		log.Fatalf("Invalid origin address: %v", err)
-	}
-
-	// Validate IP is local
-	if !isLocalIP(originHost) {
-		log.Fatal("Origin host must be a local IP address")
-	}
-
-	if !silent {
-		log.Printf("DarkFlare server listening on %s", origin)
-	}
-
-	// If override-dest is provided, validate it
-	if overrideDest != "" {
-		if !isValidDestination(overrideDest) {
-			log.Fatal("Invalid override destination format")
+		flag.Usage = func() {
+			fmt.Fprintf(os.Stderr, "DarkFlare Server - TCP-over-CDN tunnel server component\n")
+			fmt.Fprintf(os.Stderr, "(c) 2024 Barrett Lyon\n\n")
+			fmt.Fprintf(os.Stderr, "Usage:\n")
+			fmt.Fprintf(os.Stderr, "  %s [options]\n\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "Options:\n")
+			fmt.Fprintf(os.Stderr, "  -o        Listen address for the server\n")
+			fmt.Fprintf(os.Stderr, "            Format: proto://[host]:port\n")
+			fmt.Fprintf(os.Stderr, "            Default: http://0.0.0.0:8080\n\n")
+			fmt.Fprintf(os.Stderr, "  -allow-direct\n")
+			fmt.Fprintf(os.Stderr, "            Allow direct connections not coming through Cloudflare\n")
+			fmt.Fprintf(os.Stderr, "            Default: false (only allow Cloudflare IPs)\n\n")
+			fmt.Fprintf(os.Stderr, "  -c        Path to TLS certificate file\n")
+			fmt.Fprintf(os.Stderr, "            Default: Auto-generated self-signed cert\n\n")
+			fmt.Fprintf(os.Stderr, "  -k        Path to TLS private key file\n")
+			fmt.Fprintf(os.Stderr, "            Default: Auto-generated with cert\n\n")
+			fmt.Fprintf(os.Stderr, "  -debug    Enable detailed debug logging\n")
+			fmt.Fprintf(os.Stderr, "            Shows connection details and errors\n\n")
+			fmt.Fprintf(os.Stderr, "  -s        Silent mode\n")
+			fmt.Fprintf(os.Stderr, "            Suppresses all non-error output\n\n")
+			fmt.Fprintf(os.Stderr, "  -redirect Custom URL to redirect unauthorized requests\n")
+			fmt.Fprintf(os.Stderr, "            Default: GitHub project page\n\n")
+			fmt.Fprintf(os.Stderr, "  -override-dest\n")
+			fmt.Fprintf(os.Stderr, "            Override client destination with server-side setting\n")
+			fmt.Fprintf(os.Stderr, "            Format: host:port\n")
+			fmt.Fprintf(os.Stderr, "            Default: Use client-provided destination\n\n")
+			fmt.Fprintf(os.Stderr, "Examples:\n")
+			fmt.Fprintf(os.Stderr, "  Basic setup:\n")
+			fmt.Fprintf(os.Stderr, "    %s -o http://0.0.0.0:8080\n\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "  With custom TLS certificates:\n")
+			fmt.Fprintf(os.Stderr, "    %s -o https://0.0.0.0:443 -c /path/to/cert.pem -k /path/to/key.pem\n\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "  Debug mode with metrics:\n")
+			fmt.Fprintf(os.Stderr, "    %s -o http://0.0.0.0:8080 -debug\n\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "Notes:\n")
+			fmt.Fprintf(os.Stderr, "  - Server accepts destination from client via X-Requested-With header\n")
+			fmt.Fprintf(os.Stderr, "  - Destination validation is performed for security\n")
+			fmt.Fprintf(os.Stderr, "  - Use with Cloudflare as reverse proxy for best security\n\n")
+			fmt.Fprintf(os.Stderr, "For more information: https://github.com/doxx/darkflare\n")
+			fmt.Fprintf(os.Stderr, "  -auth     Basic authentication credentials\n")
 		}
-		if !silent {
-			log.Printf("Using server-side destination override: %s", overrideDest)
-		}
-	}
+		flag.StringVar(&auth, "auth", "", "Basic auth (user:pass)")
+		flag.StringVar(&origin, "o", "http://0.0.0.0:8080", "")
+		flag.StringVar(&certFile, "c", "", "")
+		flag.StringVar(&keyFile, "k", "", "")
+		flag.StringVar(&appCommand, "a", "", "")
+		flag.BoolVar(&debug, "debug", false, "")
+		flag.BoolVar(&allowDirect, "allow-direct", false, "")
+		flag.BoolVar(&silent, "s", false, "")
+		flag.StringVar(&redirect, "redirect", "", "Custom URL to redirect unauthorized requests (default: GitHub project page)")
+		flag.StringVar(&overrideDest, "override-dest", "", "Override destination address (format: host:port)")
+		flag.Parse()
 
-	server := NewServer(originHost, originPort, appCommand, debug, allowDirect, silent, redirect, overrideDest, "", "")
-
-	// 解析认证信息
-	if auth != "" {
-		parts := strings.Split(auth, ":")
-		if len(parts) == 2 {
-			server.username = parts[0]
-			server.password = parts[1]
-		}
-	}
-
-	log.Printf("DarkFlare server running on %s://%s:%s", originURL.Scheme, originHost, originPort)
-	if allowDirect {
-		log.Printf("Warning: Direct connections allowed (no Cloudflare required)")
-	}
-
-	// Start server with appropriate protocol
-	if originURL.Scheme == "https" {
-		if certFile == "" || keyFile == "" {
-			log.Fatal("HTTPS requires both certificate (-c) and key (-k) files")
-		}
-
-		// Load and verify certificates
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		// Parse origin URL
+		originURL, err := url.Parse(origin)
 		if err != nil {
-			log.Fatalf("Failed to load certificate and key: %v", err)
+			log.Fatalf("Invalid origin URL: %v", err)
 		}
 
-		server := &http.Server{
-			Addr:    fmt.Sprintf("%s:%s", originHost, originPort),
-			Handler: http.HandlerFunc(server.handleRequest),
-			TLSConfig: &tls.Config{
-				Certificates: []tls.Certificate{cert},
-				MinVersion:   tls.VersionTLS12,
-				MaxVersion:   tls.VersionTLS13,
-				// Allow any cipher suites
-				CipherSuites: nil,
-				// Don't verify client certs
-				ClientAuth: tls.NoClientCert,
-				// Handle SNI
-				GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
-					if debug {
-						log.Printf("Client requesting certificate for server name: %s", info.ServerName)
-					}
-					return &cert, nil
-				},
-				GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
-					if debug {
-						log.Printf("TLS Handshake Details:")
-						log.Printf("  Client Address: %s", hello.Conn.RemoteAddr())
-						log.Printf("  Server Name: %s", hello.ServerName)
-						log.Printf("  Supported Versions: %v", hello.SupportedVersions)
-						log.Printf("  Supported Ciphers: %v", hello.CipherSuites)
-						log.Printf("  Supported Curves: %v", hello.SupportedCurves)
-						log.Printf("  Supported Points: %v", hello.SupportedPoints)
-						log.Printf("  ALPN Protocols: %v", hello.SupportedProtos)
-					}
-					return nil, nil
-				},
-				VerifyConnection: func(cs tls.ConnectionState) error {
-					if debug {
-						log.Printf("TLS Connection State:")
-						log.Printf("  Version: 0x%x", cs.Version)
-						log.Printf("  HandshakeComplete: %v", cs.HandshakeComplete)
-						log.Printf("  CipherSuite: 0x%x", cs.CipherSuite)
-						log.Printf("  NegotiatedProtocol: %s", cs.NegotiatedProtocol)
-						log.Printf("  ServerName: %s", cs.ServerName)
-					}
-					return nil
-				},
-				// Enable HTTP/2 support
-				NextProtos: []string{"h2", "http/1.1"},
-			},
-			ErrorLog: log.New(os.Stderr, "[HTTPS] ", log.LstdFlags),
-			ConnState: func(conn net.Conn, state http.ConnState) {
-				if debug {
-					log.Printf("Connection state changed to %s from %s",
-						state, conn.RemoteAddr().String())
-				}
-			},
+		// Validate scheme
+		if originURL.Scheme != "http" && originURL.Scheme != "https" {
+			log.Fatal("Origin scheme must be either 'http' or 'https'")
 		}
 
-		log.Printf("Starting HTTPS server on %s:%s", originHost, originPort)
-		if debug {
-			log.Printf("TLS Configuration:")
-			log.Printf("  Minimum Version: %x", server.TLSConfig.MinVersion)
-			log.Printf("  Maximum Version: %x", server.TLSConfig.MaxVersion)
-			log.Printf("  Certificates Loaded: %d", len(server.TLSConfig.Certificates))
-			log.Printf("  Listening Address: %s", server.Addr)
-			log.Printf("  Supported Protocols: %v", server.TLSConfig.NextProtos)
+		// Validate and extract host/port
+		originHost, originPort, err := net.SplitHostPort(originURL.Host)
+		if err != nil {
+			log.Fatalf("Invalid origin address: %v", err)
 		}
 
-		log.Fatal(server.ListenAndServeTLS(certFile, keyFile))
-	} else {
-		server := &http.Server{
-			Addr:    fmt.Sprintf("%s:%s", originHost, originPort),
-			Handler: http.HandlerFunc(server.handleRequest),
+		// Validate IP is local
+		if !isLocalIP(originHost) {
+			log.Fatal("Origin host must be a local IP address")
 		}
-		log.Fatal(server.ListenAndServe())
+
+		if !silent {
+			log.Printf("DarkFlare server listening on %s", origin)
+		}
+
+		// If override-dest is provided, validate it
+		if overrideDest != "" {
+			if !isValidDestination(overrideDest) {
+				log.Fatal("Invalid override destination format")
+			}
+			if !silent {
+				log.Printf("Using server-side destination override: %s", overrideDest)
+			}
+		}
+
+		server := NewServer(originHost, originPort, appCommand, debug, allowDirect, silent, redirect, overrideDest, "", "")
+
+		// 解析认证信息
+		if auth != "" {
+			parts := strings.Split(auth, ":")
+			if len(parts) == 2 {
+				server.username = parts[0]
+				server.password = parts[1]
+			}
+		}
+
+		log.Printf("DarkFlare server running on %s://%s:%s", originURL.Scheme, originHost, originPort)
+		if allowDirect {
+			log.Printf("Warning: Direct connections allowed (no Cloudflare required)")
+		}
+
+		// Start server with appropriate protocol
+		if originURL.Scheme == "https" {
+			if certFile == "" || keyFile == "" {
+				log.Fatal("HTTPS requires both certificate (-c) and key (-k) files")
+			}
+
+			// Load and verify certificates
+			cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+			if err != nil {
+				log.Fatalf("Failed to load certificate and key: %v", err)
+			}
+
+			server := &http.Server{
+				Addr:    fmt.Sprintf("%s:%s", originHost, originPort),
+				Handler: http.HandlerFunc(server.HandleRequest),
+				TLSConfig: &tls.Config{
+					Certificates: []tls.Certificate{cert},
+					MinVersion:   tls.VersionTLS12,
+					MaxVersion:   tls.VersionTLS13,
+					// Allow any cipher suites
+					CipherSuites: nil,
+					// Don't verify client certs
+					ClientAuth: tls.NoClientCert,
+					// Handle SNI
+					GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+						if debug {
+							log.Printf("Client requesting certificate for server name: %s", info.ServerName)
+						}
+						return &cert, nil
+					},
+					GetConfigForClient: func(hello *tls.ClientHelloInfo) (*tls.Config, error) {
+						if debug {
+							log.Printf("TLS Handshake Details:")
+							log.Printf("  Client Address: %s", hello.Conn.RemoteAddr())
+							log.Printf("  Server Name: %s", hello.ServerName)
+							log.Printf("  Supported Versions: %v", hello.SupportedVersions)
+							log.Printf("  Supported Ciphers: %v", hello.CipherSuites)
+							log.Printf("  Supported Curves: %v", hello.SupportedCurves)
+							log.Printf("  Supported Points: %v", hello.SupportedPoints)
+							log.Printf("  ALPN Protocols: %v", hello.SupportedProtos)
+						}
+						return nil, nil
+					},
+					VerifyConnection: func(cs tls.ConnectionState) error {
+						if debug {
+							log.Printf("TLS Connection State:")
+							log.Printf("  Version: 0x%x", cs.Version)
+							log.Printf("  HandshakeComplete: %v", cs.HandshakeComplete)
+							log.Printf("  CipherSuite: 0x%x", cs.CipherSuite)
+							log.Printf("  NegotiatedProtocol: %s", cs.NegotiatedProtocol)
+							log.Printf("  ServerName: %s", cs.ServerName)
+						}
+						return nil
+					},
+					// Enable HTTP/2 support
+					NextProtos: []string{"h2", "http/1.1"},
+				},
+				ErrorLog: log.New(os.Stderr, "[HTTPS] ", log.LstdFlags),
+				ConnState: func(conn net.Conn, state http.ConnState) {
+					if debug {
+						log.Printf("Connection state changed to %s from %s",
+							state, conn.RemoteAddr().String())
+					}
+				},
+			}
+
+			log.Printf("Starting HTTPS server on %s:%s", originHost, originPort)
+			if debug {
+				log.Printf("TLS Configuration:")
+				log.Printf("  Minimum Version: %x", server.TLSConfig.MinVersion)
+				log.Printf("  Maximum Version: %x", server.TLSConfig.MaxVersion)
+				log.Printf("  Certificates Loaded: %d", len(server.TLSConfig.Certificates))
+				log.Printf("  Listening Address: %s", server.Addr)
+				log.Printf("  Supported Protocols: %v", server.TLSConfig.NextProtos)
+			}
+
+			log.Fatal(server.ListenAndServeTLS(certFile, keyFile))
+		} else {
+			server := &http.Server{
+				Addr:    fmt.Sprintf("%s:%s", originHost, originPort),
+				Handler: http.HandlerFunc(server.HandleRequest),
+			}
+			log.Fatal(server.ListenAndServe())
+		}
 	}
-}
-
+*/
 func isLocalIP(ip string) bool {
 	// Allow 0.0.0.0 as a valid binding address
 	if ip == "0.0.0.0" {
