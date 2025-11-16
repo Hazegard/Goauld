@@ -39,6 +39,9 @@ func NewAgentStore(_db *persistence.DB) *AgentStore {
 			sshttpAgentMap:   make(map[string]*SSHTTPAgent),
 			sshttpAgentMapMu: sync.Mutex{},
 
+			sshCDNAgentMap:   make(map[string]*SSHCDNAgent),
+			sshCDNAgentMapMu: sync.Mutex{},
+
 			quicAgentMap:   make(map[string]*QUICAgent),
 			quicAgentMapMu: sync.Mutex{},
 
@@ -72,6 +75,9 @@ type AgentStore struct {
 
 	sshttpAgentMap   map[string]*SSHTTPAgent
 	sshttpAgentMapMu sync.Mutex
+
+	sshCDNAgentMap   map[string]*SSHCDNAgent
+	sshCDNAgentMapMu sync.Mutex
 
 	quicAgentMap   map[string]*QUICAgent
 	quicAgentMapMu sync.Mutex

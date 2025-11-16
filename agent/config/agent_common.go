@@ -250,6 +250,15 @@ func (a *Agent) SSHTTPURL(id string) string {
 	return fmt.Sprintf("%s/sshttp/%s", a.ServerURL(), id)
 }
 
+// SSHTTPURL return the SSH over HTTP connection URL.
+func (a *Agent) CDNURL(id string) string {
+	if id == "" {
+		id = a.ID
+	}
+
+	return fmt.Sprintf("%s/sshttp2/%s", a.ServerURL(), id)
+}
+
 // TLSURL return the SSH over TLS connection URL.
 func (a *Agent) TLSURL() string {
 	u := strings.Split(a.cfg.TLSServer, ":")

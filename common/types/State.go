@@ -48,6 +48,12 @@ type SSHTTPState struct {
 	StreamID   uint32 `yaml:"streamID,omitempty"`
 }
 
+// SSHCDNState represents the state of the SSH over HTTP connections between the agents and the server.
+type SSHCDNState struct {
+	AgentID string `yaml:"agentId,omitempty"`
+	SSHConn Conn   `yaml:"sshConn,omitempty"`
+}
+
 // DNSSHState represents the state of the SSH over DNS connections between the agents and the server.
 type DNSSHState struct {
 	AgentID      string `yaml:"agentId,omitempty"`
@@ -92,4 +98,5 @@ type State struct {
 	SocketIO     SocketIOState `json:"socketIO" yaml:"socketIO"`
 	SSH          SSHState      `json:"ssh" yaml:"ssh"`
 	DNS          DNSSHState    `json:"dns" yaml:"dns"`
+	CDN          SSHCDNState   `json:"cdn" yaml:"cdn"`
 }

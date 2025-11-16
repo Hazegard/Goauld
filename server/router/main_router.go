@@ -31,6 +31,7 @@ type MainRouter struct {
 	tlsshHandler  *transport.TLSSHServer
 	tlsConfig     *tls.Config
 	quicSSH       *transport.QUICServer
+	sshttp2       *transport.Server
 }
 
 // NewHTTPRouter returns an HTTP router responsible for handling all HTTP related connections.
@@ -42,6 +43,7 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 	adminRouter *AdminRouter,
 	staticRouter *StaticRouter,
 	quicSSH *transport.QUICServer,
+	sshttp2 *transport.Server,
 ) (*MainRouter, error) {
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
@@ -59,7 +61,7 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 	logger.ALogger = log.GetNegroniLogger()
 	// Custom middleware
 	n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		if strings.HasPrefix(r.URL.Path, "/sshttp") && r.Method == http.MethodPost {
+		if (strings.HasPrefix(r.URL.Path, "/sshttp") && r.Method == http.MethodPost) || (strings.HasPrefix(r.URL.Path, "/sshttp2") && r.Method == http.MethodGet) {
 			next(w, r)
 
 			return
@@ -88,6 +90,8 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 		Handler: n,
 	}
 
+	router.HandleFunc("/sshttp2/{agentId}/", sshttp2.HandleRequest)
+
 	httprouter := &MainRouter{
 		controlServer: controlServer.Server,
 		wsshHandler:   wssh,
@@ -96,6 +100,7 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 		server3:       server3,
 		router:        router,
 		quicSSH:       quicSSH,
+		sshttp2:       sshttp2,
 	}
 
 	// If the TLS is enabled, configure the server to use TLS
