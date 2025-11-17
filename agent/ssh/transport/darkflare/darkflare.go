@@ -5,12 +5,11 @@ import (
 	"bytes"
 	"context"
 	cryptorand "crypto/rand"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"net"
 	"net/http"
@@ -18,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"crypto/x509"
+	"Goauld/common/log"
 
 	"golang.org/x/time/rate"
 )
@@ -48,7 +47,6 @@ type Client struct {
 	proxyURL        string
 	username        string
 	password        string
-	insecureTLS     bool // Added for -insecure flag
 }
 
 func generateSessionID() string {
@@ -57,10 +55,12 @@ func generateSessionID() string {
 	if err != nil {
 		panic(err)
 	}
+
 	return hex.EncodeToString(b)
 }
 
-func NewClient(cloudflareHost string, destPort int, scheme string, destAddr string, debug bool, proxyURL string, username string, password string, insecureTLS bool) *Client {
+func NewClient(cloudflareHost string, destPort int, scheme string, destAddr string, debug bool, proxyURL string, username string, password string) *Client {
+	//nolint:gosec
 	rand.Seed(time.Now().UnixNano())
 
 	if scheme == "" {
@@ -91,39 +91,13 @@ func NewClient(cloudflareHost string, destPort int, scheme string, destAddr stri
 		username:        username,
 		password:        password,
 		bufferPool: sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				return make([]byte, 64*1024)
 			},
 		},
 	}
 
-	// Load system root CAs
-	rootCAs, err := x509.SystemCertPool()
-	if err != nil {
-		log.Printf("Warning: failed to load system cert pool: %v", err)
-		rootCAs = x509.NewCertPool()
-		if rootCAs == nil {
-			log.Fatal("Failed to create cert pool")
-		}
-	}
-
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			RootCAs:    rootCAs,
-			MinVersion: tls.VersionTLS12,
-			CurvePreferences: []tls.CurveID{
-				tls.X25519,
-				tls.CurveP256,
-			},
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			},
-			PreferServerCipherSuites: true,
-			SessionTicketsDisabled:   false,
-			InsecureSkipVerify:       false,
-			NextProtos:               []string{"http/1.1"},
-		},
 		MaxIdleConns:          1,
 		IdleConnTimeout:       90 * time.Second,
 		DisableCompression:    true,
@@ -212,12 +186,13 @@ func NewClient(cloudflareHost string, destPort int, scheme string, destAddr stri
 	return client
 }
 
-func (c *Client) debugLog(format string, v ...interface{}) {
-	if c.debug {
-		log.Printf("[DEBUG] "+format, v...)
+/*
+	func (c *Client) debugLog(format string, v ...any) {
+		if c.debug {
+			log.Printf("[DEBUG] "+format, v...)
+		}
 	}
-}
-
+*/
 func (c *Client) createDebugRequest(method, baseURL string, body io.Reader, closeConnection bool) (*http.Request, error) {
 	baseURL = strings.TrimSuffix(baseURL, "/")
 	baseURL = strings.TrimPrefix(baseURL, "http://")
@@ -278,13 +253,14 @@ func (c *Client) createDebugRequest(method, baseURL string, body io.Reader, clos
 	}
 
 	// Debug logging for headers
-	if c.debug {
-		c.debugLog("Request Headers for %s:", fullURL)
-		for k, v := range req.Header {
-			c.debugLog("  %s: %s", k, v)
+	/*
+		if c.debug {
+			c.debugLog("Request Headers for %s:", fullURL)
+			for k, v := range req.Header {
+				c.debugLog("  %s: %s", k, v)
+			}
 		}
-	}
-
+	*/
 	return req, nil
 }
 
@@ -297,6 +273,7 @@ func (c *Client) HandleConnection(conn net.Conn, ctx context.Context) {
 	sessionID := c.sessionID
 
 	// Get a buffer from the pool
+	//nolint:forcetypeassert
 	buffer := c.bufferPool.Get().([]byte)
 	defer c.bufferPool.Put(buffer)
 
@@ -337,9 +314,10 @@ func (c *Client) HandleConnection(conn net.Conn, ctx context.Context) {
 			case <-ticker.C:
 				if err := c.pollData(ctx, sessionID, conn); err != nil {
 					if !strings.Contains(err.Error(), "EOF") {
-						c.debugLog("Poll error for connection %s: %v", sessionID, err)
+						log.Trace().Err(err).Str("SessionID", sessionID).Msg("Poll error for connection")
 					}
 					safeClose()
+
 					return
 				}
 			}
@@ -350,18 +328,20 @@ func (c *Client) HandleConnection(conn net.Conn, ctx context.Context) {
 	for {
 		n, err := conn.Read(buffer)
 		if err != nil {
-			if err != io.EOF {
-				c.debugLog("Read error for connection %s: %v", sessionID, err)
+			if !errors.Is(err, io.EOF) {
+				log.Trace().Err(err).Str("SessionID", sessionID).Msg("Read error for connection")
 			}
 			safeClose()
+
 			break
 		}
 		if n > 0 {
 			data := make([]byte, n)
 			copy(data, buffer[:n])
 			if err := c.sendData(ctx, sessionID, data, false); err != nil {
-				c.debugLog("Send error for connection %s: %v", sessionID, err)
+				log.Trace().Err(err).Str("SessionID", sessionID).Msg("Sent error for connection")
 				safeClose()
+
 				break
 			}
 		}
@@ -381,10 +361,6 @@ func (c *Client) HandleConnection(conn net.Conn, ctx context.Context) {
 }
 
 func (c *Client) sendData(ctx context.Context, sessionID string, data []byte, closeConnection bool) error {
-	if c.debug {
-		c.debugLog("Sending data for session %s: %d bytes, closeConnection: %v", sessionID[:8], len(data), closeConnection)
-	}
-
 	req, err := c.createDebugRequest(http.MethodPost, c.cloudflareHost, bytes.NewReader(data), closeConnection)
 	if err != nil {
 		return err
@@ -399,10 +375,6 @@ func (c *Client) sendData(ctx context.Context, sessionID string, data []byte, cl
 	}
 	defer resp.Body.Close()
 
-	if c.debug {
-		c.debugLog("Received response for session %s: %d", sessionID[:8], resp.StatusCode)
-	}
-
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
@@ -413,48 +385,9 @@ func (c *Client) sendData(ctx context.Context, sessionID string, data []byte, cl
 func (c *Client) handleResponse(resp *http.Response, body []byte) {
 	if resp.StatusCode != http.StatusOK {
 		// Format error message
-		errorMsg := fmt.Sprintf("\n╭─ CDN Error ─────────────────────────────────────────────────\n")
-		errorMsg += fmt.Sprintf("│ Status: %d (%s)\n", resp.StatusCode, resp.Status)
 
-		// Add common CDN error explanations
-		switch resp.StatusCode {
-		case http.StatusBadGateway:
-			errorMsg += "│ Cause:  Origin server (darkflare-server) is unreachable\n"
-		case http.StatusForbidden:
-			errorMsg += "│ Cause:  Request blocked by CDN security rules\n"
-		case http.StatusServiceUnavailable:
-			errorMsg += "│ Cause:  CDN temporary error or rate limiting\n"
-		case http.StatusGatewayTimeout:
-			errorMsg += "│ Cause:  Origin server (darkflare-server) timed out\n"
-		case http.StatusNotFound:
-			errorMsg += "│ Cause:  Origin server not responding or incorrect path\n"
-		}
+		log.Trace().Str("Code", resp.Status).Msgf("Body len: %d", len(body))
 
-		// If we got HTML content, parse it for specific errors
-		if bytes.Contains(body, []byte("<!DOCTYPE html>")) || bytes.Contains(body, []byte("<html>")) {
-			switch {
-			case bytes.Contains(body, []byte("Index of /")):
-				errorMsg += "│ Detail: Origin server returned directory listing\n"
-				errorMsg += "│        Server is misconfigured or not running darkflare\n"
-			case bytes.Contains(body, []byte("Error 521")):
-				errorMsg += "│ Detail: Origin server is down (Cloudflare Error 521)\n"
-			case bytes.Contains(body, []byte("Error 522")):
-				errorMsg += "│ Detail: Connection timed out (Cloudflare Error 522)\n"
-			case bytes.Contains(body, []byte("Error 523")):
-				errorMsg += "│ Detail: Origin unreachable (Cloudflare Error 523)\n"
-			case bytes.Contains(body, []byte("Error 524")):
-				errorMsg += "│ Detail: Origin timeout (Cloudflare Error 524)\n"
-			default:
-				errorMsg += "│ Detail: Received HTML instead of tunnel data\n"
-				errorMsg += "│        Server may be down or misconfigured\n"
-			}
-		} else if len(body) > 0 {
-			// If we got binary data, just indicate it
-			errorMsg += "│ Detail: Received unexpected binary response\n"
-		}
-
-		errorMsg += "──────────────────────────────────────────────────────────────\n"
-		c.debugLog(errorMsg)
 		return
 	}
 	// ... handle successful response ...
@@ -478,6 +411,7 @@ func (c *Client) pollData(ctx context.Context, sessionID string, conn net.Conn) 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, c.maxBodySize))
 		c.handleResponse(resp, body)
+
 		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 
@@ -491,28 +425,28 @@ func (c *Client) pollData(ctx context.Context, sessionID string, conn net.Conn) 
 		if bytes.Contains(data, []byte("<!DOCTYPE html>")) || bytes.Contains(data, []byte("<html>")) {
 			switch {
 			case bytes.Contains(data, []byte("Index of /")):
-				return fmt.Errorf("server returned directory listing")
+				return errors.New("server returned directory listing")
 			case bytes.Contains(data, []byte("Error 521")):
-				return fmt.Errorf("origin server is down (Cloudflare Error 521)")
+				return errors.New("origin server is down (Cloudflare Error 521)")
 			case bytes.Contains(data, []byte("Error 522")):
-				return fmt.Errorf("connection timed out (Cloudflare Error 522)")
+				return errors.New("connection timed out (Cloudflare Error 522)")
 			case bytes.Contains(data, []byte("Error 523")):
-				return fmt.Errorf("origin unreachable (Cloudflare Error 523)")
+				return errors.New("origin unreachable (Cloudflare Error 523)")
 			case bytes.Contains(data, []byte("Error 524")):
-				return fmt.Errorf("origin timeout (Cloudflare Error 524)")
+				return errors.New("origin timeout (Cloudflare Error 524)")
 			default:
-				return fmt.Errorf("received HTML response instead of tunnel data")
+				return errors.New("received HTML response instead of tunnel data")
 			}
 		}
 
 		decoded, err := hex.DecodeString(string(data))
 		if err != nil {
-			return fmt.Errorf("error decoding data: %v", err)
+			return fmt.Errorf("error decoding data: %w", err)
 		}
 
 		_, err = conn.Write(decoded)
 		if err != nil {
-			return fmt.Errorf("error writing to connection: %v", err)
+			return fmt.Errorf("error writing to connection: %w", err)
 		}
 	}
 
@@ -596,7 +530,7 @@ func (c *Client) pollData(ctx context.Context, sessionID string, conn net.Conn) 
 		}
 
 		// Extract scheme
-		scheme := strings.ToLower(u.Scheme)
+		:= strings.ToLower(u.Scheme)
 		if scheme != "http" && scheme != "https" {
 			log.Fatal("Scheme must be either 'http' or 'https'")
 		}
@@ -609,8 +543,7 @@ func (c *Client) pollData(ctx context.Context, sessionID string, conn net.Conn) 
 			destPort, err = strconv.Atoi(port)
 			if err != nil {
 				log.Fatalf("Invalid port number: %v", err)
-			}
-		} else if scheme == "http" {
+			} else if scheme == "http" {
 			destPort = 80
 		}
 
@@ -661,8 +594,6 @@ func (c *Client) pollData(ctx context.Context, sessionID string, conn net.Conn) 
 				client := NewClient(host, destPort, scheme, destAddr, debug, proxyURL, username, password, insecureTLS)
 				go client.HandleConnection(conn, context.Background())
 			}
-		}
-	}
 
 	func min(a, b int) int {
 		if a < b {
@@ -671,15 +602,18 @@ func (c *Client) pollData(ctx context.Context, sessionID string, conn net.Conn) 
 		return b
 	}
 */
-func randomString(min, max int) string {
-	if min < 0 || max < min {
-		min, max = 1, 15
+func randomString(_min, _max int) string {
+	if _min < 0 || _max < _min {
+		_min, _max = 1, 15
 	}
-	length := min + rand.Intn(max-min+1)
+	//nolint:gosec
+	length := _min + rand.Intn(_max-_min+1)
 	b := make([]byte, length)
 	for i := range b {
+		//nolint:gosec
 		b[i] = charset[rand.Intn(len(charset))]
 	}
+
 	return string(b)
 }
 
@@ -702,6 +636,8 @@ func randomFilename() string {
 		// Config files
 		".conf", ".cfg", ".ini",
 	}
+
+	//nolint:gosec
 	return randomString(minLen, maxLen) + extensions[rand.Intn(len(extensions))]
 }
 
@@ -709,10 +645,11 @@ func (c *Client) isDirectMode() bool {
 	// If the host is an IP address or localhost, we're in direct mode
 	host := strings.Split(c.cloudflareHost, ":")[0]
 	ip := net.ParseIP(host)
+
 	return ip != nil || host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
-// StdinStdoutConn implements net.Conn interface for stdin/stdout
+// StdinStdoutConn implements net.Conn interface for stdin/stdout.
 type StdinStdoutConn struct {
 	io.Reader
 	io.Writer
@@ -721,6 +658,6 @@ type StdinStdoutConn struct {
 func (c *StdinStdoutConn) Close() error                       { return nil }
 func (c *StdinStdoutConn) LocalAddr() net.Addr                { return &net.UnixAddr{Name: "stdin", Net: "unix"} }
 func (c *StdinStdoutConn) RemoteAddr() net.Addr               { return &net.UnixAddr{Name: "stdout", Net: "unix"} }
-func (c *StdinStdoutConn) SetDeadline(t time.Time) error      { return nil }
-func (c *StdinStdoutConn) SetReadDeadline(t time.Time) error  { return nil }
-func (c *StdinStdoutConn) SetWriteDeadline(t time.Time) error { return nil }
+func (c *StdinStdoutConn) SetDeadline(_ time.Time) error      { return nil }
+func (c *StdinStdoutConn) SetReadDeadline(_ time.Time) error  { return nil }
+func (c *StdinStdoutConn) SetWriteDeadline(_ time.Time) error { return nil }

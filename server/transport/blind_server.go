@@ -27,6 +27,7 @@ import (
 	"Goauld/common/log"
 	"Goauld/common/net/blind"
 	"Goauld/server/persistence"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -62,12 +63,12 @@ func (s *BlindSession) reconnect(tcpDest string) error {
 	// Resolve address to IPv4 only
 	host, port, err := net.SplitHostPort(tcpDest)
 	if err != nil {
-		return fmt.Errorf("invalid address %s: %v", tcpDest, err)
+		return fmt.Errorf("invalid address %s: %w", tcpDest, err)
 	}
 
 	ips, err := net.LookupIP(host)
 	if err != nil {
-		return fmt.Errorf("failed to resolve %s: %v", host, err)
+		return fmt.Errorf("failed to resolve %s: %w", host, err)
 	}
 
 	// Find first IPv4 address
@@ -75,6 +76,7 @@ func (s *BlindSession) reconnect(tcpDest string) error {
 	for _, ip := range ips {
 		if ip.To4() != nil {
 			ipv4 = ip
+
 			break
 		}
 	}
@@ -87,7 +89,7 @@ func (s *BlindSession) reconnect(tcpDest string) error {
 	addr := net.JoinHostPort(ipv4.String(), port)
 	conn, err := dialer.Dial("tcp4", addr) // Force TCP4
 	if err != nil {
-		return fmt.Errorf("reconnection failed: %v", err)
+		return fmt.Errorf("reconnection failed: %w", err)
 	}
 
 	// Set keepalive
@@ -98,6 +100,7 @@ func (s *BlindSession) reconnect(tcpDest string) error {
 
 	s.conn = conn
 	s.lastActive = time.Now()
+
 	return nil
 }
 
@@ -106,7 +109,7 @@ func (s *BlindSession) Write(data []byte) error {
 	defer s.mu.Unlock()
 
 	if s.conn == nil {
-		return fmt.Errorf("connection is nil")
+		return errors.New("connection is nil")
 	}
 
 	// Set write deadline
@@ -117,10 +120,12 @@ func (s *BlindSession) Write(data []byte) error {
 	if err != nil {
 		s.conn.Close()
 		s.conn = nil
-		return fmt.Errorf("write error: %v", err)
+
+		return fmt.Errorf("write error: %w", err)
 	}
 
 	s.lastActive = time.Now()
+
 	return nil
 }
 
@@ -129,19 +134,20 @@ func (s *BlindSession) Read(buffer []byte) (int, error) {
 	defer s.mu.Unlock()
 
 	if s.conn == nil {
-		return 0, fmt.Errorf("connection is nil")
+		return 0, errors.New("connection is nil")
 	}
 
 	// Set a short read deadline
-	//s.conn.SetReadDeadline(time.Now().Add(250 * time.Millisecond))
-	//defer s.conn.SetReadDeadline(time.Time{})
+	// s.conn.SetReadDeadline(time.Now().Add(250 * time.Millisecond))
+	// defer s.conn.SetReadDeadline(time.Time{})
 
 	n, err := s.conn.Read(buffer)
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// Handle EOF by closing the connection
 			s.conn.Close()
 			s.conn = nil
+
 			return 0, err
 		}
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
@@ -151,10 +157,12 @@ func (s *BlindSession) Read(buffer []byte) (int, error) {
 		// Other errors should close the connection
 		s.conn.Close()
 		s.conn = nil
-		return 0, fmt.Errorf("read error: %v", err)
+
+		return 0, fmt.Errorf("read error: %w", err)
 	}
 
 	s.lastActive = time.Now()
+
 	return n, nil
 }
 
@@ -174,11 +182,12 @@ func (s *BlindSession) Close() {
 func (s *BlindSession) IsClosed() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	return s.closed
 }
 
 type DNSServer struct {
-	//dnsListener            string
+	// dnsListener            string
 	SSHDest                string
 	HTTPDest               string
 	domain                 string
@@ -189,11 +198,11 @@ type DNSServer struct {
 	db                     *persistence.DB
 }
 
-func NewDNSServer(db *persistence.DB, SSHDest string, HTTPDest string, domain string, debug bool) *DNSServer {
+func NewDNSServer(db *persistence.DB, sshDest string, httpDest string, domain string, debug bool) *DNSServer {
 	return &DNSServer{
 		//dnsListener: dnsListener,
-		HTTPDest: HTTPDest,
-		SSHDest:  SSHDest,
+		HTTPDest: httpDest,
+		SSHDest:  sshDest,
 		domain:   domain,
 		sessions: make(map[string]*BlindSession),
 		mu:       sync.Mutex{},
@@ -261,13 +270,15 @@ func (s *DNSServer) handlePoll(session *BlindSession) ([]byte, error) {
 	if err != nil {
 		log.Trace().Msgf("Read error: %v", err)
 		log.Trace().Msgf("Read error: %v", err)
-		if err == io.EOF || strings.Contains(err.Error(), "connection reset") {
+		if errors.Is(err, io.EOF) || strings.Contains(err.Error(), "connection reset") {
 			session.Close()
+
 			return []byte("CLOSED"), nil
 		}
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			return []byte("EMPTY"), nil
 		}
+
 		return nil, err
 	}
 
@@ -285,10 +296,10 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 
 	question := r.Question[0]
 	if s.debug {
-		//log.Printf("=== Received DNS Request ===")
-		//log.Printf("From: %s", addr.String())
-		//log.Printf("Raw message: %v", r.String())
-		//log.Printf("Question: %s (type: %d)", question.Name, question.Qtype)
+		// log.Printf("=== Received DNS Request ===")
+		// log.Printf("From: %s", addr.String())
+		// log.Printf("Raw message: %v", r.String())
+		// log.Printf("Question: %s (type: %d)", question.Name, question.Qtype)
 	}
 
 	// Create response message
@@ -314,6 +325,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 		if err != nil {
 			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 		}
+
 		return
 	}
 
@@ -323,14 +335,6 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 
 	// Combine all remaining parts as the encoded data
 	encodedData := strings.Join(parts[:len(parts)-2], ".")
-
-	if s.debug {
-		log.Printf("Parsed request:")
-		log.Printf("  Encoded data: %s", encodedData)
-		log.Printf("  Sequence: %s", sequence)
-		log.Printf("  BlindSession ID: %s", sessionID)
-		log.Printf("  TLD: %s", s.domain)
-	}
 
 	// Get or create session
 	session, err := s.getBlindSession(sessionID)
@@ -343,6 +347,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 		if err != nil {
 			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 		}
+
 		return
 	}
 
@@ -351,6 +356,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 		if err != nil {
 			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 		}
+
 		return
 	}
 	// Handle the request
@@ -368,6 +374,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 			if err != nil {
 				log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 			}
+
 			return
 		}
 
@@ -398,48 +405,50 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 			msg.Answer = append(msg.Answer, txt)
 
 			if s.debug {
-				//log.Printf("Sending response with %d chunks", len(chunks))
+				// log.Printf("Sending response with %d chunks", len(chunks))
 			}
 		}
 		err = WriteMsg(msg, dnsConn, addr)
 		if err != nil {
 			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 		}
+
 		return
-	} else {
-		// Handle regular data
-		decodedData, err := blind.DecodeDNSSafe(encodedData)
+	}
+	// Handle regular data
+	decodedData, err := blind.DecodeDNSSafe(encodedData)
+	if err != nil {
+		if s.debug {
+			log.Printf("Failed to decode data: %v", err)
+		}
+		msg.Rcode = dns.RcodeFormatError
+		err = WriteMsg(msg, dnsConn, addr)
 		if err != nil {
+			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
+		}
+
+		return
+	}
+
+	if len(decodedData) > 0 {
+		if s.debug {
+			// log.Printf("Writing %d bytes to connection", len(decodedData))
+		}
+
+		if err := session.Write(decodedData); err != nil {
 			if s.debug {
-				log.Printf("Failed to decode data: %v", err)
+				// log.Printf("Failed to write to connection: %v", err)
 			}
-			msg.Rcode = dns.RcodeFormatError
+			msg.Rcode = dns.RcodeServerFailure
 			err = WriteMsg(msg, dnsConn, addr)
 			if err != nil {
 				log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 			}
+
 			return
 		}
-
-		if len(decodedData) > 0 {
-			if s.debug {
-				//log.Printf("Writing %d bytes to connection", len(decodedData))
-			}
-
-			if err := session.Write(decodedData); err != nil {
-				if s.debug {
-					//log.Printf("Failed to write to connection: %v", err)
-				}
-				msg.Rcode = dns.RcodeServerFailure
-				err = WriteMsg(msg, dnsConn, addr)
-				if err != nil {
-					log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
-				}
-				return
-			}
-		}
-		responseText = "EMPTY"
 	}
+	responseText = "EMPTY"
 
 	// Split response into smaller chunks if needed
 	const maxResponseChunkSize = 180 // Smaller response chunks
@@ -477,7 +486,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 	}
 
 	if s.debug {
-		//log.Printf("Sending response with %d chunks", len(msg.Answer[0].(*dns.TXT).Txt))
+		// log.Printf("Sending response with %d chunks", len(msg.Answer[0].(*dns.TXT).Txt))
 	}
 
 	err = WriteMsg(msg, dnsConn, addr)
@@ -501,12 +510,12 @@ func (s *DNSServer) createBlindSession(sessionID string) (*BlindSession, error) 
 	// Resolve address to IPv4 only
 	host, port, err := net.SplitHostPort(dest)
 	if err != nil {
-		return nil, fmt.Errorf("invalid address %s: %v", dest, err)
+		return nil, fmt.Errorf("invalid address %s: %w", dest, err)
 	}
 
 	ips, err := net.LookupIP(host)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve %s: %v", host, err)
+		return nil, fmt.Errorf("failed to resolve %s: %w", host, err)
 	}
 
 	// Find first IPv4 address
@@ -514,6 +523,7 @@ func (s *DNSServer) createBlindSession(sessionID string) (*BlindSession, error) 
 	for _, ip := range ips {
 		if ip.To4() != nil {
 			ipv4 = ip
+
 			break
 		}
 	}
@@ -526,7 +536,7 @@ func (s *DNSServer) createBlindSession(sessionID string) (*BlindSession, error) 
 	addr := net.JoinHostPort(ipv4.String(), port)
 	conn, err := dialer.Dial("tcp4", addr)
 	if err != nil {
-		return nil, fmt.Errorf("connection failed: %v", err)
+		return nil, fmt.Errorf("connection failed: %w", err)
 	}
 
 	// Set keepalive
@@ -572,5 +582,6 @@ func WriteMsg(msg *dns.Msg, conn net.PacketConn, addr net.Addr) error {
 		return err
 	}
 	_, err = conn.WriteTo(pack, addr)
+
 	return err
 }

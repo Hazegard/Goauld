@@ -4,6 +4,7 @@ import (
 	"Goauld/common/log"
 	"Goauld/common/net/blind"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -38,15 +39,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// DNSClient represents a DNS tunnel client
+// DNSClient represents a DNS tunnel client.
 type DNSClient struct {
-	//listenAddr string
+	// listenAddr string
 	dnsServer string
 	sessionID string
 	agentID   string
 	tld       string
 	dnsClient *dns.Client
-	debug     bool
 	mode      string
 }
 
@@ -57,11 +57,12 @@ func generateSessionID() string {
 		n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
 		result[i] = chars[n.Int64()]
 	}
+
 	return string(result)
 }
 
-// NewDNSClient creates a new DNS tunnel client
-func NewDNSClient(dnsServer []string, dnsDomain string, debug bool, mode string, agentID string) (*DNSClient, error) {
+// NewDNSClient creates a new DNS tunnel client.
+func NewDNSClient(dnsServer []string, dnsDomain string, mode string, agentID string) (*DNSClient, error) {
 	sessionID := generateSessionID()
 	switch {
 	case strings.EqualFold(mode, "control"):
@@ -88,12 +89,11 @@ func NewDNSClient(dnsServer []string, dnsDomain string, debug bool, mode string,
 		agentID:   agentID,
 		tld:       dnsDomain,
 		dnsClient: dnsClient,
-		debug:     debug,
 		mode:      mode,
 	}, nil
 }
 
-// Add a new method to reset client state
+// Add a new method to reset client state.
 func (c *DNSClient) resetState() {
 	// Generate new session ID for new connections
 	sessionID := blind.GenerateSessionID()
@@ -105,9 +105,7 @@ func (c *DNSClient) resetState() {
 	}
 	c.sessionID = sessionID
 
-	if c.debug {
-		log.Debug().Msgf("Reset client state with new session ID: %s", c.sessionID)
-	}
+	log.Debug().Msgf("Reset client state with new session ID: %s", c.sessionID)
 }
 
 func (c *DNSClient) Tunnel(conn net.Conn) {
@@ -159,7 +157,7 @@ func (c *DNSClient) Start() error {
 	}
 }
 */
-// Update handleConnection to be more robust
+// Update handleConnection to be more robust.
 func (c *DNSClient) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
@@ -179,20 +177,18 @@ func (c *DNSClient) handleConnection(conn net.Conn) {
 			default:
 				n, err := conn.Read(buffer)
 				if err != nil {
-					if err != io.EOF && !strings.Contains(err.Error(), "use of closed network connection") {
-						if c.debug {
-							log.Debug().Msgf("Error reading from connection: %v", err)
-						}
+					if !errors.Is(err, io.EOF) && !strings.Contains(err.Error(), "use of closed network connection") {
+						log.Debug().Msgf("Error reading from connection: %v", err)
 					}
 					errChan <- err
+
 					return
 				}
 				if n > 0 {
 					if err := c.sendChunk(buffer[:n], sequence); err != nil {
-						if c.debug {
-							log.Debug().Msgf("Error sending chunk: %v", err)
-						}
+						log.Debug().Msgf("Error sending chunk: %v", err)
 						errChan <- err
+
 						return
 					}
 					sequence++
@@ -212,30 +208,24 @@ func (c *DNSClient) handleConnection(conn net.Conn) {
 			default:
 				data, err := c.pollForData()
 				if err != nil {
-					if c.debug {
-						log.Debug().Msgf("Poll error: %v", err)
-					}
+					log.Debug().Msgf("Poll error: %v", err)
 					errChan <- err
+
 					return
 				}
 				if data != nil {
 					if string(data) == "CLOSED" {
-						if c.debug {
-							log.Debug().Msgf("Server indicated session closed")
-						}
-						errChan <- fmt.Errorf("session closed by server")
+						log.Debug().Msgf("Server indicated session closed")
+						errChan <- errors.New("session closed by server")
+
 						return
 					}
 					if len(data) > 0 && string(data) != "EMPTY" {
 						if _, err := conn.Write(data); err != nil {
-							if c.debug {
-								log.Debug().Msgf("Error writing to connection: %v", err)
-							}
+							log.Debug().Msgf("Error writing to connection: %v", err)
 							errChan <- err
+
 							return
-						}
-						if c.debug {
-							log.Debug().Msgf("Wrote %d bytes from poll to local connection", len(data))
 						}
 					}
 				}
@@ -247,14 +237,12 @@ func (c *DNSClient) handleConnection(conn net.Conn) {
 	// Wait for either an error or done signal
 	select {
 	case err := <-errChan:
-		if c.debug {
-			log.Debug().Msgf("Session ended: %v", err)
-		}
+		log.Debug().Msgf("Session ended: %v", err)
 	case <-done:
 	}
 }
 
-// sendChunk sends a chunk of data through DNS
+// sendChunk sends a chunk of data through DNS.
 func (c *DNSClient) sendChunk(chunk []byte, sequence uint16) error {
 	// Split large chunks into smaller ones
 	maxChunkSize := 100 // Reduced chunk size
@@ -267,28 +255,22 @@ func (c *DNSClient) sendChunk(chunk []byte, sequence uint16) error {
 		// Construct FQDN
 		fqdn := fmt.Sprintf("%s.%04x.%s.%s",
 			encodedData,
+			//nolint:gosec
 			sequence+uint16(i),
 			c.sessionID,
 			c.tld)
 
-		if c.debug {
-			log.Debug().Msgf("=== Sending DNS Query ===")
-			log.Debug().Msgf("To: %s", c.dnsServer)
-			log.Debug().Msgf("FQDN: %s", fqdn)
-			log.Debug().Msgf("Sequence: %d", sequence+uint16(i))
-			log.Debug().Msgf("Chunk size: %d", len(subChunk))
-		}
-
 		_, err := c.sendQuery(fqdn)
 		if err != nil {
-			return fmt.Errorf("failed to send chunk %d: %v", sequence+uint16(i), err)
+			//nolint:gosec
+			return fmt.Errorf("failed to send chunk %d: %w", sequence+uint16(i), err)
 		}
 	}
 
 	return nil
 }
 
-// sendQuery sends a DNS query and returns the response
+// sendQuery sends a DNS query and returns the response.
 func (c *DNSClient) sendQuery(fqdn string) ([]byte, error) {
 	msg := new(dns.Msg)
 	msg.SetQuestion(dns.Fqdn(fqdn), dns.TypeTXT)
@@ -302,27 +284,22 @@ func (c *DNSClient) sendQuery(fqdn string) ([]byte, error) {
 	msg.Extra = append(msg.Extra, opt)
 
 	for attempt := 1; attempt <= blind.MaxRetries; attempt++ {
-		if c.debug {
-			log.Debug().Msgf("Attempt %d of %d", attempt, blind.MaxRetries)
-		}
-
 		r, _, err := c.dnsClient.Exchange(msg, c.dnsServer)
 		if err != nil {
 			if strings.Contains(err.Error(), "i/o timeout") {
-				if c.debug {
-					log.Debug().Msgf("Query failed: %v, retrying...", err)
-				}
+				log.Debug().Msgf("Query failed: %v, retrying...", err)
 				time.Sleep(blind.RetryDelay)
+
 				continue
 			}
+
 			return nil, err
 		}
 
 		if r.Rcode != dns.RcodeSuccess {
-			if c.debug {
-				log.Debug().Msgf("Query returned error code %d, retrying...", r.Rcode)
-			}
+			log.Debug().Msgf("Query returned error code %d, retrying...", r.Rcode)
 			time.Sleep(blind.RetryDelay)
+
 			continue
 		}
 
@@ -336,14 +313,14 @@ func (c *DNSClient) sendQuery(fqdn string) ([]byte, error) {
 
 				decodedResponse, err := blind.DecodeDNSSafe(responseText)
 				if err != nil {
-					if c.debug {
-						log.Debug().Msgf("Failed to decode response: %v", err)
-					}
+					log.Debug().Msgf("Failed to decode response: %v", err)
+
 					return nil, err
 				}
 				if string(decodedResponse) == "EMPTY" {
 					return nil, nil
 				}
+
 				return decodedResponse, nil
 			}
 		}
@@ -351,19 +328,13 @@ func (c *DNSClient) sendQuery(fqdn string) ([]byte, error) {
 		return nil, nil
 	}
 
-	return nil, fmt.Errorf("max retries exceeded")
+	return nil, errors.New("max retries exceeded")
 }
 
-// pollForData polls the server for available data
+// pollForData polls the server for available data.
 func (c *DNSClient) register() ([]byte, error) {
 	fqdn := fmt.Sprintf("%s.aaaa.%s.%s", c.agentID, c.sessionID, c.tld)
 
-	if c.debug {
-		//log.Debug().Msgf("=== Sending Poll Query ===")
-		//log.Debug().Msgf("To: %s", c.dnsServer)
-		//log.Debug().Msgf("FQDN: %s", fqdn)
-	}
-
 	response, err := c.sendQuery(fqdn)
 	if err != nil {
 		return nil, err
@@ -376,16 +347,10 @@ func (c *DNSClient) register() ([]byte, error) {
 	return response, nil
 }
 
-// pollForData polls the server for available data
+// pollForData polls the server for available data.
 func (c *DNSClient) pollForData() ([]byte, error) {
 	fqdn := fmt.Sprintf("AA.ffff.%s.%s", c.sessionID, c.tld)
 
-	if c.debug {
-		//log.Debug().Msgf("=== Sending Poll Query ===")
-		//log.Debug().Msgf("To: %s", c.dnsServer)
-		//log.Debug().Msgf("FQDN: %s", fqdn)
-	}
-
 	response, err := c.sendQuery(fqdn)
 	if err != nil {
 		return nil, err
@@ -398,13 +363,14 @@ func (c *DNSClient) pollForData() ([]byte, error) {
 	return response, nil
 }
 
-// sendData sends data through DNS
+// sendData sends data through DNS.
 func (c *DNSClient) sendData(data []byte) error {
 	if len(data) == 0 {
 		return nil
 	}
 
 	// Start with sequence 0
+	//nolint:gosec
 	sequence := uint16(0)
 
 	// Send data in chunks

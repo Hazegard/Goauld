@@ -1,19 +1,16 @@
 package transport
 
 import (
+	"Goauld/common/log"
 	"Goauld/server/persistence"
 	"Goauld/server/store"
-	"bufio"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
-	"os"
-	"os/exec"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -26,44 +23,41 @@ type Session struct {
 }
 
 type Server struct {
-	sessions     sync.Map
-	destHost     string
-	destPort     string
-	debug        bool
-	appCommand   string
-	isAppMode    bool
+	sessions   sync.Map
+	destHost   string
+	destPort   string
+	debug      bool
+	appCommand string
+	// isAppMode    bool
 	allowDirect  bool
 	silent       bool
 	redirect     string
 	overrideDest string
-	username     string // 新增
-	password     string // 新增
 	db           *persistence.DB
 	store        *store.AgentStore
 }
 
-func NewServer(destHost, destPort string, appCommand string, debug bool, allowDirect bool, silent bool, redirect string, overrideDest string, username string, password string, db *persistence.DB, store *store.AgentStore) *Server {
+func NewServer(destHost, destPort string, debug, allowDirect, silent bool, redirect, overrideDest string, db *persistence.DB, agentStore *store.AgentStore) *Server {
 	s := &Server{
-		destHost:     destHost,
-		destPort:     destPort,
-		debug:        debug,
-		appCommand:   appCommand,
-		isAppMode:    appCommand != "",
+		destHost: destHost,
+		destPort: destPort,
+		debug:    debug,
+		//appCommand: appCommand,
+		//isAppMode:    appCommand != "",
 		allowDirect:  allowDirect,
 		silent:       silent,
 		redirect:     redirect,
 		overrideDest: overrideDest,
-		username:     username, // 新增
-		password:     password, // 新增
 		db:           db,
-		store:        store,
+		store:        agentStore,
 	}
 
-	if s.isAppMode && s.debug && !s.silent {
-		log.Printf("Starting in application mode with command: %s", appCommand)
-	}
+	// if s.isAppMode && s.debug && !s.silent {
+	//	log.Printf("Starting in application mode with command: %s", appCommand)
+	//}
 
 	go s.cleanupSessions()
+
 	return s
 }
 
@@ -71,7 +65,8 @@ func (s *Server) cleanupSessions() {
 	for {
 		time.Sleep(time.Minute)
 		now := time.Now()
-		s.sessions.Range(func(key, value interface{}) bool {
+		s.sessions.Range(func(key, value any) bool {
+			//nolint:forcetypeassert
 			session := value.(*Session)
 			session.mu.Lock()
 			if now.Sub(session.lastActive) > 5*time.Minute {
@@ -79,108 +74,99 @@ func (s *Server) cleanupSessions() {
 				s.sessions.Delete(key)
 			}
 			session.mu.Unlock()
+
 			return true
 		})
 	}
 }
 
-func (s *Server) handleApplication(w http.ResponseWriter, r *http.Request) {
-	if s.debug {
-		log.Printf("Handling application request from %s", r.Header.Get("Cf-Connecting-Ip"))
-	}
-
-	parts := strings.Fields(s.appCommand)
-	if len(parts) == 0 {
-		http.Error(w, "Invalid application command", http.StatusInternalServerError)
-		return
-	}
-
-	cmd := exec.Command(parts[0], parts[1:]...)
-	cmd.Env = os.Environ()
-
-	if s.debug {
-		log.Printf("Launching application: %s", s.appCommand)
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Printf("Failed to create stdout pipe: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.Printf("Failed to create stderr pipe: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err := cmd.Start(); err != nil {
-		log.Printf("Failed to start application: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Handle stdout in a goroutine
-	go func() {
-		scanner := bufio.NewScanner(stdout)
-		for scanner.Scan() {
-			if s.debug {
-				log.Printf("Application stdout: %s", scanner.Text())
-			}
-		}
-		if err := scanner.Err(); err != nil && s.debug {
-			log.Printf("Error reading stdout: %v", err)
-		}
-	}()
-
-	// Handle stderr in a goroutine
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			if s.debug {
-				log.Printf("Application stderr: %s", scanner.Text())
-			}
-		}
-		if err := scanner.Err(); err != nil && s.debug {
-			log.Printf("Error reading stderr: %v", err)
-		}
-	}()
-
-	if err := cmd.Wait(); err != nil {
+/*
+	func (s *Server) handleApplication(w http.ResponseWriter, r *http.Request) {
 		if s.debug {
-			log.Printf("Application exited with error: %v", err)
+			log.Printf("Handling application request from %s", r.Header.Get("Cf-Connecting-Ip"))
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
 
-func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
-	// 添加认证检查
-	if s.username != "" || s.password != "" {
-		username, password, ok := r.BasicAuth()
-		if s.debug {
-			log.Printf("Auth attempt - User: %s, Auth OK: %v", username, ok)
-			log.Printf("Expected - User: %s, Pass: %s", s.username, s.password)
+		parts := strings.Fields(s.appCommand)
+		if len(parts) == 0 {
+			http.Error(w, "Invalid application command", http.StatusInternalServerError)
+
+			return
 		}
-		if !ok || username != s.username || password != s.password {
-			redirectURL := s.redirect
-			if redirectURL == "" {
-				redirectURL = "https://github.com/doxx/darkflare"
+
+		cmd := exec.Command(parts[0], parts[1:]...)
+		cmd.Env = os.Environ()
+
+		if s.debug {
+			log.Printf("Launching application: %s", s.appCommand)
+		}
+
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			log.Printf("Failed to create stdout pipe: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
+
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			log.Printf("Failed to create stderr pipe: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
+
+		if err := cmd.Start(); err != nil {
+			log.Printf("Failed to start application: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
+
+		// Handle stdout in a goroutine
+		go func() {
+			scanner := bufio.NewScanner(stdout)
+			for scanner.Scan() {
+				if s.debug {
+					log.Printf("Application stdout: %s", scanner.Text())
+				}
 			}
-			w.Header().Set("Location", redirectURL)
-			w.WriteHeader(http.StatusFound)
+			if err := scanner.Err(); err != nil && s.debug {
+				log.Printf("Error reading stdout: %v", err)
+			}
+		}()
+
+		// Handle stderr in a goroutine
+		go func() {
+			scanner := bufio.NewScanner(stderr)
+			for scanner.Scan() {
+				if s.debug {
+					log.Printf("Application stderr: %s", scanner.Text())
+				}
+			}
+			if err := scanner.Err(); err != nil && s.debug {
+				log.Printf("Error reading stderr: %v", err)
+			}
+		}()
+
+		if err := cmd.Wait(); err != nil {
+			if s.debug {
+				log.Printf("Application exited with error: %v", err)
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 	}
+*/
+func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
+	/*
+		if s.isAppMode {
+			s.handleApplication(w, r)
 
-	if s.isAppMode {
-		s.handleApplication(w, r)
-		return
-	}
-
+			return
+		}
+	*/
 	// Add basic connection logging
 	clientIP := r.Header.Get("X-Forwarded-For")
 	if clientIP == "" {
@@ -206,8 +192,8 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		if redirectURL == "" {
 			redirectURL = "https://github.com/doxx/darkflare"
 		}
-		log.Printf("Redirect: %s → %s", clientIP, redirectURL)
 		http.Redirect(w, r, redirectURL, http.StatusFound)
+
 		return
 	}
 
@@ -234,32 +220,13 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		if sessionID != "" {
 			sessionDisplay = sessionID[:8]
 		}
-		log.Printf("Disconnect: %s [%s]", clientIP, sessionDisplay)
+		log.Debug().Str("Source", clientIP).Msgf("Disconnect: [%s]", sessionDisplay)
 		if sessionInterface, exists := s.sessions.LoadAndDelete(sessionID); exists {
+			//nolint:forcetypeassert
 			session := sessionInterface.(*Session)
 			session.conn.Close()
 		}
-		return
-	}
 
-	/*
-		// Always log basic connection info
-		sessionDisplay := "no-session"
-		if sessionID != "" {
-			sessionDisplay = sessionID[:8] // First 8 chars of session ID
-		}
-		s.logf("Connection: %s [%s] → %s", clientIP, sessionDisplay, destination)
-	*/
-	// Debug logging only when enabled
-	if s.debug {
-		log.Printf("Headers: %+v", r.Header)
-		// ... rest of debug logging ...
-	}
-
-	// Verify Cloudflare connection
-	cfConnecting := r.Header.Get("Cf-Connecting-Ip")
-	if cfConnecting == "" && !s.allowDirect {
-		http.Error(w, "Direct access not allowed", http.StatusForbidden)
 		return
 	}
 
@@ -279,19 +246,15 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	// Validate the destination format and DNS resolution
 	host, port, err := net.SplitHostPort(destination)
 	if err != nil {
-		if s.debug {
-			log.Printf("[DEBUG] Invalid destination format %s: %v", destination, err)
-		}
 		http.Error(w, fmt.Sprintf("Invalid destination format: %v", err), http.StatusBadRequest)
+
 		return
 	}
 
 	// Additional host validation
 	if host == "" {
-		if s.debug {
-			log.Printf("[DEBUG] Empty host in destination: %s", destination)
-		}
 		http.Error(w, "Empty host not allowed", http.StatusBadRequest)
+
 		return
 	}
 
@@ -301,7 +264,8 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		if s.debug {
 			log.Printf("[DEBUG] Invalid port %s in destination: %v", port, err)
 		}
-		http.Error(w, fmt.Sprintf("Invalid port number: %s", port), http.StatusBadRequest)
+		http.Error(w, "Invalid port number: "+port, http.StatusBadRequest)
+
 		return
 	}
 
@@ -313,6 +277,7 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 				log.Printf("[DEBUG] DNS resolution failed for %s: %v", host, err)
 			}
 			http.Error(w, fmt.Sprintf("DNS resolution failed: %v", err), http.StatusBadRequest)
+
 			return
 		}
 		if len(ips) == 0 {
@@ -320,6 +285,7 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 				log.Printf("[DEBUG] No IP addresses found for host: %s", host)
 			}
 			http.Error(w, "No IP addresses found for host", http.StatusBadRequest)
+
 			return
 		}
 		if s.debug {
@@ -333,13 +299,12 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 			log.Printf("[DEBUG] Invalid destination format: %s", destination)
 		}
 		http.Error(w, "Invalid destination", http.StatusForbidden)
+
 		return
 	}
 
 	// Use the decoded destination for the connection
-	if s.debug {
-		log.Printf("[DEBUG] Connecting to %s:%s", host, port)
-	}
+	log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("[DEBUG] Connecting to %s:%s", host, port)
 
 	// Try to get session ID from various possible headers
 	sessionID = r.Header.Get("X-For")
@@ -354,19 +319,20 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	if sessionID == "" {
 		if s.debug {
-			log.Printf("Error: Missing session ID from %s", r.Header.Get("Cf-Connecting-Ip"))
+			log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("Error: Missing session ID from %s", r.Header.Get("Cf-Connecting-Ip"))
 		}
 		http.Error(w, "Missing session ID", http.StatusBadRequest)
+
 		return
 	}
 
 	var session *Session
 	sessionInterface, exists := s.sessions.Load(sessionID)
 	if !exists {
-
 		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%s", host, port))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 
@@ -377,12 +343,13 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 		s.sessions.Store(sessionID, session)
 		id := r.PathValue("agentId")
-		err = s.db.SetAgentSSHMode(id, "CDN", r.RemoteAddr)
+		err = s.db.SetAgentSSHMode(id, "HTTP-ALT", r.RemoteAddr)
 		if err != nil {
-			log.Printf("Error setting agent SSH mode: %v", err)
+			log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("Error setting agent SSH mode: %v", err)
 		}
 		s.store.SSHCDNAddAgent(conn, id)
 	} else {
+		//nolint:forcetypeassert
 		session = sessionInterface.(*Session)
 	}
 
@@ -393,28 +360,25 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			if s.debug {
-				log.Printf("Error reading request body: %v", err)
-			}
+			log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("Error reading request body: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 		if len(data) > 0 {
-			if s.debug {
-				log.Printf("POST: Writing %d bytes to connection for session %s",
-					len(data),
-					sessionID[:8], // First 8 chars of session ID for brevity
-				)
-			}
+			log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("POST: Writing %d bytes to connection for session %s",
+				len(data),
+				sessionID[:8], // First 8 chars of session ID for brevity
+			)
 			_, err = session.conn.Write(data)
 			if err != nil {
-				if s.debug {
-					log.Printf("Error writing to connection: %v", err)
-				}
+				log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("Error writing to connection: %v", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+
 				return
 			}
 		}
+
 		return
 	}
 
@@ -426,13 +390,15 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		session.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond)) // Increased from 10ms to 100ms
 		n, err := session.conn.Read(buffer)
 		if err != nil {
-			if err != io.EOF && !err.(net.Error).Timeout() {
-				if s.debug {
-					log.Printf("Error reading from connection: %v", err)
+			if !errors.Is(err, io.EOF) {
+				if ne, ok := err.(net.Error); !ok || !ne.Timeout() {
+					log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("Error reading from connection: %v", err)
 				}
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+
 				return
 			}
+
 			break
 		}
 		if n > 0 {
@@ -447,7 +413,7 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	if len(readData) > 0 {
 		encoded := hex.EncodeToString(readData)
 		if s.debug {
-			log.Printf("Response: Sending %d bytes (encoded: %d bytes) for session %s path %s",
+			log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("Response: Sending %d bytes (encoded: %d bytes) for session %s path %s",
 				len(readData),
 				len(encoded),
 				sessionID[:8],
@@ -456,7 +422,7 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write([]byte(encoded))
 	} else if s.debug {
-		log.Printf("Response: No data to send for session %s path %s",
+		log.Debug().Str("Mode", "SSHTTP-ALT").Msgf("Response: No data to send for session %s path %s",
 			sessionID[:8],
 			r.URL.Path,
 		)
@@ -665,54 +631,56 @@ func (s *Server) HandleRequest(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(server.ListenAndServe())
 		}
 	}
-*/
-func isLocalIP(ip string) bool {
-	// Allow 0.0.0.0 as a valid binding address
-	if ip == "0.0.0.0" {
-		return true
-	}
 
-	ipAddr := net.ParseIP(ip)
-	if ipAddr == nil {
-		return false
-	}
-
-	// Check if it's a loopback address
-	if ipAddr.IsLoopback() {
-		return true
-	}
-
-	// Get all network interfaces
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		log.Printf("Error getting network interfaces: %v", err)
-		return false
-	}
-
-	for _, iface := range interfaces {
-		addrs, err := iface.Addrs()
-		if err != nil {
-			log.Printf("Error getting addresses for interface %s: %v", iface.Name, err)
-			continue
+	func isLocalIP(ip string) bool {
+		// Allow 0.0.0.0 as a valid binding address
+		if ip == "0.0.0.0" {
+			return true
 		}
 
-		for _, addr := range addrs {
-			switch v := addr.(type) {
-			case *net.IPNet:
-				if v.IP.Equal(ipAddr) {
-					return true
-				}
-			case *net.IPAddr:
-				if v.IP.Equal(ipAddr) {
-					return true
+		ipAddr := net.ParseIP(ip)
+		if ipAddr == nil {
+			return false
+		}
+
+		// Check if it's a loopback address
+		if ipAddr.IsLoopback() {
+			return true
+		}
+
+		// Get all network interfaces
+		interfaces, err := net.Interfaces()
+		if err != nil {
+			log.Printf("Error getting network interfaces: %v", err)
+
+			return false
+		}
+
+		for _, iface := range interfaces {
+			addrs, err := iface.Addrs()
+			if err != nil {
+				log.Printf("Error getting addresses for interface %s: %v", iface.Name, err)
+
+				continue
+			}
+
+			for _, addr := range addrs {
+				switch v := addr.(type) {
+				case *net.IPNet:
+					if v.IP.Equal(ipAddr) {
+						return true
+					}
+				case *net.IPAddr:
+					if v.IP.Equal(ipAddr) {
+						return true
+					}
 				}
 			}
 		}
+
+		return false
 	}
-
-	return false
-}
-
+*/
 func isValidDestination(dest string) bool {
 	host, portStr, err := net.SplitHostPort(dest)
 	if err != nil {
@@ -737,10 +705,11 @@ func isValidDestination(dest string) bool {
 
 	// Try DNS resolution
 	ips, err := net.LookupHost(host)
+
 	return err == nil && len(ips) > 0
 }
 
-func (s *Server) logf(format string, v ...interface{}) {
+func (s *Server) logf(format string, v ...any) {
 	if !s.silent {
 		log.Printf(format, v...)
 	}

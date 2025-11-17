@@ -480,8 +480,7 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 
 		if len(query.Question) > 0 {
 			question := query.Question[0]
-			q, ok := question.Name.TrimSuffix(blindDomain)
-			fmt.Println(question.Name, q)
+			_, ok := question.Name.TrimSuffix(blindDomain)
 			if ok {
 				msg := &miekgDns.Msg{}
 				raw, err := query.WireFormat()
@@ -489,16 +488,20 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 					err = msg.Unpack(raw)
 					if err == nil {
 						d.blindServer.handleDNSRequest(dnsConn, msg, addr)
+
 						continue
 					} else {
 						log.Trace().Str("Mode", "DNSSH2").Msgf("Error parsing query: %v", err)
+
 						continue
 					}
 				} else {
 					log.Trace().Str("Mode", "DNSSH2").Msgf("Error parsing query: %v", err)
+
 					continue
 				}
 			}
+
 			continue
 		}
 

