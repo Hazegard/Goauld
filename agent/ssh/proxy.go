@@ -96,7 +96,7 @@ func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTrans
 				}
 			case strings.HasPrefix(proto, "dns-alt"):
 				if dnsTransport != nil {
-					client, conn = proxyDNS(sshConfig, dnsTransport, id)
+					client, conn = proxyDNSAlt(sshConfig, id)
 					if client != nil {
 						closer = conn
 						resultChan <- "DNS"
@@ -272,23 +272,23 @@ func proxyDNSAlt(sshConfig *ssh.ClientConfig, id string) (*ssh.Client, net.Conn)
 		return nil, nil
 	}
 
-	dnsClient, err := blind.NewDNSClient(dnsServers[0].String(), config.Get().DNSDomainAlt(), true)
+	dnsClient, err := blind.NewDNSClient(config.Get().DNSServer(), config.Get().DNSDomainAlt(), true, "ssh", config.Get().ID)
 	if err != nil {
 		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
 
 		return nil, nil
 	}
 	conn1, conn2 := net.Pipe()
-	dnsClient.Tunnel(conn2)
+	go dnsClient.Tunnel(conn1)
 	log.Debug().Str("Mode", "DNSSH").Msg("Trying to mount SSH over the DNS connection")
 	// Write S tag to inform the incoming SSH traffic
-	_, err = conn2.Write([]byte{'S'})
-	if err != nil {
-		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
-
-		return nil, nil
-	}
-	client, err := tryProxySSH(sshConfig, conn1, id)
+	//_, err = conn2.Write([]byte{'S'})
+	//if err != nil {
+	//	log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
+	//
+	//	return nil, nil
+	//}
+	client, err := tryProxySSH(sshConfig, conn2, id)
 	if err != nil {
 		log.Error().Str("Mode", "DNSSH").Err(err).Msg("failed to proxy ssh connection using DNS")
 

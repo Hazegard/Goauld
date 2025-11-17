@@ -480,7 +480,8 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 
 		if len(query.Question) > 0 {
 			question := query.Question[0]
-			_, ok := question.Name.TrimSuffix(blindDomain)
+			q, ok := question.Name.TrimSuffix(blindDomain)
+			fmt.Println(question.Name, q)
 			if ok {
 				msg := &miekgDns.Msg{}
 				raw, err := query.WireFormat()
@@ -488,14 +489,17 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 					err = msg.Unpack(raw)
 					if err == nil {
 						d.blindServer.handleDNSRequest(dnsConn, msg, addr)
-						return nil
+						continue
 					} else {
 						log.Trace().Str("Mode", "DNSSH2").Msgf("Error parsing query: %v", err)
+						continue
 					}
 				} else {
 					log.Trace().Str("Mode", "DNSSH2").Msgf("Error parsing query: %v", err)
+					continue
 				}
 			}
+			continue
 		}
 
 		resp, payload := responseFor(&query, domain)
@@ -861,7 +865,7 @@ func NewDNSSHServer(agentStore *store.AgentStore, db *persistence.DB) (*DNSSHSer
 		db:            db,
 		domain:        domain,
 		blindDomain:   blindDomain,
-		blindServer:   NewDNSServer(config.Get().LocalSSHAddr(), true),
+		blindServer:   NewDNSServer(db, config.Get().LocalSSHAddr(), config.Get().LocalHTTPAddr(), config.Get().DNSDomainAlt, true),
 		sshUpstream:   config.Get().LocalSSHAddr(),
 		httpUpstream:  config.Get().LocalHTTPAddr(),
 		dnsConn:       dnsConn,

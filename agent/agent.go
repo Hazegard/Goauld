@@ -5,6 +5,7 @@ package main
 
 import (
 	globalcontext "Goauld/agent/context"
+	"Goauld/agent/control"
 	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
 	"Goauld/agent/relay"
@@ -172,7 +173,12 @@ func run() globalcontext.CancelReason {
 
 	var err error
 
-	success, controlPlanClient := InitControl(ctx, dnsTransport, globalCanceler, configDone, controlErr)
+	controlInitStrategy["DNS"] = control.InitStrategy{
+		Name:     "DNS",
+		InitFunc: ClosureInitControlOverDNS(dnsTransport),
+	}
+
+	success, controlPlanClient := InitControl(ctx, globalCanceler, configDone, controlErr)
 
 	// If no strategy was successful, we restart the agent
 	if !success {
@@ -529,4 +535,26 @@ func ScheduleDelete() error {
 	}
 
 	return cmd.Start()
+}
+
+func ClosureInitControlOverDNS(dnsTransport *transport.DNSSH) func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+	return func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+		if !dnsTransport.Started {
+			err := dnsTransport.Start()
+			if err != nil {
+				return err
+			}
+		}
+
+		err := client.InitOverDNS(dnsTransport.ControlStream, success, chanErr)
+		if err != nil {
+			return err
+		}
+
+		// As the  control socket is established using DNS we consider that the only working protocol is DNS
+		// so we set the RSSH protocol order to only DNS
+		config.Get().SetRSSHOrder([]string{"DNS"})
+
+		return nil
+	}
 }

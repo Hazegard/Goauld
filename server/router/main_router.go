@@ -47,7 +47,7 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 ) (*MainRouter, error) {
 	// Initializing the router and adding the handlers to paths
 	router := http.NewServeMux()
-	router.Handle("/live/{agentId}/{$}", controlServer.Server)
+	router.HandleFunc("/live/{agentId}/{$}", controlServer.ServeHTTP)
 	router.Handle("/wssh/{agentId}", wssh)
 	router.Handle("/sshttp/{agentId}", sshttp)
 	router.Handle("/manage/", http.StripPrefix("/manage", manageRouter.GetRouter()))

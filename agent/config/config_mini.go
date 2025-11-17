@@ -81,6 +81,7 @@ func InitAgent() {
 		TLSServer:            _tls_server,
 		DNSServer:            strings.Split(_dns_server, ","),
 		DNSServerDomain:      _dns_domain,
+		DNSServerDomainAlt:   _dns_domain_alt,
 		LocalSSHPassword:     _shared_password,
 		PrivatePassword:      _password_cli,
 		Name:                 _name,
