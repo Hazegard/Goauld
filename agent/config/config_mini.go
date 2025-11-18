@@ -185,7 +185,7 @@ func InitAgent() {
 		log.Error().Err(errs[0]).Msg("error getting ips")
 	}
 
-	currDir, err := os.Getwd()
+	currDir, err := os.Executable()
 	if err != nil {
 		log.Warn().Err(err).Msg("error getting current directory")
 	}

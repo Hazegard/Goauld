@@ -115,7 +115,7 @@ func InitAgent() (*kong.Context, []error, error) {
 		warnings = append(warnings, fmt.Errorf("error getting ips: %w", errors.Join(errs...)))
 	}
 
-	currDir, err := os.Getwd()
+	currDir, err := os.Executable()
 	if err != nil {
 		warnings = append(warnings, fmt.Errorf("error getting current directory: %w", err))
 	}
