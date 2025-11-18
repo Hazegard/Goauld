@@ -561,10 +561,26 @@ builds:
       - amd64
       - "386"
       # - arm
-      - arm64
+      # - arm64
     flags:
       - -trimpath
       # - -buildmode=pie
+    overrides:
+      - goarch: amd64
+        goos: windows
+        env:
+          - CC=x86_64-w64-mingw32-gcc
+          - CXX=x86_64-w64-mingw32-g++
+      - goarch: "386"
+        goos: windows
+        env:
+          - CC=i686-w64-mingw32-gcc
+          - CXX=i686-w64-mingw32-g++
+      # - goarch: arm64
+      #   goos: windows
+      #   env:
+      #     - CC=aarch64-w64-mingw32-gcc
+      #     - CXX=aarch64-w64-mingw32-g++
     tags:
       - netgo
       - osusergo

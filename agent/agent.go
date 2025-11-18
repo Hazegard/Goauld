@@ -38,6 +38,16 @@ import (
 
 var globalCanceler *globalcontext.GlobalCanceler
 
+// Main :
+//
+//export Main
+func Main() {
+	main()
+}
+
+// main :
+//
+//export main
 func main() {
 	// Initialize the agent using the provided parameters (Command line, configuration file, environment variable)
 	_, warnings, err := config.InitAgent()
