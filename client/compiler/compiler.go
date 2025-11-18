@@ -43,6 +43,7 @@ type Compiler struct {
 	Tiny          bool   `default:"true"  name:"tiny" yaml:"tiny" negatable:"" help:"Tiny garble flag (reduce size, but no stacktrace)."`
 	Literals      bool   `default:"true"  name:"literals" yaml:"literals" negatable:"" help:"Literals garble flag (obfuscate string variable, but take more space)."`
 	ClientBuild   bool   `default:"true" hidden:"true"`
+	Keep          bool   `default:"false" name:"keep" yaml:"keep" help:"Keep temp sources."`
 }
 
 const (
@@ -71,12 +72,14 @@ func (c *Compiler) Run() error {
 		if err != nil {
 			return fmt.Errorf("could not create temp dir: %w", err)
 		}
-		defer func(path string) {
-			err := os.RemoveAll(path)
-			if err != nil {
-				log.Error().Err(err).Str("Path", path).Msg("could not remove temp dir, please remove it manually")
-			}
-		}(tempDir)
+		if !c.Keep {
+			defer func(path string) {
+				err := os.RemoveAll(path)
+				if err != nil {
+					log.Error().Err(err).Str("Path", path).Msg("could not remove temp dir, please remove it manually")
+				}
+			}(tempDir)
+		}
 		c.Source = tempDir
 		err = drop(tempDir, sources.Sources)
 		if err != nil {

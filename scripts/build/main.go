@@ -33,6 +33,7 @@ type BuildConfig struct {
 	Verbose          int    `default:"0" name:"verbose" short:"v" type:"counter" help:"Verbosity of the logs. Repeat -v to increase"`
 	Tiny             bool   `default:"true"  name:"tiny" yaml:"tiny" negatable:"" help:"Tiny garble flag (reduce size, but no stacktrace)."`
 	Literals         bool   `default:"true"  name:"literals" yaml:"literals" negatable:"" help:"Literals garble flag (obfuscate string variable, but take more space)."`
+	Keep             bool   `default:"false" name:"keep" yaml:"keep" help:"Keep temp sources."`
 }
 
 func main() {
@@ -76,6 +77,7 @@ func main() {
 		Compress:    cfg.Compress,
 		Tiny:        cfg.Tiny,
 		Literals:    cfg.Literals,
+		Keep:        cfg.Keep,
 	}
 
 	err = cpl.Run()
