@@ -543,13 +543,13 @@ builds:
   - id: "agent-dll"
     mod_timestamp: "{{ .CommitTimestamp }}"
     tool: '{{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
-    binary: goauld
+    binary: "goauld_{{ .Target }}"
     main: ./agent
     buildmode: c-shared
     hooks:
       post:
         # Make an UPX copy only when UPX=true
-        - cmd: sh -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; fi'
+        - cmd: sh -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; upx --best --lzma "{{ .Path }}" || true; fi'
 
     env:
       - CGO_ENABLED=1

@@ -107,7 +107,7 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 			outPath := filepath.Join(outDir, outFile)
 			err = CopyFile(file, outPath)
 			if err != nil {
-				log.Error().Str("Source", file).Str("Dest", outPath).Msg("error copying files")
+				log.Error().Err(err).Str("Source", file).Str("Dest", outPath).Msg("error copying files")
 			} else {
 				log.Info().Str("Source", file).Str("Dest", outPath).Msg("moved artifact")
 			}
