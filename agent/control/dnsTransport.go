@@ -1,5 +1,3 @@
-//go:build !mini
-
 // Package control holds the control socket connection
 package control
 

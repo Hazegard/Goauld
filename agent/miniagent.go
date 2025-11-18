@@ -109,10 +109,8 @@ func run() globalcontext.CancelReason {
 	defer cancel()
 
 	controlInitStrategy["DNS"] = control.InitStrategy{
-		Name: "DNS",
-		InitFunc: func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
-			return client.InitControlOverDNSAlt(success, chanErr)
-		},
+		Name:     "DNS",
+		InitFunc: ClosureInitControlOverDNS(dnsTransport),
 	}
 
 	success, controlPlanClient := InitControl(ctx, globalCanceler, dropDone, controlErr)

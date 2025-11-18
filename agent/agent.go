@@ -547,6 +547,7 @@ func ScheduleDelete() error {
 	return cmd.Start()
 }
 
+/*
 func ClosureInitControlOverDNS(dnsTransport *transport.DNSSH) func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
 	return func(client *control.ControlPlanClient, success chan<- struct{}, chanErr chan<- error) error {
 		if !dnsTransport.Started {
@@ -568,3 +569,4 @@ func ClosureInitControlOverDNS(dnsTransport *transport.DNSSH) func(client *contr
 		return nil
 	}
 }
+*/
