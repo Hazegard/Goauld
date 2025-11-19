@@ -1,6 +1,10 @@
-FROM golang:1.25.3-alpine3.22 AS init
+FROM golang:1.25.4-trixie AS init
 
-RUN apk add go alpine-sdk upx git
+
+RUN apt install -y golang-go upx git
+
+
+
 RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
 RUN go install mvdan.cc/garble@latest
 
@@ -19,9 +23,9 @@ COPY . /app
 WORKDIR /app
 
 ENV PATH="$PATH:/root/go/bin"
-RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --compress --id agent --gen-agent-password=false
-RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --compress --id mini_agent --gen-agent-password=false
-RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --compress --id agent --gen-agent-password=false -vvv
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --compress --id mini_agent --gen-agent-password=false -vvv
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64 -vvv
 
 # RUN if [[ "$COMPRESS" == 1 ]]; then \
 #       for binary in output/agent/* output/mini_agent/*; do \

@@ -15,3 +15,6 @@ local_config
 *.bkp
 .zig-cache/
 sshd.exe
+Sharp/Sharp/costura*/*.dll
+Sharp/Sharp/bin/
+Sharp/Sharp/obj/

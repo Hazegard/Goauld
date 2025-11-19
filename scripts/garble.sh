@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 FLAG=()
 if [[ "$TINY" == "true" ]];then
   FLAG+=("-tiny")
