@@ -24,7 +24,7 @@ var (
 	_quic_domain    = "app.example.com"            //nolint:revive
 	_dns_server     = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9" //nolint:revive
 	_dns_domain     = "t.example.com"                           //nolint:revive
-	_dns_domain_alt = "t.example.com"                           //nolint:revive
+	_dns_domain_alt = "s.example.com"                           //nolint:revive
 
 	_sshd_enabled           = "true"  //nolint:revive
 	_socks_enabled          = "true"  //nolint:revive

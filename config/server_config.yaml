@@ -12,6 +12,9 @@ tls-domain:
 # Domain used to serve DNS-based traffic (SSH over DNS).
 dns-domain: t.example.com
 
+# Domain used to serve DNS-based traffic (SSH over DNS-ALT).
+dns-domain-alt: s.example.com
+
 # Address and port to bind for HTTP connections (port 0 = random).
 http-listen-addr: :80
 
@@ -60,10 +63,12 @@ allowed-ips:
 - 0.0.0.0/32
 
 # Access token required for the /manage/ API endpoint.
-access-token: TODO_TOKEN
+access-token:
+- TODO_TOKEN
 
 # Admin token required for the /admin/ API endpoint.
-admin-token: TODO_TOKEN
+admin-token:
+- TODO_TOKEN
 
 # HTTP Basic Auth credentials required to access the binaries endpoint.
 binaries-basic-auth: username:password

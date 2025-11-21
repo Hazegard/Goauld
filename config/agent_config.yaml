@@ -23,6 +23,9 @@ dns-server:
 # DNS domain used to tunnel SSH-over-DNS traffic.
 dns-domain: t.example.com
 
+# DNS domain used to tunnel SSH-over-DNS traffic.
+dns-domain-alt: s.example.com
+
 # Password for local SSH access. If empty, a random password is generated automatically.
 shared-password: ""
 

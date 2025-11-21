@@ -28,6 +28,7 @@ env:
   - SERVER__HTTP_DOMAIN={{ .Env.SERVER__HTTP_DOMAIN }}
   - SERVER__TLS_DOMAIN={{ .Env.SERVER__TLS_DOMAIN }}
   - SERVER__DNS_DOMAIN={{ .Env.SERVER__DNS_DOMAIN }}
+  - SERVER__DNS_DOMAIN_ALT={{ .Env.SERVER__DNS_DOMAIN_ALT }}
 
   - SERVER__HTTP_LISTEN_ADDR={{ .Env.SERVER__HTTP_LISTEN_ADDR }}
   - SERVER__HTTPS_LISTEN_ADDR={{ .Env.SERVER__HTTPS_LISTEN_ADDR }}
@@ -67,6 +68,7 @@ env:
   - AGENT__TLS_SERVER={{ .Env.AGENT__TLS_SERVER }}
   - AGENT__DNS_SERVER={{ .Env.AGENT__DNS_SERVER }}
   - AGENT__DNS_DOMAIN={{ .Env.AGENT__DNS_DOMAIN }}
+  - AGENT__DNS_DOMAIN_ALT={{ .Env.AGENT__DNS_DOMAIN_ALT }}
 
   - AGENT__SHARED_PASSWORD={{ .Env.AGENT__SHARED_PASSWORD }}
   - AGENT__DISABLE_PASSWORD={{ .Env.AGENT__DISABLE_PASSWORD }}
@@ -278,6 +280,7 @@ builds:
       - '{{ if (index .Env "SERVER__HTTP_DOMAIN") }} -X Goauld/server/config._http_domain={{ .Env.SERVER__HTTP_DOMAIN }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_DOMAIN") }} -X Goauld/server/config._tls_domain={{ .Env.SERVER__TLS_DOMAIN }}{{end}}'
       - '{{ if (index .Env "SERVER__DNS_DOMAIN") }} -X Goauld/server/config._dns_domain={{ .Env.SERVER__DNS_DOMAIN }}{{end}}'
+      - '{{ if (index .Env "SERVER__DNS_DOMAIN_ALT") }} -X Goauld/server/config._dns_domain_alt={{ .Env.SERVER__DNS_DOMAIN_ALT }}{{end}}'
 
       - '{{ if (index .Env "SERVER__HTTP_LISTEN_ADDR") }} -X Goauld/server/config._http_listen_addr={{ .Env.SERVER__HTTP_LISTEN_ADDR }}{{end}}'
       - '{{ if (index .Env "SERVER__HTTPS_LISTEN_ADDR") }} -X Goauld/server/config._https_listen_addr={{ .Env.SERVER__HTTPS_LISTEN_ADDR }}{{end}}'
@@ -353,6 +356,7 @@ builds:
       - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_SERVER") }} -X Goauld/agent/config._dns_server={{ .Env.AGENT__DNS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
+      - '{{ if (index .Env "AGENT__DNS_DOMAIN_ALT") }} -X Goauld/agent/config._dns_domain_alt={{ .Env.AGENT__DNS_DOMAIN_ALT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__DISABLE_PASSWORD") }} -X Goauld/agent/config._disable_password={{ .Env.AGENT__DISABLE_PASSWORD }}{{end}}'
@@ -474,6 +478,7 @@ builds:
       - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_SERVER") }} -X Goauld/agent/config._dns_server={{ .Env.AGENT__DNS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
+      - '{{ if (index .Env "AGENT__DNS_DOMAIN_ALT") }} -X Goauld/agent/config._dns_domain_alt={{ .Env.AGENT__DNS_DOMAIN_ALT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__DISABLE_PASSWORD") }} -X Goauld/agent/config._disable_password={{ .Env.AGENT__DISABLE_PASSWORD }}{{end}}'
@@ -602,6 +607,7 @@ builds:
       - '{{ if (index .Env "AGENT__TLS_SERVER") }} -X Goauld/agent/config._tls_server={{ .Env.AGENT__TLS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_SERVER") }} -X Goauld/agent/config._dns_server={{ .Env.AGENT__DNS_SERVER }}{{end}}'
       - '{{ if (index .Env "AGENT__DNS_DOMAIN") }} -X Goauld/agent/config._dns_domain={{ .Env.AGENT__DNS_DOMAIN }}{{end}}'
+      - '{{ if (index .Env "AGENT__DNS_DOMAIN_ALT") }} -X Goauld/agent/config._dns_domain_alt={{ .Env.AGENT__DNS_DOMAIN_ALT }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SHARED_PASSWORD") }} -X Goauld/agent/config._shared_password={{ .Env.AGENT__SHARED_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__DISABLE_PASSWORD") }} -X Goauld/agent/config._disable_password={{ .Env.AGENT__DISABLE_PASSWORD }}{{end}}'
