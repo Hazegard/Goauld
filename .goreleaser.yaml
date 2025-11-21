@@ -450,8 +450,8 @@ builds:
     tags:
       - netgo
       - osusergo
-      - mini
       - nethttpomithttp2
+      - mini
     gcflags:
       - -N
       - -l
@@ -584,6 +584,7 @@ builds:
     tags:
       - netgo
       - osusergo
+      - dll
     ldflags:
       - -s -w -buildid=
       - '{{ if (index .Env "AGENT__PRIVATE_PASSWORD") }} -X Goauld/agent/config._private_password={{ .Env.AGENT__PRIVATE_PASSWORD }}{{end}}'
