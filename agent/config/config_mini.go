@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/keygen-sh/machineid"
+	"golang.org/x/text/unicode/norm"
 )
 
 func InitAgent() {
@@ -159,6 +160,16 @@ func InitAgent() {
 			log.Error().Err(err).Msg("error getting hostname")
 		}
 		cfg.Name = fmt.Sprintf("%s@%s", name, hostname)
+	}
+	if strings.Contains(cfg.Name, "$") {
+		old := cfg.Name
+		cfg.Name = strings.ReplaceAll(cfg.Name, "$", "_")
+		log.Warn().Str("Old Name", old).Str("New Name", cfg.Name).Msg("Name contains '$', which cau cause issues. '$' will be replaced with '_'")
+	}
+	newName := norm.NFKD.String(cfg.Name)
+	if newName != cfg.Name {
+		log.Warn().Str("New Name", newName).Str("OldName", cfg.Name).Msg("Normalizing agent name")
+		cfg.Name = newName
 	}
 
 	// compute the agent ID used to identify it
