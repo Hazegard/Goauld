@@ -25,6 +25,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/keygen-sh/machineid"
+	"golang.org/x/text/unicode/norm"
 )
 
 var agent *Agent
@@ -90,6 +91,16 @@ func InitAgent() (*kong.Context, []error, error) {
 			return nil, nil, fmt.Errorf("error getting hostname: %w", err)
 		}
 		cfg.Name = fmt.Sprintf("%s@%s", name, hostname)
+	}
+	if strings.Contains(cfg.Name, "$") {
+		old := cfg.Name
+		cfg.Name = strings.ReplaceAll(cfg.Name, "$", "_")
+		log.Warn().Str("Old Name", old).Str("New Name", cfg.Name).Msg("Name contains '$', which cau cause issues. '$' will be replaced with '_'")
+	}
+	newName := norm.NFKD.String(cfg.Name)
+	if newName != cfg.Name {
+		log.Warn().Str("New Name", newName).Str("OldName", cfg.Name).Msg("Normalizing agent name")
+		cfg.Name = newName
 	}
 	// compute the agent ID used to identify it
 	mid, err := machineid.ID()
