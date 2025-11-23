@@ -215,7 +215,7 @@ before:
       tar -C vendored/github.com/hazegard/togettyc --no-recursion --null -T - --uid 0 --gid 0 --numeric-owner --format pax -cf - | \
       gzip -n > vendored/github.com/hazegard/togettyc.tar.gz
     - |
-      bash -c "
+      sh -c "
       if [[ -z "$GOOS" ]] || [[ "$GOOS" == "windows" ]]; then
         # if command -v zig >/dev/null 2>&1; then
         #   zig build-exe agent/sshd/shell/shim_windows/sshd_shim.zig -target x86_64-windows -O ReleaseSmall -femit-bin=agent/sshd/shell/shimembed/sshd_shim/sshd_windows_amd64.exe
@@ -432,7 +432,7 @@ builds:
     hooks:
       post:
         # Make an UPX copy only when UPX=true
-        - cmd: bash -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; fi'
+        - cmd: sh -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; fi'
 
     env:
       - CGO_ENABLED=0
@@ -554,7 +554,7 @@ builds:
     hooks:
       post:
         # Make an UPX copy only when UPX=true
-        - cmd: bash -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; upx --best --lzma "{{ .Path }}" || true; fi'
+        - cmd: sh -c 'if [ "$(printf "%s" "${COMPRESS:-false}" | tr A-Z a-z)" = "true" ]; then cp "{{ .Path }}" "{{ .Path }}.fat"; upx --best --lzma "{{ .Path }}" || true; fi'
 
     env:
       - CGO_ENABLED=1
