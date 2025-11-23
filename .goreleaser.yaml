@@ -190,7 +190,7 @@ env:
 # END Dynamic ENV
 upx:
   - enabled: "{{.Env.COMPRESS}}"
-    ids: ["mini_agent", "agent"]
+    ids: ["agent-mini", "agent"]
     compress: "9"
     lzma: true
     brute: false
@@ -424,7 +424,7 @@ builds:
 
 # END Dynamic AGENT
 
-  - id: "mini_agent"
+  - id: "agent-mini"
     mod_timestamp: "{{ .CommitTimestamp }}"
     tool: '{{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
     binary: jaffa

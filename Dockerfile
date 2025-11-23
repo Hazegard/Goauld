@@ -24,11 +24,11 @@ WORKDIR /app
 
 ENV PATH="$PATH:/root/go/bin"
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --compress --id agent --gen-agent-password=false -vvv
-RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --compress --id mini_agent --gen-agent-password=false -vvv
+RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --compress --id agent-mini --gen-agent-password=false -vvv
 RUN go run ./scripts/build/ --gen-age-key=false --gen-access-token=false --id server --goos linux --goarch amd64 -vvv
 
 # RUN if [[ "$COMPRESS" == 1 ]]; then \
-#       for binary in output/agent/* output/mini_agent/*; do \
+#       for binary in output/agent/* output/agent-mini/*; do \
 #         if [[ "$binary" != *darwin* ]] && [[ "$binary" != *windows-arm* ]]; then \
 #           if [[ "$binary" == *.exe ]]; then \
 #             n="${binary%.exe}"; \
