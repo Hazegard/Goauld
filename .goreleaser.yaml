@@ -156,7 +156,7 @@ env:
   - CLIENT__SSH_WG={{ .Env.CLIENT__SSH_WG }}
   - CLIENT__SSH_LOCAL_SOCKS_PORT={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}
   - CLIENT__SSH_LOCAL_HTTP_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}
-  - CLIENT__SSH_LOCAL_HTTP_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}
+  - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
   - CLIENT__SSH_SSH={{ .Env.CLIENT__SSH_SSH }}
   - CLIENT__SSH_PRINT={{ .Env.CLIENT__SSH_PRINT }}
   - CLIENT__SSH_PROXY={{ .Env.CLIENT__SSH_PROXY }}
@@ -732,7 +732,7 @@ builds:
       - '{{ if (index .Env "CLIENT__SSH_WG") }} -X main._ssh_wg={{ .Env.CLIENT__SSH_WG }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_LOCAL_SOCKS_PORT") }} -X main._ssh_local_socks_port={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_LOCAL_HTTP_PORT") }} -X main._ssh_local_http_port={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}{{end}}'
-      - '{{ if (index .Env "CLIENT__SSH_LOCAL_HTTP_PORT") }} -X main._ssh_local_http_port={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__WG_PORT") }} -X main._wg_port={{ .Env.CLIENT__WG_PORT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_SSH") }} -X main._ssh_ssh={{ .Env.CLIENT__SSH_SSH }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_PRINT") }} -X main._ssh_print={{ .Env.CLIENT__SSH_PRINT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_PROXY") }} -X main._ssh_proxy={{ .Env.CLIENT__SSH_PROXY }}{{end}}'

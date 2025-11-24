@@ -29,7 +29,7 @@ type SSH struct {
 	WG             bool     `default:"${_ssh_wg}" name:"wg" yaml:"wg" negatable:"" optional:"" help:"Forward the agent's WireGuard interface to the local host."`
 	LocalSocksPort int      `default:"${_ssh_local_socks_port}" name:"socks-port" yaml:"socks-port" optional:"" help:"Local port to bind the SOCKS proxy."`
 	LocalHTTPPort  int      `default:"${_ssh_local_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Local port to bind the HTTP proxy."`
-	LocalWGPort    int      `default:"${_ssh_local_http_port}" name:"wg-port" yaml:"wg-port" optional:"" help:"Local port to bind the WireGuard proxy."`
+	LocalWGPort    int      `default:"${_wg_port}" name:"wg-port" yaml:"wg-port" optional:"" help:"Local port to bind the WireGuard proxy."`
 	SSH            bool     `default:"${_ssh_ssh}" name:"ssh" yaml:"ssh" negatable:"" optional:"" help:"Connect directly to the agent’s SSH service."`
 	Print          bool     `default:"${_ssh_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated SSH command instead of executing it."`
 	Proxy          bool     `default:"${_ssh_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Use direct STDIN/STDOUT mode for ProxyCommand compatibility."`

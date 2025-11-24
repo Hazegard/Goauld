@@ -57,7 +57,7 @@ ssh:
   #Local port to bind the HTTP proxy.
   http-port: 3128
   #Local port to bind the WireGuard proxy.
-  wg-port: 3128
+  wg-port: 51820
   #Connect directly to the agent’s SSH service.
   ssh: true
   #Print the generated SSH command instead of executing it.
