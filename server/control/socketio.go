@@ -49,6 +49,10 @@ func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = commonnet.HTTP10ToHTTP11FakeUpgrader(r)
 	id := r.PathValue("agentId")
 	if !md5Re.MatchString(id) {
+		if id == "__health" {
+			w.WriteHeader(200)
+			return
+		}
 		http.NotFound(w, r)
 
 		return
