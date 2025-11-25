@@ -8,6 +8,11 @@ import (
 	"unsafe"
 )
 
+//export Main2
+func Main2() {
+	main()
+}
+
 //export Main
 func Main(argc C.int, argv **C.char) {
 	if int(argc) == 0 {
