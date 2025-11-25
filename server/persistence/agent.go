@@ -373,7 +373,7 @@ func (db *DB) CreateAgent(agent *Agent) error {
 
 // DeleteAgentByID delete the agent from the database.
 func (db *DB) DeleteAgentByID(id string) error {
-	res := db.db.Unscoped().Delete(&Agent{}, "id = ?", id)
+	res := db.db.Delete(&Agent{}, "id = ?", id)
 	if res.Error != nil {
 		return res.Error
 	}
