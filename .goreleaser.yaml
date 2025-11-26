@@ -546,7 +546,7 @@ builds:
       - '{{ if (index .Env "AGENT__RELAY_ADDR") }} -X Goauld/agent/config._relay_addr={{ .Env.AGENT__RELAY_ADDR }}{{end}}'
 
   # END Dynamic AGENT
-  - id: "agent-dll"
+  - id: "agent.dll"
     mod_timestamp: "{{ .CommitTimestamp }}"
     tool: '{{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}{{ if eq .Runtime.Goos "windows" }}./scripts/garble.bat{{ else }}./scripts/garble.sh{{ end }}{{else}}go{{end}}'
     binary: "goauld_{{ .Target }}"
