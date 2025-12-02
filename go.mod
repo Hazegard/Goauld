@@ -44,6 +44,7 @@ require (
 	golang.org/x/sync v0.17.0
 	golang.org/x/sys v0.37.0
 	golang.org/x/term v0.36.0
+	golang.org/x/text v0.30.0
 	golang.org/x/time v0.12.0
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
@@ -119,7 +120,6 @@ require (
 	go.uber.org/zap/exp v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
 	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	h12.io/socks v1.0.3 // indirect

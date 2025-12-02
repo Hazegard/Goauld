@@ -116,8 +116,7 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 		} else {
 			dllHeaderOutFile := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, artifact.Extra.Ext)
 			dllHeaderOutPath := filepath.Join(outDir, dllHeaderOutFile)
-			headerFile := strings.TrimSuffix(file, ".dll") + ".h"
-			err = CopyFile(headerFile, dllHeaderOutPath)
+			err = CopyFile(file, dllHeaderOutPath)
 			if err != nil {
 				log.Error().Err(err).Str("Source", file).Str("Dest", dllHeaderOutPath).Msg("error copying files")
 			} else {
@@ -126,7 +125,8 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 			if artifact.Extra.Ext == ".dll" {
 				dllOutFile := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, ".h")
 				dllOutPath := filepath.Join(outDir, dllOutFile)
-				err = CopyFile(file, dllOutPath)
+				headerFile := strings.TrimSuffix(file, ".dll") + ".h"
+				err = CopyFile(headerFile, dllOutPath)
 				if err != nil {
 					return fmt.Errorf("error copying header files: %w", err)
 				}
