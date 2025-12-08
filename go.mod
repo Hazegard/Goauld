@@ -50,7 +50,8 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gorm.io/gorm v1.31.1
-	gvisor.dev/gvisor v0.0.0-20251205192251-9d75d560f532
+	// go get gvisor.dev/gvisor@go pour utiliser la bonne version de gvisor
+	gvisor.dev/gvisor v0.0.0-20251205175057-80156027975d
 	www.bamsoftware.com/git/champa.git v0.20250620.0
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )

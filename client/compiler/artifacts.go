@@ -103,6 +103,14 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 					return fmt.Errorf("error copying header files: %w", err)
 				}
 				log.Info().Str("Source", file).Str("Dest", dllHeaderOutPath).Msg("moved header artifact")
+				dllOutFile := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, ".h")
+				dllOutPath := filepath.Join(outDir, dllOutFile)
+				headerFileRaw := strings.TrimSuffix(file, ".dll") + ".h"
+				err = CopyFile(headerFileRaw, dllOutPath)
+				if err != nil {
+					return fmt.Errorf("error copying header files: %w", err)
+				}
+				log.Info().Str("Source", file).Str("Dest", dllOutPath).Msg("moved header artifact")
 			}
 			// .fat file is not compressed
 			outFileFat := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, artifact.Extra.Ext)
