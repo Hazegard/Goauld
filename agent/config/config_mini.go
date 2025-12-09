@@ -275,6 +275,7 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("KILL_SWITCH", _killswitch))
 	env = append(env, prefixEnv("DISABLE_PASSWORD", _disable_password))
 	env = append(env, prefixEnv("RELAY_ADDR", _relay_addr))
+	env = append(env, prefixEnv("DNS_DOMAIN_ALT", _dns_domain_alt))
 	return env
 }
 
