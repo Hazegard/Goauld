@@ -120,7 +120,6 @@ func MoveArtifacts(artifacts []Artifact, source string, output string) error {
 				return fmt.Errorf("error copying files: %w", err)
 			}
 			log.Info().Str("Source", file).Str("Dest", outPathFat).Msg("moved fat artifact")
-
 		} else {
 			dllHeaderOutFile := fmt.Sprintf("%s_%s-%s%s", artifact.Extra.Binary, artifact.Goos, artifact.Goarch, artifact.Extra.Ext)
 			dllHeaderOutPath := filepath.Join(outDir, dllHeaderOutFile)

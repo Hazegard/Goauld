@@ -19,26 +19,29 @@ type item struct {
 
 // maxHeap keeps the *largest* hash on top, so we can eject it
 // when we find a smaller hash and size > N.
+// nolint:recvcheck
 type maxHeap []item
 
 func (h maxHeap) Len() int { return len(h) }
 
-// Less reversed => max-heap by hash lexicographic order
+// Less reversed => max-heap by hash lexicographic order.
 func (h maxHeap) Less(i, j int) bool {
 	return bytes.Compare(h[i].hash[:], h[j].hash[:]) > 0
 }
 func (h maxHeap) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
 
+// nolint:forcetypeassert
 func (h *maxHeap) Push(x any) { *h = append(*h, x.(item)) }
 func (h *maxHeap) Pop() any {
 	old := *h
 	n := len(old)
 	it := old[n-1]
 	*h = old[:n-1]
+
 	return it
 }
 
-// lexicographic compare for [32]byte
+// lexicographic compare for [32]byte.
 func lessHash(a, b [32]byte) bool {
 	return bytes.Compare(a[:], b[:]) < 0
 }
@@ -97,12 +100,14 @@ func main() {
 	}
 	if err := sc.Err(); err != nil {
 		fmt.Fprintln(os.Stderr, "scan:", err)
-		os.Exit(1)
+
+		return
 	}
 
 	// heap now holds N smallest hashes, but unordered
 	out := make([]item, h.Len())
 	for i := range out {
+		// nolint:forcetypeassert
 		out[i] = heap.Pop(h).(item)
 	}
 
@@ -112,6 +117,7 @@ func main() {
 	})
 
 	for _, it := range out {
+		//nolint:forbidigo
 		fmt.Println(it.line)
 	}
 }
