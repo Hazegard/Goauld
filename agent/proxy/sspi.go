@@ -63,12 +63,12 @@ func (t *SSPITransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		base = http.DefaultTransport
 	}
 
-	// If user already set Authorization and wants us to respect that, don't interfere.
+	// If user already set Authorization and we must respect it, bypass auth.
 	if t.RespectExistingAuth && req.Header.Get("Authorization") != "" {
 		return base.RoundTrip(req)
 	}
 
-	// Buffer the body so we can resend the request during auth handshake.
+	// Buffer request body for retry.
 	bodyBuf, err := t.bufferRequestBody(req)
 	if err != nil {
 		return nil, err
@@ -79,36 +79,43 @@ func (t *SSPITransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	// Only handle server auth (401). You can extend this to 407/proxy if needed.
+	// Only handle server auth (401).
 	if resp.StatusCode != http.StatusUnauthorized {
 		return resp, nil
 	}
 
-	// Look for WWW-Authenticate: Negotiate / NTLM
-	challenges := resp.Header.Values("Www-Authenticate")
-	scheme := pickAuthScheme(challenges)
-	if scheme == "" {
-		// Nothing we support; return original response.
+	// ---- Read & preserve original 401 response ----
+	origBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("sspi: read original 401 body: %w", err)
+	}
+	resp.Body.Close()
+
+	// helper: return original response at any failure
+	returnOriginal := func() (*http.Response, error) {
+		resp.Body = io.NopCloser(bytes.NewReader(origBody))
+		resp.ContentLength = int64(len(origBody))
+		resp.Header.Del("Content-Encoding")
 		return resp, nil
 	}
 
-	// Close the 401 response body before retrying.
-	orBody, err := io.ReadAll(resp.Body)
-	_ = resp.Body.Close()
+	challenges := resp.Header.Values("Www-Authenticate")
+	scheme := pickAuthScheme(challenges)
+	if scheme == "" {
+		return returnOriginal()
+	}
 
 	switch scheme {
 	case "Negotiate":
-		return t.roundTripNegotiate(req, bodyBuf, base, orBody)
+		return t.roundTripNegotiate(req, bodyBuf, base, resp, origBody)
 	case "NTLM":
-		return t.roundTripNTLM(req, bodyBuf, base, orBody)
+		return t.roundTripNTLM(req, bodyBuf, base, resp, origBody)
 	default:
-		// Shouldn't happen, but be defensive.
-		return nil, fmt.Errorf("sspi: unsupported auth scheme selected: %q", scheme)
+		return returnOriginal()
 	}
 }
 
-// Close releases SSPI credential handles.
-// Call this when you're done with the transport.
+// Close releases handles.
 func (t *SSPITransport) Close() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -129,7 +136,7 @@ func (t *SSPITransport) Close() error {
 	return firstErr
 }
 
-// -------------------- helpers --------------------
+// -------------------- Credentials --------------------
 
 func (t *SSPITransport) negotiateCred() (*sspi.Credentials, error) {
 	t.mu.Lock()
@@ -138,10 +145,8 @@ func (t *SSPITransport) negotiateCred() (*sspi.Credentials, error) {
 		return t.negCred, nil
 	}
 
-	var (
-		cred *sspi.Credentials
-		err  error
-	)
+	var cred *sspi.Credentials
+	var err error
 	if t.Username != "" {
 		cred, err = negotiate.AcquireUserCredentials(t.Domain, t.Username, t.Password)
 	} else {
@@ -161,10 +166,8 @@ func (t *SSPITransport) ntlmCredHandle() (*sspi.Credentials, error) {
 		return t.ntlmCred, nil
 	}
 
-	var (
-		cred *sspi.Credentials
-		err  error
-	)
+	var cred *sspi.Credentials
+	var err error
 	if t.Username != "" {
 		cred, err = ntlm.AcquireUserCredentials(t.Domain, t.Username, t.Password)
 	} else {
@@ -177,8 +180,8 @@ func (t *SSPITransport) ntlmCredHandle() (*sspi.Credentials, error) {
 	return cred, nil
 }
 
-// bufferRequestBody reads and replaces the request body so that it can be replayed.
-// It respects MaxReplayBodySize if set.
+// -------------------- Helpers --------------------
+
 func (t *SSPITransport) bufferRequestBody(req *http.Request) ([]byte, error) {
 	if req.Body == nil || req.Body == http.NoBody {
 		return nil, nil
@@ -186,30 +189,26 @@ func (t *SSPITransport) bufferRequestBody(req *http.Request) ([]byte, error) {
 
 	defer req.Body.Close()
 
-	var (
-		data []byte
-		err  error
-	)
-
 	if t.MaxReplayBodySize > 0 {
 		// We read up to limit+1 bytes so we can detect overflow.
 		var buf bytes.Buffer
-		limitReader := io.LimitedReader{R: req.Body, N: t.MaxReplayBodySize + 1}
-		_, err = io.Copy(&buf, &limitReader)
+		lr := io.LimitedReader{R: req.Body, N: t.MaxReplayBodySize + 1}
+		_, err := io.Copy(&buf, &lr)
 		if err != nil {
 			return nil, fmt.Errorf("sspi: read request body: %w", err)
 		}
 		if int64(buf.Len()) > t.MaxReplayBodySize {
 			return nil, ErrBodyTooLarge
 		}
-		data = buf.Bytes()
-	} else {
-		data, err = io.ReadAll(req.Body)
-		if err != nil {
-			return nil, fmt.Errorf("sspi: read request body: %w", err)
-		}
+		req.Body = io.NopCloser(bytes.NewReader(buf.Bytes()))
+		req.ContentLength = int64(buf.Len())
+		return buf.Bytes(), nil
 	}
 
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("sspi: read request body: %w", err)
+	}
 	req.Body = io.NopCloser(bytes.NewReader(data))
 	req.ContentLength = int64(len(data))
 	return data, nil
@@ -238,18 +237,14 @@ func authSchemeMatches(header, scheme string) bool {
 	if header == "" {
 		return false
 	}
-
-	// Some servers send comma-separated values on a single line.
-	// Consider only the first value for scheme matching.
-	if comma := strings.IndexByte(header, ','); comma >= 0 {
-		header = header[:comma]
+	if idx := strings.IndexByte(header, ','); idx >= 0 {
+		header = header[:idx]
 	}
-
-	fields := strings.Fields(header)
-	if len(fields) == 0 {
+	f := strings.Fields(header)
+	if len(f) == 0 {
 		return false
 	}
-	return strings.EqualFold(fields[0], scheme)
+	return strings.EqualFold(f[0], scheme)
 }
 
 // getChallengeToken finds the Base64 token in WWW-Authenticate headers
@@ -259,14 +254,8 @@ func getChallengeToken(challenges []string, scheme string) (string, bool) {
 		// Split possible combined headers first.
 		for _, part := range strings.Split(c, ",") {
 			part = strings.TrimSpace(part)
-			if part == "" {
-				continue
-			}
 			fields := strings.Fields(part)
-			if len(fields) < 2 {
-				continue
-			}
-			if strings.EqualFold(fields[0], scheme) {
+			if len(fields) >= 2 && strings.EqualFold(fields[0], scheme) {
 				return fields[1], true
 			}
 		}
@@ -311,25 +300,29 @@ func (t *SSPITransport) maxAuthSteps() int {
 
 // -------------------- Negotiate / Kerberos --------------------
 
-func (t *SSPITransport) roundTripNegotiate(orig *http.Request, body []byte, base http.RoundTripper, orBody []byte) (*http.Response, error) {
+func (t *SSPITransport) roundTripNegotiate(orig *http.Request, body []byte, base http.RoundTripper, resp *http.Response, origBody []byte) (*http.Response, error) {
+	returnOriginal := func() (*http.Response, error) {
+		resp.Body = io.NopCloser(bytes.NewReader(origBody))
+		resp.ContentLength = int64(len(origBody))
+		resp.Header.Del("Content-Encoding")
+		return resp, nil
+	}
+
 	cred, err := t.negotiateCred()
 	if err != nil {
-		return nil, err
+		return returnOriginal()
 	}
 
 	spn := servicePrincipalName(orig)
 
-	// First client context / token.
-	// Create the context with a short critical section for safety.
-	var (
-		ctx      *negotiate.ClientContext
-		outToken []byte
-	)
+	var ctx *negotiate.ClientContext
+	var outToken []byte
+
 	t.mu.Lock()
 	ctx, outToken, err = negotiate.NewClientContext(cred, spn)
 	t.mu.Unlock()
 	if err != nil {
-		return nil, fmt.Errorf("sspi: create negotiate client context: %w", err)
+		return returnOriginal()
 	}
 	defer ctx.Release()
 
@@ -339,72 +332,72 @@ func (t *SSPITransport) roundTripNegotiate(orig *http.Request, body []byte, base
 	req1 := cloneRequestWithBody(orig, body)
 	req1.Header.Set("Authorization", authHeader)
 
-	resp, err := base.RoundTrip(req1)
+	resp2, err := base.RoundTrip(req1)
 	if err != nil {
-		return nil, err
+		return returnOriginal()
 	}
-	if resp.StatusCode != http.StatusUnauthorized {
-		return resp, nil // success or other non-401 status
+	if resp2.StatusCode != http.StatusUnauthorized {
+		return resp2, nil
 	}
 
-	// If the server sends back another challenge with a token, continue the Negotiate loop.
-	maxSteps := t.maxAuthSteps()
-	for i := 0; i < maxSteps; i++ {
-		challenges := resp.Header.Values("Www-Authenticate")
+	for i := 0; i < t.maxAuthSteps(); i++ {
+		challenges := resp2.Header.Values("Www-Authenticate")
 		tokenB64, ok := getChallengeToken(challenges, "Negotiate")
 		if !ok {
-			// Server didn't provide a token; return the 401 response as-is.
-			return resp, nil
+			return returnOriginal()
 		}
 		challenge, err := base64.StdEncoding.DecodeString(tokenB64)
 		if err != nil {
-			_ = resp.Body.Close()
-			return nil, fmt.Errorf("sspi: decode negotiate challenge: %w", err)
+			return returnOriginal()
 		}
 
 		// Update the context with the server token.
 		_, outToken, err = ctx.Update(challenge)
 		if err != nil {
-			_ = resp.Body.Close()
-			return nil, fmt.Errorf("sspi: update negotiate context: %w", err)
+			return returnOriginal()
 		}
 
-		_ = resp.Body.Close()
+		resp2.Body.Close()
 
 		authHeader = "Negotiate " + base64.StdEncoding.EncodeToString(outToken)
 		reqN := cloneRequestWithBody(orig, body)
 		reqN.Header.Set("Authorization", authHeader)
 
-		resp, err = base.RoundTrip(reqN)
+		resp2, err = base.RoundTrip(reqN)
 		if err != nil {
-			return nil, err
+			return returnOriginal()
 		}
-		if resp.StatusCode != http.StatusUnauthorized {
+		if resp2.StatusCode != http.StatusUnauthorized {
 			break
 		}
 	}
 
-	return resp, nil
+	return resp2, nil
 }
 
 // -------------------- NTLM --------------------
 
-func (t *SSPITransport) roundTripNTLM(orig *http.Request, body []byte, base http.RoundTripper, orBody []byte) (*http.Response, error) {
-	cred, err := t.ntlmCredHandle()
-	if err != nil {
-		return nil, err
+func (t *SSPITransport) roundTripNTLM(orig *http.Request, body []byte, base http.RoundTripper, resp *http.Response, origBody []byte) (*http.Response, error) {
+	returnOriginal := func() (*http.Response, error) {
+		resp.Body = io.NopCloser(bytes.NewReader(origBody))
+		resp.ContentLength = int64(len(origBody))
+		resp.Header.Del("Content-Encoding")
+		return resp, nil
 	}
 
-	// First NTLM message (Negotiate).
-	var (
-		ctx      *ntlm.ClientContext
-		outToken []byte
-	)
+	cred, err := t.ntlmCredHandle()
+	if err != nil {
+		return returnOriginal()
+	}
+
+	var ctx *ntlm.ClientContext
+	var outToken []byte
+
 	t.mu.Lock()
 	ctx, outToken, err = ntlm.NewClientContext(cred)
 	t.mu.Unlock()
 	if err != nil {
-		return nil, fmt.Errorf("sspi: create ntlm client context: %w", err)
+		return returnOriginal()
 	}
 	defer ctx.Release()
 
@@ -414,36 +407,32 @@ func (t *SSPITransport) roundTripNTLM(orig *http.Request, body []byte, base http
 	req1 := cloneRequestWithBody(orig, body)
 	req1.Header.Set("Authorization", authHeader)
 
-	resp, err := base.RoundTrip(req1)
+	resp2, err := base.RoundTrip(req1)
 	if err != nil {
-		return nil, err
+		return returnOriginal()
 	}
-	if resp.StatusCode != http.StatusUnauthorized {
-		return resp, nil
+	if resp2.StatusCode != http.StatusUnauthorized {
+		return resp2, nil
 	}
 
-	// Server should now send NTLM challenge.
-	challenges := resp.Header.Values("Www-Authenticate")
+	challenges := resp2.Header.Values("Www-Authenticate")
 	tokenB64, ok := getChallengeToken(challenges, "NTLM")
 	if !ok {
-		// No challenge; just return what we got.
-		return resp, nil
+		return returnOriginal()
 	}
 
 	challenge, err := base64.StdEncoding.DecodeString(tokenB64)
 	if err != nil {
-		_ = resp.Body.Close()
-		return nil, fmt.Errorf("sspi: decode ntlm challenge: %w", err)
+		return returnOriginal()
 	}
 
 	// Second NTLM message (Authenticate).
 	outToken, err = ctx.Update(challenge)
 	if err != nil {
-		_ = resp.Body.Close()
-		return nil, fmt.Errorf("sspi: update ntlm context: %w", err)
+		return returnOriginal()
 	}
 
-	_ = resp.Body.Close()
+	resp2.Body.Close()
 
 	authHeader = "NTLM " + base64.StdEncoding.EncodeToString(outToken)
 	req2 := cloneRequestWithBody(orig, body)
