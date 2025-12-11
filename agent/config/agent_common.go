@@ -4,6 +4,7 @@ import (
 	"Goauld/agent/ssh/transport/dns"
 	"Goauld/common"
 	"Goauld/common/crypto"
+	exec2 "Goauld/common/exec"
 	"Goauld/common/ssh"
 	"Goauld/common/utils"
 	"Goauld/common/wireguard"
@@ -495,6 +496,8 @@ func (a *Agent) StartInBackground() error {
 	}
 	//nolint:gosec
 	c := exec.Command(exe, args...)
+	c = exec2.Backgrounize(c)
+
 	err = c.Start()
 	if err != nil {
 		return fmt.Errorf("failed to start agent: %w", err)
