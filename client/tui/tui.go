@@ -540,6 +540,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 			{"HTTP Port", agent.GetHTTPPort()},
 			{"WG Port", agent.GetWGPort()},
 			{"Relay Port", portRelay},
+			{"HTTP MITP Port", agent.GetHTTPMITMPort()},
 			{"Other Port", agent.GetOtherPort()},
 		}
 		rows = append(rows, details...)
@@ -565,6 +566,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		agent.GetSocksPort(),
 		agent.GetHTTPPort(),
 		agent.GetOtherPort(),
+		agent.GetHTTPMITMPort(),
 		agent.SSHPasswd,
 	}
 	for _, v := range lines {
@@ -577,7 +579,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 		Bold(false)
 
 	columns := []teatable.Column{
-		{Title: "Name", Width: 12},
+		{Title: "Name", Width: 15},
 		{Title: m.MaskString(agent.Name), Width: length},
 	}
 	t := teatable.New(
@@ -638,6 +640,7 @@ func GenerateAgentTable(detail bool) table.Model {
 	if detail {
 		columns = append(columns, NewCenterColumn("WG Port", "WG Port", 13))
 		columns = append(columns, NewCenterColumn("Relay Port", "Relay Port", 13))
+		columns = append(columns, NewCenterColumn("HTTP MITM Port", "HTTP MITM Port", 16))
 	}
 	t := table.New(columns).
 		Focused(true).
@@ -699,6 +702,7 @@ func AgentsToRow(agents []types.Agent, details bool, hide bool) []table.Row {
 			} else {
 				data["Relay Port"] = centerString(fmt.Sprintf("(%s)", agent.GetRelayPort()), 13)
 			}
+			data["HTTP MITM Port"] = centerString(agent.GetHTTPMITMPort(), 15)
 		}
 		row := table.NewRow(data)
 

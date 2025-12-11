@@ -56,17 +56,19 @@ func (r *Rsync) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 
 	cfg.SSH = SSH{
-		Target:         target,
-		Socks:          false,
-		HTTP:           false,
-		LocalSocksPort: 0,
-		LocalHTTPPort:  0,
-		SSH:            true,
-		Print:          true,
-		Proxy:          false,
-		SSHOpts:        nil,
-		SSHConfFile:    "",
-		SSHArgs:        nil,
+		Target:            target,
+		Socks:             false,
+		HTTP:              false,
+		HTTPMITM:          false,
+		LocalSocksPort:    0,
+		LocalHTTPPort:     0,
+		LocalHTTPMITMPort: 0,
+		SSH:               true,
+		Print:             true,
+		Proxy:             false,
+		SSHOpts:           nil,
+		SSHConfFile:       "",
+		SSHArgs:           nil,
 	}
 
 	exePath, err := getPath()

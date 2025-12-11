@@ -31,6 +31,7 @@ func (a *Agent) GetOtherPort() string {
 		if strings.EqualFold(rpf.Tag, "socks") ||
 			strings.EqualFold(rpf.Tag, "sshd") ||
 			strings.EqualFold(rpf.Tag, "http") ||
+			strings.EqualFold(rpf.Tag, "mitmhttp") ||
 			strings.EqualFold(rpf.Tag, "wg") ||
 			strings.EqualFold(rpf.Tag, "relay") || rpf.ServerPort == 0 {
 			continue
@@ -71,6 +72,17 @@ func (a *Agent) GetWGPort() string {
 func (a *Agent) GetHTTPPort() string {
 	for _, rpf := range a.RemotePortForwarding {
 		if strings.EqualFold(rpf.Tag, "http") {
+			return strconv.Itoa(rpf.ServerPort)
+		}
+	}
+
+	return "/"
+}
+
+// GetHTTPMITMPort returns the socks forwarded port.
+func (a *Agent) GetHTTPMITMPort() string {
+	for _, rpf := range a.RemotePortForwarding {
+		if strings.EqualFold(rpf.Tag, "mitmhttp") {
 			return strconv.Itoa(rpf.ServerPort)
 		}
 	}
