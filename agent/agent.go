@@ -359,6 +359,57 @@ func run() globalcontext.CancelReason {
 			})
 		}
 
+		// If the MITM HTTP proxy server is enabled, start it
+		if config.Get().MITMHTTPProxyEnabled() {
+			httpProxy, err := proxy.InitMITMHTTPProxy(config.Get().HTTPProxyUsername(), config.Get().MITMProxyPassword(), config.Get().MITMProxyDomain())
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy")
+				return
+			}
+
+			listener, err := net.Listen("tcp4", "127.0.0.1:0")
+			//nolint:forcetypeassert
+			port := listener.Addr().(*net.TCPAddr).Port
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy connection")
+			}
+			rpf := commonssh.RemotePortForwarding{
+				ServerPort: 0,
+				AgentPort:  port,
+				AgentIP:    "127.0.0.1",
+				Tag:        "MITMHTTP",
+			}
+			rPort, err := sshAgent.RemoteForward(ctx, rpf)
+
+			config.Get().UpdateHTTPProxyPort(rPort)
+
+			go func() {
+				select {
+				case httpProxyErr <- httpProxy.Server.Serve(listener):
+					if err != nil {
+						log.Error().Err(err).Msg("MITM HTTP proxy server error")
+					}
+					err := httpProxy.Server.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("MITM HTTP proxy close error")
+					}
+				case <-ctx.Done():
+					err := httpProxy.Server.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("MITM HTTP proxy close error")
+					}
+				}
+			}()
+
+			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote MITM HTTP proxy server started")
+			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
+				ServerPort: config.Get().RemoteForwardedHTTPProxyPort(),
+				AgentPort:  -1,
+				AgentIP:    "0.0.0.0",
+				Tag:        "MITMHTTP",
+			})
+		}
+
 		if config.Get().WGEnabled() {
 			wg := wireguard.NewWireguard()
 			err := wg.Init(config.Get().Wireguard)

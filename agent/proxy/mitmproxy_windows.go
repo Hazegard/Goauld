@@ -1,3 +1,5 @@
+//go:build windows
+
 package proxy
 
 import (
@@ -21,7 +23,7 @@ type MITMHTTPProxy struct {
 
 // InitMITMHTTPProxy initializes and returns a configured MITMHTTPProxy instance.
 // It intercepts all communications to inject if required NTLM / Kerberos authentication using the underlying credentials
-func InitMITMHTTPProxy(u string, p string, d string) *MITMHTTPProxy {
+func InitMITMHTTPProxy(u string, p string, d string) (*MITMHTTPProxy, error) {
 	proxy := &MITMHTTPProxy{
 		Proxy:    goproxy.NewProxyHttpServer(),
 		Dialer:   NewHTTPProxyDialer(),
@@ -74,5 +76,5 @@ func InitMITMHTTPProxy(u string, p string, d string) *MITMHTTPProxy {
 
 	proxy.Server = srv
 
-	return proxy
+	return proxy, nil
 }

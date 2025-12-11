@@ -34,6 +34,10 @@ var (
 	_relay_enabled           = "false" //nolint:revive
 	_socks_use_system_proxy  = "true"  //nolint:revive
 
+	_mitm_http_proxy_username = "" //nolint:revive
+	_mitm_http_proxy_password = "" //nolint:revive
+	_mitm_http_proxy_domain   = "" //nolint:revive
+
 	_proxy          = ""
 	_proxy_username = "" //nolint:revive
 	_proxy_password = "" //nolint:revive
@@ -102,6 +106,10 @@ var (
 		"_wg_enabled":              _wg_enabled,
 		"_relay_enabled":           _relay_enabled,
 		"_socks_use_system_proxy":  _socks_use_system_proxy,
+
+		"_mitm_http_proxy_username": _mitm_http_proxy_username,
+		"_mitm_http_proxy_password": _mitm_http_proxy_password,
+		"_mitm_http_proxy_domain":   _mitm_http_proxy_domain,
 
 		"_no_proxy":       _no_proxy,
 		"_proxy":          _proxy,

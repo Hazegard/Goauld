@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -108,6 +109,14 @@ func (a *Agent) SocksProxyDomain() string {
 	}
 
 	return a.cfg.ProxyDomain
+}
+
+// MITMHTTPProxyEnabled returns whether the http proxy server is enabled.
+func (a *Agent) MITMHTTPProxyEnabled() bool {
+	if runtime.GOOS != "windows" {
+		return false
+	}
+	return a.cfg.MITMHTTP
 }
 
 // MITMProxyUsername returns the username used by the upstream proxy of the socks proxy.
