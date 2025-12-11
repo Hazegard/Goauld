@@ -26,12 +26,13 @@ var (
 	_dns_domain     = "t.example.com"                           //nolint:revive
 	_dns_domain_alt = "s.example.com"                           //nolint:revive
 
-	_sshd_enabled           = "true"  //nolint:revive
-	_socks_enabled          = "true"  //nolint:revive
-	_http_proxy_enabled     = "true"  //nolint:revive
-	_wg_enabled             = "false" //nolint:revive
-	_relay_enabled          = "false" //nolint:revive
-	_socks_use_system_proxy = "true"  //nolint:revive
+	_sshd_enabled            = "true"  //nolint:revive
+	_socks_enabled           = "true"  //nolint:revive
+	_http_proxy_enabled      = "true"  //nolint:revive
+	_mitm_http_proxy_enabled = "false" //nolint:revive
+	_wg_enabled              = "false" //nolint:revive
+	_relay_enabled           = "false" //nolint:revive
+	_socks_use_system_proxy  = "true"  //nolint:revive
 
 	_proxy          = ""
 	_proxy_username = "" //nolint:revive
@@ -94,12 +95,13 @@ var (
 		"_shared_password":  _shared_password,
 		"_name":             _name,
 
-		"_sshd_enabled":           _sshd_enabled,
-		"_socks_enabled":          _socks_enabled,
-		"_http_proxy_enabled":     _http_proxy_enabled,
-		"_wg_enabled":             _wg_enabled,
-		"_relay_enabled":          _relay_enabled,
-		"_socks_use_system_proxy": _socks_use_system_proxy,
+		"_sshd_enabled":            _sshd_enabled,
+		"_socks_enabled":           _socks_enabled,
+		"_http_proxy_enabled":      _http_proxy_enabled,
+		"_mitm_http_proxy_enabled": _mitm_http_proxy_enabled,
+		"_wg_enabled":              _wg_enabled,
+		"_relay_enabled":           _relay_enabled,
+		"_socks_use_system_proxy":  _socks_use_system_proxy,
 
 		"_no_proxy":       _no_proxy,
 		"_proxy":          _proxy,
@@ -188,11 +190,16 @@ type AgentConfig struct {
 	DisablePassword  bool   `default:"${_disable_password}" name:"disable-password" yaml:"disable-password" optional:"" help:"Disable the local password generation if no static password is provided."`
 	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Friendly name to identify the agent (default: 'user@hostname')."`
 
-	Sshd  bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Enable the SSHD service."`
-	Socks bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Enable the SOCKS proxy service."`
-	HTTP  bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Enable the HTTP proxy service."`
-	WG    bool `default:"${_wg_enabled}" name:"wg" yaml:"wg" optional:"" negatable:"" help:"Enable the WireGuard service."`
-	Relay bool `default:"${_relay_enabled}" name:"relay" yaml:"relay" optional:"" negatable:"" help:"Enable the Relay service."`
+	Sshd     bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Enable the SSHD service."`
+	Socks    bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Enable the SOCKS proxy service."`
+	HTTP     bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Enable the HTTP proxy service."`
+	MITMHTTP bool `default:"${_mitm_http_proxy_enabled}" name:"mitm-http" yaml:"mitm-http" optional:"" negatable:"" help:"Enable the MITM HTTP proxy service."`
+	WG       bool `default:"${_wg_enabled}" name:"wg" yaml:"wg" optional:"" negatable:"" help:"Enable the WireGuard service."`
+	Relay    bool `default:"${_relay_enabled}" name:"relay" yaml:"relay" optional:"" negatable:"" help:"Enable the Relay service."`
+
+	MITMHTTPProxyUsername string `default:"${_mitm_http_proxy_username}" name:"mitm-http-proxy-username" yaml:"mitm-http-proxy-username" optional:"" help:"Username for the MITM HTTP upstream proxy."`
+	MITMHTTPProxyPassword string `default:"${_mitm_http_proxy_password}" name:"mitm-http-proxy-password" yaml:"mitm-http-proxy-password" optional:"" help:"Password for the MITM HTTP upstream proxy."`
+	MITMHTTPProxyDomain   string `default:"${_mitm_http_proxy_domain}" name:"mitm-http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain for the MITM HTTP upstream proxy."`
 
 	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured)."`
 	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username for the proxy server."`

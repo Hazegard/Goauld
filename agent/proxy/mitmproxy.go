@@ -1,11 +1,9 @@
 package proxy
 
 import (
-	"Goauld/agent/config"
 	"Goauld/common/log"
-	"context"
-	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/elazarl/goproxy"
@@ -23,10 +21,13 @@ type MITMHTTPProxy struct {
 
 // InitMITMHTTPProxy initializes and returns a configured MITMHTTPProxy instance.
 // It intercepts all communications to inject if required NTLM / Kerberos authentication using the underlying credentials
-func InitMITMHTTPProxy() *HTTPProxy {
-	proxy := &HTTPProxy{
-		Proxy:  goproxy.NewProxyHttpServer(),
-		Dialer: NewHTTPProxyDialer(),
+func InitMITMHTTPProxy(u string, p string, d string) *MITMHTTPProxy {
+	proxy := &MITMHTTPProxy{
+		Proxy:    goproxy.NewProxyHttpServer(),
+		Dialer:   NewHTTPProxyDialer(),
+		Domain:   d,
+		Password: p,
+		Username: u,
 	}
 	//
 	// Proxy DialContexts
@@ -41,37 +42,27 @@ func InitMITMHTTPProxy() *HTTPProxy {
 	proxyLogger := log.Get().With().Str("From", "MITM HttpProxy").Logger()
 	proxy.Proxy.Logger = &proxyLogger
 
-	// HTTP
-	proxy.Proxy.Tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-		return proxy.Dialer.ProxyDialer("http", addr, config.Get().HTTPProxy())(ctx, network, addr)
-	}
-
-	// HTTPS
-	proxy.Proxy.ConnectDialWithReq = func(req *http.Request, network, addr string) (net.Conn, error) {
-		log.Trace().Str("Addr", addr).Str("Network", network).Msg("CONNECT DIAL")
-		conn, err := proxy.Dialer.ProxyDialer("https", addr, config.Get().HTTPProxy())(req.Context(), network, addr)
-		if err != nil {
-			log.Debug().Err(err).Str("Addr", addr).Str("Network", network).Msg("CONNECT DIAL ERROR DONE")
-		}
-
-		return conn, err
+	sspiTransport := &SSPITransport{
+		Base:                NewTransportProxy(),
+		Domain:              proxy.Domain,
+		Username:            proxy.Username,
+		Password:            proxy.Password,
+		RespectExistingAuth: true,
+		mu:                  sync.Mutex{},
 	}
 
 	proxy.Proxy.OnResponse().DoFunc(func(resp *http.Response, _ *goproxy.ProxyCtx) *http.Response {
 		return resp
 	})
 
+	proxy.Proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 	proxy.Proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-		res, err := ctx.RoundTrip(req)
+		res, err := sspiTransport.RoundTrip(req)
 		if err != nil {
-			
+			log.Debug().Err(err).Msg("MITM CONNECT ERROR")
 		}
+		return req, res
 	})
-
-	var ConnectHandler goproxy.FuncHttpsHandler = func(host string, _ *goproxy.ProxyCtx) (*goproxy.ConnectAction, string) {
-		return goproxy.OkConnect, host
-	}
-	proxy.Proxy.OnRequest().HandleConnect(ConnectHandler)
 
 	srv := &http.Server{
 		Handler: proxy.Proxy,

@@ -84,7 +84,7 @@ func (t *SSPITransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, nil
 	}
 
-	// ---- Read & preserve original 401 response ----
+	// Preserve original 401 for fallback.
 	origBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("sspi: read original 401 body: %w", err)
@@ -372,7 +372,7 @@ func (t *SSPITransport) roundTripNegotiate(orig *http.Request, body []byte, base
 		}
 	}
 
-	return resp2, nil
+	return returnOriginal()
 }
 
 // -------------------- NTLM --------------------

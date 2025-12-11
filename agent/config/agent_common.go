@@ -110,6 +110,21 @@ func (a *Agent) SocksProxyDomain() string {
 	return a.cfg.ProxyDomain
 }
 
+// MITMProxyUsername returns the username used by the upstream proxy of the socks proxy.
+func (a *Agent) MITMProxyUsername() string {
+	return a.cfg.MITMHTTPProxyUsername
+}
+
+// MITMProxyPassword returns the username used by the upstream proxy of the socks proxy.
+func (a *Agent) MITMProxyPassword() string {
+	return a.cfg.MITMHTTPProxyPassword
+}
+
+// MITMProxyDomain returns the username used by the upstream proxy of the socks proxy.
+func (a *Agent) MITMProxyDomain() string {
+	return a.cfg.MITMHTTPProxyDomain
+}
+
 // HTTPProxy returns the proxy provided by the configuration.
 func (a *Agent) HTTPProxy() *url.URL {
 	if a.cfg.SocksCustomProxy != nil {
