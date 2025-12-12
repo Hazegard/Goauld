@@ -207,7 +207,7 @@ type AgentConfig struct {
 
 	MITMHTTPProxyUsername string `default:"${_mitm_http_proxy_username}" name:"mitm-http-proxy-username" yaml:"mitm-http-proxy-username" optional:"" help:"Username for the MITM HTTP upstream proxy."`
 	MITMHTTPProxyPassword string `default:"${_mitm_http_proxy_password}" name:"mitm-http-proxy-password" yaml:"mitm-http-proxy-password" optional:"" help:"Password for the MITM HTTP upstream proxy."`
-	MITMHTTPProxyDomain   string `default:"${_mitm_http_proxy_domain}" name:"mitm-http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain for the MITM HTTP upstream proxy."`
+	MITMHTTPProxyDomain   string `default:"${_mitm_http_proxy_domain}" name:"mitm-http-proxy-domain" yaml:"mitm-http-proxy-domain" optional:"" help:"Domain for the MITM HTTP upstream proxy."`
 
 	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured)."`
 	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username for the proxy server."`

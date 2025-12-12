@@ -47,11 +47,23 @@ socks: true
 # Enable the HTTP proxy service.
 http: true
 
+# Enable the MITM HTTP proxy service.
+mitm-http: false
+
 # Enable the WireGuard service.
 wg: false
 
 # Enable the Relay service.
 relay: false
+
+# Username for the MITM HTTP upstream proxy.
+mitm-http-proxy-username: ""
+
+# Password for the MITM HTTP upstream proxy.
+mitm-http-proxy-password: ""
+
+# Domain for the MITM HTTP upstream proxy.
+mitm-http-proxy-domain: ""
 
 # Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured).
 proxy: ""

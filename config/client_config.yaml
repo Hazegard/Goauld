@@ -50,12 +50,16 @@ ssh:
   socks: true
   #Forward the agent's HTTP proxy to the local host.
   http: true
+  #Forward the agent's HTTP MITM proxy to the local host.
+  http-mitm: true
   #Forward the agent's WireGuard interface to the local host.
   wg: true
   #Local port to bind the SOCKS proxy.
   socks-port: 1080
   #Local port to bind the HTTP proxy.
   http-port: 3128
+  #Local port to bind the HTTP MITM proxy.
+  http-mitm-port: 3129
   #Local port to bind the WireGuard proxy.
   wg-port: 51820
   #Connect directly to the agent’s SSH service.

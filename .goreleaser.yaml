@@ -77,8 +77,13 @@ env:
   - AGENT__SSHD_ENABLED={{ .Env.AGENT__SSHD_ENABLED }}
   - AGENT__SOCKS_ENABLED={{ .Env.AGENT__SOCKS_ENABLED }}
   - AGENT__HTTP_PROXY_ENABLED={{ .Env.AGENT__HTTP_PROXY_ENABLED }}
+  - AGENT__MITM_HTTP_PROXY_ENABLED={{ .Env.AGENT__MITM_HTTP_PROXY_ENABLED }}
   - AGENT__WG_ENABLED={{ .Env.AGENT__WG_ENABLED }}
   - AGENT__RELAY_ENABLED={{ .Env.AGENT__RELAY_ENABLED }}
+
+  - AGENT__MITM_HTTP_PROXY_USERNAME={{ .Env.AGENT__MITM_HTTP_PROXY_USERNAME }}
+  - AGENT__MITM_HTTP_PROXY_PASSWORD={{ .Env.AGENT__MITM_HTTP_PROXY_PASSWORD }}
+  - AGENT__MITM_HTTP_PROXY_DOMAIN={{ .Env.AGENT__MITM_HTTP_PROXY_DOMAIN }}
 
   - AGENT__PROXY={{ .Env.AGENT__PROXY }}
   - AGENT__PROXY_USERNAME={{ .Env.AGENT__PROXY_USERNAME }}
@@ -153,9 +158,11 @@ env:
   - CLIENT__SAVE_STATIC_PASSWORD={{ .Env.CLIENT__SAVE_STATIC_PASSWORD }}
   - CLIENT__SSH_SOCKS={{ .Env.CLIENT__SSH_SOCKS }}
   - CLIENT__SSH_HTTP={{ .Env.CLIENT__SSH_HTTP }}
+  - CLIENT__SSH_HTTP_MITM={{ .Env.CLIENT__SSH_HTTP_MITM }}
   - CLIENT__SSH_WG={{ .Env.CLIENT__SSH_WG }}
   - CLIENT__SSH_LOCAL_SOCKS_PORT={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}
   - CLIENT__SSH_LOCAL_HTTP_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}
+  - CLIENT__SSH_LOCAL_HTTP_MITM_PORT={{ .Env.CLIENT__SSH_LOCAL_HTTP_MITM_PORT }}
   - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
   - CLIENT__SSH_SSH={{ .Env.CLIENT__SSH_SSH }}
   - CLIENT__SSH_PRINT={{ .Env.CLIENT__SSH_PRINT }}
@@ -366,8 +373,13 @@ builds:
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._mitm_http_proxy_enabled={{ .Env.AGENT__MITM_HTTP_PROXY_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__RELAY_ENABLED") }} -X Goauld/agent/config._relay_enabled={{ .Env.AGENT__RELAY_ENABLED }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._mitm_http_proxy_username={{ .Env.AGENT__MITM_HTTP_PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._mitm_http_proxy_password={{ .Env.AGENT__MITM_HTTP_PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._mitm_http_proxy_domain={{ .Env.AGENT__MITM_HTTP_PROXY_DOMAIN }}{{end}}'
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
@@ -488,8 +500,13 @@ builds:
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._mitm_http_proxy_enabled={{ .Env.AGENT__MITM_HTTP_PROXY_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__RELAY_ENABLED") }} -X Goauld/agent/config._relay_enabled={{ .Env.AGENT__RELAY_ENABLED }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._mitm_http_proxy_username={{ .Env.AGENT__MITM_HTTP_PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._mitm_http_proxy_password={{ .Env.AGENT__MITM_HTTP_PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._mitm_http_proxy_domain={{ .Env.AGENT__MITM_HTTP_PROXY_DOMAIN }}{{end}}'
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
@@ -617,8 +634,13 @@ builds:
       - '{{ if (index .Env "AGENT__SSHD_ENABLED") }} -X Goauld/agent/config._sshd_enabled={{ .Env.AGENT__SSHD_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_ENABLED") }} -X Goauld/agent/config._socks_enabled={{ .Env.AGENT__SOCKS_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._http_proxy_enabled={{ .Env.AGENT__HTTP_PROXY_ENABLED }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_ENABLED") }} -X Goauld/agent/config._mitm_http_proxy_enabled={{ .Env.AGENT__MITM_HTTP_PROXY_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_ENABLED") }} -X Goauld/agent/config._wg_enabled={{ .Env.AGENT__WG_ENABLED }}{{end}}'
       - '{{ if (index .Env "AGENT__RELAY_ENABLED") }} -X Goauld/agent/config._relay_enabled={{ .Env.AGENT__RELAY_ENABLED }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._mitm_http_proxy_username={{ .Env.AGENT__MITM_HTTP_PROXY_USERNAME }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._mitm_http_proxy_password={{ .Env.AGENT__MITM_HTTP_PROXY_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._mitm_http_proxy_domain={{ .Env.AGENT__MITM_HTTP_PROXY_DOMAIN }}{{end}}'
 
       - '{{ if (index .Env "AGENT__PROXY") }} -X Goauld/agent/config._proxy={{ .Env.AGENT__PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_USERNAME") }} -X Goauld/agent/config._proxy_username={{ .Env.AGENT__PROXY_USERNAME }}{{end}}'
@@ -729,9 +751,11 @@ builds:
 
       - '{{ if (index .Env "CLIENT__SSH_SOCKS") }} -X main._ssh_socks={{ .Env.CLIENT__SSH_SOCKS }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_HTTP") }} -X main._ssh_http={{ .Env.CLIENT__SSH_HTTP }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_HTTP_MITM") }} -X main._ssh_http_mitm={{ .Env.CLIENT__SSH_HTTP_MITM }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_WG") }} -X main._ssh_wg={{ .Env.CLIENT__SSH_WG }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_LOCAL_SOCKS_PORT") }} -X main._ssh_local_socks_port={{ .Env.CLIENT__SSH_LOCAL_SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_LOCAL_HTTP_PORT") }} -X main._ssh_local_http_port={{ .Env.CLIENT__SSH_LOCAL_HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__SSH_LOCAL_HTTP_MITM_PORT") }} -X main._ssh_local_http_mitm_port={{ .Env.CLIENT__SSH_LOCAL_HTTP_MITM_PORT }}{{end}}'
       - '{{ if (index .Env "CLIENT__WG_PORT") }} -X main._wg_port={{ .Env.CLIENT__WG_PORT }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_SSH") }} -X main._ssh_ssh={{ .Env.CLIENT__SSH_SSH }}{{end}}'
       - '{{ if (index .Env "CLIENT__SSH_PRINT") }} -X main._ssh_print={{ .Env.CLIENT__SSH_PRINT }}{{end}}'
