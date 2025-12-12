@@ -33,6 +33,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20
 	github.com/miekg/dns v1.1.68
 	github.com/pkg/sftp v1.13.10
+	github.com/iamacarpet/go-winpty v1.0.4
 	github.com/prometheus-community/pro-bing v0.7.0
 	github.com/quic-go/quic-go v0.57.1
 	github.com/rs/zerolog v1.34.0
