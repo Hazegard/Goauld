@@ -45,7 +45,7 @@ func InitMITMHTTPProxy(u string, p string, d string) (*MITMHTTPProxy, error) {
 	proxy.Proxy.Logger = &proxyLogger
 
 	sspiTransport := &SSPITransport{
-		Base:                NewTransportProxy(),
+		Base:                ProxyUsingHttpProxy(),
 		Domain:              proxy.Domain,
 		Username:            proxy.Username,
 		Password:            proxy.Password,

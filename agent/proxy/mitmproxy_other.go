@@ -19,6 +19,6 @@ type MITMHTTPProxy struct {
 	Domain   string
 }
 
-func InitMITMHTTPProxy(u string, p string, d string) (*MITMHTTPProxy, error) {
+func InitMITMHTTPProxy(_ string, _ string, _ string) (*MITMHTTPProxy, error) {
 	return nil, errors.New("not implemented")
 }

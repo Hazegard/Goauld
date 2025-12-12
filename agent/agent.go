@@ -364,6 +364,7 @@ func run() globalcontext.CancelReason {
 			httpProxy, err := proxy.InitMITMHTTPProxy(config.Get().HTTPProxyUsername(), config.Get().MITMProxyPassword(), config.Get().MITMProxyDomain())
 			if err != nil {
 				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy")
+
 				return
 			}
 

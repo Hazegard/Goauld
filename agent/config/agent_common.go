@@ -116,6 +116,7 @@ func (a *Agent) MITMHTTPProxyEnabled() bool {
 	if runtime.GOOS != "windows" {
 		return false
 	}
+
 	return a.cfg.MITMHTTP
 }
 

@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -117,4 +118,17 @@ func ProxyTransport(tr *http.Transport) http.RoundTripper {
 		rt: tr,
 		ua: UA,
 	}
+}
+
+func ProxyUsingHttpProxy() http.RoundTripper {
+	proxyUrl, _ := url.Parse(fmt.Sprintf("http://localhost:%d", config.Get().RemoteForwardedHTTPProxyPort()))
+	internalProxy := NewProxyDialer(proxyUrl, "", "", "")
+
+	tr := &http.Transport{
+		DialContext: internalProxy,
+	}
+	tr.TLSClientConfig = NewTLSConfig()
+	tr.ForceAttemptHTTP2 = false
+
+	return tr
 }
