@@ -179,13 +179,14 @@ function UpdateContent(){
           print
       }
   }
-  ' "$FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$FILE"
+  ' "$FILE" | sed 's/SERVER__ACCESS_TOKEN={{ .Env.SERVER__ACCESS_TOKEN }}/SERVER__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}/g' | sed 's/CLIENT__ACCESS_TOKEN={{ .Env.CLIENT__ACCESS_TOKEN }}/CLIENT__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}/g' > "$TEMP_FILE" && mv "$TEMP_FILE" "$FILE"
 
   echo "Content replaced successfully in $FILE"
 }
 
 UpdateContent "ENV" ./.goreleaser.yaml "$GORELEASER_ENV"
 UpdateContent "SERVER" ./.goreleaser.yaml "$GORELEASER_FLAGS_SERVER"
+
 UpdateContent "CLIENT" ./.goreleaser.yaml "$GORELEASER_FLAGS_CLIENT"
 UpdateContent "AGENT" ./.goreleaser.yaml "$GORELEASER_FLAGS_AGENT"
 
