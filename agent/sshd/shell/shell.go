@@ -10,20 +10,10 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/aymanbagabas/go-pty"
 	"github.com/charmbracelet/ssh"
-	"github.com/iamacarpet/go-winpty"
 )
-
-func hasConPTY() bool {
-	kernel32 := syscall.NewLazyDLL("kernel32.dll")
-	createPseudoConsole := kernel32.NewProc("CreatePseudoConsole")
-
-	// If the symbol does not exist, ConPTY is not available
-	return createPseudoConsole.Find() == nil
-}
 
 // GivePty sets up a pseudo-terminal (PTY) for the given SSH session.
 // It enables interaction with a shell (e.g., bash) through the session.
@@ -43,8 +33,7 @@ func GivePty(globalCtx context.Context, s ssh.Session, c []string, rawCommand st
 	// Get pty information
 	ptyReq, winCh, isPty := s.Pty()
 	if isPty {
-
-		if !hasConPTY() {
+		if isLegacyWindows() {
 			if len(c) == 0 {
 				c := getShell()
 				rawCommand = strings.Join(c.Cli(), " ")
@@ -53,8 +42,10 @@ func GivePty(globalCtx context.Context, s ssh.Session, c []string, rawCommand st
 			err := runWithWinPTY(s, rawCommand, winCh)
 			if err != nil {
 				log.Error().Err(err).Msg("error in GivePty")
+
 				return err
 			}
+
 			return nil
 		}
 		// Extract the PTY request and check if the session requested a PTY.
@@ -260,37 +251,4 @@ func getShellCmd(cmds []Command) Command {
 	}
 
 	return Command{}
-}
-
-func runWithWinPTY(s ssh.Session, cmd string, winCh <-chan ssh.Window) error {
-
-	Env := append(os.Environ(),
-		"PLATFORM="+strings.ToLower(runtime.GOOS),
-		"USER="+s.User(),
-		"LANG=en_US.UTF-8",
-	)
-	p, err := winpty.OpenWithOptions(winpty.Options{
-		Command: cmd,
-		Env:     Env,
-	})
-	if err != nil {
-		return err
-	}
-	defer p.Close()
-
-	// SSH → winpty
-	go io.Copy(p.StdIn, s)
-
-	// winpty → SSH
-	go io.Copy(s, p.StdOut)
-
-	// Resize handling
-	go func() {
-		for win := range winCh {
-			p.SetSize(uint32(win.Width), uint32(win.Height))
-		}
-	}()
-
-	<-s.Context().Done()
-	return nil
 }

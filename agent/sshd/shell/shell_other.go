@@ -3,9 +3,12 @@
 package shell
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/charmbracelet/ssh"
 )
 
 // ShellParam the param used to provide a shell command as a string.
@@ -124,3 +127,11 @@ func lookPath(binaryName Command, path string) (Command, error) {
 	}
 }
 */
+
+func isLegacyWindows() bool {
+	return false
+}
+
+func runWithWinPTY(_ ssh.Session, _ string, _ <-chan ssh.Window) error {
+	return errors.New("windows not supported")
+}

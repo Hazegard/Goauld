@@ -183,85 +183,85 @@ var (
 
 // AgentConfig the agent configuration.
 type AgentConfig struct {
-	AgePubKey string `default:"${_agePubKey}" name:"age-pubkey" yaml:"age-pubkey" short:"A" help:"Age public key associated with the server. Must match the server’s public key."`
+	AgePubKey string `default:"${_agePubKey}" group:"Agent configuration:" name:"age-pubkey" yaml:"age-pubkey" short:"A" help:"Age public key associated with the server. Must match the server’s public key."`
 
-	Server             string   `default:"${_server}" short:"s" name:"server" yaml:"server" optional:"" help:"Control HTTP server to connect to."`
-	SSHServer          string   `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH server used for direct SSH connections."`
-	QuicServer         string   `default:"${_quic_domain}" short:"Q" name:"quic-domain" yaml:"quic-domain" optional:"" help:"QUIC domain used to tunnel traffic."`
-	TLSServer          string   `default:"${_tls_server}" short:"T" name:"tls-server" yaml:"tls-server" optional:"" help:"TLS server used for SSH-over-TLS connections."`
-	DNSServer          []string `default:"${_dns_server}" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"DNS servers used for SSH-over-DNS connections. Use 'system' to include the system DNS servers."`
-	DNSServerDomain    string   `default:"${_dns_domain}" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
-	DNSServerDomainAlt string   `default:"${_dns_domain_alt}" name:"dns-domain-alt" yaml:"dns-domain-alt" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
+	Server             string   `default:"${_server}" group:"Control server configuration:" short:"s" name:"server" yaml:"server" optional:"" help:"Control HTTP server to connect to."`
+	SSHServer          string   `default:"${_ssh_server}" group:"Control server configuration:" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH server used for direct SSH connections."`
+	QuicServer         string   `default:"${_quic_domain}" group:"Control server configuration:" short:"Q" name:"quic-domain" yaml:"quic-domain" optional:"" help:"QUIC domain used to tunnel traffic."`
+	TLSServer          string   `default:"${_tls_server}" group:"Control server configuration:" short:"T" name:"tls-server" yaml:"tls-server" optional:"" help:"TLS server used for SSH-over-TLS connections."`
+	DNSServer          []string `default:"${_dns_server}" group:"Control server configuration:" short:"d" name:"dns-server" yaml:"dns-server" optional:"" help:"DNS servers used for SSH-over-DNS connections. Use 'system' to include the system DNS servers."`
+	DNSServerDomain    string   `default:"${_dns_domain}" group:"Control server configuration:" short:"N" name:"dns-domain" yaml:"dns-domain" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
+	DNSServerDomainAlt string   `default:"${_dns_domain_alt}" group:"Control server configuration:" name:"dns-domain-alt" yaml:"dns-domain-alt" optional:"" help:"DNS domain used to tunnel SSH-over-DNS traffic."`
 
-	LocalSSHPassword string `default:"${_shared_password}" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"Password for local SSH access. If empty, a random password is generated automatically."`
-	PrivatePassword  string `default:"${_password_cli}" short:"p" name:"password" yaml:"password" optional:"" help:"Password required to access the agent."`
-	DisablePassword  bool   `default:"${_disable_password}" name:"disable-password" yaml:"disable-password" optional:"" help:"Disable the local password generation if no static password is provided."`
-	Name             string `default:"${_name}" name:"name" yaml:"name" optional:"" help:"Friendly name to identify the agent (default: 'user@hostname')."`
+	LocalSSHPassword string `default:"${_shared_password}" group:"Agent configuration:" short:"P" name:"shared-password" yaml:"shared-password" optional:"" hidden:"" help:"Password for local SSH access. If empty, a random password is generated automatically."`
+	PrivatePassword  string `default:"${_password_cli}" group:"Agent configuration:" short:"p" name:"password" yaml:"password" optional:"" help:"Password required to access the agent."`
+	DisablePassword  bool   `default:"${_disable_password}" group:"Agent configuration:" name:"disable-password" yaml:"disable-password" optional:"" help:"Disable the local password generation if no static password is provided."`
+	Name             string `default:"${_name}" name:"name" group:"Agent configuration:" yaml:"name" optional:"" help:"Friendly name to identify the agent (default: 'user@hostname')."`
 
-	Sshd     bool `default:"${_sshd_enabled}" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Enable the SSHD service."`
-	Socks    bool `default:"${_socks_enabled}" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Enable the SOCKS proxy service."`
-	HTTP     bool `default:"${_http_proxy_enabled}" name:"http" yaml:"http" optional:"" negatable:"" help:"Enable the HTTP proxy service."`
-	MITMHTTP bool `default:"${_mitm_http_proxy_enabled}" name:"mitm-http" yaml:"mitm-http" optional:"" negatable:"" help:"Enable the MITM HTTP proxy service."`
-	WG       bool `default:"${_wg_enabled}" name:"wg" yaml:"wg" optional:"" negatable:"" help:"Enable the WireGuard service."`
-	Relay    bool `default:"${_relay_enabled}" name:"relay" yaml:"relay" optional:"" negatable:"" help:"Enable the Relay service."`
+	Sshd     bool `default:"${_sshd_enabled}" group:"Agent features:" name:"sshd" yaml:"sshd" optional:"" negatable:"" help:"Enable the SSHD service."`
+	Socks    bool `default:"${_socks_enabled}" group:"Agent features:" name:"socks" yaml:"socks" optional:"" negatable:"" help:"Enable the SOCKS proxy service."`
+	HTTP     bool `default:"${_http_proxy_enabled}" group:"Agent features:" name:"http" yaml:"http" optional:"" negatable:"" help:"Enable the HTTP proxy service."`
+	MITMHTTP bool `default:"${_mitm_http_proxy_enabled}" group:"Agent features:" name:"mitm-http" yaml:"mitm-http" optional:"" negatable:"" help:"Enable the MITM HTTP proxy service."`
+	WG       bool `default:"${_wg_enabled}" group:"Agent features:" name:"wg" yaml:"wg" optional:"" negatable:"" help:"Enable the WireGuard service."`
+	Relay    bool `default:"${_relay_enabled}" group:"Agent features:" name:"relay" yaml:"relay" optional:"" negatable:"" help:"Enable the Relay service."`
 
-	MITMHTTPProxyUsername string `default:"${_mitm_http_proxy_username}" name:"mitm-http-proxy-username" yaml:"mitm-http-proxy-username" optional:"" help:"Username for the MITM HTTP upstream proxy."`
-	MITMHTTPProxyPassword string `default:"${_mitm_http_proxy_password}" name:"mitm-http-proxy-password" yaml:"mitm-http-proxy-password" optional:"" help:"Password for the MITM HTTP upstream proxy."`
-	MITMHTTPProxyDomain   string `default:"${_mitm_http_proxy_domain}" name:"mitm-http-proxy-domain" yaml:"mitm-http-proxy-domain" optional:"" help:"Domain for the MITM HTTP upstream proxy."`
+	MITMHTTPProxyUsername string `default:"${_mitm_http_proxy_username}" group:"HTTP MITM proxy custom configuration:" name:"mitm-http-proxy-username" yaml:"mitm-http-proxy-username" optional:"" help:"Username for the MITM HTTP upstream proxy."`
+	MITMHTTPProxyPassword string `default:"${_mitm_http_proxy_password}" group:"HTTP MITM proxy custom configuration:" name:"mitm-http-proxy-password" yaml:"mitm-http-proxy-password" optional:"" help:"Password for the MITM HTTP upstream proxy."`
+	MITMHTTPProxyDomain   string `default:"${_mitm_http_proxy_domain}" group:"HTTP MITM proxy custom configuration:" name:"mitm-http-proxy-domain" yaml:"mitm-http-proxy-domain" optional:"" help:"Domain for the MITM HTTP upstream proxy."`
 
-	Proxy         *url.URL `default:"${_proxy}" name:"proxy" yaml:"proxy" optional:"" help:"Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured)."`
-	ProxyUsername string   `default:"${_proxy_username}" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username for the proxy server."`
-	ProxyPassword string   `default:"${_proxy_password}" name:"proxy-password" yaml:"proxy-password" optional:"" help:"Password for the proxy server."`
-	ProxyDomain   string   `default:"${_proxy_domain}" name:"proxy-domain" yaml:"proxy-domain" optional:"" help:"Authentication domain for the proxy server."`
+	Proxy         *url.URL `default:"${_proxy}" group:"Egress proxy configuration:" name:"proxy" yaml:"proxy" optional:"" help:"Proxy URL to use for control server connections. If omitted, the system proxy is used (if configured)."`
+	ProxyUsername string   `default:"${_proxy_username}" group:"Egress proxy configuration:" name:"proxy-username" yaml:"proxy-username" optional:"" help:"Username for the proxy server."`
+	ProxyPassword string   `default:"${_proxy_password}" group:"Egress proxy configuration:" name:"proxy-password" yaml:"proxy-password" optional:"" help:"Password for the proxy server."`
+	ProxyDomain   string   `default:"${_proxy_domain}" group:"Egress proxy configuration:" name:"proxy-domain" yaml:"proxy-domain" optional:"" help:"Authentication domain for the proxy server."`
 
-	SocksCustomProxy    *url.URL `default:"${_socks_custom_proxy}" name:"socks-custom-proxy" yaml:"socks-custom-proxy" optional:"" help:"Custom proxy used within the SOCKS proxy. Falls back to the system proxy if not set."`
-	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" name:"socks-proxy" yaml:"socks-proxy" optional:"" negatable:"" help:"Use the system proxy for all SOCKS proxy traffic."`
-	SocksProxyUsername  string   `default:"${_socks_proxy_username}" name:"socks-proxy-username" yaml:"socks-proxy-username" optional:"" help:"Username for the SOCKS upstream proxy."`
-	SocksProxyPassword  string   `default:"${_socks_proxy_password}" name:"socks-proxy-password" yaml:"socks-proxy-password" optional:"" help:"Password for the SOCKS upstream proxy."`
-	SocksProxyDomain    string   `default:"${_socks_proxy_domain}" name:"socks-proxy-domain" yaml:"socks-proxy-domain" optional:"" help:"Domain for the SOCKS upstream proxy."`
+	NoProxy bool `default:"${_no_proxy}" group:"Egress proxy configuration:" name:"no-proxy" yaml:"no-proxy" optional:"" help:"Ignore system proxy settings."`
 
-	HTTPCustomProxy   *url.URL `default:"${_http_custom_proxy}" name:"http-custom-proxy" yaml:"http-custom-proxy" optional:"" help:"Custom proxy used within the HTTP proxy. Falls back to the system proxy if not set."`
-	HTTPProxyUsername string   `default:"${_http_proxy_username}" name:"http-proxy-username" yaml:"http-proxy-username" optional:"" help:"Username for the HTTP upstream proxy."`
-	HTTPProxyPassword string   `default:"${_http_proxy_password}" name:"http-proxy-password" yaml:"http-proxy-password" optional:"" help:"Password for the HTTP upstream proxy."`
-	HTTPProxyDomain   string   `default:"${_http_proxy_domain}" name:"http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain for the HTTP upstream proxy."`
+	SocksCustomProxy    *url.URL `default:"${_socks_custom_proxy}" group:"Socks proxy custom configuration:" name:"socks-custom-proxy" yaml:"socks-custom-proxy" optional:"" help:"Custom proxy used within the SOCKS proxy. Falls back to the system proxy if not set."`
+	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" group:"Socks proxy custom configuration:" name:"socks-proxy" yaml:"socks-proxy" optional:"" negatable:"" help:"Use the system proxy for all SOCKS proxy traffic."`
+	SocksProxyUsername  string   `default:"${_socks_proxy_username}" group:"Socks proxy custom configuration:" name:"socks-proxy-username" yaml:"socks-proxy-username" optional:"" help:"Username for the SOCKS upstream proxy."`
+	SocksProxyPassword  string   `default:"${_socks_proxy_password}" group:"Socks proxy custom configuration:" name:"socks-proxy-password" yaml:"socks-proxy-password" optional:"" help:"Password for the SOCKS upstream proxy."`
+	SocksProxyDomain    string   `default:"${_socks_proxy_domain}" group:"Socks proxy custom configuration:" name:"socks-proxy-domain" yaml:"socks-proxy-domain" optional:"" help:"Domain for the SOCKS upstream proxy."`
 
-	NoProxy bool `default:"${_no_proxy}" name:"no-proxy" yaml:"no-proxy" optional:"" help:"Ignore system proxy settings."`
+	HTTPCustomProxy   *url.URL `default:"${_http_custom_proxy}" group:"HTTP proxy custom configuration:" name:"http-custom-proxy" yaml:"http-custom-proxy" optional:"" help:"Custom proxy used within the HTTP proxy. Falls back to the system proxy if not set."`
+	HTTPProxyUsername string   `default:"${_http_proxy_username}" group:"HTTP proxy custom configuration:" name:"http-proxy-username" yaml:"http-proxy-username" optional:"" help:"Username for the HTTP upstream proxy."`
+	HTTPProxyPassword string   `default:"${_http_proxy_password}" group:"HTTP proxy custom configuration:" name:"http-proxy-password" yaml:"http-proxy-password" optional:"" help:"Password for the HTTP upstream proxy."`
+	HTTPProxyDomain   string   `default:"${_http_proxy_domain}" group:"HTTP proxy custom configuration:" name:"http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain for the HTTP upstream proxy."`
 
-	RSSHPort      int `default:"${_rssh_port}" name:"rssh-port" yaml:"rssh-port" optional:"" help:"Remote SSH port to bind on the server (0 = random)."`
-	SocksPort     int `default:"${_socks_port}" name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"Remote SOCKS proxy port to bind on the server (0 = random)."`
-	HTTPProxyPort int `default:"${_http_port}" name:"http-port" yaml:"http-port" optional:"" help:"Remote HTTP proxy port to bind on the server (0 = random)."`
-	WGPort        int `default:"${_wg_port}" name:"wg-port" yaml:"wg-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
-	RelayPort     int `default:"${_relay_port}" name:"relay-port" yaml:"relay-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
+	RSSHPort      int `default:"${_rssh_port}" group:"Ports configuration:" name:"rssh-port" yaml:"rssh-port" optional:"" help:"Remote SSH port to bind on the server (0 = random)."`
+	SocksPort     int `default:"${_socks_port}" group:"Ports configuration:" name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"Remote SOCKS proxy port to bind on the server (0 = random)."`
+	HTTPProxyPort int `default:"${_http_port}" group:"Ports configuration:" name:"http-port" yaml:"http-port" optional:"" help:"Remote HTTP proxy port to bind on the server (0 = random)."`
+	WGPort        int `default:"${_wg_port}" group:"Ports configuration:" name:"wg-port" yaml:"wg-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
+	RelayPort     int `default:"${_relay_port}" group:"Ports configuration:" name:"relay-port" yaml:"relay-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
 
-	KeepAwake bool `default:"${_keepawake}" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Prevent the system from sleeping or locking."`
-	KeepAlive int  `default:"${_keepalive}" short:"K" name:"keepalive" yaml:"keepalive" optional:"" help:"Interval in seconds between keepalive messages (0 = disabled)."`
-	Verbose   int  `default:"${_verbosity}" short:"v" name:"verbose" yaml:"verbose" short:"v" optional:"" type:"counter" help:"Increase log verbosity. Repeat for more detail."`
-	Quiet     bool `default:"${_quiet}" short:"q" name:"quiet" yaml:"quiet" short:"q" optional:"" help:"Suppress all log output."`
+	KeepAwake bool `default:"${_keepawake}" group:"Agent configuration:" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Prevent the system from sleeping or locking."`
+	KeepAlive int  `default:"${_keepalive}" group:"Agent configuration:" short:"K" name:"keepalive" yaml:"keepalive" optional:"" help:"Interval in seconds between keepalive messages (0 = disabled)."`
+	Verbose   int  `default:"${_verbosity}" group:"Agent configuration:" short:"v" name:"verbose" yaml:"verbose" short:"v" optional:"" type:"counter" help:"Increase log verbosity. Repeat for more detail."`
+	Quiet     bool `default:"${_quiet}" group:"Agent configuration:" short:"q" name:"quiet" yaml:"quiet" short:"q" optional:"" help:"Suppress all log output."`
 
-	OnlyWorkingDays    bool   `default:"${_only_working_days}" name:"only-working-days" yaml:"only-working-days" optional:"" help:"Restrict agent activity to working days only."`
-	WorkingDayStart    string `default:"${_working_day_start}" name:"working-day-start" yaml:"working-day-start" optional:"" help:"Start time of the working day (e.g. '09:00')."`
-	WorkingDayEnd      string `default:"${_working_day_end}" name:"working-day-end" yaml:"working-day-end" optional:"" help:"End time of the working day (e.g. '17:00')."`
-	WorkingDayTimeZone string `default:"${_working_day_timezone}" name:"working-day-timezone" yaml:"working-day-timezone" optional:"" help:"Timezone used for working day calculations."`
+	OnlyWorkingDays    bool   `default:"${_only_working_days}" group:"Working days configuration:" name:"only-working-days" yaml:"only-working-days" optional:"" help:"Restrict agent activity to working days only."`
+	WorkingDayStart    string `default:"${_working_day_start}" group:"Working days configuration:" name:"working-day-start" yaml:"working-day-start" optional:"" help:"Start time of the working day (e.g. '09:00')."`
+	WorkingDayEnd      string `default:"${_working_day_end}" group:"Working days configuration:" name:"working-day-end" yaml:"working-day-end" optional:"" help:"End time of the working day (e.g. '17:00')."`
+	WorkingDayTimeZone string `default:"${_working_day_timezone}" group:"Working days configuration:" name:"working-day-timezone" yaml:"working-day-timezone" optional:"" help:"Timezone used for working day calculations."`
 
-	RSSHOrder  []string `default:"${_rssh_order}" short:"O" name:"rssh-order" yaml:"rssh-order" optional:"" help:"Preferred order of SSH tunnel protocols."`
-	SSHTimeout int      `default:"${_rssh_timeout}" name:"ssh-timeout" yaml:"ssh-timeout" optional:"" help:"Timeout in seconds to wait for each SSH tunnel attempt (0 = unlimited)."`
+	RSSHOrder  []string `default:"${_rssh_order}" group:"SSH configuration:" short:"O" name:"rssh-order" yaml:"rssh-order" optional:"" help:"Preferred order of SSH tunnel protocols."`
+	SSHTimeout int      `default:"${_rssh_timeout}" group:"SSH configuration:"  name:"ssh-timeout" yaml:"ssh-timeout" optional:"" help:"Timeout in seconds to wait for each SSH tunnel attempt (0 = unlimited)."`
 
-	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" short:"R" name:"rpf" yaml:"rpf" optional:""  help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). Use 0 for a random remote port."`
+	RemotePortForwarding []ssh.RemotePortForwarding `default:"${_remote_port_forwarding}" group:"SSH configuration:" group:"SSH configuration"  short:"R" name:"rpf" yaml:"rpf" optional:""  help:"Ports to forward to the server (REMOTE_PORT[:LOCAL_IP]:LOCAL_PORT). Use 0 for a random remote port."`
 
-	MaxRetries int `default:"${_max_retries}" short:"M" name:"max-retries" yaml:"max-retries" help:"Maximum number of connection retries before giving up."`
+	MaxRetries int `default:"${_max_retries}" group:"Agent configuration:" short:"M" name:"max-retries" yaml:"max-retries" help:"Maximum number of connection retries before giving up."`
 
-	Version        bool   `default:"${_version}" short:"V" name:"version" yaml:"version" help:"Show version information and exit."`
-	GenerateConfig bool   `default:"${_generate_config}" name:"generate-config" yaml:"generate-config" help:"Generate a configuration file from the current settings."`
-	ConfigFile     string `default:"${_config_file}" short:"c" name:"config-file" yaml:"config-file" optional:"" help:"Path to the configuration file to use."`
+	Version        bool   `default:"${_version}" group:"Agent configuration:"  short:"V" name:"version" yaml:"version" help:"Show version information and exit."`
+	GenerateConfig bool   `default:"${_generate_config}" group:"Agent configuration:"  name:"generate-config" yaml:"generate-config" help:"Generate a configuration file from the current settings."`
+	ConfigFile     string `default:"${_config_file}" group:"Agent configuration:"  short:"c" name:"config-file" yaml:"config-file" optional:"" help:"Path to the configuration file to use."`
 
-	Background       bool `default:"${_background}" short:"B" name:"background" yaml:"background" negatable:"" optional:"" help:"Run the agent in the background."`
+	Background       bool `default:"${_background}" group:"Agent configuration:"  short:"B" name:"background" yaml:"background" negatable:"" optional:"" help:"Run the agent in the background."`
 	HiddenBackground bool `default:"${_hidden_background}" name:"hidden-background" yaml:"hidden-background" hidden:"" negatable:"" optional:"" help:"Run the agent in hidden background mode."`
 
-	CustomDNSCommand string `default:"${_custom_dns_command}" name:"custom-dns-command" yaml:"custom-dns-command" help:"System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.\n Powershell example: \"((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '\x00' -replace '\\s+', '\x00' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )\"\n Linux example:\"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p\"."`
+	CustomDNSCommand string `default:"${_custom_dns_command}" group:"Agent configuration:"  name:"custom-dns-command" yaml:"custom-dns-command" help:"System command used to perform SSH over DNS when raw DNS queries are blocked. The provided command is responsible for performing the DNS query and returning the result as raw bytes.\n Powershell example: \"((Resolve-DnsName -Type TXT -Server 127.0.0.1 '%s')[0].Strings -join '\x00' -replace '\\s+', '\x00' -split '..' | ForEach-Object { [Convert]::ToByte($_,16) } )\"\n Linux example:\"dig +short +unknownformat -t TXT '%s' @127.0.0.1 | head -n1 | cut -d ' ' -f3- | tr -d ' '  | xxd -r -p\"."`
 
-	KillSwitch int `default:"${_killswitch}" name:"kill-switch" yaml:"kill-switch" help:"Number of days before the agent self-terminates (0 = disabled)."`
+	KillSwitch int `default:"${_killswitch}" group:"Agent configuration:"  name:"kill-switch" yaml:"kill-switch" help:"Number of days before the agent self-terminates (0 = disabled)."`
 
-	RelayAddr string `default:"${_relay_addr}" name:"relay-addr" yaml:"relay-addr" help:"Use another agent to relay the connection to the server."`
+	RelayAddr string `default:"${_relay_addr}" group:"Agent configuration:"  name:"relay-addr" yaml:"relay-addr" help:"Use another agent to relay the connection to the server."`
 
 	Remaining []string `arg:"" name:"remaining" yaml:"remaining" passthrough:"" optional:"" hidden:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
 }
