@@ -55,16 +55,19 @@ func (tun *netTun) acceptTCP(req *tcp.ForwarderRequest) {
 
 		return
 	}
+	defer outbound.Close()
 
 	var wq waiter.Queue
 	ep, tcpErr := req.CreateEndpoint(&wq)
 	if tcpErr != nil {
 		log.Debug().Msgf("req.CreateEndpoint() = %v", tcpErr)
-		req.Complete(false)
+		req.Complete(true)
 
 		return
 	}
+	req.Complete(false)
 	conn := gonet.NewTCPConn(&wq, ep)
+	defer conn.Close()
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -86,5 +89,5 @@ func (tun *netTun) cpy(wg *sync.WaitGroup, dst, src net.Conn) {
 	// Set a deadline for the ReadOperation so that we don't
 	// wait forever for a dst that might not respond on
 	// a resonable amount of time.
-	dst.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+	_ = dst.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 }
