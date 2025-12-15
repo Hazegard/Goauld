@@ -77,6 +77,9 @@ proxy-password: ""
 # Authentication domain for the proxy server.
 proxy-domain: ""
 
+# Ignore system proxy settings.
+no-proxy: false
+
 # Custom proxy used within the SOCKS proxy. Falls back to the system proxy if not set.
 socks-custom-proxy: ""
 
@@ -103,9 +106,6 @@ http-proxy-password: ""
 
 # Domain for the HTTP upstream proxy.
 http-proxy-domain: ""
-
-# Ignore system proxy settings.
-no-proxy: false
 
 # Remote SSH port to bind on the server (0 = random).
 rssh-port: 0

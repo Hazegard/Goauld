@@ -30,12 +30,6 @@ dns-listen-addr: :53
 # Address and port to bind for QUIC connections (port 0 = random).
 quic-listen-addr: :443
 
-# Increase log verbosity. Repeat for more detail.
-verbose: 0
-
-# Suppress all log output.
-quiet: false
-
 # Enable TLS support.
 tls: true
 
@@ -75,6 +69,12 @@ binaries-basic-auth: username:password
 
 # Filesystem path where agent binaries are stored.
 binaries-path-location: ./binaries
+
+# Increase log verbosity. Repeat for more detail.
+verbose: 0
+
+# Suppress all log output.
+quiet: false
 
 # Show version information and exit.
 version: false

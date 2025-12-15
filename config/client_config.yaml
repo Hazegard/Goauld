@@ -40,6 +40,9 @@ prompt: false
 # Save the prompted password in the configuration file.
 save: false
 
+# enable SSH control master to reuse SSH connection.
+control-master: false
+
 # Connect to an agent via SSH.
 #  This command supports SSH cli flags, however, these flags must be placed at the end of the command line, e.g:
 #  $ ${AppName} ssh [TEALC OPTIONS] AGENT [SSH OPTIONS]

@@ -36,15 +36,12 @@ env:
   - SERVER__DNS_LISTEN_ADDR={{ .Env.SERVER__DNS_LISTEN_ADDR }}
   - SERVER__QUIC_LISTEN_ADDR={{ .Env.SERVER__QUIC_LISTEN_ADDR }}
 
-  - SERVER__VERBOSITY={{ .Env.SERVER__VERBOSITY }}
-  - SERVER__QUIET={{ .Env.SERVER__QUIET }}
-
   - SERVER__TLS={{ .Env.SERVER__TLS }}
   - SERVER__TLS_KEY={{ .Env.SERVER__TLS_KEY }}
   - SERVER__TLS_CERT={{ .Env.SERVER__TLS_CERT }}
   - SERVER__QUIC={{ .Env.SERVER__QUIC }}
-
   - SERVER__DNS={{ .Env.SERVER__DNS }}
+
   - SERVER__NO_DB={{ .Env.SERVER__NO_DB }}
   - SERVER__DB_NAME={{ .Env.SERVER__DB_NAME }}
 
@@ -55,6 +52,8 @@ env:
   - SERVER__BINARIES_BASICAUTH={{ .Env.SERVER__BINARIES_BASICAUTH }}
   - SERVER__BINARIES_PATH={{ .Env.SERVER__BINARIES_PATH }}
 
+  - SERVER__VERBOSITY={{ .Env.SERVER__VERBOSITY }}
+  - SERVER__QUIET={{ .Env.SERVER__QUIET }}
   - SERVER__VERSION={{ .Env.SERVER__VERSION }}
   - SERVER__GENERATE_CONFIG={{ .Env.SERVER__GENERATE_CONFIG }}
   - SERVER__CONFIG_FILE={{ .Env.SERVER__CONFIG_FILE }}
@@ -90,6 +89,8 @@ env:
   - AGENT__PROXY_PASSWORD={{ .Env.AGENT__PROXY_PASSWORD }}
   - AGENT__PROXY_DOMAIN={{ .Env.AGENT__PROXY_DOMAIN }}
 
+  - AGENT__NO_PROXY={{ .Env.AGENT__NO_PROXY }}
+
   - AGENT__SOCKS_CUSTOM_PROXY={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}
   - AGENT__SOCKS_USE_SYSTEM_PROXY={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}
   - AGENT__SOCKS_PROXY_USERNAME={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}
@@ -100,8 +101,6 @@ env:
   - AGENT__HTTP_PROXY_USERNAME={{ .Env.AGENT__HTTP_PROXY_USERNAME }}
   - AGENT__HTTP_PROXY_PASSWORD={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}
   - AGENT__HTTP_PROXY_DOMAIN={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}
-
-  - AGENT__NO_PROXY={{ .Env.AGENT__NO_PROXY }}
 
   - AGENT__RSSH_PORT={{ .Env.AGENT__RSSH_PORT }}
   - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
@@ -296,15 +295,12 @@ builds:
       - '{{ if (index .Env "SERVER__DNS_LISTEN_ADDR") }} -X Goauld/server/config._dns_listen_addr={{ .Env.SERVER__DNS_LISTEN_ADDR }}{{end}}'
       - '{{ if (index .Env "SERVER__QUIC_LISTEN_ADDR") }} -X Goauld/server/config._quic_listen_addr={{ .Env.SERVER__QUIC_LISTEN_ADDR }}{{end}}'
 
-      - '{{ if (index .Env "SERVER__VERBOSITY") }} -X Goauld/server/config._verbosity={{ .Env.SERVER__VERBOSITY }}{{end}}'
-      - '{{ if (index .Env "SERVER__QUIET") }} -X Goauld/server/config._quiet={{ .Env.SERVER__QUIET }}{{end}}'
-
       - '{{ if (index .Env "SERVER__TLS") }} -X Goauld/server/config._tls={{ .Env.SERVER__TLS }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_KEY") }} -X Goauld/server/config._tls_key={{ .Env.SERVER__TLS_KEY }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_CERT") }} -X Goauld/server/config._tls_cert={{ .Env.SERVER__TLS_CERT }}{{end}}'
       - '{{ if (index .Env "SERVER__QUIC") }} -X Goauld/server/config._quic={{ .Env.SERVER__QUIC }}{{end}}'
-
       - '{{ if (index .Env "SERVER__DNS") }} -X Goauld/server/config._dns={{ .Env.SERVER__DNS }}{{end}}'
+
       - '{{ if (index .Env "SERVER__NO_DB") }} -X Goauld/server/config._no_db={{ .Env.SERVER__NO_DB }}{{end}}'
       - '{{ if (index .Env "SERVER__DB_NAME") }} -X Goauld/server/config._db_name={{ .Env.SERVER__DB_NAME }}{{end}}'
 
@@ -315,6 +311,8 @@ builds:
       - '{{ if (index .Env "SERVER__BINARIES_BASICAUTH") }} -X Goauld/server/config._binaries_basicauth={{ .Env.SERVER__BINARIES_BASICAUTH }}{{end}}'
       - '{{ if (index .Env "SERVER__BINARIES_PATH") }} -X Goauld/server/config._binaries_path={{ .Env.SERVER__BINARIES_PATH }}{{end}}'
 
+      - '{{ if (index .Env "SERVER__VERBOSITY") }} -X Goauld/server/config._verbosity={{ .Env.SERVER__VERBOSITY }}{{end}}'
+      - '{{ if (index .Env "SERVER__QUIET") }} -X Goauld/server/config._quiet={{ .Env.SERVER__QUIET }}{{end}}'
       - '{{ if (index .Env "SERVER__VERSION") }} -X Goauld/server/config._version={{ .Env.SERVER__VERSION }}{{end}}'
       - '{{ if (index .Env "SERVER__GENERATE_CONFIG") }} -X Goauld/server/config._generate_config={{ .Env.SERVER__GENERATE_CONFIG }}{{end}}'
       - '{{ if (index .Env "SERVER__CONFIG_FILE") }} -X Goauld/server/config._config_file={{ .Env.SERVER__CONFIG_FILE }}{{end}}'
@@ -386,6 +384,8 @@ builds:
       - '{{ if (index .Env "AGENT__PROXY_PASSWORD") }} -X Goauld/agent/config._proxy_password={{ .Env.AGENT__PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_DOMAIN") }} -X Goauld/agent/config._proxy_domain={{ .Env.AGENT__PROXY_DOMAIN }}{{end}}'
 
+      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
+
       - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_custom_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
@@ -396,8 +396,6 @@ builds:
       - '{{ if (index .Env "AGENT__HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._http_proxy_username={{ .Env.AGENT__HTTP_PROXY_USERNAME }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._http_proxy_password={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._http_proxy_domain={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}{{end}}'
-
-      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
@@ -513,6 +511,8 @@ builds:
       - '{{ if (index .Env "AGENT__PROXY_PASSWORD") }} -X Goauld/agent/config._proxy_password={{ .Env.AGENT__PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_DOMAIN") }} -X Goauld/agent/config._proxy_domain={{ .Env.AGENT__PROXY_DOMAIN }}{{end}}'
 
+      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
+
       - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_custom_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
@@ -523,8 +523,6 @@ builds:
       - '{{ if (index .Env "AGENT__HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._http_proxy_username={{ .Env.AGENT__HTTP_PROXY_USERNAME }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._http_proxy_password={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._http_proxy_domain={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}{{end}}'
-
-      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
@@ -647,6 +645,8 @@ builds:
       - '{{ if (index .Env "AGENT__PROXY_PASSWORD") }} -X Goauld/agent/config._proxy_password={{ .Env.AGENT__PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__PROXY_DOMAIN") }} -X Goauld/agent/config._proxy_domain={{ .Env.AGENT__PROXY_DOMAIN }}{{end}}'
 
+      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
+
       - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_custom_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
@@ -657,8 +657,6 @@ builds:
       - '{{ if (index .Env "AGENT__HTTP_PROXY_USERNAME") }} -X Goauld/agent/config._http_proxy_username={{ .Env.AGENT__HTTP_PROXY_USERNAME }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_PASSWORD") }} -X Goauld/agent/config._http_proxy_password={{ .Env.AGENT__HTTP_PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PROXY_DOMAIN") }} -X Goauld/agent/config._http_proxy_domain={{ .Env.AGENT__HTTP_PROXY_DOMAIN }}{{end}}'
-
-      - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
