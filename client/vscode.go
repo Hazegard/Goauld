@@ -29,7 +29,7 @@ func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 		return err
 	}
 
-	configDir := GetConfigDir()
+	configDir := GetCacheDir()
 	userVsCode := filepath.Join(configDir, "vscode", "User")
 	log.Debug().Str("Agent", cfg.VsCode.Target).Str("ConfigDir", userVsCode).Str("Path", userVsCode).Msg("Generated User VsCode config")
 	err = os.MkdirAll(userVsCode, 0o750)
@@ -151,22 +151,6 @@ func (v VsCode) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 
 	return nil
-}
-
-func GetConfigDir() string {
-	dir, err := os.UserCacheDir()
-	if err != nil {
-		dir, err = os.Getwd()
-		if err != nil {
-			dir = os.TempDir()
-		}
-	}
-	log.Debug().Str("dir", dir).Msg("Using current directory")
-	configDir := filepath.Join(dir, "tealc")
-
-	_ = os.MkdirAll(configDir, 0o755)
-
-	return configDir
 }
 
 func CheckVsCode() error {

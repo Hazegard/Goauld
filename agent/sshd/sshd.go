@@ -58,6 +58,7 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 		RequestHandlers: map[string]ssh.RequestHandler{
 			"tcpip-forward":        forwardHandler.HandleSSHRequest,
 			"cancel-tcpip-forward": forwardHandler.HandleSSHRequest,
+			// Deprecated
 			_ssh.Copy: func(ctx ssh.Context, _ *ssh.Server, _ *gossh.Request) (bool, []byte) {
 				log.Trace().Str("Event", _ssh.Copy).Msgf("Received COPY from %s", ctx.User())
 				content, err := clipboard.Copy(ctx)
@@ -69,6 +70,7 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 
 				return true, content
 			},
+			// Deprecated
 			_ssh.Paste: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
 				log.Trace().Str("Event", _ssh.Paste).Str("Content", string(req.Payload)).Msgf("Received PASTE from %s", ctx.User())
 				err := clipboard.Paste(ctx, req.Payload)
@@ -80,18 +82,21 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 
 				return true, nil
 			},
+			// Deprecated
 			_ssh.Kill: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
 				log.Debug().Str("Event", _ssh.Kill).Str("Content", string(req.Payload)).Msgf("Received KILL from %s", ctx.User())
 				canceler.Exit("Client requested exit")
 
 				return true, nil
 			},
+			// Deprecated
 			_ssh.Restart: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
 				log.Debug().Str("Event", _ssh.Restart).Str("Content", string(req.Payload)).Msgf("Received RESTART from %s", ctx.User())
 				canceler.Exit("Client requested restart")
 
 				return true, nil
 			},
+			// Deprecated
 			_ssh.Delete: func(ctx ssh.Context, _ *ssh.Server, req *gossh.Request) (bool, []byte) {
 				log.Debug().Str("Event", _ssh.Delete).Str("Content", string(req.Payload)).Msgf("Received DELETE from %s", ctx.User())
 				canceler.Delete("Client requested restart")
@@ -103,6 +108,52 @@ func NewSshdServer(ctx context.Context, canceler *globalcontext.GlobalCanceler) 
 		ChannelHandlers: map[string]ssh.ChannelHandler{
 			"direct-tcpip": ssh.DirectTCPIPHandler,
 			"session":      ssh.DefaultSessionHandler,
+			_ssh.Copy: func(_ *ssh.Server, _ *gossh.ServerConn, newChan gossh.NewChannel, ctx ssh.Context) {
+				log.Trace().Str("Event", _ssh.Copy).Msgf("Received COPY from %s", ctx.User())
+				ch, _, err := newChan.Accept()
+				if err != nil {
+					log.Error().Err(err).Str("Handler", _ssh.Copy).Msg("ssh channel accept")
+				}
+				defer ch.Close()
+
+				content, err := clipboard.Copy(ctx)
+
+				cc := _ssh.NewChannel(ch)
+				err = cc.WriteResponse(err == nil, content)
+				if err != nil {
+					log.Error().Str("Event", _ssh.Copy).Err(err).Msg("ssh channel copy")
+				}
+			},
+			_ssh.Paste: func(_ *ssh.Server, _ *gossh.ServerConn, newChan gossh.NewChannel, ctx ssh.Context) {
+				log.Trace().Str("Event", _ssh.Paste).Msgf("Received PASTE from %s", ctx.User())
+				ch, _, err := newChan.Accept()
+				if err != nil {
+					log.Error().Err(err).Str("Handler", _ssh.Copy).Msg("ssh channel accept")
+				}
+				defer ch.Close()
+
+				cc := _ssh.NewChannel(ch)
+				payload, err := cc.ReadResponse()
+				if err != nil {
+					log.Error().Str("Event", _ssh.Paste).Err(err).Msg("ssh channel read")
+				}
+				err = clipboard.Paste(ctx, payload)
+				if err != nil {
+					log.Error().Str("Event", _ssh.Paste).Err(err).Msg("clipboard copy")
+				}
+			},
+			_ssh.Kill: func(_ *ssh.Server, _ *gossh.ServerConn, _ gossh.NewChannel, ctx ssh.Context) {
+				log.Debug().Str("Event", _ssh.Kill).Msgf("Received KILL from %s", ctx.User())
+				canceler.Exit("Client requested exit")
+			},
+			_ssh.Restart: func(_ *ssh.Server, _ *gossh.ServerConn, _ gossh.NewChannel, ctx ssh.Context) {
+				log.Debug().Str("Event", _ssh.Restart).Msgf("Received RESTART from %s", ctx.User())
+				canceler.Restart("Client requested restart")
+			},
+			_ssh.Delete: func(_ *ssh.Server, _ *gossh.ServerConn, _ gossh.NewChannel, ctx ssh.Context) {
+				log.Debug().Str("Event", _ssh.Delete).Msgf("Received DELETE from %s", ctx.User())
+				canceler.Delete("Client requested restart")
+			},
 		},
 		// Allows tcp traffic within the SSH connection
 		PasswordHandler: func(ctx ssh.Context, password string) bool {

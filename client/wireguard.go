@@ -126,7 +126,7 @@ func (s *Start) Run(clientAPI *api.API, cfg ClientConfig) error {
 		s.Ranges = s.Ranges + "," + agent.IPs
 	}
 	conf := s.GenerateWGConf(cfg, agent)
-	dir := GetConfigDir()
+	dir := GetCacheDir()
 	wgName := truncateString(strings.ReplaceAll(cfg.Wireguard.Start.Target, "@", "_"), 15)
 	p := filepath.Join(dir, wgName+".conf")
 	log.Info().Str("Path", p).Msg("Wireguard configuration generated and saved:")

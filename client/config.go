@@ -2,6 +2,7 @@ package main
 
 import (
 	"Goauld/client/compiler"
+	"Goauld/client/customssh"
 	"Goauld/client/types"
 	common2 "Goauld/common"
 	"Goauld/common/cli"
@@ -164,6 +165,7 @@ type ClientConfig struct {
 	PrivatePassword string            `default:"" short:"P" name:"password" yaml:"password" short:"P" help:"Agent private password."`
 	PromptPassword  bool              `default:"${_prompt_static_password}" short:"Q" name:"prompt" yaml:"prompt" short:"Q" yaml:"prompt" help:"Prompt for the agent's private password."`
 	SavePassword    bool              `default:"${_save_static_password}" name:"save" yaml:"save" negatable:"" help:"Save the prompted password in the configuration file."`
+	ControlMaster   bool              `default:"false" short:"M" name:"control-master" yaml:"control-master" optional:"" help:"enable SSH control master to reuse SSH connection."`
 
 	SSH       SSH       `cmd:"" name:"ssh" yaml:"ssh" help:"Connect to an agent via SSH.\n This command supports SSH cli flags, however, these flags must be placed at the end of the command line, e.g:\n $ ${AppName} ssh [TEALC OPTIONS] AGENT [SSH OPTIONS]"`
 	Socks     Socks     `cmd:"" name:"socks" yaml:"socks" help:"Expose the SOCKS proxy provided by the agent.\n $ ${AppName} socks [TEALC OPTIONS] AGENT"`
@@ -397,6 +399,15 @@ func (cfg *ClientConfig) UpdatePassConfigFile() error {
 
 // ShouldPrompt return whether the client should display a prompt.
 func (cfg *ClientConfig) ShouldPrompt(agent types.Agent) bool {
+	if cfg.ControlMaster {
+		target := GetSockDir(agent.Name)
+		socketOn, err := customssh.CheckControlSocket(target, agent.Name)
+		if err == nil && socketOn {
+			return false
+		}
+
+		return true
+	}
 	if cfg.PromptPassword {
 		return true
 	}
@@ -443,4 +454,27 @@ func (cfg *ClientConfig) GetStaticPassword() string {
 	log.Debug().Str("Agent", cfg.Pass.Agent).Msg("No static password found, trying empty static password")
 
 	return ""
+}
+
+func GetCacheDir() string {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		dir, err = os.Getwd()
+		if err != nil {
+			dir = os.TempDir()
+		}
+	}
+	log.Debug().Str("dir", dir).Msg("Using current directory")
+	configDir := filepath.Join(dir, "tealc")
+
+	_ = os.MkdirAll(configDir, 0o755)
+
+	return configDir
+}
+
+func GetSockDir(agent string) string {
+	dir := GetCacheDir()
+	target := filepath.Join(dir, agent) + ".sock"
+
+	return target
 }

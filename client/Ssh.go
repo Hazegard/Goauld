@@ -421,6 +421,10 @@ func (e *SSH) buildOuterSSHCommand(cfg ClientConfig, agent types.Agent, exePath 
 	} else {
 		proxyCmd = fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.String(), sep)
 	}
+	if cfg.ControlMaster {
+		sock := GetSockDir(agent.Name)
+		cmd.Args = append(cmd.Args, "-oControlMaster=auto", "-oControlPath="+sock, "-oControlPersist=10m")
+	}
 	cmd.Args = append(cmd.Args, proxyCmd)
 	cmd.Args = append(cmd.Args, fmt.Sprintf("%s@%s", agent.Name, agent.ID))
 	cmd.Args = append(cmd.Args, cfg.SSH.SSHArgs...)

@@ -29,16 +29,11 @@ func (reset *Reset) Run(clientAPI *api.API, cfg ClientConfig) error {
 	if err != nil {
 		return err
 	}
-	status, _, err := clientSSH.SSHClient.SendRequest(_ssh.Restart, false, nil)
+	defer clientSSH.Close()
+	_, _, err = clientSSH.SSHClient.OpenChannel(_ssh.Restart, nil)
 	if err != nil {
 		return err
 	}
-	if status {
-		log.Info().Str("Agent", cfg.Reset.Target).Msg("Agent restarted")
-
-		return nil
-	}
-	log.Error().Msgf("Failed to reset agent: %s", cfg.Reset.Target)
 
 	return nil
 
@@ -60,20 +55,15 @@ func (kill *Kill) Run(clientAPI *api.API, cfg ClientConfig) error {
 	if err != nil {
 		return err
 	}
+	defer clientSSH.Close()
 	req := _ssh.Kill
 	if kill.Delete {
 		req = _ssh.Delete
 	}
-	status, _, err := clientSSH.SSHClient.SendRequest(req, false, nil)
+	_, _, err = clientSSH.SSHClient.OpenChannel(req, nil)
 	if err != nil {
 		return err
 	}
-	if status {
-		log.Info().Str("Agent", cfg.Reset.Target).Msg("Agent killed")
-
-		return nil
-	}
-	log.Error().Msgf("Failed to kill agent: %s", cfg.Reset.Target)
 
 	return nil
 	/*err := wrap(clientAPI, cfg, kill.Target, true, false)

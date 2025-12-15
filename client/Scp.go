@@ -141,6 +141,10 @@ func (s *Scp) buildScpCommand(cfg ClientConfig, agent types.Agent, exePath strin
 	for _, opt := range s.SSHOpts {
 		cmd.Args = append(cmd.Args, "-o"+opt)
 	}
+	if cfg.ControlMaster {
+		target := GetSockDir(agent.Name)
+		cmd.Args = append(cmd.Args, "-oControlMaster=auto", "-oControlPath="+target, "-oControlPersist=10m")
+	}
 	if s.SSHConfFile != "" {
 		cmd.Args = append(cmd.Args, "-F", s.SSHConfFile)
 	}

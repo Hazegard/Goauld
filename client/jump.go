@@ -25,7 +25,11 @@ func (j *Jump) Run(clientAPI *api.API, cfg ClientConfig) error {
 		return err
 	}
 	exe = strings.ReplaceAll(exe, ` `, `\ `)
-	proxyCommand := fmt.Sprintf("%s ssh %s -W %%h:%%p", exe, j.Agent)
+	opts := ""
+	if cfg.ControlMaster {
+		opts = "-M"
+	}
+	proxyCommand := fmt.Sprintf("%s ssh %s %s -W %%h:%%p", exe, opts, j.Agent)
 	args := []string{"-oProxycommand=" + proxyCommand}
 	args = append(args, j.Args...)
 

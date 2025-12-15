@@ -2,6 +2,7 @@ package main
 
 import (
 	"Goauld/client/api"
+	"Goauld/client/customssh"
 	_ssh "Goauld/common/ssh"
 	"errors"
 	"fmt"
@@ -32,27 +33,29 @@ func (c *CustomSSH) Request() {
 }
 
 func (c *CustomSSH) Copy() ([]byte, error) {
-	status, res, err := c.SSHClient.SendRequest(_ssh.Copy, true, nil)
+	// Open the custom control channel
+	ch, _, err := c.SSHClient.OpenChannel(_ssh.Copy, nil)
 	if err != nil {
 		return nil, err
 	}
-	if !status {
-		return nil, errors.New("SSH copy failed")
-	}
+	defer ch.Close()
 
-	return res, nil
+	cc := _ssh.NewChannel(ch)
+
+	return cc.ReadResponse()
 }
 
 func (c *CustomSSH) Paste(data []byte) error {
-	status, _, err := c.SSHClient.SendRequest(_ssh.Paste, true, data)
+	// Open the custom control channel
+	ch, _, err := c.SSHClient.OpenChannel(_ssh.Paste, nil)
 	if err != nil {
 		return err
 	}
-	if !status {
-		return errors.New("SSH copy failed")
-	}
+	defer ch.Close()
 
-	return nil
+	cc := _ssh.NewChannel(ch)
+
+	return cc.WriteResponse(true, data)
 }
 
 func (c *CustomSSH) Close() error {
@@ -81,42 +84,58 @@ func (c *CustomSSH) CustomSSH(clientAPI *api.API, cfg ClientConfig, agentName st
 	if err != nil {
 		return err
 	}
-	proxyUser := agent.Name
-
-	proxyPass := GenerateServerPassword(cfg.GetStaticPassword(), agent.OneTimePassword)
-
-	proxyHost := cfg.GetSshdHost()
-	proxyPort := cfg.GetSshdPort()
-	proxy, err := proxyCommand(proxyUser, proxyPass, proxyHost, proxyPort)
-	if err != nil {
-		return err
+	if cfg.ShouldPrompt(agent) {
+		_ = cfg.Prompt(agentName)
 	}
+	if cfg.ControlMaster {
+		target := GetSockDir(agentName)
+		conn, err := net.Dial("unix", target)
+		if err != nil {
+			return fmt.Errorf("error dialing to %s: %w", target, err)
+		}
+		ncc, chans, reqs, err := customssh.NewControlClientConn(conn)
+		if err != nil {
+			return fmt.Errorf("error dialing new ssh client to %s: %w", target, err)
+		}
+		client := ssh.NewClient(ncc, chans, reqs)
 
-	c.ProxyClient = proxy
+		c.SSHClient = client
+	} else {
+		proxyUser := agent.Name
 
-	agentPort := agent.GetSSHPort()
+		proxyPass := GenerateServerPassword(cfg.GetStaticPassword(), agent.OneTimePassword)
 
-	pxyConn, err := proxy.Dial("tcp", fmt.Sprintf("%s:%s", "127.0.0.1", agentPort))
-	if err != nil {
-		return err
+		proxyHost := cfg.GetSshdHost()
+		proxyPort := cfg.GetSshdPort()
+		proxy, err := proxyCommand(proxyUser, proxyPass, proxyHost, proxyPort)
+		if err != nil {
+			return err
+		}
+
+		c.ProxyClient = proxy
+
+		agentPort := agent.GetSSHPort()
+
+		pxyConn, err := proxy.Dial("tcp", fmt.Sprintf("%s:%s", "127.0.0.1", agentPort))
+		if err != nil {
+			return err
+		}
+		c.ProxyConn = pxyConn
+
+		sshConfig := &ssh.ClientConfig{
+			User:            fmt.Sprintf("%s@%s", agent.Name, agent.ID),
+			Auth:            []ssh.AuthMethod{ssh.Password(agent.SSHPasswd)},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(), //nolint:gosec
+		}
+
+		conn, chn, req, err := ssh.NewClientConn(pxyConn, "127.0.0.1", sshConfig)
+		if err != nil {
+			return err
+		}
+		c.Conn = conn
+
+		c.SSHClient = ssh.NewClient(conn, chn, req)
 	}
-	c.ProxyConn = pxyConn
-
-	sshConfig := &ssh.ClientConfig{
-		User:            fmt.Sprintf("%s@%s", agent.Name, agent.ID),
-		Auth:            []ssh.AuthMethod{ssh.Password(agent.SSHPasswd)},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), //nolint:gosec
-	}
-
-	conn, chn, req, err := ssh.NewClientConn(pxyConn, "127.0.0.1", sshConfig)
-	if err != nil {
-		return err
-	}
-	c.Conn = conn
-
-	client := ssh.NewClient(conn, chn, req)
-
-	c.SSHClient = client
 
 	return nil
 }
