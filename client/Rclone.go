@@ -16,8 +16,8 @@ import (
 // Rclone wraps the rclone command to copy files between the host and the agent.
 type Rclone struct {
 	Target    string   `kong:"-"` // internal, not shown in help
-	Log       bool     `default:"${_scp_log}" name:"log" yaml:"log" optional:"" help:"Record the SSH session to a log file."`
-	Print     bool     `default:"${_scp_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated rclone command instead of executing it."`
+	Log       bool     `default:"${_rclone_log}" name:"log" yaml:"log" optional:"" help:"Record the SSH session to a log file."`
+	Print     bool     `default:"${_rclone_print}" name:"print" yaml:"print" negatable:"" optional:"" help:"Print the generated rclone command instead of executing it."`
 	AgentPath string   `arg:"" name:"agent" yaml:"agent" help:"AgentPath with paths that should be mounted."`
 	LocalPath string   `arg:"" name:"local-path" yaml:"local-path" help:"Local path."`
 	Args      []string `arg:"" name:"args" yaml:"args" help:"Paths to synchronize using rclone." passthrough:"" optional:""`

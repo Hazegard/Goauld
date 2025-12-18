@@ -132,6 +132,10 @@ GenConfig "client/Rsync.go" "client/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
+GenConfig "client/Rclone.go" "client/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
 
 GenConfig "client/vscode.go" "client/config.go" "main"
 echo >> "$ENV_FILE"

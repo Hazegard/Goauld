@@ -69,6 +69,12 @@ var (
 	_scp_destination = ""      //nolint:revive
 	_scp_args        = ""      //nolint:revive
 
+	_rsync_print = "false" //nolint:revive
+	_rsync_log   = "false" //nolint:revive
+
+	_rclone_print = "false" //nolint:revive
+	_rclone_log   = "false" //nolint:revive
+
 	_pass_agent = "" //nolint:revive
 	_pass_type  = "" //nolint:revive
 
@@ -128,6 +134,12 @@ var (
 		"_scp_source":      _scp_source,
 		"_scp_destination": _scp_destination,
 		"_scp_args":        _scp_args,
+
+		"_rsync_print": _rsync_print,
+		"_rsync_log":   _rsync_log,
+
+		"_rclone_print": _rclone_print,
+		"_rclone_log":   _rclone_log,
 
 		"_pass_agent": _pass_agent,
 		"_pass_type":  _pass_type,

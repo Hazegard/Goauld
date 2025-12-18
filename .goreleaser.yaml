@@ -190,8 +190,10 @@ env:
   - CLIENT__COMPILE_COMPRESS={{ .Env.CLIENT__COMPILE_COMPRESS }}
   - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
 
-  - CLIENT__SCP_LOG={{ .Env.CLIENT__SCP_LOG }}
-  - CLIENT__SCP_PRINT={{ .Env.CLIENT__SCP_PRINT }}
+  - CLIENT__RSYNC_LOG={{ .Env.CLIENT__RSYNC_LOG }}
+  - CLIENT__RSYNC_PRINT={{ .Env.CLIENT__RSYNC_PRINT }}
+  - CLIENT__RCLONE_LOG={{ .Env.CLIENT__RCLONE_LOG }}
+  - CLIENT__RCLONE_PRINT={{ .Env.CLIENT__RCLONE_PRINT }}
 
 # END Dynamic ENV
 upx:
@@ -790,8 +792,11 @@ builds:
 
 
 
-      - '{{ if (index .Env "CLIENT__SCP_LOG") }} -X main._scp_log={{ .Env.CLIENT__SCP_LOG }}{{end}}'
-      - '{{ if (index .Env "CLIENT__SCP_PRINT") }} -X main._scp_print={{ .Env.CLIENT__SCP_PRINT }}{{end}}'
+      - '{{ if (index .Env "CLIENT__RSYNC_LOG") }} -X main._rsync_log={{ .Env.CLIENT__RSYNC_LOG }}{{end}}'
+      - '{{ if (index .Env "CLIENT__RSYNC_PRINT") }} -X main._rsync_print={{ .Env.CLIENT__RSYNC_PRINT }}{{end}}'
+
+      - '{{ if (index .Env "CLIENT__RCLONE_LOG") }} -X main._rclone_log={{ .Env.CLIENT__RCLONE_LOG }}{{end}}'
+      - '{{ if (index .Env "CLIENT__RCLONE_PRINT") }} -X main._rclone_print={{ .Env.CLIENT__RCLONE_PRINT }}{{end}}'
 
 # END Dynamic CLIENT
 
