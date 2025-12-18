@@ -2,7 +2,9 @@ package main
 
 import (
 	"Goauld/client/api"
+	commonCmd "Goauld/common/cmd"
 	"Goauld/common/log"
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -23,6 +25,10 @@ type Rclone struct {
 
 func (r *Rclone) Run(clientAPI *api.API, cfg ClientConfig) error {
 
+	if len(commonCmd.CheckCommands([]string{"rclone"})) > 0 {
+		log.Error().Str("Command", "rclone").Msg("Command not found")
+		return errors.New("command not found: rclone")
+	}
 	log.Warn().Msgf("Rclone is running")
 	ok, target := ExtractRemote(r.AgentPath)
 	if !ok {
@@ -78,7 +84,7 @@ func (r *Rclone) Run(clientAPI *api.API, cfg ClientConfig) error {
 		mountOption = "nfsmount"
 	}
 
-	rsyncArgs := []string{
+	rcloneArgs := []string{
 		"--sftp-ssh",
 		strings.ReplaceAll(proxyCmd.String(), "'", "\""),
 		mountOption,
@@ -86,21 +92,21 @@ func (r *Rclone) Run(clientAPI *api.API, cfg ClientConfig) error {
 		r.LocalPath,
 	}
 
-	rsyncArgs = append(rsyncArgs, r.Args...)
-	rsyncCommand := Command{
+	rcloneArgs = append(rcloneArgs, r.Args...)
+	rcloneCommand := Command{
 		Executable: "rclone",
-		Args:       rsyncArgs,
+		Args:       rcloneArgs,
 		Env:        proxyCmd.Env,
 		Agent:      agent,
 	}
 
 	if cfg.Rclone.Print {
 		//nolint:forbidigo
-		fmt.Println(rsyncCommand.StringShell())
+		fmt.Println(rcloneCommand.StringShell())
 
 		return nil
 	}
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
-	return rsyncCommand.Execute(cfg, target, isTerminal, r.Log)
+	return rcloneCommand.Execute(cfg, target, isTerminal, r.Log)
 }
