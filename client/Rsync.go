@@ -21,7 +21,7 @@ func getRawRsyncArgs() []string {
 	isRsyncParam := false
 	params := []string{"-r", "-v", "-P"}
 	for _, arg := range os.Args {
-		if arg == "--log" {
+		if arg == "--log" || arg == "--print" {
 			continue
 		}
 		if isRsyncParam {
@@ -92,6 +92,13 @@ func (r *Rsync) Run(clientAPI *api.API, cfg ClientConfig) error {
 		Args:       rsyncArgs,
 		Env:        nil,
 		Agent:      agent,
+	}
+
+	if cfg.Rsync.Print {
+		//nolint:forbidigo
+		fmt.Println(rsyncCommand.StringShell())
+
+		return nil
 	}
 	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
