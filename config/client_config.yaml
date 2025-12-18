@@ -137,6 +137,21 @@ rsync:
   #Paths to synchronize using rsync.
   paths: []
 
+# Locally mount the target folder of the agent using rclone.
+#  $ ${AppName} rclone AGENT:/remote/path /local/path
+rclone:
+  target: ""
+  #Record the SSH session to a log file.
+  log: false
+  #Print the generated rclone command instead of executing it.
+  print: false
+  #AgentPath with paths that should be mounted.
+  agent: ""
+  #Local path.
+  local-path: ""
+  #Paths to synchronize using rclone.
+  args: []
+
 # SSH into a remote host using the agent as a jump server (similar to ssh -J option).
 # It supports arbitrary SSH flags (SSH keys, etc.) placed at the end of the command line.
 #  ${AppName} jump AGENT REMOTE_HOST [SSH_OPTIONS]

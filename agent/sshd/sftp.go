@@ -14,6 +14,7 @@ import (
 
 // SftpHandler handle sftp connections.
 func SftpHandler(sess ssh.Session) {
+	log.Info().Msg("Start SFTP session")
 	debugStream := io.Discard
 	serverOptions := []sftp.ServerOption{
 		sftp.WithDebug(debugStream),

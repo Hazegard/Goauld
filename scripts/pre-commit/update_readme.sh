@@ -117,6 +117,7 @@ UpdateBlocCode Readme.md 'CLIP SET' <(echo '$ tealc clip set --help'; COLUMNS=10
 echo 'KILL'
 # shellcheck disable=SC2016
 UpdateBlocCode Readme.md 'KILL' <(echo '$ tealc kill --help'; COLUMNS=10000 go run ./client kill --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+
 echo 'DELETE'
 # shellcheck disable=SC2016
 UpdateBlocCode Readme.md 'DELETE' <(echo '$ tealc delete --help'; COLUMNS=10000 go run ./client delete --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
@@ -132,6 +133,10 @@ UpdateBlocCode Readme.md 'WIREGUARD GENERATE' <(echo '$ tealc wireguard generate
 echo 'WIREGUARD START'
 # shellcheck disable=SC2016
 UpdateBlocCode Readme.md 'WIREGUARD START' <(echo '$ tealc wireguard start --help'; COLUMNS=10000 go run ./client wireguard start --help | cat| sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
+
+echo 'RCLONE MOUNT'
+# shellcheck disable=SC2016
+UpdateBlocCode Readme.md 'RCLONE MOUNT' <(echo '$ tealc rclone --help'; COLUMNS=10000 go run ./client rclone --help | cat | sed -n '/^Usage:/,$p' | sed "s/Goa'uld/Goauld/g" | tr -d '\000')
 
 echo 'Compile'
 # shellcheck disable=SC2016

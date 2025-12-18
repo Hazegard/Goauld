@@ -417,9 +417,9 @@ func (e *SSH) buildOuterSSHCommand(cfg ClientConfig, agent types.Agent, exePath 
 	}
 	var proxyCmd string
 	if e.Print {
-		proxyCmd = fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.InlineEnv().String(), sep)
+		proxyCmd = fmt.Sprintf("%s-oProxyCommand=%s%s", sep, innerCmd.InlineEnv().String(), sep)
 	} else {
-		proxyCmd = fmt.Sprintf("-oProxyCommand=%s%s%s", sep, innerCmd.String(), sep)
+		proxyCmd = fmt.Sprintf("%s-oProxyCommand=%s%s", sep, innerCmd.String(), sep)
 	}
 	if cfg.ControlMaster {
 		sock := GetSockDir(agent.Name)
