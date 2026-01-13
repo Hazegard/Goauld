@@ -135,7 +135,7 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 			if err != nil {
 				return nil, err
 			}
-			tlsConfig.NextProtos = []string{"http/1.1"}
+			tlsConfig.NextProtos = append([]string{"http/1.1"}, tlsConfig.NextProtos...)
 			//nolint:staticcheck,gosec // SA1019
 			tlsConfig.MinVersion = tls.VersionSSL30
 			httprouter.tlsConfig = tlsConfig
@@ -144,8 +144,9 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 			if err != nil {
 				return nil, err
 			}
-			quicConfig.NextProtos = []string{"quic", "ssh", "h3"}
+			quicConfig.NextProtos = append([]string{"quic", "ssh", "h3"}, tlsConfig.NextProtos...)
 			quicConfig.MinVersion = tls.VersionTLS13
+			certmagic.DefaultACME.DisableHTTPChallenge = false
 
 			httprouter.server3.TLSConfig = quicConfig
 		}
