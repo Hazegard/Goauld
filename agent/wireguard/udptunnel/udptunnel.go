@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// HandleUDP https://github.com/jpillora/chisel/blob/d56938d7a26e5ee9f50f390822a6a334ad8fd70d/share/tunnel/tunnel_out_ssh_udp.go#L15
 func HandleUDP(rwc io.ReadWriteCloser, hostPort string) error {
 	conns := &udpConns{
 		m: map[string]*udpConn{},

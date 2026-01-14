@@ -39,6 +39,7 @@ func Replace240With127(addr tcpip.Address) tcpip.Address {
 	return tcpip.AddrFrom4Slice(newAddr)
 }
 
+// acceptTCP establish a tcp connection using the virtual interface and forward it upstream using the system network.
 func (tun *netTun) acceptTCP(req *tcp.ForwarderRequest) {
 	localAddress := Replace240With127(req.ID().LocalAddress)
 	log.Trace().Str("RADDR", req.ID().RemoteAddress.String()).
@@ -77,6 +78,7 @@ func (tun *netTun) acceptTCP(req *tcp.ForwarderRequest) {
 	wg.Wait()
 }
 
+// cpy copy the net.Conns.
 func (tun *netTun) cpy(wg *sync.WaitGroup, dst, src net.Conn) {
 	defer wg.Done()
 

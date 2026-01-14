@@ -9,6 +9,7 @@ import (
 	socketio "Goauld/common/socket.io"
 )
 
+// ChunkedReconstructor holds the chunk of the agent
 type ChunkedReconstructor struct {
 	mu    sync.Mutex
 	m     map[int][]byte
@@ -32,6 +33,7 @@ func (cr *ChunkedReconstructor) AddChunk(agent *socketio.ChunkedAgent) bool {
 	return false
 }
 
+// Rebuild return the chunks appended in the correct order
 func (cr *ChunkedReconstructor) Rebuild() []byte {
 	cr.mu.Lock()
 	defer cr.mu.Unlock()

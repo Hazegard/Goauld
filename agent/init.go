@@ -121,6 +121,7 @@ func HandleCtrlC(controlPlanClient *control.ControlPlanClient, canceler *globalc
 	}
 }
 
+// KillSwitchLoop starts a loop that will kill the agent after X days.
 func KillSwitchLoop(days int, globalCanceler *globalcontext.GlobalCanceler) time.Duration {
 	if days == 0 {
 		return 0

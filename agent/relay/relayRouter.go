@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// RelayRouter allows an agent to relay connection from other agents to the control server.
 type RelayRouter struct {
 	ControlRouter *ControlRouter
 	SSHRouter     *SSHRouter
@@ -19,6 +20,7 @@ type RelayRouter struct {
 	listener      net.Listener
 }
 
+// Init initialise the relay server.
 func (router *RelayRouter) Init() error {
 	addr := fmt.Sprintf(":%d", config.Get().RelayPort())
 	listener, err := net.Listen("tcp", addr)
@@ -33,10 +35,12 @@ func (router *RelayRouter) Init() error {
 	return nil
 }
 
+// Serve starts the relay HTTP server.
 func (router *RelayRouter) Serve() error {
 	return router.Server.Serve(router.listener)
 }
 
+// NewRelayRouter returns a relay HTTP router.
 func NewRelayRouter(ctx context.Context, controlMode string, sshMode string, dnsTransport *transport.DNSSH) (*RelayRouter, error) {
 	sio, err := InitSocketIORelayServer(ctx, controlMode, dnsTransport)
 	if err != nil {

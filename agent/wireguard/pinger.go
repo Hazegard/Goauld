@@ -15,6 +15,7 @@ import (
 	probing "github.com/prometheus-community/pro-bing"
 )
 
+// Ping pings.
 func Ping(address string) (bool, uint8) {
 	// Always return true for localhost
 	psudoLoopback := net.IPNet{
@@ -113,6 +114,7 @@ func pingc(dstIP netip.Addr) (bool, uint8) {
 	return true, uint8(ttl)
 }
 
+// extractTTL parses the ping command line to extract the TTL.
 func extractTTL(input string) int {
 	output := strings.Split(strings.ToLower(input), "\n")
 

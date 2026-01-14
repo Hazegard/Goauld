@@ -128,10 +128,12 @@ func lookPath(binaryName Command, path string) (Command, error) {
 }
 */
 
+// isLegacyWindows returns always false.
 func isLegacyWindows() bool {
 	return false
 }
 
+// runWithWinPTY shim.
 func runWithWinPTY(_ ssh.Session, _ string, _ <-chan ssh.Window) error {
 	return errors.New("windows not supported")
 }

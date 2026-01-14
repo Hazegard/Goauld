@@ -7,6 +7,7 @@ import (
 	"github.com/gopasspw/clipboard"
 )
 
+// Copy returns the content of the agent clipboard.
 func Copy(ctx context.Context) ([]byte, error) {
 	content, err := clipboard.ReadAll(ctx)
 	if err != nil {
@@ -16,6 +17,7 @@ func Copy(ctx context.Context) ([]byte, error) {
 	return content, nil
 }
 
+// Paste set the agent clipboard content.
 func Paste(ctx context.Context, content []byte) error {
 	return clipboard.WriteAll(ctx, content)
 }

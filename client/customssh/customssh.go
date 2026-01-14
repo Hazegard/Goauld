@@ -4,6 +4,8 @@
 
 package customssh
 
+// Custom used to allow the golang SSH implementation to use SSH Control master on UNIX sockets
+
 import (
 	"bytes"
 	"encoding/binary"

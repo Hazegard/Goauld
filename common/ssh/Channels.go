@@ -19,6 +19,7 @@ func NewChannel(rw io.ReadWriter) *Channel {
 // uint32 payload_len
 // payload
 
+// WriteResponse serialize the response and send it over SSH channel.
 func (c *Channel) WriteResponse(ok bool, payload []byte) error {
 	var status uint32
 	if ok {
@@ -44,6 +45,7 @@ func (c *Channel) WriteResponse(ok bool, payload []byte) error {
 	return nil
 }
 
+// ReadResponse unserialize the data received through the SSH channel.
 func (c *Channel) ReadResponse() ([]byte, error) {
 	var status uint32
 	if err := binary.Read(c.rw, binary.BigEndian, &status); err != nil {

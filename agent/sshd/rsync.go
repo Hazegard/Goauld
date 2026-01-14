@@ -11,6 +11,7 @@ import (
 	"github.com/gokrazy/rsync/rsyncd"
 )
 
+// HandleRsync handle the incomming rsync commands.
 func HandleRsync(s ssh.Session) {
 	log.Debug().Str("Username", s.User()).Str("RemoteAddr", s.RemoteAddr().String()).Str("Command", s.RawCommand()).Msgf("Handling Rsync command")
 	l := log.Get().With().Str("Module", "rsync").Logger()

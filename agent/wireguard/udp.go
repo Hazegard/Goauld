@@ -16,6 +16,7 @@ const (
 	idleTimeout = 10 * time.Second
 )
 
+// acceptTCP establish an udp connection using the virtual interface and forward it upstream using the system network.
 func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 	sess := req.ID()
 	localAddress := Replace240With127(sess.LocalAddress)
@@ -55,6 +56,7 @@ func (tun *netTun) acceptUDP(req *udp.ForwarderRequest) bool {
 	return true
 }
 
+// proxy proxies the udp packets.
 func (tun *netTun) proxy(ctx context.Context, cancel context.CancelFunc, dst net.PacketConn, dstAddr net.Addr, src net.PacketConn) {
 	defer cancel()
 	buf := make([]byte, tun.mtu)

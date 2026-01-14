@@ -12,6 +12,7 @@ import (
 	"github.com/iamacarpet/go-winpty"
 )
 
+// runWithWinPTY start a pty using the legacy go-winpty method
 func runWithWinPTY(s ssh.Session, cmd string, winCh <-chan ssh.Window) error {
 
 	Env := append(os.Environ(),

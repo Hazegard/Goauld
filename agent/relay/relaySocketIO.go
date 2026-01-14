@@ -25,6 +25,7 @@ type ControlRouter struct {
 	DnsTransport *transport.DNSSH
 }
 
+// ServeHTTP handle incomming HTTP requsts on the relay router.
 func (router *ControlRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = commonnet.HTTP10ToHTTP11FakeUpgrader(r)
 	id := r.PathValue("agentId")
@@ -99,6 +100,8 @@ func (sio *ControlRouter) Setup(ctx context.Context, root *gosio.Namespace) {
 	})
 }
 
+// SetupProxy configures and starts a Socket.IO proxy.
+// The requests have to be manually resend as it might not using the same HTTP transport (HTTP, WS, DNS, etc...)
 func SetupProxy(relay2Server gosio.ClientSocket, agent2Relay gosio.ServerSocket, u string) {
 	relay2Server.OnConnect(func() {
 		log.Trace().Msg("OnConnect")

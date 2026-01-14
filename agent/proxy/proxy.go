@@ -120,6 +120,7 @@ func ProxyTransport(tr *http.Transport) http.RoundTripper {
 	}
 }
 
+// ProxyUsingHttpProxy returns an HTTP transport using the HTTP proxy exposed by the agent.
 func ProxyUsingHttpProxy() http.RoundTripper {
 	proxyUrl, _ := url.Parse(fmt.Sprintf("http://localhost:%d", config.Get().RemoteForwardedHTTPProxyPort()))
 	internalProxy := NewProxyDialer(proxyUrl, "", "", "")

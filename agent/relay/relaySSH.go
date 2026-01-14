@@ -16,12 +16,14 @@ import (
 	"github.com/coder/websocket"
 )
 
+// SSHRouter allows to proxy SSH connection from relayed agents.
 type SSHRouter struct {
 	mode         string
 	dnsTransport *transport.DNSSH
 	ctx          context.Context
 }
 
+// handleSSHRelay relay the incomming connection masquerading with the provided agent ID.
 func (r *SSHRouter) handleSSHRelay(conn net.Conn, id string) {
 	serverConn, err := GetSSHCon(r.mode, id, r.ctx, r.dnsTransport)
 	if err != nil {
@@ -111,6 +113,7 @@ type result struct {
 	err  error
 }
 
+// GetSSHCon returns a connection to the SSH server using the tunnel available.
 func GetSSHCon(mode string, id string, ctx context.Context, dnsTransport *transport.DNSSH) (net.Conn, error) {
 	log.Info().Str("Mode", mode).Dur("Timeout", config.Get().GetSSHTimeout()).Msg("Connecting to ssh")
 	timeoutCtx, cancel := context.WithTimeout(ctx, config.Get().GetSSHTimeout())

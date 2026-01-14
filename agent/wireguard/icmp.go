@@ -11,6 +11,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
+// ICMPHandler replay the ICMP packet using ping on the host network.
 func ICMPHandler(s *stack.Stack) func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 	return func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 		localAddress := Replace240With127(id.LocalAddress)
@@ -37,6 +38,7 @@ func ICMPHandler(s *stack.Stack) func(id stack.TransportEndpointID, pkt *stack.P
 	}
 }
 
+// handleICMP returns the ICMP packet according to the ping response and the incoming ICMP request.
 func handleICMP(pkt *stack.PacketBuffer, ttl uint8) *stack.PacketBuffer {
 	replyData := stack.PayloadSince(pkt.TransportHeader())
 	iph := header.IPv4(pkt.NetworkHeader().Slice())

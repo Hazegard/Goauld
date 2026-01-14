@@ -59,6 +59,7 @@ type netTun struct {
 
 type Net netTun
 
+// CreateNetTUN creates a virtual TUN using wireguard/gvisor
 func CreateNetTUN(localAddresses, dnsServers []netip.Addr, mtu int) (tun.Device, *Net, error) {
 	opts := stack.Options{
 		NetworkProtocols: []stack.NetworkProtocolFactory{

@@ -57,6 +57,7 @@ func UpdateShell(shell Command, rawCommand string) (Command, func() error, error
 }
 */
 
+// isLegacyWindows returns whether the agen is running on a legacy windows version
 func isLegacyWindows() bool {
 	kernel32 := syscall.NewLazyDLL("kernel32.dll")
 	createPseudoConsole := kernel32.NewProc("CreatePseudoConsole")
