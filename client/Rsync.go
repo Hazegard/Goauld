@@ -40,9 +40,9 @@ func getRawRsyncArgs() []string {
 }
 
 func (r *Rsync) Run(clientAPI *api.API, cfg ClientConfig) error {
-
 	if len(commonCmd.CheckCommands([]string{"rsync"})) > 0 {
 		log.Error().Str("Command", "rsync").Msg("Command not found")
+
 		return errors.New("command not found: rsync")
 	}
 	r.Args = getRawRsyncArgs()

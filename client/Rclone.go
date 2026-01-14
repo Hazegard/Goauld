@@ -24,9 +24,9 @@ type Rclone struct {
 }
 
 func (r *Rclone) Run(clientAPI *api.API, cfg ClientConfig) error {
-
 	if len(commonCmd.CheckCommands([]string{"rclone"})) > 0 {
 		log.Error().Str("Command", "rclone").Msg("Command not found")
+
 		return errors.New("command not found: rclone")
 	}
 	log.Warn().Msgf("Rclone is running")
@@ -77,7 +77,7 @@ func (r *Rclone) Run(clientAPI *api.API, cfg ClientConfig) error {
 	}
 
 	proxyCmd := cfg.SSH.buildCommand(cfg, agent, exePath)
-	//proxyCmdEnv := proxyCmd.InlineEnv()
+	// proxyCmdEnv := proxyCmd.InlineEnv()
 
 	mountOption := "mount"
 	if runtime.GOOS == "darwin" {
