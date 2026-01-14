@@ -6,14 +6,7 @@ import (
 	"Goauld/agent/sshd/shell/shimembed"
 	"Goauld/common/log"
 	"fmt"
-	"io"
-	"os"
-	"runtime"
-	"strings"
 	"syscall"
-
-	"github.com/charmbracelet/ssh"
-	"github.com/iamacarpet/go-winpty"
 )
 
 const SHELL_PARAM = "/c"
@@ -70,37 +63,4 @@ func isLegacyWindows() bool {
 
 	// If the symbol does not exist, ConPTY is not available
 	return createPseudoConsole.Find() != nil
-}
-
-func runWithWinPTY(s ssh.Session, cmd string, winCh <-chan ssh.Window) error {
-
-	Env := append(os.Environ(),
-		"PLATFORM="+strings.ToLower(runtime.GOOS),
-		"USER="+s.User(),
-		"LANG=en_US.UTF-8",
-	)
-	p, err := winpty.OpenWithOptions(winpty.Options{
-		Command: cmd,
-		Env:     Env,
-	})
-	if err != nil {
-		return err
-	}
-	defer p.Close()
-
-	// SSH → winpty
-	go io.Copy(p.StdIn, s)
-
-	// winpty → SSH
-	go io.Copy(s, p.StdOut)
-
-	// Resize handling
-	go func() {
-		for win := range winCh {
-			p.SetSize(uint32(win.Width), uint32(win.Height))
-		}
-	}()
-
-	<-s.Context().Done()
-	return nil
 }
