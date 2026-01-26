@@ -313,3 +313,15 @@ func (s *ServerConfig) GenerateSafeYAMLConfig() (string, error) {
 
 	return cli.GenerateYAMLWithComments(ss)
 }
+
+func (s *ServerConfig) ReloadDomains() error {
+	_, cfg, err := InitServer()
+	if err != nil {
+		return err
+	}
+
+	s.TLSDomain = cfg.TLSDomain
+	s.HTTPDomain = cfg.HTTPDomain
+
+	return nil
+}

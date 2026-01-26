@@ -1,11 +1,17 @@
 package router
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/quic-go/quic-go/http3"
@@ -106,23 +112,42 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 	// If the TLS is enabled, configure the server to use TLS
 	if config.Get().TLS {
 		if config.Get().IsCustomTLS() {
-			cert, err := tls.LoadX509KeyPair(config.Get().TLSCert, config.Get().TLSKey)
+			certLoader := certReloader{}
+			err := certLoader.Load(config.Get().TLSCert, config.Get().TLSKey)
+			// cert, err := tls.LoadX509KeyPair(config.Get().TLSCert, config.Get().TLSKey)
+
 			if err != nil {
 				log.Error().Err(err).Msg("failed to load key pair")
 			}
 			//nolint:gosec
 			tlsC := &tls.Config{
-				NextProtos:   []string{"http/1.1"},
-				Certificates: []tls.Certificate{cert},
+				NextProtos: []string{"http/1.1"},
+				//Certificates: []tls.Certificate{cert},
 				//nolint:staticcheck,gosec // SA1019
-				MinVersion: tls.VersionSSL30,
+				MinVersion:     tls.VersionSSL30,
+				GetCertificate: certLoader.GetCertificate,
 			}
 			httprouter.tlsConfig = tlsC
 			quicTLS := &tls.Config{
-				NextProtos:   []string{"quic"},
-				Certificates: []tls.Certificate{cert},
-				MinVersion:   tls.VersionTLS13,
+				NextProtos: []string{"quic"},
+				//Certificates: []tls.Certificate{cert},
+				MinVersion:     tls.VersionTLS13,
+				GetCertificate: certLoader.GetCertificate,
 			}
+
+			// Reload on SIGHUP (common in Unix deployments)
+			go func() {
+				ch := make(chan os.Signal, 1)
+				signal.Notify(ch, syscall.SIGHUP)
+				for range ch {
+					if err := certLoader.Load(config.Get().TLSCert, config.Get().TLSKey); err != nil {
+						log.Printf("TLS reload failed: %v", err)
+
+						continue
+					}
+					log.Printf("TLS certificate reloaded")
+				}
+			}()
 
 			httprouter.server3.TLSConfig = quicTLS
 		} else {
@@ -130,25 +155,71 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 			certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
 			certmagic.DefaultACME.Agreed = true
 			certmagic.DefaultACME.Email = "mail@example.com"
-
-			tlsConfig, err := certmagic.TLS(config.Get().GetTLSDomains())
-			if err != nil {
-				return nil, err
-			}
-			tlsConfig.NextProtos = append([]string{"http/1.1"}, tlsConfig.NextProtos...)
-			//nolint:staticcheck,gosec // SA1019
-			tlsConfig.MinVersion = tls.VersionSSL30
-			httprouter.tlsConfig = tlsConfig
-
-			quicConfig, err := certmagic.TLS(config.Get().GetTLSDomains())
-			if err != nil {
-				return nil, err
-			}
-			quicConfig.NextProtos = append([]string{"quic", "ssh", "h3"}, tlsConfig.NextProtos...)
-			quicConfig.MinVersion = tls.VersionTLS13
 			certmagic.DefaultACME.DisableHTTPChallenge = false
 
+			var allowedDomains atomic.Value
+
+			renew := func(domains []string) {
+				m := make(map[string]struct{}, len(domains))
+				for _, domain := range domains {
+					m[domain] = struct{}{}
+				}
+				allowedDomains.Store(m)
+			}
+			renew(config.Get().GetTLSDomains())
+
+			certMagicConfig := certmagic.NewDefault()
+			certMagicConfig.OnDemand = &certmagic.OnDemandConfig{
+				DecisionFunc: func(_ context.Context, name string) error {
+					v := allowedDomains.Load()
+					if v == nil {
+						return fmt.Errorf("no certificate loaded for domain %s", name)
+					}
+					m, ok := v.(map[string]struct{})
+					if !ok {
+						return fmt.Errorf("unexpected type %T for domain %s", v, name)
+					}
+					_, ok = m[name]
+					if ok {
+						return nil
+					}
+
+					return fmt.Errorf("domain %s not allowed", name)
+				},
+			}
+
+			baseConfig, err := certmagic.TLS(config.Get().GetTLSDomains())
+			if err != nil {
+				return nil, err
+			}
+			//nolint:staticcheck,gosec // SA1019
+			baseConfig.MinVersion = tls.VersionSSL30
+
+			baseConfig.GetCertificate = certMagicConfig.GetCertificate
+
+			tlsConfig := baseConfig.Clone()
+			tlsConfig.NextProtos = append([]string{"http/1.1"}, tlsConfig.NextProtos...)
+			httprouter.tlsConfig = tlsConfig
+
+			quicConfig := baseConfig.Clone()
+			quicConfig.NextProtos = append([]string{"quic", "ssh", "h3"}, quicConfig.NextProtos...)
 			httprouter.server3.TLSConfig = quicConfig
+
+			// Reload on SIGHUP (common in Unix deployments)
+			go func() {
+				ch := make(chan os.Signal, 1)
+				signal.Notify(ch, syscall.SIGHUP)
+				for range ch {
+					err := config.Get().ReloadDomains()
+					if err != nil {
+						log.Error().Err(err).Msg("failed to reload domains")
+
+						continue
+					}
+					renew(config.Get().GetTLSDomains())
+					log.Printf("TLS certificate reloaded")
+				}
+			}()
 		}
 	}
 
@@ -183,4 +254,31 @@ func (router *MainRouter) Serve() error {
 	}
 
 	return nil
+}
+
+type certReloader struct {
+	cert atomic.Value
+}
+
+func (r *certReloader) Load(certFile string, keyFile string) error {
+	c, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return err
+	}
+	r.cert.Store(c)
+
+	return nil
+}
+
+func (r *certReloader) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+	v := r.cert.Load()
+	if v == nil {
+		return nil, errors.New("no certificate loaded")
+	}
+	c, ok := v.(*tls.Certificate)
+	if !ok {
+		return nil, errors.New("invalid certificate")
+	}
+
+	return c, nil
 }
