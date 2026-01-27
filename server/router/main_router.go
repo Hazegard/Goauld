@@ -154,7 +154,7 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 			// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 			certmagic.DefaultACME.CA = certmagic.LetsEncryptProductionCA
 			certmagic.DefaultACME.Agreed = true
-			certmagic.DefaultACME.Email = "mail@example.com"
+			certmagic.DefaultACME.Email = config.Get().LetsEncryptMail
 			certmagic.DefaultACME.DisableHTTPChallenge = false
 
 			var allowedDomains atomic.Value

@@ -44,10 +44,11 @@ var (
 	_verbosity = "0"
 	_quiet     = "false"
 
-	_tls      = "true"
-	_tls_cert = ""     //nolint:revive
-	_tls_key  = ""     //nolint:revive
-	_quic     = "true" //nolint:revive
+	_tls               = "true"
+	_tls_cert          = "" //nolint:revive
+	_tls_key           = "" //nolint:revive
+	_letsencrypt_email = "mail@example.com"
+	_quic              = "true" //nolint:revive
 
 	_dns = "true"
 
@@ -82,10 +83,11 @@ var (
 		"_verbosity": _verbosity,
 		"_quiet":     _quiet,
 
-		"_tls":      _tls,
-		"_tls_cert": _tls_cert,
-		"_tls_key":  _tls_key,
-		"_quic":     _quic,
+		"_tls":               _tls,
+		"_tls_cert":          _tls_cert,
+		"_tls_key":           _tls_key,
+		"_letsencrypt_email": _letsencrypt_email,
+		"_quic":              _quic,
 
 		"_dns": _dns,
 
@@ -126,11 +128,12 @@ type ServerConfig struct {
 	DNSAddr   string `default:"${_dns_listen_addr}" group:"Local addresses binding configuration:" name:"dns-listen-addr" yaml:"dns-listen-addr" optional:"" help:"Address and port to bind for DNS connections (port 0 = random)."`
 	QuicAddr  string `default:"${_quic_listen_addr}" group:"Local addresses binding configuration:" name:"quic-listen-addr" yaml:"quic-listen-addr" optional:"" help:"Address and port to bind for QUIC connections (port 0 = random)."`
 
-	TLS     bool   `default:"${_tls}" group:"Listeners configuration:" name:"tls" yaml:"tls" negatable:"" help:"Enable TLS support."`
-	TLSKey  string `default:"${_tls_key}" group:"Listeners configuration:" name:"tls-key" yaml:"tls-key" help:"Path to the TLS private key file."`
-	TLSCert string `default:"${_tls_cert}" group:"Listeners configuration:" name:"tls-cert" yaml:"tls-cert" help:"Path to the TLS certificate file."`
-	Quic    bool   `default:"${_quic}" group:"Listeners configuration:" name:"quic" yaml:"quic" negatable:"" help:"Enable QUIC protocol support."`
-	DNS     bool   `default:"${_dns}" group:"Listeners configuration:" name:"dns" yaml:"dns" negatable:"" help:"Enable DNS server for SSH-over-DNS connections."`
+	TLS             bool   `default:"${_tls}" group:"Listeners configuration:" name:"tls" yaml:"tls" negatable:"" help:"Enable TLS support."`
+	TLSKey          string `default:"${_tls_key}" group:"Listeners configuration:" name:"tls-key" yaml:"tls-key" help:"Path to the TLS private key file."`
+	TLSCert         string `default:"${_tls_cert}" group:"Listeners configuration:" name:"tls-cert" yaml:"tls-cert" help:"Path to the TLS certificate file."`
+	LetsEncryptMail string `default:"${_letsencrypt_email}" group:"Listeners configuration:" name:"letsencrypt-mail" yaml:"letsencrypt-mail" help:"Email used when generating Let's Encrypt certificates.'"`
+	Quic            bool   `default:"${_quic}" group:"Listeners configuration:" name:"quic" yaml:"quic" negatable:"" help:"Enable QUIC protocol support."`
+	DNS             bool   `default:"${_dns}" group:"Listeners configuration:" name:"dns" yaml:"dns" negatable:"" help:"Enable DNS server for SSH-over-DNS connections."`
 
 	NoDB       bool   `default:"${_no_db}" group:"Database configuration" name:"db" yaml:"db" negatable:"" help:"Disable database usage."`
 	DbFileName string `default:"${_db_name}" group:"Database configuration" name:"db-file-name" yaml:"db-file-name" help:"Path or filename of the database to use."`
