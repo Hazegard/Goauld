@@ -38,6 +38,7 @@ type Agent struct {
 	Wireguard                wireguard.WGConfig
 	SSHTunnelMode            string
 	ControlTunnelMode        string
+	LocalHTTPPRoxyPort       int
 }
 
 // LocalSSHDPassword returns the current ssh password allowing to connect.
