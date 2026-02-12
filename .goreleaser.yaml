@@ -39,6 +39,7 @@ env:
   - SERVER__TLS={{ .Env.SERVER__TLS }}
   - SERVER__TLS_KEY={{ .Env.SERVER__TLS_KEY }}
   - SERVER__TLS_CERT={{ .Env.SERVER__TLS_CERT }}
+  - SERVER__LETSENCRYPT_EMAIL={{ .Env.SERVER__LETSENCRYPT_EMAIL }}
   - SERVER__QUIC={{ .Env.SERVER__QUIC }}
   - SERVER__DNS={{ .Env.SERVER__DNS }}
 
@@ -105,6 +106,7 @@ env:
   - AGENT__RSSH_PORT={{ .Env.AGENT__RSSH_PORT }}
   - AGENT__SOCKS_PORT={{ .Env.AGENT__SOCKS_PORT }}
   - AGENT__HTTP_PORT={{ .Env.AGENT__HTTP_PORT }}
+  - AGENT__MITM_HTTP_PORT={{ .Env.AGENT__MITM_HTTP_PORT }}
   - AGENT__WG_PORT={{ .Env.AGENT__WG_PORT }}
   - AGENT__RELAY_PORT={{ .Env.AGENT__RELAY_PORT }}
 
@@ -300,6 +302,7 @@ builds:
       - '{{ if (index .Env "SERVER__TLS") }} -X Goauld/server/config._tls={{ .Env.SERVER__TLS }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_KEY") }} -X Goauld/server/config._tls_key={{ .Env.SERVER__TLS_KEY }}{{end}}'
       - '{{ if (index .Env "SERVER__TLS_CERT") }} -X Goauld/server/config._tls_cert={{ .Env.SERVER__TLS_CERT }}{{end}}'
+      - '{{ if (index .Env "SERVER__LETSENCRYPT_EMAIL") }} -X Goauld/server/config._letsencrypt_email={{ .Env.SERVER__LETSENCRYPT_EMAIL }}{{end}}'
       - '{{ if (index .Env "SERVER__QUIC") }} -X Goauld/server/config._quic={{ .Env.SERVER__QUIC }}{{end}}'
       - '{{ if (index .Env "SERVER__DNS") }} -X Goauld/server/config._dns={{ .Env.SERVER__DNS }}{{end}}'
 
@@ -402,6 +405,7 @@ builds:
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PORT") }} -X Goauld/agent/config._mitm_http_port={{ .Env.AGENT__MITM_HTTP_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__RELAY_PORT") }} -X Goauld/agent/config._relay_port={{ .Env.AGENT__RELAY_PORT }}{{end}}'
 
@@ -529,6 +533,7 @@ builds:
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PORT") }} -X Goauld/agent/config._mitm_http_port={{ .Env.AGENT__MITM_HTTP_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__RELAY_PORT") }} -X Goauld/agent/config._relay_port={{ .Env.AGENT__RELAY_PORT }}{{end}}'
 
@@ -663,6 +668,7 @@ builds:
       - '{{ if (index .Env "AGENT__RSSH_PORT") }} -X Goauld/agent/config._rssh_port={{ .Env.AGENT__RSSH_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PORT") }} -X Goauld/agent/config._socks_port={{ .Env.AGENT__SOCKS_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__HTTP_PORT") }} -X Goauld/agent/config._http_port={{ .Env.AGENT__HTTP_PORT }}{{end}}'
+      - '{{ if (index .Env "AGENT__MITM_HTTP_PORT") }} -X Goauld/agent/config._mitm_http_port={{ .Env.AGENT__MITM_HTTP_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__WG_PORT") }} -X Goauld/agent/config._wg_port={{ .Env.AGENT__WG_PORT }}{{end}}'
       - '{{ if (index .Env "AGENT__RELAY_PORT") }} -X Goauld/agent/config._relay_port={{ .Env.AGENT__RELAY_PORT }}{{end}}'
 

@@ -116,6 +116,9 @@ socks-port: 0
 # Remote HTTP proxy port to bind on the server (0 = random).
 http-port: 0
 
+# Remote MITM HTTP proxy port to bind on the server (0 = random).
+mitm-http-port: 0
+
 # Remote WireGuard port to bind on the server (0 = random).
 wg-port: 0
 
