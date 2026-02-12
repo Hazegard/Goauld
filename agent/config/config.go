@@ -55,11 +55,12 @@ var (
 
 	_no_proxy = "false" //nolint:revive
 
-	_rssh_port  = "0" //nolint:revive
-	_socks_port = "0" //nolint:revive
-	_http_port  = "0" //nolint:revive
-	_wg_port    = "0" //nolint:revive
-	_relay_port = "0" //nolint:revive
+	_rssh_port      = "0" //nolint:revive
+	_socks_port     = "0" //nolint:revive
+	_http_port      = "0" //nolint:revive
+	_mitm_http_port = "0" //nolint:revive
+	_wg_port        = "0" //nolint:revive
+	_relay_port     = "0" //nolint:revive
 
 	_keepawake = "false"
 	_keepalive = "20"
@@ -135,11 +136,12 @@ var (
 		"_dns_domain":     _dns_domain,
 		"_dns_domain_alt": _dns_domain_alt,
 
-		"_rssh_port":  _rssh_port,
-		"_socks_port": _socks_port,
-		"_http_port":  _http_port,
-		"_wg_port":    _wg_port,
-		"_relay_port": _relay_port,
+		"_rssh_port":      _rssh_port,
+		"_socks_port":     _socks_port,
+		"_http_port":      _http_port,
+		"_mitm_http_port": _mitm_http_port,
+		"_wg_port":        _wg_port,
+		"_relay_port":     _relay_port,
 
 		"_keepawake": _keepawake,
 		"_keepalive": _keepalive,
@@ -227,11 +229,12 @@ type AgentConfig struct {
 	HTTPProxyPassword string   `default:"${_http_proxy_password}" group:"HTTP proxy custom configuration:" name:"http-proxy-password" yaml:"http-proxy-password" optional:"" help:"Password for the HTTP upstream proxy."`
 	HTTPProxyDomain   string   `default:"${_http_proxy_domain}" group:"HTTP proxy custom configuration:" name:"http-proxy-domain" yaml:"http-proxy-domain" optional:"" help:"Domain for the HTTP upstream proxy."`
 
-	RSSHPort      int `default:"${_rssh_port}" group:"Ports configuration:" name:"rssh-port" yaml:"rssh-port" optional:"" help:"Remote SSH port to bind on the server (0 = random)."`
-	SocksPort     int `default:"${_socks_port}" group:"Ports configuration:" name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"Remote SOCKS proxy port to bind on the server (0 = random)."`
-	HTTPProxyPort int `default:"${_http_port}" group:"Ports configuration:" name:"http-port" yaml:"http-port" optional:"" help:"Remote HTTP proxy port to bind on the server (0 = random)."`
-	WGPort        int `default:"${_wg_port}" group:"Ports configuration:" name:"wg-port" yaml:"wg-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
-	RelayPort     int `default:"${_relay_port}" group:"Ports configuration:" name:"relay-port" yaml:"relay-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
+	RSSHPort          int `default:"${_rssh_port}" group:"Remote ports configuration:" name:"rssh-port" yaml:"rssh-port" optional:"" help:"Remote SSH port to bind on the server (0 = random)."`
+	SocksPort         int `default:"${_socks_port}" group:"Remote ports configuration:" name:"socks-port" yaml:"socks-port" short:"D" optional:"" help:"Remote SOCKS proxy port to bind on the server (0 = random)."`
+	HTTPProxyPort     int `default:"${_http_port}" group:"Remote ports configuration:" name:"http-port" yaml:"http-port" optional:"" help:"Remote HTTP proxy port to bind on the server (0 = random)."`
+	MITMHTTPProxyPort int `default:"${_mitm_http_port}" group:"Remote ports configuration:" name:"mitm-http-port" yaml:"mitm-http-port" optional:"" help:"Remote MITM HTTP proxy port to bind on the server (0 = random)."`
+	WGPort            int `default:"${_wg_port}" group:"Remote ports configuration:" name:"wg-port" yaml:"wg-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
+	RelayPort         int `default:"${_relay_port}" group:"Remote ports configuration:" name:"relay-port" yaml:"relay-port" optional:"" help:"Remote WireGuard port to bind on the server (0 = random)."`
 
 	KeepAwake bool `default:"${_keepawake}" group:"Agent configuration:" name:"keep-awake" yaml:"keep-awake" optional:"" help:"Prevent the system from sleeping or locking."`
 	KeepAlive int  `default:"${_keepalive}" group:"Agent configuration:" short:"K" name:"keepalive" yaml:"keepalive" optional:"" help:"Interval in seconds between keepalive messages (0 = disabled)."`

@@ -323,7 +323,7 @@ func run() globalcontext.CancelReason {
 				log.Error().Err(err).Msg("error initializing the HTTP proxy connection")
 			}
 			rpf := commonssh.RemotePortForwarding{
-				ServerPort: 0,
+				ServerPort: config.Get().RemoteForwardedHTTPProxyPort(),
 				AgentPort:  port,
 				AgentIP:    "127.0.0.1",
 				Tag:        "HTTP",
@@ -355,7 +355,7 @@ func run() globalcontext.CancelReason {
 			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
 				ServerPort: config.Get().RemoteForwardedHTTPProxyPort(),
 				AgentPort:  port,
-				AgentIP:    "0.0.0.0",
+				AgentIP:    "127.0.0.1",
 				Tag:        "HTTP",
 			})
 		}
@@ -376,14 +376,14 @@ func run() globalcontext.CancelReason {
 				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy connection")
 			}
 			rpf := commonssh.RemotePortForwarding{
-				ServerPort: 0,
+				ServerPort: config.Get().RemoteForwardedHTTPMITMProxyPort(),
 				AgentPort:  port,
 				AgentIP:    "127.0.0.1",
 				Tag:        "MITMHTTP",
 			}
 			rPort, err := sshAgent.RemoteForward(ctx, rpf)
 
-			config.Get().UpdateHTTPProxyPort(rPort)
+			config.Get().UpdateMITMHTTPProxyPort(rPort)
 
 			go func() {
 				select {
@@ -405,9 +405,9 @@ func run() globalcontext.CancelReason {
 
 			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote MITM HTTP proxy server started")
 			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
-				ServerPort: config.Get().RemoteForwardedHTTPProxyPort(),
+				ServerPort: config.Get().RemoteForwardedHTTPMITMProxyPort(),
 				AgentPort:  port,
-				AgentIP:    "0.0.0.0",
+				AgentIP:    "127.0.0.1",
 				Tag:        "MITMHTTP",
 			})
 		}
@@ -480,7 +480,7 @@ func run() globalcontext.CancelReason {
 				forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
 					ServerPort: -1,
 					AgentPort:  relayer.Port,
-					AgentIP:    "",
+					AgentIP:    "0.0.0.0",
 					Tag:        "RELAY",
 				})
 				go func() {

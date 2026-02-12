@@ -428,6 +428,11 @@ func (a *Agent) RemoteForwardedHTTPProxyPort() int {
 	return a.cfg.HTTPProxyPort
 }
 
+// RemoteForwardedHTTPMITMProxyPort returns the remote forwarded MITM port.
+func (a *Agent) RemoteForwardedHTTPMITMProxyPort() int {
+	return a.cfg.HTTPProxyPort
+}
+
 // RemoteForwardedSocksPort returns the remote forwarded Socks port.
 func (a *Agent) RemoteForwardedSocksPort() int {
 	return a.cfg.SocksPort
@@ -451,6 +456,11 @@ func (a *Agent) UpdateWGPort(port int) {
 // UpdateHTTPProxyPort set the new socks port.
 func (a *Agent) UpdateHTTPProxyPort(port int) {
 	a.cfg.HTTPProxyPort = port
+}
+
+// UpdateMITMHTTPProxyPort set the new socks port.
+func (a *Agent) UpdateMITMHTTPProxyPort(port int) {
+	a.cfg.MITMHTTPProxyPort = port
 }
 
 // UpdateSshdPort set the new sshd port.
