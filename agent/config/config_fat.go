@@ -38,6 +38,10 @@ func (c *AgentConfig) Validate() error {
 		errs = append(errs, errors.New("the kill-switch must not be negative"))
 	}
 
+	if !c.HTTP && c.MITMHTTP {
+		errs = append(errs, errors.New("MITM HTTP proxy requires HTTP proxy to be enabled"))
+	}
+
 	return errors.Join(errs...)
 }
 
