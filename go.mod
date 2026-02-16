@@ -1,58 +1,59 @@
 module Goauld
 
-go 1.25.3
+go 1.26.0
 
 require (
 	filippo.io/age v1.3.1
 	github.com/hazegard/socket.io-go v0.1.1
 	github.com/hazegard/togettyc v0.3.6
-	github.com/alecthomas/kong v1.13.0
+	github.com/alecthomas/kong v1.14.0
+	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e
 	github.com/aus/proxyplease v0.1.0
 	github.com/aymanbagabas/go-pty v0.2.2
 	github.com/caddyserver/certmagic v0.25.1
 	github.com/cenkalti/backoff/v5 v5.0.3
-	github.com/charmbracelet/bubbles v0.21.0
+	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/ssh v0.0.0-20250826160808-ebfa259c7309
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/coder/websocket v1.8.14
-	github.com/elazarl/goproxy v1.7.2
+	github.com/elazarl/goproxy v1.8.2
 	github.com/evertras/bubble-table v0.19.2
 	github.com/fatih/color v1.18.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/goccy/go-yaml v1.19.2
-	github.com/gokrazy/rsync v0.3.2
+	github.com/gokrazy/rsync v0.3.3
 	github.com/google/uuid v1.6.0
 	github.com/gopasspw/clipboard v0.0.4
 	github.com/iamacarpet/go-winpty v1.0.4
 	github.com/jellydator/ttlcache/v2 v2.11.1
-	github.com/kevinburke/ssh_config v1.4.0
+	github.com/kevinburke/ssh_config v1.6.0
 	github.com/keygen-sh/machineid v1.1.2
-	github.com/klauspost/compress v1.18.2
+	github.com/klauspost/compress v1.18.4
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-isatty v0.0.20
-	github.com/miekg/dns v1.1.70
+	github.com/miekg/dns v1.1.72
 	github.com/pkg/sftp v1.13.10
-	github.com/prometheus-community/pro-bing v0.7.0
+	github.com/prometheus-community/pro-bing v0.8.0
 	github.com/quic-go/quic-go v0.59.0
 	github.com/rs/zerolog v1.34.0
 	github.com/things-go/go-socks5 v0.1.0
 	github.com/urfave/negroni v1.0.0
-	github.com/xtaci/kcp-go/v5 v5.6.61
-	github.com/xtaci/smux v1.5.50
-	golang.org/x/crypto v0.47.0
-	golang.org/x/net v0.49.0
+	github.com/xtaci/kcp-go/v5 v5.6.70
+	github.com/xtaci/smux v1.5.56
+	golang.org/x/crypto v0.48.0
+	golang.org/x/net v0.50.0
 	golang.org/x/sync v0.19.0
-	golang.org/x/sys v0.40.0
-	golang.org/x/term v0.39.0
-	golang.org/x/text v0.33.0
+	golang.org/x/sys v0.41.0
+	golang.org/x/term v0.40.0
+	golang.org/x/text v0.34.0
 	golang.org/x/time v0.14.0
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	gorm.io/gorm v1.31.1
 	// go get gvisor.dev/gvisor@go pour utiliser la bonne version de gvisor
-	gvisor.dev/gvisor v0.0.0-20251205175057-80156027975d
+	gvisor.dev/gvisor v0.0.0-20260213200628-444f74c20034
 	www.bamsoftware.com/git/champa.git v0.20250620.0
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
@@ -66,19 +67,17 @@ replace github.com/hazegard/togettyc => ./vendored/github.com/hazegard/togettyc
 
 require (
 	filippo.io/hpke v0.4.0 // indirect
-	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/caddyserver/zerossl v0.1.4 // indirect
-	github.com/charmbracelet/colorprofile v0.4.1 // indirect
-	github.com/charmbracelet/x/ansi v0.11.3 // indirect
-	github.com/charmbracelet/x/cellbuf v0.0.14 // indirect
+	github.com/caddyserver/zerossl v0.1.5 // indirect
+	github.com/charmbracelet/colorprofile v0.4.2 // indirect
+	github.com/charmbracelet/x/ansi v0.11.6 // indirect
+	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/conpty v0.2.0 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
-	github.com/clipperhouse/displaywidth v0.7.0 // indirect
-	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
+	github.com/clipperhouse/displaywidth v0.10.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/creack/pty v1.1.24 // indirect
 	github.com/deckarep/golang-set/v2 v2.8.0 // indirect
 	github.com/dunglas/httpsfv v1.1.0 // indirect
@@ -93,9 +92,9 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/karagenc/yeast v0.1.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
-	github.com/klauspost/reedsolomon v1.13.0 // indirect
+	github.com/klauspost/reedsolomon v1.13.2 // indirect
 	github.com/kr/fs v0.1.0 // indirect
-	github.com/landlock-lsm/go-landlock v0.0.0-20251103212306-430f8e5cd97c // indirect
+	github.com/landlock-lsm/go-landlock v0.7.0 // indirect
 	github.com/libdns/libdns v1.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
@@ -123,15 +122,15 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.1 // indirect
 	go.uber.org/zap/exp v0.3.0 // indirect
-	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
-	golang.org/x/mod v0.32.0 // indirect
-	golang.org/x/tools v0.41.0 // indirect
+	golang.org/x/exp v0.0.0-20260212183809-81e46e3db34a // indirect
+	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/tools v0.42.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	h12.io/socks v1.0.3 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
 	maze.io/x/ttyrec v1.0.0 // indirect
-	modernc.org/libc v1.67.4 // indirect
+	modernc.org/libc v1.67.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.43.0 // indirect
+	modernc.org/sqlite v1.45.0 // indirect
 )

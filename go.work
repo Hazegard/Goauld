@@ -1,8 +1,8 @@
-go 1.25.3
+go 1.26.0
 
 use (
 	.
 	vendored/github.com/hazegard/socket.io-go
-	vendored/github.com/aus/proxyplease@v0.1.0
 	vendored/github.com/hazegard/togettyc
+	vendored/github.com/aus/proxyplease@v0.1.0
 )
