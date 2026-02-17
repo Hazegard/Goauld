@@ -1,4 +1,4 @@
-FROM golang:1.25.4-trixie AS init
+FROM golang:1.26.0-trixie AS init
 
 
 RUN apt install -y golang-go upx git
