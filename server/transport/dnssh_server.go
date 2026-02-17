@@ -502,7 +502,6 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 				}
 			}
 
-			continue
 		}
 
 		resp, payload := responseFor(&query, domain)
