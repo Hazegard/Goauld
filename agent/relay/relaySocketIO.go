@@ -69,7 +69,7 @@ func InitSocketIORelayServer(ctx context.Context, mode string, dnsTransport *tra
 func (sio *ControlRouter) Setup(ctx context.Context, root *gosio.Namespace) {
 	root.OnConnection(func(agent2Relay gosio.ServerSocket) {
 		agent2Relay.OnEvent(socketio.RegisterEvent.ID(), func(data any) {
-			u := "http://" + strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoURL("00000000000000000000000000000000"), "https://"), "http://")
+			u := "http://" + strings.TrimPrefix(strings.TrimPrefix(config.Get().SocketIoURL("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"), "https://"), "http://")
 
 			cfg, err := control.GetRelayEioConfig(sio.Mode, sio.DnsTransport)
 			if err != nil {

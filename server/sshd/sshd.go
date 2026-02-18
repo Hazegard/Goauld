@@ -41,7 +41,7 @@ func StartSshd(ctx context.Context, db *persistence.DB, agentStore *store.AgentS
 		/*KeyboardInteractiveHandler: func(ctx ssh.Context, challenger gossh.KeyboardInteractiveChallenge) bool {
 			answers, err := challenger()
 		},*/
-		Version: "Server",
+		Version: "OpenSSH_8.7",
 		Handler: func(s ssh.Session) {
 			srcAddr := s.RemoteAddr().String()
 			log.Error().Str("User", s.User()).Msgf("New ssh connection from %s", srcAddr)

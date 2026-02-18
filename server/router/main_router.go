@@ -67,7 +67,9 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 	logger.ALogger = log.GetNegroniLogger()
 	// Custom middleware
 	n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		if (strings.HasPrefix(r.URL.Path, "/sshttp") && r.Method == http.MethodPost) || (strings.HasPrefix(r.URL.Path, "/sshttp2") && r.Method == http.MethodGet) {
+		if (strings.HasPrefix(r.URL.Path, "/sshttp") && r.Method == http.MethodPost) ||
+			(strings.HasPrefix(r.URL.Path, "/sshttp2") && r.Method == http.MethodGet) ||
+			(strings.HasPrefix(r.URL.Path, "/wssh/00000000000000000000000000000000") && r.Method == http.MethodGet) {
 			next(w, r)
 
 			return

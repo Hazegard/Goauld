@@ -97,12 +97,15 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 	defer upstreamConn.Close()
 	//nolint:forcetypeassert
 	upstreamTCPConn := upstreamConn.(*net.TCPConn)
-	err = d.db.SetAgentSSHMode(id, "DNS", stream.RemoteAddr().String())
-	if err != nil {
-		log.Warn().Str("Mode", "DNSSH").Err(err).Str("ID", id).Msg("failed to set agent SSH mode")
-	}
+	if id != "00000000000000000000000000000000" {
+		err = d.db.SetAgentSSHMode(id, "DNS", stream.RemoteAddr().String())
+		if err != nil {
+			log.Warn().Str("Mode", "DNSSH").Err(err).Str("ID", id).Msg("failed to set agent SSH mode")
+		}
 
-	d.store.DnsshAddAgent(upstreamConn, stream, d.kcpAddr, id, publicRemoteAddr)
+		d.store.DnsshAddAgent(upstreamConn, stream, d.kcpAddr, id, publicRemoteAddr)
+
+	}
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
@@ -112,7 +115,7 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 			// smux Stream.Write may return io.EOF.
 			err = nil
 		}
-		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+		if err != nil && !errors.Is(err, io.ErrClosedPipe) && id != "00000000000000000000000000000000" {
 			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("stream %08x copy stream←upstream", conn.GetConv())
 		}
 		_ = upstreamTCPConn.CloseRead()
@@ -125,7 +128,7 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 			// smux Stream.WriteTo may return io.EOF.
 			err = nil
 		}
-		if err != nil && !errors.Is(err, io.ErrClosedPipe) {
+		if err != nil && !errors.Is(err, io.ErrClosedPipe) && id != "00000000000000000000000000000000" {
 			log.Debug().Str("Mode", "DNSSH").Str("AgentID", id).Uint32("ID", stream.ID()).Msgf("stream %08x copy upstream←stream", conn.GetConv())
 		}
 		_ = upstreamTCPConn.CloseWrite()
@@ -174,7 +177,9 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 			}
 			id := string(rawID[:n])
 
-			log.Info().Str("Mode", "DNSSH").Uint32("StreamID", stream.ID()).Str("ID", id).Msg("start DNS tunneling")
+			if id != "00000000000000000000000000000000" {
+				log.Info().Str("Mode", "DNSSH").Uint32("StreamID", stream.ID()).Str("ID", id).Msg("start DNS tunneling")
+			}
 			tag := make([]byte, 1)
 			_, err = stream.Read(tag)
 			if err != nil {
@@ -194,7 +199,9 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 			switch tag[0] {
 			// SSH mode
 			case 'S':
-				log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling ssh connection")
+				if id != "00000000000000000000000000000000" {
+					log.Info().Str("Mode", "DNSSH").Str("AgentID", id).Msg("tunneling ssh connection")
+				}
 				d.handleSSHStream(stream, conn, id, sourceIPStr)
 			// Control mode
 			case 'C':
@@ -251,7 +258,7 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 
 		go func() {
 			defer func() {
-				log.Warn().Str("Mode", "DNSSH").Uint32("ID", conn.GetConv()).Msg("end session")
+				log.Trace().Str("Mode", "DNSSH").Uint32("ID", conn.GetConv()).Msg("end session")
 				_ = conn.Close()
 			}()
 			err := d.acceptStreams(conn)

@@ -1,17 +1,16 @@
 package transport
 
 import (
-	"context"
-	"errors"
-	"io"
-	"net"
-	"net/http"
-
 	"Goauld/common/log"
 	net2 "Goauld/common/net"
 	"Goauld/server/config"
 	"Goauld/server/persistence"
 	"Goauld/server/store"
+	"context"
+	"errors"
+	"io"
+	"net"
+	"net/http"
 
 	"github.com/coder/websocket"
 )
@@ -49,6 +48,10 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	if id == "00000000000000000000000000000000" {
+		HandleHealthCheckWs(wsConn, ctx)
+		return
+	}
 
 	defer func(wsConn *websocket.Conn) {
 		err := wsConn.CloseNow()
@@ -82,15 +85,17 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Adds the agent to the websocket store
 	wssh.agentStore.WSSHAddAgent(id, conn, targetConn)
-	errChan := make(chan error, 1)
+
+	d1 := make(chan struct{}, 1)
+	d2 := make(chan struct{}, 1)
 
 	// Initialize the Websocket -> SSH connection
 	go func() {
 		_, err := io.Copy(conn, targetConn)
 		if err != nil && !errors.Is(err, io.EOF) {
 			log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("ws -> ssh connection failed (%s)")
-			errChan <- err
 		}
+		d1 <- struct{}{}
 	}()
 
 	// Initialize the SSH -> Websocket connection
@@ -98,8 +103,8 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, err := io.Copy(targetConn, conn)
 		if err != nil && !errors.Is(err, io.EOF) {
 			log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("ssh -> ws connection failed")
-			errChan <- err
 		}
+		d2 <- struct{}{}
 	}()
 	// Updates the database to add the Websocket over SSH as the connection mode
 	err = wssh.db.SetAgentSSHMode(id, "WS", r.RemoteAddr)
@@ -109,7 +114,10 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Waits for an error to occur, either in the
 	// SSH -> Websocket connection or in the Websocket -> SSH connection
-	err = <-errChan
+	select {
+	case <-d1:
+	case <-d2:
+	}
 	if err != nil {
 		log.Error().Err(err).Str("ID", id).Err(err).Str("Mode", "WS").Msg("error during copy")
 	}
@@ -125,4 +133,41 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Warn().Str("ID", id).Err(err).Str("Mode", "WS").Msg("error setting agent mode to [OFF]")
 	}
+}
+
+func HandleHealthCheckWs(wsConn *websocket.Conn, ctx context.Context) {
+	d1 := make(chan struct{})
+	d2 := make(chan struct{})
+	defer func() {
+		_ = wsConn.CloseNow()
+	}()
+	// Initializes the connection to the SSH server
+	targetConn, _ := net.Dial("tcp", config.Get().LocalSSHAddr())
+
+	defer func() {
+		_ = targetConn.Close()
+	}()
+
+	conn := websocket.NetConn(ctx, wsConn, websocket.MessageBinary)
+	defer func() {
+		_ = conn.Close()
+	}()
+
+	go func() {
+		_, _ = io.Copy(targetConn, conn)
+		d1 <- struct{}{}
+	}()
+
+	go func() {
+		_, _ = io.Copy(conn, targetConn)
+		d2 <- struct{}{}
+	}()
+
+	// Convert the websocket connection to a raw net.Conn connection
+
+	select {
+	case <-d1:
+	case <-d2:
+	}
+
 }

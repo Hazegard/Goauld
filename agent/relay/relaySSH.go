@@ -59,19 +59,23 @@ func relay(agentConn, serverConn net.Conn) {
 	defer agentConn.Close()
 	defer serverConn.Close()
 
-	done := make(chan struct{}, 2)
+	d1 := make(chan struct{})
+	d2 := make(chan struct{})
 
 	go func() {
 		_, _ = io.Copy(serverConn, agentConn)
-		done <- struct{}{}
+		d1 <- struct{}{}
 	}()
 	go func() {
 		_, _ = io.Copy(agentConn, serverConn)
-		done <- struct{}{}
+		d2 <- struct{}{}
 	}()
 
 	// Wait for one side to close, then clean up
-	<-done
+	select {
+	case <-d1:
+	case <-d2:
+	}
 }
 
 func (router *SSHRouter) ServeHTTP(w netHttp.ResponseWriter, r *netHttp.Request) {

@@ -173,15 +173,16 @@ func (sshAgent *SSHAgent) RemoteForward(ctx context.Context, rpf _ssh.RemotePort
 					//nolint:errcheck
 					defer localConn.Close()
 
-					errChan := make(chan error, 1)
+					d1 := make(chan struct{})
+					d2 := make(chan struct{})
 
 					// Initialize the Remote -> Local copy
 					go func() {
 						_, err := io.Copy(localConn, remoteConn)
 						if err != nil && !errors.Is(err, io.EOF) {
 							log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Local -> Remote connection failed")
-							errChan <- err
 						}
+						d1 <- struct{}{}
 					}()
 
 					// Initialize the Local -> Remote copy
@@ -189,12 +190,16 @@ func (sshAgent *SSHAgent) RemoteForward(ctx context.Context, rpf _ssh.RemotePort
 						_, err := io.Copy(remoteConn, localConn)
 						if err != nil && !errors.Is(err, io.EOF) {
 							log.Error().Err(err).Str("Local", rpf.GetLocal()).Str("Remote", rpf.GetRemote()).Msgf("Remote forwarding: Remote -> Local connection failed")
-							errChan <- err
 						}
+						d2 <- struct{}{}
 					}()
 
 					// Waits for an error to occur
-					err = <-errChan
+					select {
+					case <-ctx.Done():
+					case <-d1:
+					case <-d2:
+					}
 					_ = remoteConn.Close()
 					_ = localConn.Close()
 					if err != nil {
