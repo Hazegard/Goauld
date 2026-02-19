@@ -76,6 +76,7 @@ func dnsNameCapacity(domain dns.Name) int {
 	capacity = capacity * 63 / 64
 	// Base32 expands every 5 bytes to 8.
 	capacity = capacity * 5 / 8
+
 	return capacity
 }
 
@@ -86,13 +87,14 @@ func readKeyFromFile(filename string) ([]byte, error) {
 		return nil, err
 	}
 	defer f.Close()
+
 	return noise.ReadKey(f)
 }
 
 func handle(in io.ReadCloser, out io.WriteCloser, sess *smux.Session, conv uint32) error {
 	stream, err := sess.OpenStream()
 	if err != nil {
-		return fmt.Errorf("session %08x opening stream: %v", conv, err)
+		return fmt.Errorf("session %08x opening stream: %w", conv, err)
 	}
 	defer func() {
 		log.Printf("end stream %08x:%d", conv, stream.ID())
@@ -105,7 +107,7 @@ func handle(in io.ReadCloser, out io.WriteCloser, sess *smux.Session, conv uint3
 	go func() {
 		defer wg.Done()
 		_, err := io.Copy(stream, in)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// smux Stream.Write may return io.EOF.
 			err = nil
 		}
@@ -118,7 +120,7 @@ func handle(in io.ReadCloser, out io.WriteCloser, sess *smux.Session, conv uint3
 	go func() {
 		defer wg.Done()
 		_, err := io.Copy(out, stream)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			// smux Stream.WriteTo may return io.EOF.
 			err = nil
 		}
@@ -143,7 +145,7 @@ func run(domain dns.Name, localAddr *net.TCPAddr, remoteAddr net.Addr, pconn net
 		var err error
 		ln, err = net.ListenTCP("tcp", localAddr)
 		if err != nil {
-			return fmt.Errorf("opening local listener: %v", err)
+			return fmt.Errorf("opening local listener: %w", err)
 		}
 		defer ln.Close()
 	}
@@ -157,7 +159,7 @@ func run(domain dns.Name, localAddr *net.TCPAddr, remoteAddr net.Addr, pconn net
 	// Open a KCP conn on the PacketConn.
 	conn, err := kcp.NewConn2(remoteAddr, nil, 0, 0, pconn)
 	if err != nil {
-		return fmt.Errorf("opening KCP conn: %v", err)
+		return fmt.Errorf("opening KCP conn: %w", err)
 	}
 	defer func() {
 		log.Printf("end session %08x", conn.GetConv())
@@ -186,7 +188,7 @@ func run(domain dns.Name, localAddr *net.TCPAddr, remoteAddr net.Addr, pconn net
 	smuxConfig.MaxStreamBuffer = 1 * 1024 * 1024 // default is 65536
 	sess, err := smux.Client(conn, smuxConfig)
 	if err != nil {
-		return fmt.Errorf("opening smux session: %v", err)
+		return fmt.Errorf("opening smux session: %w", err)
 	}
 	defer sess.Close()
 
@@ -198,6 +200,7 @@ func run(domain dns.Name, localAddr *net.TCPAddr, remoteAddr net.Addr, pconn net
 				if err, ok := err.(net.Error); ok && err.Temporary() {
 					continue
 				}
+
 				return err
 			}
 			go func() {
@@ -214,6 +217,7 @@ func run(domain dns.Name, localAddr *net.TCPAddr, remoteAddr net.Addr, pconn net
 		if err != nil {
 			return err
 		}
+
 		return nil
 	}
 }
@@ -265,6 +269,7 @@ func main() {
 				return nil, nil, err
 			}
 			pconn, err := net.ListenUDP("udp", nil)
+
 			return addr, pconn, err
 		}},
 	} {

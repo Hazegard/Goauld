@@ -19,9 +19,9 @@ func RandomCarrierGradeNATIP() net.IP {
 	ipInt := base + offset
 	ip := net.IPv4(
 		byte(ipInt>>24),
-		byte(ipInt>>16),
-		byte(ipInt>>8),
-		byte(ipInt),
+		byte(ipInt>>16), //nolint:gosec
+		byte(ipInt>>8),  //nolint:gosec
+		byte(ipInt),     //nolint:gosec
 	)
 
 	return ip

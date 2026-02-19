@@ -21,6 +21,7 @@ func NewClientID() ClientID {
 	if err != nil {
 		panic(err)
 	}
+
 	return id
 }
 

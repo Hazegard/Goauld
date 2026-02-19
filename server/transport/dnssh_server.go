@@ -104,7 +104,6 @@ func (d *DNSSHServer) handleStream(stream *smux.Stream, upstream string, conn *k
 		}
 
 		d.store.DnsshAddAgent(upstreamConn, stream, d.kcpAddr, id, publicRemoteAddr)
-
 	}
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -508,7 +507,6 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 					continue
 				}
 			}
-
 		}
 
 		resp, payload := responseFor(&query, domain)

@@ -42,6 +42,7 @@ func (qssh *QUICServer) HandleQuic(quicConn *quic.Stream, id string, remote stri
 
 	if id == "00000000000000000000000000000000" {
 		HandleHealthCheckQuic(quicConn, sshConn)
+
 		return
 	}
 

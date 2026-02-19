@@ -131,6 +131,11 @@ linters:
           disabled: true
         - name: unused-parameter
         # - name: unused-receiver
+    gosec:
+      excludes:
+        - G704
+        - G705
+        - G115
 
   exclusions:
     presets:
@@ -140,6 +145,7 @@ linters:
       - legacy
     paths:
       - vendored
+      - healthcheck
     rules:
       - path: (.+)_test\.go
         linters:

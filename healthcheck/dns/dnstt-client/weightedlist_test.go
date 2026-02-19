@@ -23,6 +23,7 @@ func TestParseWeightedList(t *testing.T) {
 		weights, labels, err := parseWeightedList(test.input)
 		if err != nil {
 			t.Errorf("%+q resulted in error: %v", test.input, err)
+
 			continue
 		}
 		i := 0
@@ -37,6 +38,7 @@ func TestParseWeightedList(t *testing.T) {
 		if i < len(test.expectedWeights) || i < len(test.expectedLabels) {
 			t.Errorf("%+q: expected %v, %v, got %v, %v", test.input,
 				test.expectedWeights, test.expectedLabels, weights, labels)
+
 			continue
 		}
 	}
@@ -58,6 +60,7 @@ func TestParseWeightedList(t *testing.T) {
 		_, _, err := parseWeightedList(input)
 		if err == nil {
 			t.Errorf("%+q resulted in no error", input)
+
 			continue
 		}
 	}
@@ -91,7 +94,7 @@ func TestSampleWeighted(t *testing.T) {
 		{[]uint32{0, 0, 0, 0, 1}, 4},
 		{[]uint32{0, 0, 0xffffffff, 0, 1}, 2},
 	} {
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			index := sampleWeighted(test.weights)
 			if index != test.index {
 				t.Errorf("%v: expected %d, got %d", test.weights, test.index, index)

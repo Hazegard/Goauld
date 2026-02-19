@@ -4,17 +4,19 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
+	"errors"
 	"flag"
 	"fmt"
-	"github.com/aus/proxyplease"
-	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/aus/proxyplease"
+	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 )
 
 // Copyright 2017-2022 Google Inc.
@@ -53,8 +55,10 @@ func secretString(s string) (string, error) {
 			return "", fmt.Errorf("valid permissions for %q is %0o, was %0o", fn, 0600, p)
 		}
 		b, err := ioutil.ReadFile(fn)
+
 		return strings.TrimSpace(string(b)), err
 	}
+
 	return s, nil
 }
 
@@ -69,7 +73,6 @@ func dialError(url string, resp *http.Response, err error) {
 			extra = "Body:\n" + string(b)
 		}
 		log.Fatalf("%s: HTTP error: %d %s\n%s", err, resp.StatusCode, resp.Status, extra)
-
 	}
 	log.Fatalf("Dial to %q fail: %v", url, err)
 }
@@ -152,10 +155,10 @@ func main() {
 
 	// stdin -> websocket
 	// TODO: NextWriter() seems to be broken.
-	if err := File2WS(ctx, cancel, os.Stdin, conn); err == io.EOF {
+	if err := File2WS(ctx, cancel, os.Stdin, conn); errors.Is(err, io.EOF) {
 		if err := conn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
-			time.Now().Add(*writeTimeout)); err == websocket.ErrCloseSent {
+			time.Now().Add(*writeTimeout)); errors.Is(err, websocket.ErrCloseSent) {
 		} else if err != nil {
 			log.Errorf("Error sending 'close' message: %v", err)
 		}

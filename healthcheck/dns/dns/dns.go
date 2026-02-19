@@ -90,6 +90,7 @@ func NewName(labels [][]byte) (Name, error) {
 	if len(builder.Bytes()) > 255 {
 		return nil, ErrNameTooLong
 	}
+
 	return name, nil
 }
 
@@ -130,6 +131,7 @@ func (name Name) String() string {
 			}
 		}
 	}
+
 	return buf.String()
 }
 
@@ -142,11 +144,12 @@ func (name Name) TrimSuffix(suffix Name) (Name, bool) {
 	}
 	split := len(name) - len(suffix)
 	fore, aft := name[:split], name[split:]
-	for i := 0; i < len(aft); i++ {
-		if !bytes.Equal(bytes.ToLower(aft[i]), bytes.ToLower(suffix[i])) {
+	for i := range len(aft) {
+		if !bytes.EqualFold(aft[i], suffix[i]) {
 			return nil, false
 		}
 	}
+
 	return fore, true
 }
 
@@ -272,6 +275,7 @@ loop:
 			return nil, err
 		}
 	}
+
 	return NewName(labels)
 }
 
@@ -351,7 +355,7 @@ func readMessage(r io.ReadSeeker) (Message, error) {
 
 	// Question section
 	// https://tools.ietf.org/html/rfc1035#section-4.1.2
-	for i := 0; i < int(qdCount); i++ {
+	for range qdCount {
 		question, err := readQuestion(r)
 		if err != nil {
 			return message, err
@@ -369,7 +373,7 @@ func readMessage(r io.ReadSeeker) (Message, error) {
 		{&message.Authority, nsCount},
 		{&message.Additional, arCount},
 	} {
-		for i := 0; i < int(rec.count); i++ {
+		for range rec.count {
 			rr, err := readRR(r)
 			if err != nil {
 				return message, err
@@ -387,17 +391,18 @@ func readMessage(r io.ReadSeeker) (Message, error) {
 func MessageFromWireFormat(buf []byte) (Message, error) {
 	r := bytes.NewReader(buf)
 	message, err := readMessage(r)
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		err = io.ErrUnexpectedEOF
 	} else if err == nil {
 		// Check for trailing bytes.
 		_, err = r.ReadByte()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = nil
 		} else if err == nil {
 			err = ErrTrailingBytes
 		}
 	}
+
 	return message, err
 }
 
@@ -430,6 +435,7 @@ func (builder *messageBuilder) WriteName(name Name) {
 		if ptr, ok := builder.nameCache[name[i:].String()]; ok && ptr&0x3fff == ptr {
 			// If so, we can write a compression pointer.
 			binary.Write(&builder.w, binary.BigEndian, uint16(0xc000|ptr))
+
 			return
 		}
 		// Not cached; we must encode this label verbatim. Store a cache
@@ -468,6 +474,7 @@ func (builder *messageBuilder) WriteRR(rr *RR) error {
 	}
 	binary.Write(&builder.w, binary.BigEndian, rdLength)
 	builder.w.Write(rr.Data)
+
 	return nil
 }
 
@@ -522,6 +529,7 @@ func (message *Message) WireFormat() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return builder.Bytes(), nil
 }
 
@@ -547,6 +555,7 @@ func DecodeRDataTXT(p []byte) ([]byte, error) {
 			break
 		}
 	}
+
 	return buf.Bytes(), nil
 }
 
@@ -571,5 +580,6 @@ func EncodeRDataTXT(p []byte) []byte {
 	// <character-string>s".
 	buf.WriteByte(byte(len(p)))
 	buf.Write(p)
+
 	return buf.Bytes()
 }

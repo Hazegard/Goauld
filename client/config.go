@@ -162,8 +162,8 @@ type ClientConfig struct {
 	Server    string `default:"${_server}" short:"s" name:"server" yaml:"server" optional:"" help:"HTTP server address to connect to."`
 	SSHServer string `default:"${_ssh_server}" short:"S" name:"ssh-server" yaml:"ssh-server" optional:"" help:"SSH server address to connect to."`
 
-	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token for the /manage/ API endpoint."`
-	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token for the /admin/ API endpoint."`
+	AccessToken string `default:"${_access_token}" name:"access-token" yaml:"access-token" help:"Access token for the /manage/ API endpoint."` //nolint:gosec
+	AdminToken  string `default:"${_admin_token}" name:"admin-token" yaml:"admin-token" help:"Admin token for the /admin/ API endpoint."`      //nolint:gosec
 
 	Quiet    bool `default:"${_quiet}" short:"q" name:"quiet" yaml:"quiet" short:"q" help:"Suppress all log output."`
 	Verbose  int  `default:"${_verbosity}" short:"v" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Increase verbosity level. Repeat for more detailed logs."`

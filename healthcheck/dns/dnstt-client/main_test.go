@@ -8,7 +8,7 @@ import (
 )
 
 func TestDNSNameCapacity(t *testing.T) {
-	for domainLen := 0; domainLen < 255; domainLen++ {
+	for domainLen := range 255 {
 		domain, err := dns.NewName(chunks(bytes.Repeat([]byte{'x'}, domainLen), 63))
 		if err != nil {
 			continue

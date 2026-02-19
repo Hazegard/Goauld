@@ -50,6 +50,7 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if id == "00000000000000000000000000000000" {
 		HandleHealthCheckWs(wsConn, ctx)
+
 		return
 	}
 
@@ -169,5 +170,4 @@ func HandleHealthCheckWs(wsConn *websocket.Conn, ctx context.Context) {
 	case <-d1:
 	case <-d2:
 	}
-
 }

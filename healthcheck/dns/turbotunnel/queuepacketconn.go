@@ -145,6 +145,7 @@ func (c *QueuePacketConn) closeWithError(err error) error {
 	if !newlyClosed {
 		return &net.OpError{Op: "close", Net: c.LocalAddr().Network(), Addr: c.LocalAddr(), Err: c.err.Load().(error)}
 	}
+
 	return nil
 }
 

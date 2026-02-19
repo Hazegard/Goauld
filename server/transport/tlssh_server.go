@@ -40,6 +40,7 @@ func (tlssh *TLSSHServer) HandleTLSSH(tlsConn net.Conn, id string) {
 
 	if id == "00000000000000000000000000000000" {
 		HandleHealthCheckTls(tlsConn, sshConn)
+
 		return
 	}
 	// Adds the agent to the TLS over SSH store

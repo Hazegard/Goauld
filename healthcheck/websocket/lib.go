@@ -39,9 +39,10 @@ func File2WS(ctx context.Context, cancel func(), src io.Reader, dst *websocket.C
 		} else {
 			b = b[:n]
 		}
-		//log.Printf("->ws %d bytes: %q", len(b), string(b))
+		// log.Printf("->ws %d bytes: %q", len(b), string(b))
 		if err := dst.WriteMessage(websocket.BinaryMessage, b); err != nil {
 			log.Warningf("Writing websockt message: %v", err)
+
 			return err
 		}
 	}

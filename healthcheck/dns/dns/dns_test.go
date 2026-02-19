@@ -2,6 +2,7 @@ package dns
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -13,11 +14,12 @@ func namesEqual(a, b Name) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for i := 0; i < len(a); i++ {
+	for i := range len(a) {
 		if !bytes.Equal(a[i], b[i]) {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -82,9 +84,10 @@ func TestName(t *testing.T) {
 		// Test that NewName returns proper error codes, and otherwise
 		// returns an equal slice of labels.
 		name, err := NewName(test.labels)
-		if err != test.err || (err == nil && !namesEqual(name, test.labels)) {
+		if !errors.Is(err, test.err) || (err == nil && !namesEqual(name, test.labels)) {
 			t.Errorf("%+q returned (%+q, %v), expected (%+q, %v)",
 				test.labels, name, err, test.labels, test.err)
+
 			continue
 		}
 		if test.err != nil {
@@ -96,6 +99,7 @@ func TestName(t *testing.T) {
 		s := name.String()
 		if s != test.s {
 			t.Errorf("%+q became string %+q, expected %+q", test.labels, s, test.s)
+
 			continue
 		}
 
@@ -105,14 +109,16 @@ func TestName(t *testing.T) {
 		if err != nil || !namesEqual(name, test.labels) {
 			t.Errorf("%+q parsing %+q returned (%+q, %v), expected (%+q, %v)",
 				test.labels, s, name, err, test.labels, nil)
+
 			continue
 		}
 		// A trailing dot should be ignored.
 		if !strings.HasSuffix(s, ".") {
 			dotName, dotErr := ParseName(s + ".")
-			if dotErr != err || !namesEqual(dotName, name) {
+			if !errors.Is(dotErr, err) || !namesEqual(dotName, name) {
 				t.Errorf("%+q parsing %+q returned (%+q, %v), expected (%+q, %v)",
 					test.labels, s+".", dotName, dotErr, name, err)
+
 				continue
 			}
 		}
@@ -130,9 +136,10 @@ func TestParseName(t *testing.T) {
 		{"", [][]byte{}, nil},
 	} {
 		name, err := ParseName(test.s)
-		if err != test.err || (err == nil && !namesEqual(name, test.name)) {
+		if !errors.Is(err, test.err) || (err == nil && !namesEqual(name, test.name)) {
 			t.Errorf("%+q returned (%+q, %v), expected (%+q, %v)",
 				test.s, name, err, test.name, test.err)
+
 			continue
 		}
 	}
@@ -169,6 +176,7 @@ func unescapeString(s string) ([][]byte, error) {
 		}
 		result = append(result, buf.Bytes())
 	}
+
 	return result, nil
 }
 
@@ -190,15 +198,18 @@ func TestNameString(t *testing.T) {
 		s := test.name.String()
 		if s != test.s {
 			t.Errorf("%+q escaped to %+q, expected %+q", test.name, s, test.s)
+
 			continue
 		}
 		unescaped, err := unescapeString(s)
 		if err != nil {
 			t.Errorf("%+q unescaping %+q resulted in error %v", test.name, s, err)
+
 			continue
 		}
 		if !namesEqual(Name(unescaped), test.name) {
 			t.Errorf("%+q roundtripped through %+q to %+q", test.name, s, unescaped)
+
 			continue
 		}
 	}
@@ -230,6 +241,7 @@ func TestNameTrimSuffix(t *testing.T) {
 		if ok != test.ok || trimmed != test.trimmed {
 			t.Errorf("TrimSuffix %+q %+q returned (%+q, %v), expected (%+q, %v)",
 				test.name, test.suffix, trimmed, ok, test.trimmed, test.ok)
+
 			continue
 		}
 	}
@@ -272,16 +284,19 @@ func TestReadName(t *testing.T) {
 		name, err := readName(r)
 		if err != nil {
 			t.Errorf("%+q returned error %s", test.input, err)
+
 			continue
 		}
 		s := name.String()
 		if s != test.s {
 			t.Errorf("%+q returned %+q, expected %+q", test.input, s, test.s)
+
 			continue
 		}
 		cur, _ := r.Seek(0, io.SeekCurrent)
 		if cur != test.end {
 			t.Errorf("%+q left offset %d, expected %d", test.input, cur, test.end)
+
 			continue
 		}
 	}
@@ -321,11 +336,12 @@ func TestReadName(t *testing.T) {
 			panic(err)
 		}
 		name, err := readName(r)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
-		if err != test.err {
+		if !errors.Is(err, test.err) {
 			t.Errorf("%+q returned (%+q, %v), expected %v", test.input, name, err, test.err)
+
 			continue
 		}
 	}
@@ -336,6 +352,7 @@ func mustParseName(s string) Name {
 	if err != nil {
 		panic(err)
 	}
+
 	return name
 }
 
@@ -346,6 +363,7 @@ func questionsEqual(a, b *Question) bool {
 	if a.Type != b.Type || a.Class != b.Class {
 		return false
 	}
+
 	return true
 }
 
@@ -359,6 +377,7 @@ func rrsEqual(a, b *RR) bool {
 	if !bytes.Equal(a.Data, b.Data) {
 		return false
 	}
+
 	return true
 }
 
@@ -369,7 +388,7 @@ func messagesEqual(a, b *Message) bool {
 	if len(a.Question) != len(b.Question) {
 		return false
 	}
-	for i := 0; i < len(a.Question); i++ {
+	for i := range len(a.Question) {
 		if !questionsEqual(&a.Question[i], &b.Question[i]) {
 			return false
 		}
@@ -382,12 +401,13 @@ func messagesEqual(a, b *Message) bool {
 		if len(rec.rrA) != len(rec.rrB) {
 			return false
 		}
-		for i := 0; i < len(rec.rrA); i++ {
+		for i := range len(rec.rrA) {
 			if !rrsEqual(&rec.rrA[i], &rec.rrB[i]) {
 				return false
 			}
 		}
 	}
+
 	return true
 }
 
@@ -453,9 +473,10 @@ func TestMessageFromWireFormat(t *testing.T) {
 		},
 	} {
 		message, err := MessageFromWireFormat([]byte(test.buf))
-		if err != test.err || (err == nil && !messagesEqual(&message, &test.expected)) {
+		if !errors.Is(err, test.err) || (err == nil && !messagesEqual(&message, &test.expected)) {
 			t.Errorf("%+q\nreturned (%+v, %v)\nexpected (%+v, %v)",
 				test.buf, message, err, test.expected, test.err)
+
 			continue
 		}
 	}
@@ -509,15 +530,18 @@ func TestMessageWireFormatRoundTrip(t *testing.T) {
 		buf, err := message.WireFormat()
 		if err != nil {
 			t.Errorf("%+v cannot make wire format: %v", message, err)
+
 			continue
 		}
 		message2, err := MessageFromWireFormat(buf)
 		if err != nil {
 			t.Errorf("%+q cannot parse wire format: %v", buf, err)
+
 			continue
 		}
 		if !messagesEqual(&message, &message2) {
 			t.Errorf("messages unequal\nbefore: %+v\n after: %+v", message, message2)
+
 			continue
 		}
 	}
@@ -534,9 +558,10 @@ func TestDecodeRDataTXT(t *testing.T) {
 		{[]byte("\x01"), nil, io.ErrUnexpectedEOF},
 	} {
 		decoded, err := DecodeRDataTXT(test.p)
-		if err != test.err || (err == nil && !bytes.Equal(decoded, test.decoded)) {
+		if !errors.Is(err, test.err) || (err == nil && !bytes.Equal(decoded, test.decoded)) {
 			t.Errorf("%+q\nreturned (%+q, %v)\nexpected (%+q, %v)",
 				test.p, decoded, err, test.decoded, test.err)
+
 			continue
 		}
 	}
@@ -586,6 +611,7 @@ func TestRDataTXTRoundTrip(t *testing.T) {
 		decoded, err := DecodeRDataTXT(rdata)
 		if err != nil || !bytes.Equal(decoded, p) {
 			t.Errorf("%+q returned (%+q, %v)", p, decoded, err)
+
 			continue
 		}
 	}

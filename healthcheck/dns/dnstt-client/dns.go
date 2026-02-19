@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/binary"
-	"fmt"
+	"errors"
 	"io"
 	"log"
 	"net"
@@ -93,6 +93,7 @@ func NewDNSPacketConn(transport net.PacketConn, addr net.Addr, domain dns.Name) 
 			log.Printf("sendLoop: %v", err)
 		}
 	}()
+
 	return c
 }
 
@@ -146,9 +147,10 @@ func nextPacket(r *bytes.Reader) ([]byte, error) {
 		p := make([]byte, n)
 		_, err = io.ReadFull(r, p)
 		// Here we must change io.EOF to io.ErrUnexpectedEOF.
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
+
 		return p, err
 	}
 }
@@ -189,8 +191,10 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 		if err != nil {
 			if err, ok := err.(net.Error); ok && err.Temporary() {
 				log.Printf("ReadFrom temporary error: %v", err)
+
 				continue
 			}
+
 			return err
 		}
 
@@ -198,6 +202,7 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 		resp, err := dns.MessageFromWireFormat(buf[:n])
 		if err != nil {
 			log.Printf("MessageFromWireFormat: %v", err)
+
 			continue
 		}
 
@@ -240,6 +245,7 @@ func chunks(p []byte, n int) [][]byte {
 		result = append(result, p[:sz])
 		p = p[sz:]
 	}
+
 	return result
 }
 
@@ -256,34 +262,34 @@ func chunks(p []byte, n int) [][]byte {
 //
 //  0. Start with the raw packet contents.
 //
-//	supercalifragilisticexpialidocious
+//     supercalifragilisticexpialidocious
 //
 //  1. Length-prefix the packet and add random padding. A length prefix L < 0xe0
 //     means a data packet of L bytes. A length prefix L ≥ 0xe0 means padding
 //     of L − 0xe0 bytes (not counting the length of the length prefix itself).
 //
-//	\xe3\xd9\xa3\x15\x22supercalifragilisticexpialidocious
+//     \xe3\xd9\xa3\x15\x22supercalifragilisticexpialidocious
 //
 //  2. Prefix the ClientID.
 //
-//	CLIENTID\xe3\xd9\xa3\x15\x22supercalifragilisticexpialidocious
+//     CLIENTID\xe3\xd9\xa3\x15\x22supercalifragilisticexpialidocious
 //
 //  3. Base32-encode, without padding and in lower case.
 //
-//	ingesrkokreujy6zumkse43vobsxey3bnruwm4tbm5uwy2ltoruwgzlyobuwc3djmrxwg2lpovzq
+//     ingesrkokreujy6zumkse43vobsxey3bnruwm4tbm5uwy2ltoruwgzlyobuwc3djmrxwg2lpovzq
 //
 //  4. Break into labels of at most 63 octets.
 //
-//	ingesrkokreujy6zumkse43vobsxey3bnruwm4tbm5uwy2ltoruwgzlyobuwc3d.jmrxwg2lpovzq
+//     ingesrkokreujy6zumkse43vobsxey3bnruwm4tbm5uwy2ltoruwgzlyobuwc3d.jmrxwg2lpovzq
 //
 //  5. Append the domain.
 //
-//	ingesrkokreujy6zumkse43vobsxey3bnruwm4tbm5uwy2ltoruwgzlyobuwc3d.jmrxwg2lpovzq.t.example.com
+//     ingesrkokreujy6zumkse43vobsxey3bnruwm4tbm5uwy2ltoruwgzlyobuwc3d.jmrxwg2lpovzq.t.example.com
 func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) error {
 	var decoded []byte
 	{
 		if len(p) >= 224 {
-			return fmt.Errorf("too long")
+			return errors.New("too long")
 		}
 		var buf bytes.Buffer
 		// ClientID
@@ -342,6 +348,7 @@ func (c *DNSPacketConn) send(transport net.PacketConn, p []byte, addr net.Addr) 
 	}
 
 	_, err = transport.WriteTo(buf, addr)
+
 	return err
 }
 
@@ -401,6 +408,7 @@ func (c *DNSPacketConn) sendLoop(transport net.PacketConn, addr net.Addr) error 
 		err := c.send(transport, p, addr)
 		if err != nil {
 			log.Printf("send: %v", err)
+
 			continue
 		}
 	}

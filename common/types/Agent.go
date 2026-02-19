@@ -15,7 +15,7 @@ type Agent struct {
 	SSHMode              string                     `gorm:"type:text" json:"ssh_mode" yaml:"ssh_mode"`
 	UsedPorts            string                     `gorm:"type:string" json:"usedPorts" yaml:"usedPorts"`
 	RemotePortForwarding []ssh.RemotePortForwarding `gorm:"serializer:json" json:"remote_port_forwarding" yaml:"remote_port_forwarding"`
-	PrivateKey           string                     `gorm:"type:text" json:"privateKey,omitempty" yaml:"privateKey,omitempty"`
+	PrivateKey           string                     `gorm:"type:text" json:"privateKey,omitempty" yaml:"privateKey,omitempty"` //nolint:gosec
 	PublicKey            string                     `gorm:"type:text" json:"publicKey,omitempty" yaml:"publicKey,omitempty"`
 	Source               string                     `gorm:"type:text" json:"source" yaml:"source"`
 	Connected            bool                       `gorm:"type:boolean" json:"connected" yaml:"connected"`

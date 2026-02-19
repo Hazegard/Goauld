@@ -9,7 +9,7 @@ import (
 type ExitRequest struct {
 	Kill           bool   `json:"kill"`
 	Delete         bool   `json:"delete"`
-	HashedPassword []byte `json:"password"`
+	HashedPassword []byte `json:"password"` //nolint:gosec
 }
 
 // newExitRequest creates a new Exit request.

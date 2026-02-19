@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/binary"
+	"errors"
 	"io"
 	"log"
 	"net"
@@ -40,6 +41,7 @@ func NewTLSPacketConn(addr string, dialTLSContext func(ctx context.Context, netw
 	dial := func() (net.Conn, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), dialTimeout)
 		defer cancel()
+
 		return dialTLSContext(ctx, "tcp", addr)
 	}
 	// We maintain one TLS connection at a time, redialing it whenever it
@@ -79,10 +81,12 @@ func NewTLSPacketConn(addr string, dialTLSContext func(ctx context.Context, netw
 			conn, err = dial()
 			if err != nil {
 				log.Printf("dial tls: %v", err)
+
 				break
 			}
 		}
 	}()
+
 	return c, nil
 }
 
@@ -94,9 +98,10 @@ func (c *TLSPacketConn) recvLoop(conn net.Conn) error {
 		var length uint16
 		err := binary.Read(br, binary.BigEndian, &length)
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				err = nil
 			}
+
 			return err
 		}
 		p := make([]byte, int(length))
@@ -130,5 +135,6 @@ func (c *TLSPacketConn) sendLoop(conn net.Conn) error {
 			return err
 		}
 	}
+
 	return nil
 }

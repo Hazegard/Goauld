@@ -43,10 +43,12 @@ func parseWeightedList(s string) ([]uint32, []string, error) {
 		}
 		if s[i] == ',' {
 			i++
+
 			return token{Kind: kindComma}
 		}
 		if s[i] == '*' {
 			i++
+
 			return token{Kind: kindAsterisk}
 		}
 		var text strings.Builder
@@ -60,12 +62,14 @@ func parseWeightedList(s string) ([]uint32, []string, error) {
 			text.WriteByte(s[i])
 			i++
 		}
+
 		return token{Kind: kindText, Text: text.String()}
 	}
 	peekToken := func() token {
 		saved := i
 		t := nextToken()
 		i = saved
+
 		return t
 	}
 
@@ -149,6 +153,7 @@ func parseWeightedList(s string) ([]uint32, []string, error) {
 				case kindText:
 					ttext = fmt.Sprintf("%+q", t.Text)
 				}
+
 				return nil, nil, fmt.Errorf("unexpected %s", ttext)
 			}
 		default:
@@ -173,6 +178,7 @@ func (s cryptoSource) Int63() int64 {
 		panic(err)
 	}
 	n &= (1 << 63) - 1
+
 	return n
 }
 

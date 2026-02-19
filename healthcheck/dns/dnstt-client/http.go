@@ -68,16 +68,17 @@ func NewHTTPPacketConn(rt http.RoundTripper, urlString string, numSenders int) (
 		urlString:       urlString,
 		QueuePacketConn: turbotunnel.NewQueuePacketConn(turbotunnel.DummyAddr{}, 0),
 	}
-	for i := 0; i < numSenders; i++ {
+	for range numSenders {
 		go c.sendLoop()
 	}
+
 	return c, nil
 }
 
 // send sends a message in an HTTP request, and queues the body HTTP response to
 // be returned from a future call to ReadFrom.
 func (c *HTTPPacketConn) send(p []byte) error {
-	req, err := http.NewRequest("POST", c.urlString, bytes.NewReader(p))
+	req, err := http.NewRequest(http.MethodPost, c.urlString, bytes.NewReader(p))
 	if err != nil {
 		return err
 	}
@@ -172,5 +173,6 @@ func parseRetryAfter(value string, now time.Time) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
+
 	return now.Add(time.Duration(i) * time.Second), nil
 }

@@ -60,6 +60,7 @@ func NewRemoteMap(timeout time.Duration) *RemoteMap {
 			}
 		}()
 	}
+
 	return m
 }
 
@@ -68,6 +69,7 @@ func NewRemoteMap(timeout time.Duration) *RemoteMap {
 func (m *RemoteMap) SendQueue(addr net.Addr) chan []byte {
 	m.lock.Lock()
 	defer m.lock.Unlock()
+
 	return m.inner.Lookup(addr, time.Now()).SendQueue
 }
 
@@ -89,6 +91,7 @@ func (m *RemoteMap) Stash(addr net.Addr, p []byte) bool {
 func (m *RemoteMap) Unstash(addr net.Addr) <-chan []byte {
 	m.lock.Lock()
 	defer m.lock.Unlock()
+
 	return m.inner.Lookup(addr, time.Now()).Stash
 }
 
@@ -132,6 +135,7 @@ func (inner *remoteMapInner) Lookup(addr net.Addr, now time.Time) *remoteRecord 
 		}
 		heap.Push(inner, record)
 	}
+
 	return record
 }
 
@@ -141,6 +145,7 @@ func (inner *remoteMapInner) Len() int {
 	if len(inner.byAge) != len(inner.byAddr) {
 		panic("inconsistent remoteMap")
 	}
+
 	return len(inner.byAge)
 }
 
@@ -154,7 +159,7 @@ func (inner *remoteMapInner) Swap(i, j int) {
 	inner.byAddr[inner.byAge[j].Addr] = j
 }
 
-func (inner *remoteMapInner) Push(x interface{}) {
+func (inner *remoteMapInner) Push(x any) {
 	record := x.(*remoteRecord)
 	if _, ok := inner.byAddr[record.Addr]; ok {
 		panic("duplicate address in remoteMap")
@@ -165,7 +170,7 @@ func (inner *remoteMapInner) Push(x interface{}) {
 	inner.byAge = append(inner.byAge, record)
 }
 
-func (inner *remoteMapInner) Pop() interface{} {
+func (inner *remoteMapInner) Pop() any {
 	n := len(inner.byAddr)
 	// Remove from byAge slice.
 	record := inner.byAge[n-1]
@@ -173,5 +178,6 @@ func (inner *remoteMapInner) Pop() interface{} {
 	inner.byAge = inner.byAge[:n-1]
 	// Remove from byAddr map.
 	delete(inner.byAddr, record.Addr)
+
 	return record
 }

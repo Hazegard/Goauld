@@ -139,7 +139,7 @@ type ServerConfig struct {
 	DbFileName string `default:"${_db_name}" group:"Database configuration" name:"db-file-name" yaml:"db-file-name" help:"Path or filename of the database to use."`
 
 	AllowedIPs  []string `default:"${_allowed_ips}" group:"Access control configuration:" name:"allowed-ips" yaml:"allowed-ips" help:"List of IP addresses allowed to access the /manage/ endpoint."`
-	AccessToken []string `default:"${_access_token}" group:"Access control configuration:" name:"access-token" yaml:"access-token" help:"Access token required for the /manage/ API endpoint."`
+	AccessToken []string `default:"${_access_token}" group:"Access control configuration:" name:"access-token" yaml:"access-token" help:"Access token required for the /manage/ API endpoint."` //nolint:gosec
 	AdminToken  []string `default:"${_admin_token}" group:"Access control configuration:" name:"admin-token" yaml:"admin-token" help:"Admin token required for the /admin/ API endpoint."`
 
 	BinariesBasicAuth    string `default:"${_binaries_basicauth}" group:"Agent binaries configuration:" name:"binaries-basic-auth" yaml:"binaries-basic-auth" help:"HTTP Basic Auth credentials required to access the binaries endpoint."`

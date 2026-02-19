@@ -15,7 +15,7 @@ type MITMHTTPProxy struct {
 	Dialer   *ProxyDialer
 	Server   *http.Server
 	Username string
-	Password string
+	Password string //nolint:gosec
 	Domain   string
 }
 

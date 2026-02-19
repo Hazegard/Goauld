@@ -11,6 +11,7 @@ func mustParseTime(value string) time.Time {
 	if err != nil {
 		panic(err)
 	}
+
 	return t
 }
 

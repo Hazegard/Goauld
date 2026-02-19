@@ -1,5 +1,4 @@
 //go:build client
-// +build client
 
 // Package sources holds the agent source code
 package sources
