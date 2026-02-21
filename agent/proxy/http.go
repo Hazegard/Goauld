@@ -9,9 +9,11 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/elazarl/goproxy"
+	"github.com/rs/zerolog"
 )
 
 // HTTPProxy holds the HTTP proxy.
@@ -19,6 +21,14 @@ type HTTPProxy struct {
 	Proxy  *goproxy.ProxyHttpServer
 	Dialer *ProxyDialer
 	Server *http.Server
+}
+
+type logger struct {
+	l zerolog.Logger
+}
+
+func (l *logger) Printf(format string, v ...any) {
+	l.l.Trace().Msgf(strings.TrimSpace(format), v...)
 }
 
 // InitHTTPProxy initializes and returns a configured HTTPProxy instance. The function sets up a proxy server
@@ -40,7 +50,7 @@ func InitHTTPProxy() *HTTPProxy {
 	proxy.Proxy.KeepAcceptEncoding = true
 	proxy.Proxy.KeepHeader = true
 	proxy.Proxy.KeepDestinationHeaders = true
-	proxyLogger := log.Get().With().Str("From", "HttpProxy").Logger()
+	proxyLogger := logger{l: log.Get().With().Str("From", "HttpProxy").Logger()}
 	proxy.Proxy.Logger = &proxyLogger
 
 	// HTTP

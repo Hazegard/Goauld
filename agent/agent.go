@@ -314,12 +314,65 @@ func run() globalcontext.CancelReason {
 				}
 			}()
 
-			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote HTTP proxy server started")
+			log.Info().Int("Remote port", rPort).Int("Local port", port).Msg("Remote HTTP proxy server started")
 			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
 				ServerPort: config.Get().RemoteForwardedHTTPProxyPort(),
 				AgentPort:  port,
 				AgentIP:    "127.0.0.1",
 				Tag:        "HTTP",
+			})
+		}
+
+		// If the MITM HTTP proxy server is enabled, start it
+		if config.Get().MITMHTTPProxyEnabled() {
+			httpProxy, err := proxy.InitMITMHTTPProxy(config.Get().HTTPProxyUsername(), config.Get().MITMProxyPassword(), config.Get().MITMProxyDomain())
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy")
+
+				return
+			}
+
+			listener, err := net.Listen("tcp4", "127.0.0.1:0")
+			//nolint:forcetypeassert
+			port := listener.Addr().(*net.TCPAddr).Port
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy connection")
+			}
+			rpf := commonssh.RemotePortForwarding{
+				ServerPort: config.Get().RemoteForwardedHTTPMITMProxyPort(),
+				AgentPort:  port,
+				AgentIP:    "127.0.0.1",
+				Tag:        "MITMHTTP",
+			}
+			rPort, err := sshAgent.RemoteForward(ctx, rpf)
+
+			config.Get().UpdateMITMHTTPProxyPort(rPort)
+
+			config.Get().LocalHTTPMITMPRoxyPort = port
+			go func() {
+				select {
+				case httpProxyErr <- httpProxy.Server.Serve(listener):
+					if err != nil {
+						log.Error().Err(err).Msg("MITM HTTP proxy server error")
+					}
+					err := httpProxy.Server.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("MITM HTTP proxy close error")
+					}
+				case <-ctx.Done():
+					err := httpProxy.Server.Close()
+					if err != nil {
+						log.Warn().Err(err).Msg("MITM HTTP proxy close error")
+					}
+				}
+			}()
+
+			log.Info().Int("Remote port", rPort).Int("Local port", port).Msg("Remote MITM HTTP proxy server started")
+			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
+				ServerPort: config.Get().RemoteForwardedHTTPMITMProxyPort(),
+				AgentPort:  port,
+				AgentIP:    "127.0.0.1",
+				Tag:        "MITMHTTP",
 			})
 		}
 
@@ -357,58 +410,6 @@ func run() globalcontext.CancelReason {
 				AgentPort:  -1,
 				AgentIP:    "0.0.0.0",
 				Tag:        "SOCKS",
-			})
-		}
-
-		// If the MITM HTTP proxy server is enabled, start it
-		if config.Get().MITMHTTPProxyEnabled() {
-			httpProxy, err := proxy.InitMITMHTTPProxy(config.Get().HTTPProxyUsername(), config.Get().MITMProxyPassword(), config.Get().MITMProxyDomain())
-			if err != nil {
-				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy")
-
-				return
-			}
-
-			listener, err := net.Listen("tcp4", "127.0.0.1:0")
-			//nolint:forcetypeassert
-			port := listener.Addr().(*net.TCPAddr).Port
-			if err != nil {
-				log.Error().Err(err).Msg("error initializing the MITM HTTP proxy connection")
-			}
-			rpf := commonssh.RemotePortForwarding{
-				ServerPort: config.Get().RemoteForwardedHTTPMITMProxyPort(),
-				AgentPort:  port,
-				AgentIP:    "127.0.0.1",
-				Tag:        "MITMHTTP",
-			}
-			rPort, err := sshAgent.RemoteForward(ctx, rpf)
-
-			config.Get().UpdateMITMHTTPProxyPort(rPort)
-
-			go func() {
-				select {
-				case httpProxyErr <- httpProxy.Server.Serve(listener):
-					if err != nil {
-						log.Error().Err(err).Msg("MITM HTTP proxy server error")
-					}
-					err := httpProxy.Server.Close()
-					if err != nil {
-						log.Warn().Err(err).Msg("MITM HTTP proxy close error")
-					}
-				case <-ctx.Done():
-					err := httpProxy.Server.Close()
-					if err != nil {
-						log.Warn().Err(err).Msg("MITM HTTP proxy close error")
-					}
-				}
-			}()
-
-			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote MITM HTTP proxy server started")
-			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
-				ServerPort: config.Get().RemoteForwardedHTTPMITMProxyPort(),
-				AgentPort:  port,
-				AgentIP:    "127.0.0.1",
-				Tag:        "MITMHTTP",
 			})
 		}
 

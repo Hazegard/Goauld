@@ -4,6 +4,8 @@ package proxy
 
 import (
 	"Goauld/common/log"
+	"crypto/tls"
+	"crypto/x509"
 	"net/http"
 	"sync"
 	"time"
@@ -41,7 +43,7 @@ func InitMITMHTTPProxy(u string, p string, d string) (*MITMHTTPProxy, error) {
 	proxy.Proxy.KeepAcceptEncoding = true
 	proxy.Proxy.KeepHeader = true
 	proxy.Proxy.KeepDestinationHeaders = true
-	proxyLogger := log.Get().With().Str("From", "MITM HttpProxy").Logger()
+	proxyLogger := logger{l: log.Get().With().Str("From", "MITM HttpProxy").Logger()}
 	proxy.Proxy.Logger = &proxyLogger
 
 	sspiTransport := &SSPITransport{

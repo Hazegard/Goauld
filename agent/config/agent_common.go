@@ -39,6 +39,7 @@ type Agent struct {
 	SSHTunnelMode            string
 	ControlTunnelMode        string
 	LocalHTTPPRoxyPort       int
+	LocalHTTPMITMPRoxyPort   int
 }
 
 // LocalSSHDPassword returns the current ssh password allowing to connect.
@@ -78,11 +79,11 @@ func (a *Agent) ProxyDomain() string {
 
 // SocksProxy returns the proxy provided by the configuration.
 func (a *Agent) SocksProxy() *url.URL {
-	if a.cfg.SocksCustomProxy != nil {
-		return a.cfg.SocksCustomProxy
-	}
-
 	return a.cfg.Proxy
+}
+
+func (a *Agent) SocksCustomProxy() *url.URL {
+	return a.cfg.SocksCustomProxy
 }
 
 // SocksProxyUsername returns the username used by the upstream proxy of the socks proxy.
@@ -118,7 +119,7 @@ func (a *Agent) MITMHTTPProxyEnabled() bool {
 		return false
 	}
 
-	return a.cfg.MITMHTTP
+	return a.cfg.MITMHTTP || a.cfg.SocksUpstreamProxy == "mitm"
 }
 
 // MITMProxyUsername returns the username used by the upstream proxy of the socks proxy.
@@ -377,9 +378,9 @@ func (a *Agent) SocksEnabled() bool {
 	return a.cfg.Socks || a.cfg.SocksPort != 0
 }
 
-// SocksUseSystemProxy returns whether the agent Socks proxy should use the system proxy (if applicable).
-func (a *Agent) SocksUseSystemProxy() bool {
-	return a.cfg.SocksUseSystemProxy
+// SocksUpstreamProxy returns the upstream proxy to use.
+func (a *Agent) SocksUpstreamProxy() string {
+	return a.cfg.SocksUpstreamProxy
 }
 
 // DNSDomain returns the DNS domain that will be used to query the DNS server.
@@ -465,6 +466,10 @@ func (a *Agent) UpdateHTTPProxyPort(port int) {
 // UpdateMITMHTTPProxyPort set the new socks port.
 func (a *Agent) UpdateMITMHTTPProxyPort(port int) {
 	a.cfg.MITMHTTPProxyPort = port
+}
+
+func (a *Agent) GetLocalHTTPMitmPRoxy() string {
+	return fmt.Sprintf("http://127.0.0.1:%d", a.LocalHTTPMITMPRoxyPort)
 }
 
 // UpdateSshdPort set the new sshd port.

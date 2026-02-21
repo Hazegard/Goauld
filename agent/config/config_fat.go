@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -40,6 +41,10 @@ func (c *AgentConfig) Validate() error {
 
 	if !c.HTTP && c.MITMHTTP {
 		errs = append(errs, errors.New("MITM HTTP proxy requires HTTP proxy to be enabled"))
+	}
+
+	if (c.MITMHTTP || c.SocksUpstreamProxy == "mitm") && runtime.GOOS != "windows" {
+		errs = append(errs, errors.New("MITM HTTP proxy is only available on Windows"))
 	}
 
 	return errors.Join(errs...)

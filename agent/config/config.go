@@ -32,7 +32,7 @@ var (
 	_mitm_http_proxy_enabled = "false" //nolint:revive
 	_wg_enabled              = "false" //nolint:revive
 	_relay_enabled           = "false" //nolint:revive
-	_socks_use_system_proxy  = "true"  //nolint:revive
+	_socks_upstream_proxy    = "http"  //nolint:revive
 
 	_mitm_http_proxy_username = "" //nolint:revive
 	_mitm_http_proxy_password = "" //nolint:revive
@@ -106,7 +106,7 @@ var (
 		"_mitm_http_proxy_enabled": _mitm_http_proxy_enabled,
 		"_wg_enabled":              _wg_enabled,
 		"_relay_enabled":           _relay_enabled,
-		"_socks_use_system_proxy":  _socks_use_system_proxy,
+		"_socks_upstream_proxy":    _socks_upstream_proxy,
 
 		"_mitm_http_proxy_username": _mitm_http_proxy_username,
 		"_mitm_http_proxy_password": _mitm_http_proxy_password,
@@ -218,11 +218,11 @@ type AgentConfig struct {
 
 	NoProxy bool `default:"${_no_proxy}" group:"Egress proxy configuration:" name:"no-proxy" yaml:"no-proxy" optional:"" help:"Ignore system proxy settings."`
 
-	SocksCustomProxy    *url.URL `default:"${_socks_custom_proxy}" group:"Socks proxy custom configuration:" name:"socks-custom-proxy" yaml:"socks-custom-proxy" optional:"" help:"Custom proxy used within the SOCKS proxy. Falls back to the system proxy if not set."`
-	SocksUseSystemProxy bool     `default:"${_socks_use_system_proxy}" group:"Socks proxy custom configuration:" name:"socks-proxy" yaml:"socks-proxy" optional:"" negatable:"" help:"Use the system proxy for all SOCKS proxy traffic."`
-	SocksProxyUsername  string   `default:"${_socks_proxy_username}" group:"Socks proxy custom configuration:" name:"socks-proxy-username" yaml:"socks-proxy-username" optional:"" help:"Username for the SOCKS upstream proxy."`
-	SocksProxyPassword  string   `default:"${_socks_proxy_password}" group:"Socks proxy custom configuration:" name:"socks-proxy-password" yaml:"socks-proxy-password" optional:"" help:"Password for the SOCKS upstream proxy."`
-	SocksProxyDomain    string   `default:"${_socks_proxy_domain}" group:"Socks proxy custom configuration:" name:"socks-proxy-domain" yaml:"socks-proxy-domain" optional:"" help:"Domain for the SOCKS upstream proxy."`
+	SocksCustomProxy   *url.URL `default:"${_socks_custom_proxy}" group:"Socks proxy custom configuration:" name:"socks-custom-proxy" yaml:"socks-custom-proxy" optional:"" help:"Custom proxy used within the SOCKS proxy. Falls back to the system proxy if not set."`
+	SocksUpstreamProxy string   `default:"${_socks_upstream_proxy}" group:"Socks proxy custom configuration:" name:"socks-proxy" yaml:"socks-proxy" enum:"none,system,http,mitm" optional:"" help:"Configure the upstream HTTP proxy to use (none|system|http|mitm|custom)."`
+	SocksProxyUsername string   `default:"${_socks_proxy_username}" group:"Socks proxy custom configuration:" name:"socks-proxy-username" yaml:"socks-proxy-username" optional:"" help:"Username for the SOCKS upstream proxy."`
+	SocksProxyPassword string   `default:"${_socks_proxy_password}" group:"Socks proxy custom configuration:" name:"socks-proxy-password" yaml:"socks-proxy-password" optional:"" help:"Password for the SOCKS upstream proxy."`
+	SocksProxyDomain   string   `default:"${_socks_proxy_domain}" group:"Socks proxy custom configuration:" name:"socks-proxy-domain" yaml:"socks-proxy-domain" optional:"" help:"Domain for the SOCKS upstream proxy."`
 
 	HTTPCustomProxy   *url.URL `default:"${_http_custom_proxy}" group:"HTTP proxy custom configuration:" name:"http-custom-proxy" yaml:"http-custom-proxy" optional:"" help:"Custom proxy used within the HTTP proxy. Falls back to the system proxy if not set."`
 	HTTPProxyUsername string   `default:"${_http_proxy_username}" group:"HTTP proxy custom configuration:" name:"http-proxy-username" yaml:"http-proxy-username" optional:"" help:"Username for the HTTP upstream proxy."`

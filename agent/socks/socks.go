@@ -9,6 +9,7 @@ import (
 	stdlog "log"
 	"net"
 	"net/url"
+	"strings"
 
 	"Goauld/common/log"
 
@@ -34,23 +35,29 @@ func NewSocks() (*SocksServer, error) {
 	options := []socks5.Option{
 		socks5.WithLogger(defaultLogger),
 	}
-	if config.Get().SocksUseSystemProxy() {
-		if config.Get().HTTPProxyEnabled() {
-			u, _ := url.Parse(config.Get().GetLocalHTTPPRoxy())
-			options = append(options, socks5.WithDial(proxy.NewProxyDialer(
-				u,
-				"",
-				"",
-				"",
-			)))
-		} else {
-			options = append(options, socks5.WithDial(proxy.NewProxyDialer(
-				config.Get().SocksProxy(),
-				config.Get().SocksProxyUsername(),
-				config.Get().SocksProxyPassword(),
-				config.Get().SocksProxyDomain(),
-			)))
-		}
+	switch strings.ToLower(config.Get().SocksUpstreamProxy()) {
+	case "http":
+		u, _ := url.Parse(config.Get().GetLocalHTTPPRoxy())
+		options = append(options, socks5.WithDial(proxy.NewProxyDialer(u, "", "", "")))
+	case "mitm":
+		u, _ := url.Parse(config.Get().GetLocalHTTPMitmPRoxy())
+		options = append(options, socks5.WithDial(proxy.NewProxyDialer(u, "", "", "")))
+	case "system":
+		options = append(options, socks5.WithDial(proxy.NewProxyDialer(
+			config.Get().SocksProxy(),
+			config.Get().SocksProxyUsername(),
+			config.Get().SocksProxyPassword(),
+			config.Get().SocksProxyDomain(),
+		)))
+	case "custom":
+		options = append(options, socks5.WithDial(proxy.NewProxyDialer(
+			config.Get().SocksCustomProxy(),
+			config.Get().SocksProxyUsername(),
+			config.Get().SocksProxyPassword(),
+			config.Get().SocksProxyDomain(),
+		)))
+	case "none":
+
 	}
 	s5 := socks5.NewServer(options...)
 

@@ -53,19 +53,19 @@ func NewHTTPProxyDialer() *ProxyDialer {
 // to improve performance by reusing previously established connections. The method also handles the connection
 // through proxy authentication (username, password, domain) and sends the CONNECT request for tunneling when necessary.
 func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyplease.DialContext {
-	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
+	log.Trace().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 	cacheKey := addr
 	if pxyURL != nil && pxyURL.Host != "" && p.ProxyOverrides == nil {
 		cacheKey = pxyURL.Host
 	}
 
-	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
+	log.Trace().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
 	if dctx, err := p.cache.Get(cacheKey); err == nil {
 		//nolint:forcetypeassert
 		return dctx.(proxyplease.DialContext)
 	}
-	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
+	log.Trace().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
 	dctx, err, _ := p.group.Do(cacheKey, func() (any, error) {
 		var pxyCtx proxyplease.DialContext
@@ -167,7 +167,7 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyple
 			}
 		}
 
-		log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
+		log.Trace().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 		pxyCtx = proxyplease.NewDialContext(proxyplease.Proxy{
 			URL:       pxyURL,
 			Username:  config.Get().HTTPProxyUsername(),
@@ -178,14 +178,14 @@ func (p *ProxyDialer) ProxyDialer(scheme, addr string, pxyURL *url.URL) proxyple
 
 		err := p.cache.Set(cacheKey, pxyCtx)
 
-		log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
+		log.Trace().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
 		return pxyCtx, err
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to connect to proxy")
 	}
-	log.Debug().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
+	log.Trace().Str("scheme", scheme).Str("addr", addr).Msg("proxy dialer")
 
 	//nolint:forcetypeassert
 	return dctx.(proxyplease.DialContext)
