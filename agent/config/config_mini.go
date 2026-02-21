@@ -44,10 +44,6 @@ func InitAgent() {
 	if err != nil {
 		fmt.Println("socksProxy", err)
 	}
-	socksUseSystemProxy, err := strconv.ParseBool(_socks_use_system_proxy)
-	if err != nil {
-		fmt.Println("socksUseSystemProxy", err)
-	}
 
 	httpCustomProxy, err := url.Parse(_http_custom_proxy)
 	if err != nil {
@@ -94,7 +90,7 @@ func InitAgent() {
 		ProxyPassword:        _proxy_password,
 		ProxyDomain:          _proxy_domain,
 		SocksCustomProxy:     socksProxy,
-		SocksUseSystemProxy:  socksUseSystemProxy,
+		SocksUpstreamProxy:   _socks_upstream_proxy,
 		SocksProxyUsername:   _socks_proxy_username,
 		SocksProxyPassword:   _socks_proxy_password,
 		SocksProxyDomain:     _socks_proxy_domain,
@@ -241,7 +237,7 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("PROXY_PASSWORD", _proxy_password))
 	env = append(env, prefixEnv("PROXY_DOMAIN", _proxy_domain))
 	env = append(env, prefixEnv("SOCKS_CUSTOM_PROXY", _socks_custom_proxy))
-	env = append(env, prefixEnv("SOCKS_PROXY", _socks_use_system_proxy))
+	env = append(env, prefixEnv("SOCKS_PROXY", _socks_upstream_proxy))
 	env = append(env, prefixEnv("SOCKS_PROXY_USERNAME", _socks_proxy_username))
 	env = append(env, prefixEnv("SOCKS_PROXY_PASSWORD", _socks_proxy_password))
 	env = append(env, prefixEnv("SOCKS_PROXY_DOMAIN", _socks_proxy_domain))
@@ -281,6 +277,7 @@ func (agent *Agent) Env() []string {
 	env = append(env, prefixEnv("MITM_HTTP_PROXY_PASSWORD", _mitm_http_proxy_password))
 	env = append(env, prefixEnv("MITM_HTTP_PROXY_USERNAME", _mitm_http_proxy_username))
 	env = append(env, prefixEnv("MITM_HTTP", _mitm_http_proxy_enabled))
+	env = append(env, prefixEnv("MITM_HTTP_PORT", _mitm_http_port))
 	return env
 }
 

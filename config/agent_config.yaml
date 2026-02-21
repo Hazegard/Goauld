@@ -83,8 +83,8 @@ no-proxy: false
 # Custom proxy used within the SOCKS proxy. Falls back to the system proxy if not set.
 socks-custom-proxy: ""
 
-# Use the system proxy for all SOCKS proxy traffic.
-socks-proxy: true
+# Configure the upstream HTTP proxy to use (none|system|http|mitm|custom).
+socks-proxy: http
 
 # Username for the SOCKS upstream proxy.
 socks-proxy-username: ""

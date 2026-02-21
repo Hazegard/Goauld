@@ -93,7 +93,7 @@ env:
   - AGENT__NO_PROXY={{ .Env.AGENT__NO_PROXY }}
 
   - AGENT__SOCKS_CUSTOM_PROXY={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}
-  - AGENT__SOCKS_USE_SYSTEM_PROXY={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}
+  - AGENT__SOCKS_UPSTREAM_PROXY={{ .Env.AGENT__SOCKS_UPSTREAM_PROXY }}
   - AGENT__SOCKS_PROXY_USERNAME={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}
   - AGENT__SOCKS_PROXY_PASSWORD={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}
   - AGENT__SOCKS_PROXY_DOMAIN={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}
@@ -392,7 +392,7 @@ builds:
       - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_custom_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
-      - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_UPSTREAM_PROXY") }} -X Goauld/agent/config._socks_upstream_proxy={{ .Env.AGENT__SOCKS_UPSTREAM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_PASSWORD") }} -X Goauld/agent/config._socks_proxy_password={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_DOMAIN") }} -X Goauld/agent/config._socks_proxy_domain={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}{{end}}'
@@ -520,7 +520,7 @@ builds:
       - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_custom_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
-      - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_UPSTREAM_PROXY") }} -X Goauld/agent/config._socks_upstream_proxy={{ .Env.AGENT__SOCKS_UPSTREAM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_PASSWORD") }} -X Goauld/agent/config._socks_proxy_password={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_DOMAIN") }} -X Goauld/agent/config._socks_proxy_domain={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}{{end}}'
@@ -655,7 +655,7 @@ builds:
       - '{{ if (index .Env "AGENT__NO_PROXY") }} -X Goauld/agent/config._no_proxy={{ .Env.AGENT__NO_PROXY }}{{end}}'
 
       - '{{ if (index .Env "AGENT__SOCKS_CUSTOM_PROXY") }} -X Goauld/agent/config._socks_custom_proxy={{ .Env.AGENT__SOCKS_CUSTOM_PROXY }}{{end}}'
-      - '{{ if (index .Env "AGENT__SOCKS_USE_SYSTEM_PROXY") }} -X Goauld/agent/config._socks_use_system_proxy={{ .Env.AGENT__SOCKS_USE_SYSTEM_PROXY }}{{end}}'
+      - '{{ if (index .Env "AGENT__SOCKS_UPSTREAM_PROXY") }} -X Goauld/agent/config._socks_upstream_proxy={{ .Env.AGENT__SOCKS_UPSTREAM_PROXY }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_USERNAME") }} -X Goauld/agent/config._socks_proxy_username={{ .Env.AGENT__SOCKS_PROXY_USERNAME }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_PASSWORD") }} -X Goauld/agent/config._socks_proxy_password={{ .Env.AGENT__SOCKS_PROXY_PASSWORD }}{{end}}'
       - '{{ if (index .Env "AGENT__SOCKS_PROXY_DOMAIN") }} -X Goauld/agent/config._socks_proxy_domain={{ .Env.AGENT__SOCKS_PROXY_DOMAIN }}{{end}}'
