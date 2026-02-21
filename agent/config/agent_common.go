@@ -172,6 +172,10 @@ func (a *Agent) HTTPProxyDomain() string {
 	return a.cfg.ProxyDomain
 }
 
+func (a *Agent) GetLocalHTTPPRoxy() string {
+	return fmt.Sprintf("http://127.0.0.1:%d", a.LocalHTTPPRoxyPort)
+}
+
 // DNSServer returns the DNS servers that will be used to tunnel the connection.
 func (a *Agent) DNSServer() []string {
 	var servers []string

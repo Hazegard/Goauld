@@ -2,16 +2,17 @@
 package socks
 
 import (
+	"Goauld/agent/proxy"
 	"errors"
 	"fmt"
 	"io"
 	stdlog "log"
 	"net"
+	"net/url"
 
 	"Goauld/common/log"
 
 	"Goauld/agent/config"
-	"Goauld/agent/proxy"
 
 	"github.com/things-go/go-socks5"
 )
@@ -34,12 +35,22 @@ func NewSocks() (*SocksServer, error) {
 		socks5.WithLogger(defaultLogger),
 	}
 	if config.Get().SocksUseSystemProxy() {
-		options = append(options, socks5.WithDial(proxy.NewProxyDialer(
-			config.Get().SocksProxy(),
-			config.Get().SocksProxyUsername(),
-			config.Get().SocksProxyPassword(),
-			config.Get().SocksProxyDomain(),
-		)))
+		if config.Get().HTTPProxyEnabled() {
+			u, _ := url.Parse(config.Get().GetLocalHTTPPRoxy())
+			options = append(options, socks5.WithDial(proxy.NewProxyDialer(
+				u,
+				"",
+				"",
+				"",
+			)))
+		} else {
+			options = append(options, socks5.WithDial(proxy.NewProxyDialer(
+				config.Get().SocksProxy(),
+				config.Get().SocksProxyUsername(),
+				config.Get().SocksProxyPassword(),
+				config.Get().SocksProxyDomain(),
+			)))
+		}
 	}
 	s5 := socks5.NewServer(options...)
 

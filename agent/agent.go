@@ -9,6 +9,7 @@ import (
 	"Goauld/agent/keepawake/keepawake"
 	"Goauld/agent/proxy"
 	"Goauld/agent/relay"
+	"Goauld/agent/socks"
 	"Goauld/agent/ssh/transport"
 	"Goauld/agent/vscode"
 	"Goauld/agent/wireguard"
@@ -27,7 +28,6 @@ import (
 	"time"
 
 	"Goauld/agent/config"
-	"Goauld/agent/socks"
 	"Goauld/agent/ssh"
 	"Goauld/agent/sshd"
 	"Goauld/common/log"
@@ -275,43 +275,6 @@ func run() globalcontext.CancelReason {
 			})
 		}
 
-		// If the socks5 server is enabled, start it
-		if config.Get().SocksEnabled() {
-			socks5, err := socks.NewSocks()
-			if err != nil {
-				log.Error().Err(err).Msg("error initializing the Socks5 server")
-			}
-			rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedSocksAddress())
-			if err != nil {
-				log.Error().Err(err).Msg("error initializing the Socks5 connection")
-			}
-			config.Get().UpdateSocksPort(rPort)
-			go func() {
-				select {
-				case socksErr <- socks5.Serve(rListener):
-					if err != nil {
-						log.Error().Err(err).Msg("socks server error")
-					}
-					err := socks5.Close()
-					if err != nil && !errors.Is(err, io.EOF) {
-						log.Warn().Err(err).Msg("socks close error")
-					}
-				case <-ctx.Done():
-					err := socks5.Close()
-					if err != nil && !errors.Is(err, io.EOF) {
-						log.Warn().Err(err).Msg("socks close error")
-					}
-				}
-			}()
-			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote Socks5 server started")
-			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
-				ServerPort: config.Get().RemoteForwardedSocksPort(),
-				AgentPort:  -1,
-				AgentIP:    "0.0.0.0",
-				Tag:        "SOCKS",
-			})
-		}
-
 		// If the HTTP proxy server is enabled, start it
 		if config.Get().HTTPProxyEnabled() {
 			httpProxy := proxy.InitHTTPProxy()
@@ -357,6 +320,43 @@ func run() globalcontext.CancelReason {
 				AgentPort:  port,
 				AgentIP:    "127.0.0.1",
 				Tag:        "HTTP",
+			})
+		}
+
+		// If the socks5 server is enabled, start it
+		if config.Get().SocksEnabled() {
+			socks5, err := socks.NewSocks()
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the Socks5 server")
+			}
+			rListener, rPort, err := sshAgent.GetRemoteConn(config.Get().RemoteForwardedSocksAddress())
+			if err != nil {
+				log.Error().Err(err).Msg("error initializing the Socks5 connection")
+			}
+			config.Get().UpdateSocksPort(rPort)
+			go func() {
+				select {
+				case socksErr <- socks5.Serve(rListener):
+					if err != nil {
+						log.Error().Err(err).Msg("socks server error")
+					}
+					err := socks5.Close()
+					if err != nil && !errors.Is(err, io.EOF) {
+						log.Warn().Err(err).Msg("socks close error")
+					}
+				case <-ctx.Done():
+					err := socks5.Close()
+					if err != nil && !errors.Is(err, io.EOF) {
+						log.Warn().Err(err).Msg("socks close error")
+					}
+				}
+			}()
+			log.Info().Str("Remote port", strconv.Itoa(rPort)).Msg("Remote Socks5 server started")
+			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
+				ServerPort: config.Get().RemoteForwardedSocksPort(),
+				AgentPort:  -1,
+				AgentIP:    "0.0.0.0",
+				Tag:        "SOCKS",
 			})
 		}
 

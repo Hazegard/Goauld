@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -122,7 +121,7 @@ func ProxyTransport(tr *http.Transport) http.RoundTripper {
 
 // ProxyUsingHttpProxy returns an HTTP transport using the HTTP proxy exposed by the agent.
 func ProxyUsingHttpProxy() http.RoundTripper {
-	proxyUrl, _ := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", config.Get().LocalHTTPPRoxyPort))
+	proxyUrl, _ := url.Parse(config.Get().GetLocalHTTPPRoxy())
 	internalProxy := NewProxyDialer(proxyUrl, "", "", "")
 
 	tr := &http.Transport{
