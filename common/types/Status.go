@@ -16,7 +16,7 @@ type Status struct {
 }
 
 type DbAgent struct {
-	Agent `yaml:",omitempty,inline"`
+	Agent `yaml:",omitempty"`
 
 	CreatedAt time.Time      `yaml:"created_at"`
 	UpdatedAt time.Time      `yaml:"updated_at"`
