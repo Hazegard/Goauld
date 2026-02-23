@@ -16,3 +16,4 @@ local_config
 .zig-cache/
 sshd.exe
 common/crypto/pwgen/wordlist_mini.txt.gz
+go-legacy-win7*

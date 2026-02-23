@@ -315,12 +315,7 @@ func run() globalcontext.CancelReason {
 			}()
 
 			log.Info().Int("Remote port", rPort).Int("Local port", port).Msg("Remote HTTP proxy server started")
-			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
-				ServerPort: config.Get().RemoteForwardedHTTPProxyPort(),
-				AgentPort:  port,
-				AgentIP:    "127.0.0.1",
-				Tag:        "HTTP",
-			})
+			forwardedPorts = append(forwardedPorts, rpf)
 		}
 
 		// If the MITM HTTP proxy server is enabled, start it
@@ -368,12 +363,7 @@ func run() globalcontext.CancelReason {
 			}()
 
 			log.Info().Int("Remote port", rPort).Int("Local port", port).Msg("Remote MITM HTTP proxy server started")
-			forwardedPorts = append(forwardedPorts, commonssh.RemotePortForwarding{
-				ServerPort: config.Get().RemoteForwardedHTTPMITMProxyPort(),
-				AgentPort:  port,
-				AgentIP:    "127.0.0.1",
-				Tag:        "MITMHTTP",
-			})
+			forwardedPorts = append(forwardedPorts, rpf)
 		}
 
 		// If the socks5 server is enabled, start it

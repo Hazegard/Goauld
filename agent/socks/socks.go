@@ -57,7 +57,6 @@ func NewSocks() (*SocksServer, error) {
 			config.Get().SocksProxyDomain(),
 		)))
 	case "none":
-
 	}
 	s5 := socks5.NewServer(options...)
 
