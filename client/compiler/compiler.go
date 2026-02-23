@@ -236,6 +236,12 @@ func run(config Compiler) error {
 		requiredCommands = append(requiredCommands, "upx")
 	}
 	missingCommands := commonCmd.CheckCommands(requiredCommands)
+	if config.ID == "agent.dll" {
+		if len(commonCmd.CheckCommands([]string{"i686-w64-mingw32-gcc"})) > 0 {
+			missingCommands = append(missingCommands, "i686-w64-mingw32-gcc (mingw-w64)")
+		}
+	}
+
 	if len(missingCommands) > 0 {
 		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.Appname)).Str("commands", strings.Join(missingCommands, ", ")).Msg("Missing required commands")
 
