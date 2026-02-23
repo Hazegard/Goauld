@@ -74,7 +74,9 @@ func (router *MainRouter) HandleTLS(c net.Conn) {
 				return
 			}
 			id := string(rawID[:n])
-			log.Info().Str("ID", id).Msg("Receiving incoming SSH connection over TLS")
+			if id != "00000000000000000000000000000000" {
+				log.Info().Str("ID", id).Msg("Receiving incoming SSH connection over TLS")
+			}
 			// Serve the raw TLS traffic
 			router.tlsshHandler.HandleTLSSH(c, id)
 		}

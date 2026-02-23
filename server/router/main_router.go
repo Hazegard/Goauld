@@ -69,7 +69,8 @@ func NewHTTPRouter(controlServer *control.SocketIO,
 	n.UseFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		if (strings.HasPrefix(r.URL.Path, "/sshttp") && r.Method == http.MethodPost) ||
 			(strings.HasPrefix(r.URL.Path, "/sshttp2") && r.Method == http.MethodGet) ||
-			(strings.HasPrefix(r.URL.Path, "/wssh/00000000000000000000000000000000") && r.Method == http.MethodGet) {
+			(strings.HasPrefix(r.URL.Path, "/wssh/00000000000000000000000000000000") && r.Method == http.MethodGet) ||
+			(strings.HasPrefix(r.URL.Path, "/live/00000000000000000000000000000000") && r.Method == http.MethodGet) {
 			next(w, r)
 
 			return
