@@ -5,7 +5,7 @@ RUN apt install -y golang-go upx git
 
 
 
-RUN go install github.com/goreleaser/goreleaser/v2@v2.7.0
+RUN go install github.com/goreleaser/goreleaser/v2@v2.13.3
 RUN go install mvdan.cc/garble@latest
 
 WORKDIR /app
