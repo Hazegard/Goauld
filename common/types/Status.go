@@ -9,17 +9,17 @@ import (
 )
 
 type Status struct {
-	Version      string              `yaml:"version"`
-	ActiveAgents []State             `yaml:"activeAgents"`
-	AllAgents    []DbAgent           `yaml:"stoppedAgents"`
-	Config       config.ServerConfig `yaml:"config"`
+	Version      string              `json:"version" yaml:"version"`
+	ActiveAgents []State             `json:"activeAgents" yaml:"activeAgents"`
+	AllAgents    []DbAgent           `json:"stoppedAgents" yaml:"stoppedAgents"`
+	Config       config.ServerConfig `json:"config" yaml:"config"`
 }
 
 type DbAgent struct {
-	Agent `yaml:",omitempty"`
+	Agent `yaml:",omitempty,inline,alias"`
 
-	CreatedAt time.Time      `yaml:"created_at"`
-	UpdatedAt time.Time      `yaml:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" yaml:"deleted_at"`
-	SocketID  string         `yaml:"socket_id"`
+	CreatedAt time.Time      `json:"created_at" yaml:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at" yaml:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at" yaml:"deleted_at"`
+	SocketID  string         `json:"socket_id" yaml:"socket_id"`
 }

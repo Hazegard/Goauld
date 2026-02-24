@@ -16,7 +16,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/goccy/go-yaml"
 	"golang.org/x/crypto/bcrypt"
 
 	socketio "Goauld/common/socket.io"
@@ -276,7 +275,7 @@ func (api *API) DumpAll() ([]commontypes.State, error) {
 	}
 
 	var result []commontypes.State
-	err = yaml.Unmarshal(body, &result)
+	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +383,7 @@ func (api *API) DumpState() (commontypes.Status, error) {
 	}
 
 	var result commontypes.Status
-	err = yaml.Unmarshal(body, &result)
+	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return commontypes.Status{}, err
 	}

@@ -12,8 +12,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/goccy/go-yaml"
-
 	"github.com/rs/zerolog"
 	"github.com/urfave/negroni"
 )
@@ -96,7 +94,7 @@ func (ur *AdminRouter) Dump(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	addAgentInfoToDump(&dump, agent)
-	res, err := yaml.Marshal(dump)
+	res, err := json.Marshal(dump)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -129,7 +127,7 @@ func (ur *AdminRouter) dumpAllAgents() []types.State {
 // DumpAll return all the information stored regarding all the agents.
 func (ur *AdminRouter) DumpAll(w http.ResponseWriter, r *http.Request) {
 	outDump := ur.dumpAllAgents()
-	res, err := yaml.Marshal(outDump)
+	res, err := json.Marshal(outDump)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -207,11 +205,7 @@ func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
 		}
 		dbAgents = append(dbAgents, agent)
 	}
-	c := *config.Get()
-	c.AccessToken = []string{"[REDACTED]"}
-	c.AdminToken = []string{"[REDACTED]"}
-	c.BinariesBasicAuth = "[REDACTED]"
-	c.PrivKey = "[REDACTED]"
+	c := config.Get().CopySanitized()
 
 	activeAgents := ur.dumpAllAgents()
 	fullState := types.Status{
@@ -220,7 +214,7 @@ func (ur *AdminRouter) State(w http.ResponseWriter, r *http.Request) {
 		AllAgents:    dbAgents,
 		Config:       c,
 	}
-	res, err := yaml.Marshal(fullState)
+	res, err := json.Marshal(fullState)
 	if err != nil {
 		log.Warn().Err(err).Str("Path", r.URL.Path).Msg("error generating response json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

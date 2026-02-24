@@ -2,6 +2,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -197,6 +198,19 @@ func Get() *ServerConfig {
 	return srvCfg
 }
 
+func (s *ServerConfig) Copy() ServerConfig {
+	js, err := json.Marshal(*s)
+	if err != nil {
+		return ServerConfig{}
+	}
+	sc := ServerConfig{}
+	err = json.Unmarshal(js, &sc)
+	if err != nil {
+		return ServerConfig{}
+	}
+	return sc
+}
+
 // Decrypt returns the encrypted data using the configured private key.
 func (s *ServerConfig) Decrypt(data []byte) (string, error) {
 	return crypto.AsymDecrypt(s.PrivKey, data)
@@ -304,17 +318,30 @@ func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*s)
 }
 
+// CopySanitized return a copy of the server configuration while removing secrets
+func (s *ServerConfig) CopySanitized() ServerConfig {
+	ss := s.Copy()
+	ss.GenerateConfig = false
+	ss.AdminToken = sanitizeSlice(ss.AdminToken)
+	ss.AccessToken = sanitizeSlice(ss.AccessToken)
+	ss.PrivKey = "[REDACTED]"
+	ss.BinariesBasicAuth = "[REDACTED]"
+	return ss
+}
+
+func sanitizeSlice(slice []string) []string {
+	var newSlice []string
+	for range len(slice) {
+		newSlice = append(newSlice, "[REDACTED]")
+	}
+	return newSlice
+}
+
 // GenerateSafeYAMLConfig return the YAML configuration using the current configuration
 // (command line argument and parsed configuration files)
 // Without sensitive information.
 func (s *ServerConfig) GenerateSafeYAMLConfig() (string, error) {
-	ss := *s
-	ss.GenerateConfig = false
-	ss.AdminToken = []string{}
-	ss.AccessToken = []string{}
-	ss.PrivKey = ""
-
-	return cli.GenerateYAMLWithComments(ss)
+	return cli.GenerateYAMLWithComments(s.CopySanitized())
 }
 
 func (s *ServerConfig) ReloadDomains() error {

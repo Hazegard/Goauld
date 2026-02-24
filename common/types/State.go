@@ -5,75 +5,75 @@ import "time"
 
 // WSSHState represents the state of the SSH over Websocket connections between the agents and the server.
 type WSSHState struct {
-	AgentID string `yaml:"agentId,omitempty"`
-	SSHConn Conn   `yaml:"sshConn,omitempty"`
-	WSConn  Conn   `yaml:"wsConn,omitempty"`
+	AgentID string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SSHConn Conn   `json:"sshConn,omitempty" yaml:"sshConn,omitempty"`
+	WSConn  Conn   `json:"wsConn,omitempty" yaml:"wsConn,omitempty"`
 }
 
 // SSHConnection represents the state of the direct SSH  connections between the agents and the server.
 type SSHConnection struct {
-	AgentID       string `yaml:"agentId,omitempty"`
-	SSHConn       Conn   `yaml:"sshConn,omitempty"`
-	ClientVersion string `yaml:"clientVersion,omitempty"`
-	SessionID     string `yaml:"sessionID,omitempty"`
-	ServerVersion string `yaml:"serverVersion,omitempty"`
+	AgentID       string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SSHConn       Conn   `json:"sshConn,omitempty" yaml:"sshConn,omitempty"`
+	ClientVersion string `json:"clientVersion,omitempty" yaml:"clientVersion,omitempty"`
+	SessionID     string `json:"sessionID,omitempty" yaml:"sessionID,omitempty"`
+	ServerVersion string `json:"serverVersion,omitempty" yaml:"serverVersion,omitempty"`
 }
 
 // SSHState represents the state of the SSH connections between the agents and the server.
 type SSHState struct {
-	AgentID       string          `yaml:"agentId,omitempty"`
-	SSHConnection []SSHConnection `yaml:"SSHConnection,omitempty"`
-	SSHListeners  []string        `yaml:"SSHListeners,omitempty"`
+	AgentID       string          `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SSHConnection []SSHConnection `json:"SSHConnection,omitempty" yaml:"SSHConnection,omitempty"`
+	SSHListeners  []string        `json:"SSHListeners,omitempty" yaml:"SSHListeners,omitempty"`
 }
 
 // TLSSHState represents the state of the SSH over TLS connections between the agents and the server.
 type TLSSHState struct {
-	AgentID string `yaml:"agentId,omitempty"`
-	SSHConn Conn   `yaml:"sshConn,omitempty"`
-	TLSConn Conn   `yaml:"tlsConn,omitempty"`
+	AgentID string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SSHConn Conn   `json:"sshConn,omitempty" yaml:"sshConn,omitempty"`
+	TLSConn Conn   `json:"tlsConn,omitempty" yaml:"tlsConn,omitempty"`
 }
 
 // QUICState represents the state of the SSH over DNQUICS connections between the agents and the server.
 type QUICState struct {
-	AgentID  string `yaml:"agentId,omitempty"`
-	SSHConn  Conn   `yaml:"sshConn,omitempty"`
-	QuicConn Conn   `yaml:"tlsConn,omitempty"`
+	AgentID  string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SSHConn  Conn   `json:"sshConn,omitempty" yaml:"sshConn,omitempty"`
+	QuicConn Conn   `json:"tlsConn,omitempty" yaml:"tlsConn,omitempty"`
 }
 
 // SSHTTPState represents the state of the SSH over HTTP connections between the agents and the server.
 type SSHTTPState struct {
-	AgentID    string `yaml:"agentId,omitempty"`
-	SSHConn    Conn   `yaml:"sshConn,omitempty"`
-	StreamConn Conn   `yaml:"streamConn,omitempty"`
-	StreamID   uint32 `yaml:"streamID,omitempty"`
+	AgentID    string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SSHConn    Conn   `json:"sshConn,omitempty" yaml:"sshConn,omitempty"`
+	StreamConn Conn   `json:"streamConn,omitempty" yaml:"streamConn,omitempty"`
+	StreamID   uint32 `json:"streamID,omitempty" yaml:"streamID,omitempty"`
 }
 
 // SSHCDNState represents the state of the SSH over HTTP connections between the agents and the server.
 type SSHCDNState struct {
-	AgentID string `yaml:"agentId,omitempty"`
-	SSHConn Conn   `yaml:"sshConn,omitempty"`
+	AgentID string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SSHConn Conn   `json:"sshConn,omitempty" yaml:"sshConn,omitempty"`
 }
 
 // DNSSHState represents the state of the SSH over DNS connections between the agents and the server.
 type DNSSHState struct {
-	AgentID      string `yaml:"agentId,omitempty"`
-	UpstreamConn []Conn `yaml:"upstreamConn,omitempty"`
-	KCPAddr      string `yaml:"KCPAddr,omitempty"`
-	MuxSession   Conn   `yaml:"muxSession,omitempty"`
+	AgentID      string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	UpstreamConn []Conn `json:"upstreamConn,omitempty" yaml:"upstreamConn,omitempty"`
+	KCPAddr      string `json:"KCPAddr,omitempty" yaml:"KCPAddr,omitempty"`
+	MuxSession   Conn   `json:"muxSession,omitempty" yaml:"muxSession,omitempty"`
 }
 
 // Conn abstracts a connection representation.
 type Conn struct {
-	LocaleAddr string `yaml:"localAddr,omitempty"`
-	RemoteAddr string `yaml:"remoteAddr,omitempty"`
+	LocaleAddr string `json:"" yaml:"localAddr,omitempty"`
+	RemoteAddr string `json:"" yaml:"remoteAddr,omitempty"`
 }
 
 // SocketIOState represents the state of the socket.io connections between the agents and the server.
 type SocketIOState struct {
-	AgentID   string `yaml:"agentId,omitempty"`
-	SocketID  string `yaml:"socketId,omitempty"`
-	Connected bool   `yaml:"connected,omitempty"`
-	Recovered bool   `yaml:"recovered,omitempty"`
+	AgentID   string `json:"agentId,omitempty" yaml:"agentId,omitempty"`
+	SocketID  string `json:"socketId,omitempty" yaml:"socketId,omitempty"`
+	Connected bool   `json:"connected,omitempty" yaml:"connected,omitempty"`
+	Recovered bool   `json:"recovered,omitempty" yaml:"recovered,omitempty"`
 }
 
 // State represents the global State.

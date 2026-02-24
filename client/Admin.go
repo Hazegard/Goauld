@@ -4,6 +4,9 @@ package main
 import (
 	"Goauld/client/api"
 	colorYaml "Goauld/common/yaml"
+	"Goauld/server/config"
+	"encoding/json"
+	"fmt"
 
 	"github.com/goccy/go-yaml"
 )
@@ -15,10 +18,15 @@ type Admin struct {
 	State    State    `cmd:"" name:"state" yaml:"state" help:"Display the full server state (agents, configuration,etc...)"`
 }
 
-type Dump struct{}
-type Config struct{}
+type Dump struct {
+	Json bool `name:"json" default:"false" yaml:"json" help:"Print JSON representation."`
+}
+type Config struct {
+	Json bool `name:"json" default:"false" yaml:"json" help:"Print JSON representation."`
+}
 
 type State struct {
+	Json bool `name:"json" default:"false" yaml:"json" help:"Print JSON representation."`
 }
 type Loglevel struct {
 	Level string `arg:"" name:"level" yaml:"level" help:"Log level"`
@@ -31,6 +39,15 @@ func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 	res, err := adminAPA.DumpAll()
 	if err != nil {
 		return err
+	}
+
+	if d.Json {
+		b, err := json.MarshalIndent(res, "", "    ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+		return nil
 	}
 
 	y, err := yaml.Marshal(res)
@@ -66,7 +83,21 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 		return err
 	}
 
-	colorYaml.PrintColorizedYAML(res)
+	if !c.Json {
+		colorYaml.PrintColorizedYAML(res)
+		return nil
+	}
+	srvCfg := config.ServerConfig{}
+
+	err = yaml.Unmarshal([]byte(res), &srvCfg)
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(srvCfg, "", "    ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(data))
 
 	return nil
 }
@@ -80,6 +111,14 @@ func (c *State) Run(_ *api.API, cfg ClientConfig) error {
 		return err
 	}
 
+	if c.Json {
+		b, err := json.MarshalIndent(res, "", "    ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+		return nil
+	}
 	state, err := yaml.Marshal(res)
 	if err != nil {
 		return err
