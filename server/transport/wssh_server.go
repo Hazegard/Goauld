@@ -35,6 +35,10 @@ func (wssh *WSshHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	id := r.PathValue("agentId")
 
+	if len(id) != 32 {
+		return
+	}
+
 	r = net2.HTTP10ToHTTP11FakeUpgrader(r)
 
 	// Handle the websocket connection

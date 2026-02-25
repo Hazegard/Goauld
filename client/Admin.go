@@ -46,7 +46,9 @@ func (d *Dump) Run(_ *api.API, cfg ClientConfig) error {
 		if err != nil {
 			return err
 		}
+		//nolint:forbidigo
 		fmt.Println(string(b))
+
 		return nil
 	}
 
@@ -85,6 +87,7 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 
 	if !c.Json {
 		colorYaml.PrintColorizedYAML(res)
+
 		return nil
 	}
 	srvCfg := config.ServerConfig{}
@@ -97,6 +100,7 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 	if err != nil {
 		return err
 	}
+	//nolint:forbidigo
 	fmt.Println(string(data))
 
 	return nil
@@ -116,7 +120,9 @@ func (c *State) Run(_ *api.API, cfg ClientConfig) error {
 		if err != nil {
 			return err
 		}
+		//nolint:forbidigo
 		fmt.Println(string(b))
+
 		return nil
 	}
 	state, err := yaml.Marshal(res)

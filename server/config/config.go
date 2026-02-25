@@ -116,41 +116,41 @@ var (
 
 // ServerConfig represents the global server configuration.
 type ServerConfig struct {
-	PrivKey string `default:"${_age_privKey}" group:"Server configuration:" name:"age-privkey" yaml:"age-privkey" optional:"" help:"Age private key used by the server."`
+	PrivKey string "default:\"${_age_privKey}\" group:\"Server configuration:\" name:\"age-privkey\" yaml:\"age-privkey\" json:\"age-privkey\" optional:\"\" help:\"Age private key used by the server.\""
 
-	HTTPDomain   []string `default:"${_http_domain}" group:"Domain configuration:" name:"http-domain" yaml:"http-domain" optional:"" help:"Domains used to serve HTTP and WebSocket traffic."`
-	TLSDomain    []string `default:"${_tls_domain}" group:"Domain configuration:" name:"tls-domain" yaml:"tls-domain" optional:"" help:"Domains used to serve raw TLS traffic (SSH over TLS)."`
-	DNSDomain    string   `default:"${_dns_domain}" group:"Domain configuration:" name:"dns-domain" yaml:"dns-domain" optional:"" help:"Domain used to serve DNS-based traffic (SSH over DNS)."`
-	DNSDomainAlt string   `default:"${_dns_domain_alt}" group:"Domain configuration:" name:"dns-domain-alt" yaml:"dns-domain-alt" optional:"" help:"Domain used to serve DNS-based traffic (SSH over DNS-ALT)."`
+	HTTPDomain   []string `default:"${_http_domain}" group:"Domain configuration:" name:"http-domain" yaml:"http-domain" json:"http-domain" optional:"" help:"Domains used to serve HTTP and WebSocket traffic."`
+	TLSDomain    []string `default:"${_tls_domain}" group:"Domain configuration:" name:"tls-domain" yaml:"tls-domain" json:"tls-domain" optional:"" help:"Domains used to serve raw TLS traffic (SSH over TLS)."`
+	DNSDomain    string   `default:"${_dns_domain}" group:"Domain configuration:" name:"dns-domain" yaml:"dns-domain" json:"dns-domain" optional:"" help:"Domain used to serve DNS-based traffic (SSH over DNS)."`
+	DNSDomainAlt string   `default:"${_dns_domain_alt}" group:"Domain configuration:" name:"dns-domain-alt" yaml:"dns-domain-alt" json:"dns-domain-alt" optional:"" help:"Domain used to serve DNS-based traffic (SSH over DNS-ALT)."`
 
-	HTTPAddr  string `default:"${_http_listen_addr}" group:"Local addresses binding configuration:" name:"http-listen-addr" yaml:"http-listen-addr" optional:"" help:"Address and port to bind for HTTP connections (port 0 = random)."`
-	HTTPSAddr string `default:"${_https_listen_addr}" group:"Local addresses binding configuration:" name:"https-listen-addr" yaml:"https-listen-addr" optional:"" help:"Address and port to bind for HTTPS connections (port 0 = random)."`
-	SSHDAddr  string `default:"${_sshd_listen_addr}" group:"Local addresses binding configuration:" name:"ssh-listen-addr" yaml:"ssh-listen-addr" optional:"" help:"Address and port to bind for SSH connections (port 0 = random)."`
-	DNSAddr   string `default:"${_dns_listen_addr}" group:"Local addresses binding configuration:" name:"dns-listen-addr" yaml:"dns-listen-addr" optional:"" help:"Address and port to bind for DNS connections (port 0 = random)."`
-	QuicAddr  string `default:"${_quic_listen_addr}" group:"Local addresses binding configuration:" name:"quic-listen-addr" yaml:"quic-listen-addr" optional:"" help:"Address and port to bind for QUIC connections (port 0 = random)."`
+	HTTPAddr  string `default:"${_http_listen_addr}" group:"Local addresses binding configuration:" name:"http-listen-addr" yaml:"http-listen-addr" json:"http-listen-addr" optional:"" help:"Address and port to bind for HTTP connections (port 0 = random)."`
+	HTTPSAddr string `default:"${_https_listen_addr}" group:"Local addresses binding configuration:" name:"https-listen-addr" yaml:"https-listen-addr" json:"https-listen-addr" optional:"" help:"Address and port to bind for HTTPS connections (port 0 = random)."`
+	SSHDAddr  string `default:"${_sshd_listen_addr}" group:"Local addresses binding configuration:" name:"ssh-listen-addr" yaml:"ssh-listen-addr" json:"ssh-listen-addr" optional:"" help:"Address and port to bind for SSH connections (port 0 = random)."`
+	DNSAddr   string `default:"${_dns_listen_addr}" group:"Local addresses binding configuration:" name:"dns-listen-addr" yaml:"dns-listen-addr" json:"dns-listen-addr" optional:"" help:"Address and port to bind for DNS connections (port 0 = random)."`
+	QuicAddr  string `default:"${_quic_listen_addr}" group:"Local addresses binding configuration:" name:"quic-listen-addr" yaml:"quic-listen-addr" json:"quic-listen-addr" optional:"" help:"Address and port to bind for QUIC connections (port 0 = random)."`
 
-	TLS             bool   `default:"${_tls}" group:"Listeners configuration:" name:"tls" yaml:"tls" negatable:"" help:"Enable TLS support."`
-	TLSKey          string `default:"${_tls_key}" group:"Listeners configuration:" name:"tls-key" yaml:"tls-key" help:"Path to the TLS private key file."`
-	TLSCert         string `default:"${_tls_cert}" group:"Listeners configuration:" name:"tls-cert" yaml:"tls-cert" help:"Path to the TLS certificate file."`
-	LetsEncryptMail string `default:"${_letsencrypt_email}" group:"Listeners configuration:" name:"letsencrypt-mail" yaml:"letsencrypt-mail" help:"Email used when generating Let's Encrypt certificates.'"`
-	Quic            bool   `default:"${_quic}" group:"Listeners configuration:" name:"quic" yaml:"quic" negatable:"" help:"Enable QUIC protocol support."`
-	DNS             bool   `default:"${_dns}" group:"Listeners configuration:" name:"dns" yaml:"dns" negatable:"" help:"Enable DNS server for SSH-over-DNS connections."`
+	TLS             bool   `default:"${_tls}" group:"Listeners configuration:" name:"tls" yaml:"tls" json:"tls" negatable:"" help:"Enable TLS support."`
+	TLSKey          string `default:"${_tls_key}" group:"Listeners configuration:" name:"tls-key" yaml:"tls-key" json:"tls-key" help:"Path to the TLS private key file."`
+	TLSCert         string `default:"${_tls_cert}" group:"Listeners configuration:" name:"tls-cert" yaml:"tls-cert" json:"tls-cert" help:"Path to the TLS certificate file."`
+	LetsEncryptMail string `default:"${_letsencrypt_email}" group:"Listeners configuration:" name:"letsencrypt-mail" yaml:"letsencrypt-mail" json:"letsencrypt-mail" help:"Email used when generating Let's Encrypt certificates.'"`
+	Quic            bool   `default:"${_quic}" group:"Listeners configuration:" name:"quic" yaml:"quic" json:"quic" negatable:"" help:"Enable QUIC protocol support."`
+	DNS             bool   `default:"${_dns}" group:"Listeners configuration:" name:"dns" yaml:"dns" json:"dns" negatable:"" help:"Enable DNS server for SSH-over-DNS connections."`
 
-	NoDB       bool   `default:"${_no_db}" group:"Database configuration" name:"db" yaml:"db" negatable:"" help:"Disable database usage."`
-	DbFileName string `default:"${_db_name}" group:"Database configuration" name:"db-file-name" yaml:"db-file-name" help:"Path or filename of the database to use."`
+	NoDB       bool   `default:"${_no_db}" group:"Database configuration" name:"db" yaml:"db" json:"db" negatable:"" help:"Disable database usage."`
+	DbFileName string `default:"${_db_name}" group:"Database configuration" name:"db-file-name" yaml:"db-file-name" json:"db-file-name" help:"Path or filename of the database to use."`
 
-	AllowedIPs  []string `default:"${_allowed_ips}" group:"Access control configuration:" name:"allowed-ips" yaml:"allowed-ips" help:"List of IP addresses allowed to access the /manage/ endpoint."`
-	AccessToken []string `default:"${_access_token}" group:"Access control configuration:" name:"access-token" yaml:"access-token" help:"Access token required for the /manage/ API endpoint."` //nolint:gosec
-	AdminToken  []string `default:"${_admin_token}" group:"Access control configuration:" name:"admin-token" yaml:"admin-token" help:"Admin token required for the /admin/ API endpoint."`
+	AllowedIPs  []string `default:"${_allowed_ips}" group:"Access control configuration:" name:"allowed-ips" yaml:"allowed-ips" json:"allowed-ips" help:"List of IP addresses allowed to access the /manage/ endpoint."`
+	AccessToken []string `default:"${_access_token}" group:"Access control configuration:" name:"access-token" yaml:"access-token" json:"access-token" help:"Access token required for the /manage/ API endpoint."` //nolint:gosec
+	AdminToken  []string `default:"${_admin_token}" group:"Access control configuration:" name:"admin-token" yaml:"admin-token" json:"admin-token" help:"Admin token required for the /admin/ API endpoint."`
 
-	BinariesBasicAuth    string `default:"${_binaries_basicauth}" group:"Agent binaries configuration:" name:"binaries-basic-auth" yaml:"binaries-basic-auth" help:"HTTP Basic Auth credentials required to access the binaries endpoint."`
-	BinariesPathLocation string `default:"${_binaries_path}" group:"Agent binaries configuration:" name:"binaries-path-location" yaml:"binaries-path-location" help:"Filesystem path where agent binaries are stored."`
+	BinariesBasicAuth    string `default:"${_binaries_basicauth}" group:"Agent binaries configuration:" name:"binaries-basic-auth" yaml:"binaries-basic-auth" json:"binaries-basic-auth" help:"HTTP Basic Auth credentials required to access the binaries endpoint."`
+	BinariesPathLocation string `default:"${_binaries_path}" group:"Agent binaries configuration:" name:"binaries-path-location" yaml:"binaries-path-location" json:"binaries-path-location" help:"Filesystem path where agent binaries are stored."`
 
-	Verbose        int    `default:"${_verbosity}" group:"Server configuration:" short:"v" name:"verbose" yaml:"verbose" type:"counter" help:"Increase log verbosity. Repeat for more detail."`
-	Quiet          bool   `default:"${_quiet}" group:"Server configuration:" short:"q" name:"quiet" yaml:"quiet" help:"Suppress all log output."`
-	Version        bool   `default:"${_version}" group:"Server configuration:" short:"V" name:"version" yaml:"version" help:"Show version information and exit."`
-	GenerateConfig bool   `default:"${_generate_config}" group:"Server configuration:" name:"generate-config" yaml:"generate-config" help:"Generate a configuration file from the current settings."`
-	ConfigFile     string `default:"${_config_file}" group:"Server configuration:" short:"c" name:"config-file" yaml:"config-file" optional:"" help:"Path to the configuration file to use."`
+	Verbose        int    `default:"${_verbosity}" group:"Server configuration:" short:"v" name:"verbose" yaml:"verbose" json:"verbose" type:"counter" help:"Increase log verbosity. Repeat for more detail."`
+	Quiet          bool   `default:"${_quiet}" group:"Server configuration:" short:"q" name:"quiet" yaml:"quiet" json:"quiet" help:"Suppress all log output."`
+	Version        bool   `default:"${_version}" group:"Server configuration:" short:"V" name:"version" yaml:"version" json:"version" help:"Show version information and exit."`
+	GenerateConfig bool   `default:"${_generate_config}" group:"Server configuration:" name:"generate-config" yaml:"generate-config" json:"generate-config" help:"Generate a configuration file from the current settings."`
+	ConfigFile     string `default:"${_config_file}" group:"Server configuration:" short:"c" name:"config-file" yaml:"config-file" json:"config-file" optional:"" help:"Path to the configuration file to use."`
 }
 
 // InitServer initialize the application configuration.
@@ -208,6 +208,7 @@ func (s *ServerConfig) Copy() ServerConfig {
 	if err != nil {
 		return ServerConfig{}
 	}
+
 	return sc
 }
 
@@ -318,7 +319,7 @@ func (s *ServerConfig) GenerateYAMLConfig() (string, error) {
 	return cli.GenerateYAMLWithComments(*s)
 }
 
-// CopySanitized return a copy of the server configuration while removing secrets
+// CopySanitized return a copy of the server configuration while removing secrets.
 func (s *ServerConfig) CopySanitized() ServerConfig {
 	ss := s.Copy()
 	ss.GenerateConfig = false
@@ -326,14 +327,16 @@ func (s *ServerConfig) CopySanitized() ServerConfig {
 	ss.AccessToken = sanitizeSlice(ss.AccessToken)
 	ss.PrivKey = "[REDACTED]"
 	ss.BinariesBasicAuth = "[REDACTED]"
+
 	return ss
 }
 
 func sanitizeSlice(slice []string) []string {
 	var newSlice []string
-	for range len(slice) {
+	for range slice {
 		newSlice = append(newSlice, "[REDACTED]")
 	}
+
 	return newSlice
 }
 
