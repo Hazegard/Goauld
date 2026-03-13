@@ -43,10 +43,7 @@ The main agent features are:
 
 ## Demo
 
-<video width=90% controls autoplay>
-    <source src="docs/content/en/Demo.webm" type="video/webm">
-    Your browser does not support the video tag.  
-</video>
+![demo.webm](docs/content/en/Demo.webm)
 
 
 The architecture is based on an outbound SSH tunnel established from the agent to the server.
