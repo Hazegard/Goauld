@@ -532,6 +532,7 @@ func (m *Model) GenerateInfoTable(agent types.Agent) teatable.Model {
 			portRelay = fmt.Sprintf("(%s)", agent.GetRelayPort())
 		}
 		details := []teatable.Row{
+			{"First seen", absTime(agent.CreatedAt)},
 			{"Last Updated", absTime(agent.LastUpdated)},
 			{"Last Ping", absTime(agent.LastPing)},
 			{"SSH Mode", agent.SSHMode},
@@ -630,13 +631,18 @@ func GenerateAgentTable(detail bool) table.Model {
 	columns := []table.Column{
 		NewCenterColumn("N", "N", 3),
 		NewCenterColumn("Name", "Name", 30),
+	}
+	if detail {
+		columns = append(columns, NewCenterColumn("First seen", "First seen", 12))
+	}
+	columns = append(columns, []table.Column{
 		NewCenterColumn("Last Updated", "Last Updated", 14),
 		NewCenterColumn("Last Ping", "Last Ping", 13),
 		NewCenterColumn("Mode", "Mode", 10),
 		NewCenterColumn("SSHD Port", "SSHD Port", 13),
 		NewCenterColumn("HTTP Port", "HTTP Port", 13),
 		NewCenterColumn("Socks Port", "Socks Port", 14),
-	}
+	}...)
 	if detail {
 		columns = append(columns, NewCenterColumn("WG Port", "WG Port", 13))
 		columns = append(columns, NewCenterColumn("Relay Port", "Relay Port", 13))
@@ -695,6 +701,7 @@ func AgentsToRow(agents []types.Agent, details bool, hide bool) []table.Row {
 			"Other Port":   agent.GetOtherPort(),
 		}
 		if details {
+			data["First seen"] = centerString(relTIme(agent.CreatedAt), 12)
 			data["WG Port"] = centerString(agent.GetWGPort(), 13)
 			relayPort := agent.GetRelayPort()
 			if relayPort == "/" {

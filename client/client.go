@@ -89,6 +89,7 @@ func main() {
 		for _, arg := range os.Args {
 			if arg == "compile" {
 				found = true
+
 				continue
 			}
 			if found {

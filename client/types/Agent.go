@@ -4,6 +4,7 @@ package types
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"Goauld/common/types"
 )
@@ -11,6 +12,9 @@ import (
 // Agent represent the agent type on the client side.
 type Agent struct {
 	types.Agent
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // GetSSHPort returns the SSHD forwarded port.
