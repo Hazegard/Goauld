@@ -295,6 +295,7 @@ func run() globalcontext.CancelReason {
 			config.Get().LocalHTTPPRoxyPort = port
 
 			config.Get().UpdateHTTPProxyPort(rPort)
+			rpf.ServerPort = rPort
 
 			go func() {
 				select {
@@ -342,6 +343,7 @@ func run() globalcontext.CancelReason {
 			rPort, err := sshAgent.RemoteForward(ctx, rpf)
 
 			config.Get().UpdateMITMHTTPProxyPort(rPort)
+			rpf.ServerPort = rPort
 
 			config.Get().LocalHTTPMITMPRoxyPort = port
 			go func() {

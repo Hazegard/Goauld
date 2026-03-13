@@ -39,9 +39,9 @@ func (c *AgentConfig) Validate() error {
 		errs = append(errs, errors.New("the kill-switch must not be negative"))
 	}
 
-	if !c.HTTP && c.MITMHTTP {
-		errs = append(errs, errors.New("MITM HTTP proxy requires HTTP proxy to be enabled"))
-	}
+	//if !c.HTTP && c.MITMHTTP {
+	//	errs = append(errs, errors.New("MITM HTTP proxy requires HTTP proxy to be enabled"))
+	//}
 
 	if (c.MITMHTTP || c.SocksUpstreamProxy == "mitm") && runtime.GOOS != "windows" {
 		errs = append(errs, errors.New("MITM HTTP proxy is only available on Windows"))

@@ -370,7 +370,7 @@ func (a *Agent) SshdEnabled() bool {
 
 // HTTPProxyEnabled returns whether the http proxy server is enabled.
 func (a *Agent) HTTPProxyEnabled() bool {
-	return a.cfg.HTTP
+	return a.cfg.HTTP || a.MITMHTTPProxyEnabled() || a.cfg.SocksUpstreamProxy == "http"
 }
 
 // SocksEnabled returns whether the socks server is enabled.

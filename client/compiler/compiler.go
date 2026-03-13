@@ -243,7 +243,8 @@ func run(config Compiler) error {
 	}
 
 	if len(missingCommands) > 0 {
-		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.Appname)).Str("commands", strings.Join(missingCommands, ", ")).Msg("Missing required commands")
+		missing := strings.ReplaceAll(strings.Join(missingCommands, " "), "msbuild", "msbuild (mono-mdk)")
+		log.Error().Err(fmt.Errorf("commands required to build %s", goauldcommon.Appname)).Str("commands", missing).Msg("Missing required commands")
 
 		return fmt.Errorf("commands required to build %s", goauldcommon.Appname)
 	}
