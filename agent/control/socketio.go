@@ -19,9 +19,9 @@ import (
 
 	"github.com/xtaci/smux"
 
+	"github.com/coder/websocket"
 	sio "github.com/hazegard/socket.io-go"
 	eio "github.com/hazegard/socket.io-go/engine.io"
-	"github.com/coder/websocket"
 )
 
 // NewControlPlanClient returns a new ControlPlanClient.

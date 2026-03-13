@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/coder/websocket"
 	sio "github.com/hazegard/socket.io-go"
 	eio "github.com/hazegard/socket.io-go/engine.io"
-	"github.com/coder/websocket"
 )
 
 // InitOverDNS tries to connect to the control plan using the DNS transport.

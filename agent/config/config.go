@@ -19,9 +19,9 @@ var (
 	_name             = "user@hostname" //nolint:revive
 
 	_server         = "www.example.com"
-	_ssh_server     = "www.example.com:22222"      //nolint:revive
-	_tls_server     = "app.example.com"            //nolint:revive
-	_quic_domain    = "app.example.com"            //nolint:revive
+	_ssh_server     = "www.example.com:22222"                   //nolint:revive
+	_tls_server     = "app.example.com"                         //nolint:revive
+	_quic_domain    = "app.example.com"                         //nolint:revive
 	_dns_server     = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9" //nolint:revive
 	_dns_domain     = "t.example.com"                           //nolint:revive
 	_dns_domain_alt = "s.example.com"                           //nolint:revive

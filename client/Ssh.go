@@ -17,8 +17,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hazegard/togettyc/ttyencoder"
 	"github.com/aymanbagabas/go-pty"
+	"github.com/hazegard/togettyc/ttyencoder"
 	"golang.org/x/term"
 )
 

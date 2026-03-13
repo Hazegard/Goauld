@@ -15,8 +15,8 @@ import (
 
 	commonnet "Goauld/common/net"
 
-	eio "github.com/hazegard/socket.io-go/engine.io"
 	"github.com/google/uuid"
+	eio "github.com/hazegard/socket.io-go/engine.io"
 
 	"Goauld/common/log"
 	"Goauld/server/config"

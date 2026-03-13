@@ -33,8 +33,8 @@ var (
 
 	_http_domain    = "www.example.com" //nolint:revive
 	_tls_domain     = "app.example.com" //nolint:revive
-	_dns_domain     = "t.example.com"                //nolint:revive
-	_dns_domain_alt = "s.example.com"                //nolint:revive
+	_dns_domain     = "t.example.com"   //nolint:revive
+	_dns_domain_alt = "s.example.com"   //nolint:revive
 
 	_http_listen_addr  = ":80"   //nolint:revive
 	_https_listen_addr = ":443"  //nolint:revive
@@ -60,8 +60,8 @@ var (
 	_access_token = "TODO_TOKEN"           //nolint:revive
 	_admin_token  = "TODO_TOKEN"           //nolint:revive
 
-	_binaries_basicauth = "username:password"  //nolint:revive
-	_binaries_path      = "./binaries" //nolint:revive
+	_binaries_basicauth = "username:password" //nolint:revive
+	_binaries_path      = "./binaries"        //nolint:revive
 
 	_version         = "false"
 	_generate_config = "false" //nolint:revive
