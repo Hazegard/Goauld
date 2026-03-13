@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const WGCommand = "wireguard"
+const WGCommand = "wg-quick"
 
 const DownFlag = "down"
 const UpFlag = "up"
