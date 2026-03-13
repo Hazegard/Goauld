@@ -1,7 +1,7 @@
 version: 2
 
 env:
-  - APP_NAME=goa'uld
+  - APP_NAME=goauld
   - VERSION={{ .Env.VERSION }}
   - COMMIT={{ .Env.COMMIT }}
   - DATE={{ .Env.DATE }}

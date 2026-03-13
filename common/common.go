@@ -9,7 +9,7 @@ import (
 )
 
 // Appname application name.
-const Appname = "Goa'uld"
+const Appname = "Goauld"
 
 // JVersion holds the version information.
 type JVersion struct {
