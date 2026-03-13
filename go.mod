@@ -4,8 +4,6 @@ go 1.25.6
 
 require (
 	filippo.io/age v1.3.1
-	github.com/hazegard/socket.io-go v0.1.1
-	github.com/hazegard/togettyc v0.3.6
 	github.com/alecthomas/kong v1.14.0
 	github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e
 	github.com/aus/proxyplease v0.1.0
@@ -26,11 +24,13 @@ require (
 	github.com/gokrazy/rsync v0.3.3
 	github.com/google/uuid v1.6.0
 	github.com/gopasspw/clipboard v0.0.4
+	github.com/hazegard/socket.io-go v0.1.1
+	github.com/hazegard/togettyc v0.3.6
 	github.com/iamacarpet/go-winpty v1.0.4
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/kevinburke/ssh_config v1.6.0
 	github.com/keygen-sh/machineid v1.1.2
-	github.com/klauspost/compress v1.18.4
+	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-isatty v0.0.20
 	github.com/miekg/dns v1.1.72
@@ -65,6 +65,8 @@ replace github.com/aus/proxyplease => ./vendored/github.com/aus/proxyplease@v0.1
 
 replace github.com/hazegard/togettyc => ./vendored/github.com/hazegard/togettyc
 
+require github.com/sirupsen/logrus v1.9.3
+
 require (
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be // indirect
@@ -84,6 +86,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/flynn/noise v1.0.1-0.20220214164934-d803f5c4b0f4 // indirect
 	github.com/git-lfs/go-ntlm v0.0.0-20190401175752-c5056e7fa066 // indirect
 	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
@@ -114,7 +117,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sasha-s/go-deadlock v0.3.6 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/u-root/u-root v0.15.0 // indirect
 	github.com/xiegeo/coloredgoroutine v0.1.1 // indirect

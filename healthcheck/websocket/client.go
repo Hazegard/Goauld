@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -15,7 +13,7 @@ import (
 	"time"
 
 	"github.com/aus/proxyplease"
-	"github.com/gorilla/websocket"
+	"github.com/coder/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -90,63 +88,35 @@ func main() {
 
 	dialContext := proxyplease.NewDialContext(proxyplease.Proxy{})
 
-	dialer := websocket.Dialer{
-		// It's not documented if handshake timeout defaults.
-		HandshakeTimeout: websocket.DefaultDialer.HandshakeTimeout,
-		NetDialContext:   dialContext,
-	}
-
-	dialer.TLSClientConfig = &tls.Config{
-		InsecureSkipVerify: *insecure,
-	}
-	head := map[string][]string{}
-
-	// Add basic auth.
-	if *basicAuth != "" {
-		ss, err := secretString(*basicAuth)
-		if err != nil {
-			log.Fatalf("Error reading secret string %q: %v", *basicAuth, err)
-		}
-		a := base64.StdEncoding.EncodeToString([]byte(ss))
-		head["Authorization"] = []string{
-			"Basic " + a,
-		}
-	}
-
-	if *oauthToken != "" {
-		head["Authorization"] = []string{"Bearer " + *oauthToken}
-	}
-
-	// Load client cert
-	if *certFile != "" {
-		cert, err := tls.LoadX509KeyPair(*certFile, *keyFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		dialer.TLSClientConfig.Certificates = []tls.Certificate{cert}
-	}
-
-	conn, resp, err := dialer.Dial(url, head)
+	wsConn, resp, err := websocket.Dial(ctx, url, &websocket.DialOptions{
+		HTTPClient: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: *insecure,
+				},
+				DialContext: dialContext,
+			},
+		},
+	})
 	if err != nil {
-		dialError(url, resp, err)
+		if resp != nil && resp.Body != nil {
+			body, _ := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			fmt.Printf("%s: %s\n", resp.Status, string(body))
+			log.Fatalf("error connecting to %s: %v", url, err)
+			return
+		}
+		log.Fatalf("error connecting to %s: %v", url, err)
 	}
-	defer conn.Close()
+
+	// Wraps the websocket connection to expose it as a raw net.Conn connection
+	netConn := websocket.NetConn(ctx, wsConn, websocket.MessageBinary)
 
 	// websocket -> stdout
 	go func() {
 		for {
-			mt, r, err := conn.NextReader()
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-				return
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			if mt != websocket.BinaryMessage {
-				log.Fatal("non-binary websocket message received")
-			}
-			if _, err := io.Copy(os.Stdout, r); err != nil {
+
+			if _, err := io.Copy(os.Stdout, netConn); err != nil {
 				log.Errorf("Reading from websocket: %v", err)
 				cancel()
 			}
@@ -155,15 +125,8 @@ func main() {
 
 	// stdin -> websocket
 	// TODO: NextWriter() seems to be broken.
-	if err := File2WS(ctx, cancel, os.Stdin, conn); errors.Is(err, io.EOF) {
-		if err := conn.WriteControl(websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
-			time.Now().Add(*writeTimeout)); errors.Is(err, websocket.ErrCloseSent) {
-		} else if err != nil {
-			log.Errorf("Error sending 'close' message: %v", err)
-		}
-	} else if err != nil {
-		log.Errorf("reading from stdin: %v", err)
+	if _, err := io.Copy(netConn, os.Stdin); err != nil {
+		log.Errorf("Reading from websocket: %v", err)
 		cancel()
 	}
 
