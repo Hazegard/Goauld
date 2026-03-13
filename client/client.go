@@ -84,12 +84,16 @@ func main() {
 	}
 
 	if strings.Fields(ctx.Command())[0] == "compile" || strings.Contains(ctx.Command(), "compile ") {
-		var args []string
+		args := []string{os.Args[0]}
+		found := false
 		for _, arg := range os.Args {
 			if arg == "compile" {
+				found = true
 				continue
 			}
-			args = append(args, arg)
+			if found {
+				args = append(args, arg)
+			}
 		}
 		os.Args = args
 		kong, cfg, err := compiler.InitCompilerConfig(AppName, defaultValues)
