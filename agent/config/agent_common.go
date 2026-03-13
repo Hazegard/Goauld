@@ -435,7 +435,7 @@ func (a *Agent) RemoteForwardedHTTPProxyPort() int {
 
 // RemoteForwardedHTTPMITMProxyPort returns the remote forwarded MITM port.
 func (a *Agent) RemoteForwardedHTTPMITMProxyPort() int {
-	return a.cfg.HTTPProxyPort
+	return a.cfg.MITMHTTPProxyPort
 }
 
 // RemoteForwardedSocksPort returns the remote forwarded Socks port.
