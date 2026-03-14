@@ -24,6 +24,8 @@ import (
 	eio "github.com/hazegard/socket.io-go/engine.io"
 )
 
+const wsReadLimit = 0
+
 // NewControlPlanClient returns a new ControlPlanClient.
 func NewControlPlanClient(ctx context.Context, configDone chan<- string, canceler *globalcontext.GlobalCanceler) *ControlPlanClient {
 	return &ControlPlanClient{
@@ -242,7 +244,8 @@ func getEioConfig(tr []string) *sio.ManagerConfig {
 				HTTPClient: proxy.NewHTTPClientProxy(nil),
 				HTTPHeader: proxy.NewHeaderMap(),
 			},
-			Transports: tr,
+			Transports:  tr,
+			WsReadLimit: wsReadLimit,
 		},
 	}
 }
@@ -262,7 +265,8 @@ func getDNSEioConfig(session *smux.Stream) *sio.ManagerConfig {
 			// The tunnel fails to establish properly as the server responds to unwanted content to the open HTTP socket.
 			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
 			// On the client side
-			Transports: []string{"websocket"},
+			Transports:  []string{"websocket"},
+			WsReadLimit: wsReadLimit,
 		},
 	}
 }

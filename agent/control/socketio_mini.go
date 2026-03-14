@@ -31,6 +31,8 @@ type ControlPlanClient struct {
 	errorCounter int
 }
 
+const wsReadLimit = -1
+
 func AddHandlers(socket sio.ClientSocket, cpc *ControlPlanClient) {}
 
 // Start starts the socket and initiates the configuration exchange with the server.
