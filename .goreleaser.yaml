@@ -220,11 +220,6 @@ before:
       tar -C vendored/github.com/hazegard/socket.io-go --no-recursion --null -T - --uid 0 --gid 0 --numeric-owner --format pax -cf - | \
       gzip -n > vendored/github.com/hazegard/socket.io-go.tar.gz
     - |
-      find vendored/github.com/hazegard/togettyc -path '*/.git' -prune -o \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' \) -print0 | LC_ALL=C sort -z | \
-      sed 's|vendored/github.com/hazegard/togettyc/||g' | \
-      tar -C vendored/github.com/hazegard/togettyc --no-recursion --null -T - --uid 0 --gid 0 --numeric-owner --format pax -cf - | \
-      gzip -n > vendored/github.com/hazegard/togettyc.tar.gz
-    - |
       sh -c '
       if [ -z "$GOOS" ] || [ "$GOOS" = "windows" ]; then
         # if command -v zig >/dev/null 2>&1; then
