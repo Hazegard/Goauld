@@ -25,12 +25,11 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gopasspw/clipboard v0.0.4
 	github.com/hazegard/socket.io-go v0.1.1
-	github.com/hazegard/togettyc v0.3.6
+	github.com/hazegard/togettyc v0.3.8
 	github.com/iamacarpet/go-winpty v1.0.4
 	github.com/jellydator/ttlcache/v2 v2.11.1
 	github.com/kevinburke/ssh_config v1.6.0
 	github.com/keygen-sh/machineid v1.1.2
-	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mattn/go-isatty v0.0.20
 	github.com/miekg/dns v1.1.72
@@ -38,6 +37,7 @@ require (
 	github.com/prometheus-community/pro-bing v0.8.0
 	github.com/quic-go/quic-go v0.59.0
 	github.com/rs/zerolog v1.34.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/things-go/go-socks5 v0.1.0
 	github.com/urfave/negroni v1.0.0
 	github.com/xtaci/kcp-go/v5 v5.6.70
@@ -45,8 +45,8 @@ require (
 	golang.org/x/crypto v0.48.0
 	golang.org/x/net v0.50.0
 	golang.org/x/sync v0.19.0
-	golang.org/x/sys v0.41.0
-	golang.org/x/term v0.40.0
+	golang.org/x/sys v0.42.0
+	golang.org/x/term v0.41.0
 	golang.org/x/text v0.34.0
 	golang.org/x/time v0.14.0
 	golang.zx2c4.com/wireguard v0.0.0-20250521234502-f333402bd9cb
@@ -57,15 +57,6 @@ require (
 	www.bamsoftware.com/git/champa.git v0.20250620.0
 	www.bamsoftware.com/git/dnstt.git v1.20241021.0
 )
-
-//nolint:gomoddirectives
-replace github.com/hazegard/socket.io-go => ./vendored/github.com/hazegard/socket.io-go
-
-replace github.com/aus/proxyplease => ./vendored/github.com/aus/proxyplease@v0.1.0
-
-replace github.com/hazegard/togettyc => ./vendored/github.com/hazegard/togettyc
-
-require github.com/sirupsen/logrus v1.9.3
 
 require (
 	filippo.io/hpke v0.4.0 // indirect
@@ -94,6 +85,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/karagenc/yeast v0.1.1 // indirect
+	github.com/klauspost/compress v1.18.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/reedsolomon v1.13.2 // indirect
 	github.com/kr/fs v0.1.0 // indirect
@@ -109,14 +101,14 @@ require (
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
-	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741 // indirect
+	github.com/petermattis/goid v0.0.0-20260226131333-17d1149c6ac6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/webtransport-go v0.10.0 // indirect
 	github.com/rapid7/go-get-proxied v0.0.0-20250207205329-09112877ac70 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/sasha-s/go-deadlock v0.3.6 // indirect
+	github.com/sasha-s/go-deadlock v0.3.7 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/u-root/u-root v0.15.0 // indirect
 	github.com/xiegeo/coloredgoroutine v0.1.1 // indirect
