@@ -168,15 +168,16 @@ func (a *Agent) Verbosity() int {
 
 // PrivateSshdPassword return the static password.
 func (a *Agent) PrivateSshdPassword() string {
+	if a.cfg.DisablePassword {
+		return ""
+	}
 	if a.cfg.PrivatePassword != "" {
 		return a.cfg.PrivatePassword
 	}
 	if _private_password != "" {
 		return _private_password
 	}
-	if a.cfg.DisablePassword {
-		return ""
-	}
+
 	p, err := pwgen.GetXKCDPassword("")
 	if err != nil {
 		p, err = crypto.GeneratePassword(30)

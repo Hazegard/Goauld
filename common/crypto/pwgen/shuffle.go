@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -87,7 +88,27 @@ func shuffle(seed string, n int, wordlistPath string) ([]string, error) {
 		return []string{}, errors.New("n must be > 0")
 	}
 
-	data, err := os.ReadFile(wordlistPath)
+	var err error
+	var data []byte
+	if wordlistPath == "" {
+		data, err = sources.ReadFile(wl_name)
+		var r *gzip.Reader
+		r, err = gzip.NewReader(bytes.NewReader(data))
+		if err != nil {
+			return []string{}, fmt.Errorf("could not decompress %s: %w", wordlistPath, err)
+		}
+		defer r.Close()
+
+		data, err = io.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		data, err = os.ReadFile(wordlistPath)
+		if err != nil {
+			return []string{}, fmt.Errorf("could not read %s: %w", wordlistPath, err)
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error reading wordlist file %s: %w", wordlistPath, err)
 	}
