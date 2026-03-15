@@ -138,8 +138,8 @@ func (c *Compiler) Run() error {
 	if err != nil {
 		return fmt.Errorf("could not create output directory %s: %w", c.Output, err)
 	}
-	//nolint:gosec,G703
 	newEnvFile := filepath.Join(c.Output, EnvFile)
+	//nolint:gosec,G703
 	err = os.WriteFile(newEnvFile, []byte(content), 0o600)
 	if err != nil {
 		return fmt.Errorf("could not write env file %s: %w", newEnvFile, err)

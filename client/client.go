@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Goauld/client/cli"
 	"Goauld/client/common"
 	"Goauld/client/compiler"
 	"fmt"
@@ -68,14 +69,14 @@ func PreParseArgs() {
 func main() {
 	// To handle vscode scp check (call scp and checks that the output starts with "usage: scp"
 	if len(os.Args) == 1 && filepath.Base(os.Args[0]) == "scp" {
-		_ = ExecSCp()
+		_ = cli.ExecSCp()
 
 		return
 	}
 	// Preparsing/reordering of the os.Args
 	PreParseArgs()
 
-	kong, cfg, ctx, err := InitConfig()
+	kong, cfg, ctx, err := cli.InitConfig()
 	if err != nil {
 		//nolint:forbidigo
 		fmt.Println(err)
@@ -97,7 +98,7 @@ func main() {
 			}
 		}
 		os.Args = args
-		kong, cfg, err := compiler.InitCompilerConfig(AppName, defaultValues)
+		kong, cfg, err := compiler.InitCompilerConfig(cli.AppName, cli.DefaultValues)
 		if err != nil {
 			//nolint:forbidigo
 			fmt.Println(err)
@@ -116,7 +117,7 @@ func main() {
 
 	if cfg.Version {
 		if strings.HasPrefix(ctx.Command(), "ssh") {
-			ExecuteSystemSSH("-V")
+			cli.ExecuteSystemSSH("-V")
 		} else {
 			//nolint:forbidigo
 			fmt.Println(_common.GetVersion())

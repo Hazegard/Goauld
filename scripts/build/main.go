@@ -118,6 +118,7 @@ func GenEnvFile(envFile string, cfg BuildConfig) (string, error) {
 		content = compiler.ReplaceInFile(content, "SERVER__ACCESS_TOKEN", "SERVER__ACCESS_TOKEN="+newToken)
 	}
 
+	//nolint:gosec
 	return newEnv, os.WriteFile(newEnv, []byte(content), 0o600)
 }
 

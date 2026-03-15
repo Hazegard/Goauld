@@ -116,7 +116,7 @@ var (
 
 // ServerConfig represents the global server configuration.
 type ServerConfig struct {
-	PrivKey string "default:\"${_age_privKey}\" group:\"Server configuration:\" name:\"age-privkey\" yaml:\"age-privkey\" json:\"age-privkey\" optional:\"\" help:\"Age private key used by the server.\""
+	PrivKey string `default:"${_age_privKey}" group:"Server configuration:" name:"age-privkey" yaml:"age-privkey" json:"age-privkey" optional:"" help:"Age private key used by the server."`
 
 	HTTPDomain   []string `default:"${_http_domain}" group:"Domain configuration:" name:"http-domain" yaml:"http-domain" json:"http-domain" optional:"" help:"Domains used to serve HTTP and WebSocket traffic."`
 	TLSDomain    []string `default:"${_tls_domain}" group:"Domain configuration:" name:"tls-domain" yaml:"tls-domain" json:"tls-domain" optional:"" help:"Domains used to serve raw TLS traffic (SSH over TLS)."`
@@ -151,6 +151,9 @@ type ServerConfig struct {
 	Version        bool   `default:"${_version}" group:"Server configuration:" short:"V" name:"version" yaml:"version" json:"version" help:"Show version information and exit."`
 	GenerateConfig bool   `default:"${_generate_config}" group:"Server configuration:" name:"generate-config" yaml:"generate-config" json:"generate-config" help:"Generate a configuration file from the current settings."`
 	ConfigFile     string `default:"${_config_file}" group:"Server configuration:" short:"c" name:"config-file" yaml:"config-file" json:"config-file" optional:"" help:"Path to the configuration file to use."`
+
+	Hooks       []func(id string, name string) `hidden:"" json:"-"`
+	SingleAgent bool                           `hidden:"" json:"-"`
 }
 
 // InitServer initialize the application configuration.
@@ -197,8 +200,11 @@ func InitServer() (*kong.Context, *ServerConfig, error) {
 func Get() *ServerConfig {
 	return srvCfg
 }
-
+func Set(cfg *ServerConfig) {
+	srvCfg = cfg
+}
 func (s *ServerConfig) Copy() ServerConfig {
+	//nolint:gosec,g117
 	js, err := json.Marshal(*s)
 	if err != nil {
 		return ServerConfig{}

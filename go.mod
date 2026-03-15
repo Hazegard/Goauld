@@ -24,7 +24,7 @@ require (
 	github.com/gokrazy/rsync v0.3.3
 	github.com/google/uuid v1.6.0
 	github.com/gopasspw/clipboard v0.0.4
-	github.com/hazegard/socket.io-go v0.1.1
+	github.com/hazegard/socket.io-go v0.1.2
 	github.com/hazegard/togettyc v0.3.8
 	github.com/iamacarpet/go-winpty v1.0.4
 	github.com/jellydator/ttlcache/v2 v2.11.1

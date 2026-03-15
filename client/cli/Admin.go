@@ -1,5 +1,5 @@
 // Package main holds the client entrypoint
-package main
+package cli
 
 import (
 	"Goauld/client/api"
@@ -96,6 +96,7 @@ func (c *Config) Run(_ *api.API, cfg ClientConfig) error {
 	if err != nil {
 		return err
 	}
+	//nolint:gosec,g117
 	data, err := json.MarshalIndent(srvCfg, "", "    ")
 	if err != nil {
 		return err

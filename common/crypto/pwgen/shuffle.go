@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"container/heap"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,6 +18,7 @@ func GenWordlist(seed string, wordlistPath string, outDir string) (string, error
 	wordlist, err := shuffle(seed, 100, wordlistPath)
 	if err != nil {
 		log.Error().Err(err).Msg("could not generate wordlist")
+
 		return "", fmt.Errorf("could not generate wordlist: %w", err)
 	}
 
@@ -26,11 +28,13 @@ func GenWordlist(seed string, wordlistPath string, outDir string) (string, error
 	if err != nil {
 		_ = gz.Close()
 		log.Error().Err(err).Msg("could not compile wordlist")
+
 		return "", fmt.Errorf("could not gzip wordlist: %w", err)
 	}
 	err = gz.Close()
 	if err != nil {
 		log.Error().Err(err).Msg("could not compile wordlist")
+
 		return "", fmt.Errorf("could not gzip wordlist: %w", err)
 	}
 
@@ -40,7 +44,8 @@ func GenWordlist(seed string, wordlistPath string, outDir string) (string, error
 		b.Bytes(),
 		0o600,
 	)
-	return outPath, nil
+
+	return outPath, err
 }
 
 type item struct {
@@ -78,9 +83,8 @@ func lessHash(a, b [32]byte) bool {
 }
 
 func shuffle(seed string, n int, wordlistPath string) ([]string, error) {
-
 	if n <= 0 {
-		return []string{}, fmt.Errorf("n must be > 0")
+		return []string{}, errors.New("n must be > 0")
 	}
 
 	data, err := os.ReadFile(wordlistPath)
@@ -129,5 +133,6 @@ func shuffle(seed string, n int, wordlistPath string) ([]string, error) {
 		//nolint:forbidigo
 		result = append(result, it.line)
 	}
+
 	return result, nil
 }

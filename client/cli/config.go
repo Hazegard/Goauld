@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"Goauld/client/compiler"
@@ -90,7 +90,14 @@ var (
 	_compile_nopass           = "false"      //nolint:revive
 	_compile_compress         = "false"      //nolint:revive
 
-	defaultValues = kong.Vars{
+	_age_privKey       = ""      //nolint:revive
+	_http_listen_addr  = ":80"   //nolint:revive
+	_https_listen_addr = ":443"  //nolint:revive
+	_sshd_listen_addr  = ":2222" //nolint:revive
+	_dns_listen_addr   = ":53"   //nolint:revive
+	_quic_listen_addr  = ":443"  //nolint:revive
+
+	DefaultValues = kong.Vars{
 		"AppName":       AppName,
 		"_server":       _server,
 		"_ssh_server":   _ssh_server,
@@ -155,6 +162,13 @@ var (
 		"_compile_private_password": _compile_private_password,
 		"_compile_nopass":           _compile_nopass,
 		"_compile_compress":         _compile_compress,
+
+		"_age_privKey":       _age_privKey,
+		"_http_listen_addr":  _http_listen_addr,
+		"_https_listen_addr": _https_listen_addr,
+		"_sshd_listen_addr":  _sshd_listen_addr,
+		"_dns_listen_addr":   _dns_listen_addr,
+		"_quic_listen_addr":  _quic_listen_addr,
 	}
 )
 
@@ -196,6 +210,8 @@ type ClientConfig struct {
 	Compile   Compiler  `cmd:"" name:"compile" yaml:"compile" help:"Compile a new agent binary.\n $ ${AppName} compile -O windows -A amd64"`
 	Admin     Admin     `cmd:"" name:"admin" yaml:"admin" help:"Administrative commands (internal use)." hidden:"true"`
 	Wireguard Wireguard `cmd:"" name:"wireguard" yaml:"wireguard" help:"Generate or manage WireGuard configuration."`
+
+	EmbedServer Server `cmd:"" name:"embed-server" yaml:"embed-server" help:"Start a server to serve agents."`
 
 	SearchConfigDir string `hidden:""`
 }
@@ -344,7 +360,7 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 		kong.DefaultEnvars(strings.ToUpper(AppName)),
 		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
 			if strings.HasPrefix(ctx.Command(), "compile") {
-				_, _, _ = compiler.InitCompilerConfig(AppName, defaultValues)
+				_, _, _ = compiler.InitCompilerConfig(AppName, DefaultValues)
 
 				return nil
 			}
@@ -357,7 +373,7 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 
 			return kong.DefaultHelpPrinter(options, ctx)
 		}),
-		defaultValues,
+		DefaultValues,
 	}
 	ctx := kong.Parse(cfgTmp, kongOptions...)
 	if cfgTmp.ConfigFile != "" {

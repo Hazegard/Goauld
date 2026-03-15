@@ -30,9 +30,10 @@ import (
 
 // SocketIO represent the socket.io server.
 type SocketIO struct {
-	db         *persistence.DB
-	agentStore *store.AgentStore
-	Server     *gosio.Server
+	db                  *persistence.DB
+	agentStore          *store.AgentStore
+	Server              *gosio.Server
+	AgentConnectedHooks []func(id string, name string)
 }
 
 // deprecated
@@ -64,7 +65,7 @@ func (sio *SocketIO) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // InitSocketIOServer initialize the server socket.io used to manage the agents.
-func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*SocketIO, error) {
+func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB, hooks []func(id string, name string)) (*SocketIO, error) {
 	io := gosio.NewServer(&gosio.ServerConfig{
 		EIO: eio.ServerConfig{
 			Authenticator: func(_ http.ResponseWriter, _ *http.Request) bool {
@@ -75,9 +76,10 @@ func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB) (*Sock
 		},
 	})
 	socketIO := &SocketIO{
-		agentStore: agentStore,
-		db:         db,
-		Server:     io,
+		agentStore:          agentStore,
+		db:                  db,
+		Server:              io,
+		AgentConnectedHooks: hooks,
 	}
 	socketIO.Setup(io.Of("/"))
 	err := io.Run()
@@ -134,6 +136,22 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 				socket.Emit(socketio.AlreadyConnectedEvent.ID())
 
 				return
+			}
+
+			// In singleAGent Mode, we check whether an agent is already connected.
+			// If an agent is already connect, reject all other agents.
+			// As in this mode the DB is only in memory, we can check that using the number of agents registered in the db
+			if config.Get().SingleAgent {
+				agents, err := sio.db.GetAllAgents()
+				if err != nil {
+					log.Warn().Err(err).Msg("error getting agents")
+				}
+				if len(agents) > 0 {
+					log.Error().Str("Agent.name", "").Str("Agent.ID", data.ID).Err(err).Msg("agent already connected... emitting kill")
+					socket.Emit(socketio.AlreadyConnectedEvent.ID())
+
+					return
+				}
 			}
 
 			// Retrieve the agent from the database
@@ -355,6 +373,9 @@ func (sio *SocketIO) Setup(root *gosio.Namespace) {
 			}
 			socket.Emit(socketio.SendRemotePortForwardingDataSuccess.ID())
 			log.Trace().Str("Agent.name", agent.Name).Str("Agent.ID", agent.ID).Msg("END socketio.SendRemotePortForwardingDataEvent")
+			for _, h := range sio.AgentConnectedHooks {
+				go h(agent.ID, agent.Name)
+			}
 		})
 
 		socket.OnDisconnect(func(reason gosio.Reason) {

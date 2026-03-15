@@ -215,6 +215,7 @@ func (api *API) KillAgent(id string, doExit bool, doDelete bool, password string
 		Delete:         doDelete,
 		HashedPassword: hashedPwd,
 	}
+	//nolint:gosec,g117
 	b, err := json.Marshal(body)
 	if err != nil {
 		return err
@@ -463,6 +464,7 @@ func (api *API) AddWGPeer(id string, config wireguard.WGConfig) error {
 	config.PrivateKey = ""
 	u := fmt.Sprintf("/manage/agent/%s/addWGPeer", id)
 
+	//nolint:gosec,g117
 	jsBody, err := json.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("error marshalling request body (%s)", config)

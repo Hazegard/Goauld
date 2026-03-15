@@ -161,8 +161,8 @@ github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
 github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
-github.com/hazegard/socket.io-go v0.1.1 h1:rUO5yNVNgaWL5eSgeD+lUnaiXv1RQqUcR1S/MeY04EI=
-github.com/hazegard/socket.io-go v0.1.1/go.mod h1:QqFSysp9ojRLxPc2b/zX0mzEUuiNxOPfQO2aOwyXyqI=
+github.com/hazegard/socket.io-go v0.1.2 h1:tk+NbryodNDz2pFgWSPyIBlhzDDn49hrUB7I05cCm2I=
+github.com/hazegard/socket.io-go v0.1.2/go.mod h1:QqFSysp9ojRLxPc2b/zX0mzEUuiNxOPfQO2aOwyXyqI=
 github.com/hazegard/togettyc v0.3.5 h1:XlwxEj/spycx3uRvpf4aZAr2VbjEkq4tyq7at9WFom8=
 github.com/hazegard/togettyc v0.3.5/go.mod h1:TS+Mr1++KlmD32Tio+pLivWo9uV/ocQ3tfUZ5WYOsIw=
 github.com/hugelgupf/go-shlex v0.0.0-20200702092117-c80c9d0918fa h1:s3KPo0nThtvjEamF/aElD4k5jSsBHew3/sgNTnth+2M=
@@ -255,8 +255,6 @@ github.com/packetcap/go-pcap v0.0.0-20240528124601-8c87ecf5dbc5 h1:p4VuaitqUAqSZ
 github.com/packetcap/go-pcap v0.0.0-20240528124601-8c87ecf5dbc5/go.mod h1:zIAoVKeWP0mz4zXY50UYQt6NLg2uwKRswMDcGEqOms4=
 github.com/peterh/liner v1.2.2 h1:aJ4AOodmL+JxOZZEL2u9iJf8omNRpqHc/EbrK+3mAXw=
 github.com/peterh/liner v1.2.2/go.mod h1:xFwJyiKIXJZUKItq5dGHZSTBRAuG/CpeNpWLyiNRNwI=
-github.com/petermattis/goid v0.0.0-20260226131333-17d1149c6ac6 h1:rh2lKw/P/EqHa724vYH2+VVQ1YnW4u6EOXl0PMAovZE=
-github.com/petermattis/goid v0.0.0-20260226131333-17d1149c6ac6/go.mod h1:pxMtw7cyUw6B2bRH0ZBANSPg+AoSud1I1iyJHI69jH4=
 github.com/pierrec/lz4/v4 v4.1.22 h1:cKFw6uJDK+/gfw5BcDL0JL5aBsAFdsIT18eRtLj7VIU=
 github.com/pierrec/lz4/v4 v4.1.22/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e h1:aoZm08cpOy4WuID//EZDgcC4zIxODThtZNPirFr42+A=
@@ -304,8 +302,6 @@ github.com/safchain/ethtool v0.0.0-20200218184317-f459e2d13664 h1:gvolwzuDhul9qK
 github.com/safchain/ethtool v0.0.0-20200218184317-f459e2d13664/go.mod h1:Z0q5wiBQGYcxhMZ6gUqHn6pYNLypFAvaL3UvgZLR0U4=
 github.com/sahilm/fuzzy v0.1.1 h1:ceu5RHF8DGgoi+/dR5PsECjCDH1BE3Fnmpo7aVXOdRA=
 github.com/sahilm/fuzzy v0.1.1/go.mod h1:VFvziUEIMCrT6A6tw2RFIXPXXmzXbOsSHF0DOI8ZK9Y=
-github.com/sasha-s/go-deadlock v0.3.7 h1:i3KnHMAptD/cZ8JmDXQnD44luuRbOn+CFeXGnLnf+YU=
-github.com/sasha-s/go-deadlock v0.3.7/go.mod h1:KuZj51ZFmx42q/mPaYbRk0P1xcwe697zsJKE03vD4/Y=
 github.com/spf13/pflag v1.0.7 h1:vN6T9TfwStFPFM5XzjsvmzZkLuaLX+HS+0SeFLRgU6M=
 github.com/spf13/pflag v1.0.7/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stretchr/objx v0.1.0 h1:4G4v2dO3VZwixGIRoQ5Lfboy6nUhCyYzaqnIAPPhYs4=

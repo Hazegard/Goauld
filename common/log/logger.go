@@ -223,6 +223,10 @@ func SetLogLevel(verbosity int) {
 	}
 }
 
+func GetLogLevel() zerolog.Level {
+	return zerolog.GlobalLevel()
+}
+
 func verbosityToGormLogLevel(verbosity int) logger.LogLevel {
 	switch verbosity {
 	case 0:
