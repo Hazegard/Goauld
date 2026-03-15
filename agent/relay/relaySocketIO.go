@@ -46,7 +46,6 @@ func InitSocketIORelayServer(ctx context.Context, mode string, dnsTransport *tra
 			Authenticator: func(_ http.ResponseWriter, _ *http.Request) bool {
 				return true
 			},
-			WebTransportServer:     nil,
 			WebSocketAcceptOptions: nil,
 			DisableMaxBufferSize:   true,
 		},
