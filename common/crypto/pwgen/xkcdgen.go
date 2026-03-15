@@ -8,12 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 )
 
-func GetXKCDPassword() (string, error) {
+func GetXKCDPassword(wlPath string) (string, error) {
 	g := NewGenerator()
-	wordList, err := getWordList()
+	wordList, err := getWordList(wlPath)
 	if err != nil {
 		return "", fmt.Errorf("error getting word list: %w", err)
 	}
@@ -25,8 +26,14 @@ func GetXKCDPassword() (string, error) {
 	return g.GeneratePasswordString(), nil
 }
 
-func getWordList() ([]string, error) {
-	content, err := sources.ReadFile(wl_name)
+func getWordList(wlPath string) ([]string, error) {
+	var content []byte
+	var err error
+	if wlPath == "" {
+		content, err = sources.ReadFile(wl_name)
+	} else {
+		content, err = os.ReadFile(wlPath)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("could not read file wordlist: %w", err)
 	}

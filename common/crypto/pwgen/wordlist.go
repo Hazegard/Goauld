@@ -1,5 +1,3 @@
-//go:build client
-
 package pwgen
 
 import "embed"

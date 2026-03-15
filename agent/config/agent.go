@@ -177,7 +177,7 @@ func (a *Agent) PrivateSshdPassword() string {
 	if a.cfg.DisablePassword {
 		return ""
 	}
-	p, err := pwgen.GetXKCDPassword()
+	p, err := pwgen.GetXKCDPassword("")
 	if err != nil {
 		p, err = crypto.GeneratePassword(30)
 		if err != nil {

@@ -208,7 +208,7 @@ upx:
 before:
   hooks:
     - go mod tidy
-    - sh -c "go run ./scripts/shuffle/main.go -in ./common/crypto/pwgen/wordlist.txt -seed {{.Env.CLIENT__COMPILE_SEED}} | gzip > common/crypto/pwgen/wordlist_mini.txt.gz"
+    # - sh -c "go run ./scripts/shuffle/main.go -in ./common/crypto/pwgen/wordlist.txt -seed {{.Env.CLIENT__COMPILE_SEED}} | gzip > common/crypto/pwgen/wordlist_mini.txt.gz"
     - |
       sh -c '
       if [ -z "$GOOS" ] || [ "$GOOS" = "windows" ]; then

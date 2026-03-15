@@ -8,15 +8,10 @@ import (
 	commonCmd "Goauld/common/cmd"
 	"Goauld/common/crypto/pwgen"
 	"Goauld/common/log"
-	"archive/tar"
-	"bytes"
-	"compress/gzip"
 	"crypto/rand"
 	"embed"
 	"encoding/base64"
-	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -44,11 +39,13 @@ type Compiler struct {
 	Literals      bool   `default:"true"  name:"literals" yaml:"literals" negatable:"" help:"Literals garble flag (obfuscate string variable, but take more space)."`
 	ClientBuild   bool   `default:"true" hidden:"true"`
 	Keep          bool   `default:"false" name:"keep" yaml:"keep" help:"Keep temp sources."`
+	Wordlist      string `name:"wordlist" help:"Wordlist file to compile."`
 }
 
 const (
 	// EnvFile the default destination of created environment file.
-	EnvFile = ".env.build"
+	EnvFile     = ".env.build"
+	WordlistOut = "wordlist.txt.gz"
 )
 
 var requiredCommands = []string{
@@ -95,9 +92,26 @@ func (c *Compiler) Run() error {
 		return fmt.Errorf("could not read env file %s: %w", c.EnvFile, err)
 	}
 	content := string(byteContent)
+
+	if c.Seed == "__generate" {
+		seed, err := GenerateSecureRandomBase64(69)
+		if err != nil {
+			return fmt.Errorf("could not generate random seed: %w", err)
+		}
+		c.Seed = seed
+	}
+	if c.Seed != "" {
+		content = ReplaceInFile(content, "CLIENT__COMPILE_SEED=", "CLIENT__COMPILE_SEED="+c.Seed)
+	}
+
+	wlPath, err := pwgen.GenWordlist(c.Seed, c.Wordlist, c.Source)
+	if err != nil {
+		return fmt.Errorf("could not generate wordlist: %w", err)
+	}
+
 	if !c.NoPass {
 		if c.AgentPassword == "" {
-			newPass, err := pwgen.GetXKCDPassword()
+			newPass, err := pwgen.GetXKCDPassword(wlPath)
 			if err != nil {
 				return fmt.Errorf("could not generate password for agent: %w", err)
 			}
@@ -120,16 +134,6 @@ func (c *Compiler) Run() error {
 		content = ReplaceInFile(content, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
 	}
 
-	if c.Seed == "__generate" {
-		seed, err := GenerateSecureRandomBase64(69)
-		if err != nil {
-			return fmt.Errorf("could not generate random seed: %w", err)
-		}
-		c.Seed = seed
-	}
-	if c.Seed != "" {
-		content = ReplaceInFile(content, "CLIENT__COMPILE_SEED=", "CLIENT__COMPILE_SEED="+c.Seed)
-	}
 	err = MkdirAll(c.Output)
 	if err != nil {
 		return fmt.Errorf("could not create output directory %s: %w", c.Output, err)
@@ -147,11 +151,6 @@ func (c *Compiler) Run() error {
 		}
 	}
 	c.EnvFile = newEnvFile
-	// err = CopyFile(c.EnvFile, filepath.Join(c.Output, EnvFile))
-	// if err != nil {
-	// 	log.Error().Err(err).Msg("error copying env file")
-	// 	return fmt.Errorf("error copying env file: %v", err)
-	// }
 
 	err = run(*c)
 	if err != nil {
@@ -294,15 +293,6 @@ func drop(destDir string, source embed.FS) error {
 			return err
 		}
 
-		// Handle vendored tarballs
-		if strings.HasPrefix(path, "vendored/") && strings.HasSuffix(path, ".tar.gz") {
-			tarDir := filepath.Join(destDir, strings.TrimSuffix(path, ".tar.gz"))
-			log.Debug().Msgf("Extracting vendored archive: %s", path)
-			if err := extractTarGz(tarDir, fileContent); err != nil {
-				return err
-			}
-		}
-
 		// Normal file extraction
 		relativePath := strings.TrimPrefix(path, "")
 		destPath := filepath.Join(destDir, relativePath)
@@ -328,80 +318,4 @@ func drop(destDir string, source embed.FS) error {
 	})
 
 	return err
-}
-
-// extractTarGz extracts a .tar.gz archive from memory into destDir.
-func extractTarGz(destDir string, data []byte) error {
-	gzr, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return err
-	}
-	defer gzr.Close()
-
-	tr := tar.NewReader(gzr)
-
-	for {
-		header, err := tr.Next()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return err
-		}
-
-		base := filepath.Base(header.Name)
-		if strings.HasPrefix(base, "._") || base == ".DS_Store" {
-			continue
-		}
-		if strings.HasPrefix(header.Name, ".git") {
-			continue
-		}
-		targetPath, err := SanitizeArchivePath(destDir, header.Name)
-		if err != nil {
-			log.Error().Err(err).Msgf("error extracting tar.gz from %s", header.Name)
-
-			continue
-		}
-		//		targetPath := filepath.Join(destDir, header.Name)
-
-		switch header.Typeflag {
-		case tar.TypeDir:
-			//nolint:gosec
-			if err := os.MkdirAll(targetPath, os.FileMode(header.Mode)); err != nil {
-				return err
-			}
-		case tar.TypeReg:
-			if err := os.MkdirAll(filepath.Dir(targetPath), 0o750); err != nil {
-				return err
-			}
-
-			//nolint:gosec
-			outFile, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))
-			if err != nil {
-				return err
-			}
-			//nolint:gosec
-			if _, err := io.Copy(outFile, tr); err != nil {
-				outFile.Close()
-
-				return err
-			}
-			outFile.Close()
-		default:
-			// Ignore symlinks and other types for safety
-			log.Debug().Msgf("Skipping non-regular file in tar: %s", header.Name)
-		}
-	}
-
-	return nil
-}
-
-// SanitizeArchivePath file pathing from "G305: Zip Slip vulnerability".
-func SanitizeArchivePath(d string, t string) (string, error) {
-	v := filepath.Join(d, t)
-	if strings.HasPrefix(v, filepath.Clean(d)) {
-		return v, nil
-	}
-
-	return "", fmt.Errorf("%s: %s", "content filepath is tainted", t)
 }
