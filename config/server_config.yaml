@@ -1,5 +1,5 @@
 #Age private key used by the server.
-age-privkey: 
+age-privkey: ""
 
 # Domains used to serve HTTP and WebSocket traffic.
 http-domain:

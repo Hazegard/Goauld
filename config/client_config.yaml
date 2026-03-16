@@ -5,10 +5,10 @@ server: https://www.example.com
 ssh-server: www.example.com:22222
 
 # Access token for the /manage/ API endpoint.
-access-token: a23YiXyAZzrPlc8oWXqlSK2z7d8COQn1gGuti6KLfF5HHhZt
+access-token: TODO_TOKEN
 
 # Admin token for the /admin/ API endpoint.
-admin-token: moVmzz5aTuptalF26SnlCkwdZ5MUyX9h7xRv8BXS79LoRThi
+admin-token: TODO_TOKEN
 
 # Suppress all log output.
 quiet: false
@@ -229,15 +229,21 @@ compile:
 # Administrative commands (internal use).
 admin:
   #Dump all the agent information.
-  dump: {}
+  dump:
+    #Print JSON representation.
+    json: false
   #Update the server log level.
   log-level:
     #Log level
     level: ""
   #Display the server configuration
-  config: {}
+  config:
+    #Print JSON representation.
+    json: false
   #Display the full server state (agents, configuration,etc...)
-  state: {}
+  state:
+    #Print JSON representation.
+    json: false
 
 # Generate or manage WireGuard configuration.
 wireguard:
@@ -263,6 +269,21 @@ wireguard:
       wg-private-key: ""
       #Wireguard configuration file.
       wg-ip: ""
+
+# Start a server to serve agents.
+embed-server:
+  #Age private key used by the server.
+  age-privkey: ""
+  #Address and port to bind for HTTP connections (port 0 = random).
+  http-listen-addr: :80
+  #Address and port to bind for HTTPS connections (port 0 = random).
+  https-listen-addr: :443
+  #Address and port to bind for SSH connections (port 0 = random).
+  ssh-listen-addr: :2222
+  #Address and port to bind for DNS connections (port 0 = random).
+  dns-listen-addr: :53
+  #Address and port to bind for QUIC connections (port 0 = random).
+  quic-listen-addr: :443
 
 searchconfigdir: ~/.config/tealc.yaml
 

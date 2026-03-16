@@ -89,55 +89,55 @@ echo "################################" >> "$ENV_FILE"
 
 GORELEASER_FLAGS="$GORELEASER_FLAGS_CLIENT"
 : > "$GORELEASER_FLAGS"
-GenConfig "client/config.go" "client/config.go" "main"
+GenConfig "client/cli/config.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
-GenConfig "client/Ssh.go" "client/config.go" "main"
+GenConfig "client/cli/Ssh.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
-GenConfig "client/Socks.go" "client/config.go" "main"
+GenConfig "client/cli/Socks.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
-GenConfig "client/Scp.go" "client/config.go" "main"
+GenConfig "client/cli/Scp.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
-GenConfig "client/Pass.go" "client/config.go" "main"
+GenConfig "client/cli/Pass.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
-GenConfig "client/compiler/compiler.go" "client/config.go" "main"
-echo >> "$ENV_FILE"
-echo >> "$GORELEASER_FLAGS"
-
-
-GenConfig "client/wireguard.go" "client/config.go" "main"
-echo >> "$ENV_FILE"
-echo >> "$GORELEASER_FLAGS"
-
-GenConfig "client/Clipboard.go" "client/config.go" "main"
+GenConfig "client/compiler/compiler.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
 
-GenConfig "client/jump.go" "client/config.go" "main"
+GenConfig "client/cli/wireguard.go" "client/cli/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+GenConfig "client/cli/Clipboard.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
 
-GenConfig "client/Rsync.go" "client/config.go" "main"
-echo >> "$ENV_FILE"
-echo >> "$GORELEASER_FLAGS"
-
-GenConfig "client/Rclone.go" "client/config.go" "main"
+GenConfig "client/cli/jump.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 
 
-GenConfig "client/vscode.go" "client/config.go" "main"
+GenConfig "client/cli/Rsync.go" "client/cli/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+GenConfig "client/cli/Rclone.go" "client/cli/config.go" "main"
+echo >> "$ENV_FILE"
+echo >> "$GORELEASER_FLAGS"
+
+
+GenConfig "client/cli/vscode.go" "client/cli/config.go" "main"
 echo >> "$ENV_FILE"
 echo >> "$GORELEASER_FLAGS"
 

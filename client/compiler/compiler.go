@@ -23,7 +23,7 @@ import (
 
 // Compiler holds the information used to compile the binaries.
 type Compiler struct {
-	ID            string `default:"${_compile_id}" name:"id" yaml:"id" help:"[client|server|agent|mini_agent|agent-dll]."`
+	ID            string `default:"${_compile_id}" name:"id" yaml:"id" help:"[client|server|agent|agent-mini|agent-dll]."`
 	Goos          string `default:"${_compile_goos}" name:"goos" yaml:"goos" enum:",windows,linux,darwin" short:"O" help:"[darwin|linux|windows]."`
 	Goarch        string `default:"${_compile_goarch}" name:"goarch" yaml:"goarch" enum:",amd64,arm64,arm,386" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
 	Source        string `default:"${_compile_source}" name:"source" yaml:"source" help:"Source goauld directory."`
