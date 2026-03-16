@@ -1,6 +1,8 @@
 # Goauld
 
+[Goauld full documentation](https://hazegard.github.io/Goauld-doc/)
 > Goauld is a post-exploitation and remote access tool designed for restricted environments.
+
 
 During penetration tests, operators are sometimes forced to work from a client-provided laptop behind VPNs, authenticated egress proxies, or restrictive network controls. In other cases, gaining remote code execution on a system still requires establishing a stable and fully interactive access channel.
 
@@ -20,7 +22,7 @@ It is composed of three components:
 - Working from restricted corporate assessment laptops
 - Bypassing authenticated proxies
 
-![TUI.png](docs/content/en/04-client/02-tui/TUI.png)
+![TUI.png](img/TUI.png)
 
 ## Features
 
@@ -43,7 +45,7 @@ The main agent features are:
 
 ## Demo
 
-![demo.webm](docs/content/en/Demo.webm)
+[Demo.webm](https://github.com/user-attachments/assets/1e9eb332-174d-4ccf-a905-08614e720b86)
 
 
 The architecture is based on an outbound SSH tunnel established from the agent to the server.
