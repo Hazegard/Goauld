@@ -116,7 +116,7 @@ var (
 
 // ServerConfig represents the global server configuration.
 type ServerConfig struct {
-	PrivKey string `default:"${_age_privKey}" group:"Server configuration:" name:"age-privkey" yaml:"age-privkey" json:"age-privkey" optional:"" help:"Age private key used by the server."`
+	PrivKey string `default:"${_age_privKey}" group:"Server configuration:" name:"age-privkey" yaml:"age-privkey" json:"age-privkey" required:"" help:"Age private key used by the server."`
 
 	HTTPDomain   []string `default:"${_http_domain}" group:"Domain configuration:" name:"http-domain" yaml:"http-domain" json:"http-domain" optional:"" help:"Domains used to serve HTTP and WebSocket traffic."`
 	TLSDomain    []string `default:"${_tls_domain}" group:"Domain configuration:" name:"tls-domain" yaml:"tls-domain" json:"tls-domain" optional:"" help:"Domains used to serve raw TLS traffic (SSH over TLS)."`
