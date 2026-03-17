@@ -30,6 +30,7 @@ func (s *Server) Run(clientAPI *api.API, cfg ClientConfig) error {
 
 			if alreadyConnected.CompareAndSwap(false, true) {
 				lvl := log.GetLogLevel()
+				// We disable logs to not pollute the shell session
 				log.SetLogLevel(-1)
 
 				cfg.SSH.Target = name
@@ -39,11 +40,11 @@ func (s *Server) Run(clientAPI *api.API, cfg ClientConfig) error {
 				if err != nil {
 					log.Error().Err(err).Str("ID", id).Str("Name", name).Msg("agent failed")
 				}
-				clientAPI.KillAgent(id, true, false, cfg.PrivatePassword)
+				_ = clientAPI.KillAgent(id, true, false, cfg.PrivatePassword)
 				time.Sleep(1 * time.Second)
 				cancel()
 			} else {
-				clientAPI.KillAgent(id, true, false, cfg.PrivatePassword)
+				_ = clientAPI.KillAgent(id, true, false, cfg.PrivatePassword)
 			}
 		},
 	}
