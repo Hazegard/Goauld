@@ -158,9 +158,27 @@ func main() {
 }
 
 func run() globalcontext.CancelReason {
-	dnsTransport := transport.NewDNSSH()
-	browsertransport := transport.NewBrowserProxy()
 	cancelReason := make(chan globalcontext.CancelReason)
+	ctx, cancel := context.WithCancel(context.Background())
+	globalCanceler = &globalcontext.GlobalCanceler{
+		Cancel:       cancel,
+		CancelReason: cancelReason,
+	}
+	defer cancel()
+
+	dnsTransport := transport.NewDNSSH()
+	defer func() {
+		if dnsTransport != nil {
+			dnsTransport.Close()
+		}
+	}()
+	browserTransport := transport.NewBrowserProxy(globalCanceler)
+	defer func() {
+		if browserTransport != nil {
+			browserTransport.Close()
+		}
+	}()
+
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
 	sshErr := make(chan error)
@@ -175,13 +193,6 @@ func run() globalcontext.CancelReason {
 	configDone := make(chan string)
 	log.Info().Msg("Agent init done")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	globalCanceler = &globalcontext.GlobalCanceler{
-		Cancel:       cancel,
-		CancelReason: cancelReason,
-	}
-	defer cancel()
-
 	var err error
 
 	controlInitStrategy["DNS"] = control.InitStrategy{
@@ -193,13 +204,13 @@ func run() globalcontext.CancelReason {
 		Name: "browser",
 		InitFunc: func(client *control.ControlPlanClient, c chan<- struct{}, c2 chan<- error) error {
 			go func() {
-				err := browsertransport.Serve()
+				err := browserTransport.Serve()
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to serve browser")
 				}
 			}()
 
-			return client.InitOverBrowser(browsertransport, c, c2)
+			return client.InitOverBrowser(browserTransport, c, c2)
 		},
 	}
 
@@ -241,7 +252,7 @@ func run() globalcontext.CancelReason {
 		sshAgent := ssh.NewSSHAgent()
 		// defer sshAgent.Close()
 		// Initialize the client SSH
-		err = sshAgent.Init(ctx, dnsTransport, browsertransport)
+		err = sshAgent.Init(ctx, dnsTransport, browserTransport)
 		config.Get().SSHTunnelMode = strings.ToLower(sshAgent.Mode)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")

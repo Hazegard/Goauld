@@ -286,13 +286,25 @@ func (dnssh *DNSSH) CloseStream() error {
 
 // Close closes all the connection used in the SSH over DNS.
 func (dnssh *DNSSH) Close() error {
-	return errors.Join(
-		dnssh.kcpConn.Close(),
-		dnssh.session.Close(),
-		dnssh.udpConn.Close(),
-		dnssh.pconn.Close(),
-		dnssh.SSHStream.Close(),
-		dnssh.ControlStream.Close(),
-		dnssh.CloseStream(),
-	)
+	errs := []error{}
+	if dnssh.kcpConn != nil {
+		errs = append(errs, dnssh.kcpConn.Close())
+	}
+	if dnssh.session != nil {
+		errs = append(errs, dnssh.session.Close())
+	}
+	if dnssh.udpConn != nil {
+		errs = append(errs, dnssh.udpConn.Close())
+	}
+	if dnssh.pconn != nil {
+		errs = append(errs, dnssh.pconn.Close())
+	}
+	if dnssh.SSHStream != nil {
+		errs = append(errs, dnssh.SSHStream.Close())
+	}
+	if dnssh.ControlStream != nil {
+		errs = append(errs, dnssh.ControlStream.Close())
+	}
+	errs = append(errs, dnssh.CloseStream())
+	return errors.Join(errs...)
 }

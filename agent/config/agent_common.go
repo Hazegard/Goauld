@@ -458,6 +458,16 @@ func (a *Agent) UpdateWGPort(port int) {
 	a.cfg.WGPort = port
 }
 
+// GetBrowserProxyPort get the browser proxy port.
+func (a *Agent) GetBrowserProxyPort() int {
+	return a.cfg.BrowserProxyPort
+}
+
+// UpdateBrowserProxyPort set the new browser proxy port.
+func (a *Agent) UpdateBrowserProxyPort(port int) {
+	a.cfg.BrowserProxyPort = port
+}
+
 // UpdateHTTPProxyPort set the new socks port.
 func (a *Agent) UpdateHTTPProxyPort(port int) {
 	a.cfg.HTTPProxyPort = port

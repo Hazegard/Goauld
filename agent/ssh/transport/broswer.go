@@ -2,6 +2,7 @@ package transport
 
 import (
 	"Goauld/agent/config"
+	globalcontext "Goauld/agent/context"
 	"Goauld/common/log"
 	net2 "Goauld/common/net"
 	"context"
@@ -9,16 +10,23 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coder/websocket"
 )
 
-func NewBrowserProxy() *BrowserProxy {
+func NewBrowserProxy(canceler *globalcontext.GlobalCanceler) *BrowserProxy {
+	var once sync.Once
 	return &BrowserProxy{
 		WSConnChan:       make(chan net.Conn),
 		SocketIOConnChan: make(chan *websocket.Conn),
 		PortOk:           make(chan struct{}),
+		cancel: func() {
+			once.Do(func() {
+				canceler.Restart("Browser proxy crashed")
+			})
+		},
 	}
 }
 
@@ -31,6 +39,7 @@ type BrowserProxy struct {
 	Port             int
 	server           *http.Server
 	fakeConn         net.Conn
+	cancel           func()
 }
 
 func (bp *BrowserProxy) Close() error {
@@ -68,11 +77,17 @@ func (bp *BrowserProxy) HandleFake(w http.ResponseWriter, r *http.Request) {
 
 	sioConn := <-bp.SocketIOConnChan
 	go func() {
-		_ = pipe(ctx, wsConn, sioConn)
+		err = pipe(ctx, wsConn, sioConn)
+		log.Warn().Err(err).Str("Mode", "WSSH").Msg("error piping websocket connection")
+
+		bp.cancel()
 	}()
 
 	go func() {
 		_ = pipe(ctx, sioConn, wsConn)
+		log.Warn().Err(err).Str("Mode", "WSSH").Msg("error piping websocket connection")
+
+		bp.cancel()
 	}()
 }
 
@@ -96,7 +111,7 @@ func (bp *BrowserProxy) Serve() error {
 	}
 
 	// serve the HTTP server
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", config.Get().GetBrowserProxyPort()))
 	if err != nil {
 		return err
 	}
@@ -105,7 +120,7 @@ func (bp *BrowserProxy) Serve() error {
 	bp.PortOk <- struct{}{}
 	log.Info().Msgf("Browser proxy: http://127.0.0.1:%d", bp.Port)
 	err = bp.server.Serve(listener)
-
+	config.Get().UpdateBrowserProxyPort(bp.Port)
 	return err
 }
 
@@ -123,192 +138,104 @@ func (bp *BrowserProxy) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
   <pre id="log"></pre>
 
   <script>
-    const logEl = document.getElementById("log");
-    const log = (...args) => {
-      console.log(...args);
-      logEl.textContent += args.join(" ") + "\n";
-    };
 
-    // Replace with your endpoints
-    const WS1_URL = "ws://%s/wssh/%s";
-    const WS2_URL = "ws://127.0.0.1:%d/wssh/";
+const logEl = document.getElementById("log");
 
-    const SIO1_URL = "ws://%s/live/%s/?EIO=4&transport=websocket";
-    const SIO2_URL = "ws://127.0.0.1:%d/live/";
+const log = (...args) => {
+    const timestamp = new Date().toLocaleString()
+    console.log(timestamp, ...args);
+    logEl.textContent += timestamp +" "+ args.join(" ") + "\n";
+};
 
-    const ws1 = new WebSocket(WS1_URL);
-    const ws2 = new WebSocket(WS2_URL);
+async function startBridge() {
+    const ws1 = new WebSocket("ws://%s/wssh/%s");
+    const ws2 = new WebSocket("ws://127.0.0.1:%d/wssh/");
+    const sio1 = new WebSocket("ws://%s/live/%s/?EIO=4&transport=websocket");
+    const sio2 = new WebSocket("ws://127.0.0.1:%d/live/");
 
-    const sio1 = new WebSocket(SIO1_URL);
-    const sio2 = new WebSocket(SIO2_URL);
-
-    // Optional: support binary data
     ws1.binaryType = "arraybuffer";
     ws2.binaryType = "arraybuffer";
-    //sio1.binaryType = "arraybuffer";
-    //sio2.binaryType = "arraybuffer";
 
-    let ws1Open = false;
-    let ws2Open = false;
+    const bW1 = [];
+    const bW2 = [];
+    const bS1 = [];
+    const bS2 = [];
 
-    let sio1Open = false;
-    let sio2Open = false;
-
-    // Buffers for messages arriving before both sockets are ready
-    const buffer1 = [];
-    const buffer2 = [];
-
-    const bufferSIO1 = [];
-    const bufferSIO2 = [];
-
-function cloneData(data) {
-  if (data instanceof ArrayBuffer) return data.slice(0);
-  if (data instanceof Uint8Array) return data.slice(0);
-  return data; // strings are fine
-}
+    function cloneData(data) {
+        if (data instanceof ArrayBuffer) return data.slice(0);
+        if (data instanceof Uint8Array) return data.slice(0);
+        return data;
+    }
 
     // Flush buffered messages once both sockets are open
     function flushWSSHBuffers() {
-      if (!ws1Open || !ws2Open) return;
+        if (!(ws1.readyState === WebSocket.OPEN && ws2.readyState === WebSocket.OPEN)) return;
 
-      while (buffer1.length > 0) ws2.send(buffer1.shift());
-      while (buffer2.length > 0) ws1.send(buffer2.shift());
-log("WSSH flushed")
+        while (bW1.length > 0) ws2.send(bW1.shift());
+        while (bW2.length > 0) ws1.send(bW2.shift());
+        log("WSSH flushed")
     }
 
     // Flush buffered messages once both sockets are open
     function flushSIOBuffers() {
-      if (!sio1Open || !sio2Open) return;
-
-      while (bufferSIO1.length > 0) sio2.send(bufferSIO1.shift());
-      while (bufferSIO2.length > 0) sio1.send(bufferSIO2.shift());
-log("SIO flushed")
+        if (!(sio1.readyState === WebSocket.OPEN && sio2.readyState === WebSocket.OPEN)) return;
+        while (bS1.length > 0) sio2.send(bS1.shift());
+        while (bS2.length > 0) sio1.send(bS2.shift());
+        log("SIO flushed")
     }
 
-
-    // WS1 → WS2 (immediate forwarding)
-    ws1.onmessage = (event) => {
-		//log("WS1 " + event.data);
-      if (ws2.readyState === WebSocket.OPEN) {
-        ws2.send(event.data);
-      } else {
-        buffer1.push(event.data);
-      }
+    // Message forwarding
+    ws1.onmessage = (e) => (ws2.readyState === WebSocket.OPEN ? ws2.send(e.data) : bW1.push(e.data));
+    ws2.onmessage = (e) => (ws1.readyState === WebSocket.OPEN ? ws1.send(e.data) : bW2.push(e.data));
+    sio1.onmessage = (e) => {
+        const d = cloneData(e.data);
+        sio2.readyState === WebSocket.OPEN ? sio2.send(d) : bS1.push(d);
+    };
+    sio2.onmessage = (e) => {
+        const d = cloneData(e.data);
+        sio1.readyState === WebSocket.OPEN ? sio1.send(d) : bS2.push(d);
     };
 
-    // WS2 → WS1 (immediate forwarding)
-    ws2.onmessage = (event) => {
-		//log("WS2 " + event.data);
-      if (ws1.readyState === WebSocket.OPEN) {
-        ws1.send(event.data);
-      } else {
-        buffer2.push(event.data);
-      }
-    };
+    // Open events
+    ws1.onopen =  () => { log("WSSH1 connected"); flushWSSHBuffers(); };
+    ws2.onopen =  () => { log("WSSH2 connected"); flushWSSHBuffers(); };
+    sio1.onopen =  () => { log("SIO1 connected"); flushSIOBuffers(); };
+    sio2.onopen =  () => { log("SIO2 connected"); flushSIOBuffers(); };
 
-    // SIO1 → SIO2 (immediate forwarding)
-    sio1.onmessage = (event) => {
-		//log("SIO1 " + event.data);
-const toSend = cloneData(event.data);
-      if (sio2.readyState === WebSocket.OPEN) {
-console.log(sio2);
-        sio2.send(
-toSend
-);
-      } else {
-        bufferSIO1.push(toSend);
-      }
-    };
-
-    // SIO2 → SIO1 (immediate forwarding)
-    sio2.onmessage = (event) => {
-const toSend = cloneData(event.data);
-		//log("SIO2 " + toSend);
-      if (sio1.readyState === WebSocket.OPEN) {
-        sio1.send(toSend);
-      } else {
-        bufferSIO2.push(toSend);
-      }
-    };
-
-    ws1.onopen = () => {
-      ws1Open = true;
-      log("WS1 connected");
-      flushWSSHBuffers();
-    };
-
-    ws2.onopen = () => {
-      ws2Open = true;
-      log("WS2 connected");
-      flushWSSHBuffers();
-    };
+    // List of all sockets for error/close handling
+    const allSockets = [
+        [ws1, "WS1"],
+        [ws2, "WS2"],
+        [sio1, "SIO1"],
+        [sio2, "SIO2"]
+    ];
 
 
-    sio1.onopen = () => {
-      log("SIO1 connected");
-      sio1Open = true;
-      flushSIOBuffers();
-    };
+    // Function to wait for all sockets to close
+    async function closeAllSockets() {
+        await Promise.all(allSockets.map(([sock]) => new Promise(resolve => {
+            if (sock.readyState === WebSocket.CLOSED) return resolve();
+            sock.onclose = () => resolve();
+            if (sock.readyState === WebSocket.OPEN || sock.readyState === WebSocket.CONNECTING) {
+                sock.close();
+            }
+        })));
+    }
 
-    sio2.onopen = () => {
-      log("SIO2 connected");
-      sio2Open = true;
-      flushSIOBuffers();
-    };
-	ws1.onerror = (e) => {
-		console.log("WS1 error", e);
-		closeBoth("WS1 error");
-	  };
+    async function handleCrash(name, reason) {
+        log(name+ " crashed:", reason);
+        await closeAllSockets();
+        log("All sockets closed. Restarting bridge...");
+        setTimeout(startBridge, 1000);
+    }
 
-	ws2.onerror = (e) => {
-	console.log("WS2 error", e);
-	closeBoth("WS2 error");
-	};
-
-	sio1.onerror = (e) => {
-		console.log("SIO1 error", e);
-		closeBoth("SIO1 error");
-	  };
-
-	sio2.onerror = (e) => {
-		console.log("SIO2 error", e);
-		closeBoth("SIO2 error");
-	};
-
-	ws1.onclose = (event) => {
-	  log("WS1 closed",
-		  "code:", event.code,
-		  "reason:", event.reason,
-		  "wasClean:", event.wasClean);
-	};
-	
-	ws2.onclose = (event) => {
-	  log("WS2 closed",
-		  "code:", event.code,
-		  "reason:", event.reason,
-		  "wasClean:", event.wasClean);
-	};
-
-	sio1.onclose = (event) => {
-	  log("SIO1 closed",
-		  "code:", event.code,
-		  "reason:", event.reason,
-		  "wasClean:", event.wasClean);
-	};
-	
-	sio2.onclose = (event) => {
-	  log("SIO2 closed",
-		  "code:", event.code,
-		  "reason:", event.reason,
-		  "wasClean:", event.wasClean);
-	};
-
-    ws1.onerror = (e) => log("WS1 error", e);
-    ws2.onerror = (e) => log("WS2 error", e);
-
-    sio1.onerror = (e) => log("SIO1 error", e);
-    sio2.onerror = (e) => log("SIO2 error", e);
-
+    // Attach handlers
+    allSockets.forEach(([sock, name]) => {
+        sock.onerror = (e) => handleCrash(name, e);
+        sock.onclose = (e) => handleCrash(name, e);
+    });
+}
+startBridge()
 
   </script>
 </body>

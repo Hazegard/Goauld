@@ -90,6 +90,8 @@ var (
 
 	_relay_addr = ""
 
+	_browser_proxy_port = "0"
+
 	_killswitch = "7"
 
 	defaultValues = kong.Vars{
@@ -172,6 +174,8 @@ var (
 		"_killswitch": _killswitch,
 
 		"_relay_addr": _relay_addr,
+
+		"_browser_proxy_port": _browser_proxy_port,
 
 		"version": common.GetVersion(),
 	}
@@ -265,6 +269,8 @@ type AgentConfig struct {
 	KillSwitch int `default:"${_killswitch}" group:"Agent configuration:"  name:"kill-switch" yaml:"kill-switch" help:"Number of days before the agent self-terminates (0 = disabled)."`
 
 	RelayAddr string `default:"${_relay_addr}" group:"Agent configuration:"  name:"relay-addr" yaml:"relay-addr" help:"Use another agent to relay the connection to the server."`
+
+	BrowserProxyPort int `default:"${_browser_proxy_port}" group:"Agent configuration:" name:"browser-proxy-port" yaml:"browser-proxy-port" optional:"" help:"Local port to expose the browser WS proxy (0 = random)."`
 
 	Remaining []string `arg:"" name:"remaining" yaml:"remaining" passthrough:"" optional:"" hidden:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
 }
