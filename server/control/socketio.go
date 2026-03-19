@@ -15,6 +15,7 @@ import (
 
 	commonnet "Goauld/common/net"
 
+	"github.com/coder/websocket"
 	"github.com/google/uuid"
 	eio "github.com/hazegard/socket.io-go/engine.io"
 
@@ -71,8 +72,10 @@ func InitSocketIOServer(agentStore *store.AgentStore, db *persistence.DB, hooks 
 			Authenticator: func(_ http.ResponseWriter, _ *http.Request) bool {
 				return true
 			},
-			WebSocketAcceptOptions: nil,
-			DisableMaxBufferSize:   true,
+			WebSocketAcceptOptions: &websocket.AcceptOptions{
+				InsecureSkipVerify: true,
+			},
+			DisableMaxBufferSize: true,
 		},
 	})
 	socketIO := &SocketIO{

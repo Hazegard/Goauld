@@ -39,7 +39,7 @@ func NewSSHAgent() *SSHAgent {
 }
 
 // Init initializes the ssh client using the configuration.
-func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSSH) error {
+func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSSH, bp *transport.BrowserProxy) error {
 	log.Info().Msg("Connecting to the ssh server...")
 	// Get the private key used to authenticate to the server
 	privateKey, err := ssh.ParsePrivateKey([]byte(config.Get().SSHPrivateKey))
@@ -57,7 +57,7 @@ func (sshAgent *SSHAgent) Init(ctx context.Context, dnsTransport *transport.DNSS
 	// defer cancel()
 	// Get the ssh client, which may be proxied to bypass proxies
 	id := config.Get().ID
-	client, conn, closer, mode, err := getProxiedClient(ctx, sshConfig, dnsTransport, id)
+	client, conn, closer, mode, err := getProxiedClient(ctx, sshConfig, dnsTransport, bp, id)
 	if err != nil {
 		log.Error().Err(err).Msg("ssh init client failed")
 

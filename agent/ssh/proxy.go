@@ -23,7 +23,7 @@ import (
 // getProxiedClient return a connected SSH client
 // This client may be proxies (TLS, Websocket, HTTP), or not, depending on the egress restrictions
 // The order of the connection attempt is defined in the agent configuration.
-func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH, id string) (*ssh.Client, net.Conn, io.Closer, string, error) {
+func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTransport *transport.DNSSH, bp *transport.BrowserProxy, id string) (*ssh.Client, net.Conn, io.Closer, string, error) {
 	var client *ssh.Client
 	var conn net.Conn
 	var closer io.Closer
@@ -33,6 +33,9 @@ func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTrans
 		resultChan := make(chan string, 1)
 		go func() {
 			switch {
+			case strings.HasPrefix(proto, "browser"):
+				client, conn, closer = proxyBrowser(sshConfig, id, bp)
+				resultChan <- "browser"
 			case strings.HasPrefix(proto, "ssh"):
 				client = directSSH(timeoutCtx, sshConfig)
 				if client != nil {
@@ -232,6 +235,23 @@ func proxyWS(timeoutContext context.Context, globalContext context.Context, sshC
 	log.Info().Str("Mode", "WSSH").Msg("Proxy using websocket succeeded")
 
 	return client, wsConn
+}
+
+// proxyWS proxies the SSH traffic using a websocket connection initiated by a local web browser that proxies all
+// websocket traffic to the server, so that all network connections appears from the browser.
+func proxyBrowser(sshConfig *ssh.ClientConfig, id string, bp *transport.BrowserProxy) (*ssh.Client, net.Conn, io.Closer) {
+	wsConn := <-bp.WSConnChan
+
+	log.Info().Str("Mode", "WSSH").Str("Target", config.Get().WSshURL(id)).Msg("Trying to proxy SSH using websocket")
+	client, err := tryProxySSH(sshConfig, wsConn, id)
+	if err != nil {
+		log.Error().Str("Mode", "WSSH").Err(err).Msg("failed to proxy ssh connection using websocket")
+
+		return nil, nil, nil
+	}
+	log.Info().Str("Mode", "WSSH").Msg("Proxy using websocket succeeded")
+
+	return client, wsConn, bp
 }
 
 // proxyHTTP proxies the SSH traffic using an HTTP connection to the server.

@@ -92,6 +92,9 @@ func shuffle(seed string, n int, wordlistPath string) ([]string, error) {
 	var data []byte
 	if wordlistPath == "" {
 		data, err = sources.ReadFile(wl_name)
+		if err != nil {
+			return []string{}, err
+		}
 		var r *gzip.Reader
 		r, err = gzip.NewReader(bytes.NewReader(data))
 		if err != nil {

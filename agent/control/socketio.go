@@ -3,6 +3,7 @@ package control
 import (
 	globalcontext "Goauld/agent/context"
 	"Goauld/agent/proxy"
+	"Goauld/agent/ssh/transport"
 	"Goauld/agent/ssh/transport/blind"
 	"Goauld/agent/ssh/transport/dns"
 	"context"
@@ -117,6 +118,18 @@ func (cpc *ControlPlanClient) InitOverDNS(session *smux.Stream, success chan<- s
 	cfg := getDNSEioConfig(session)
 
 	return cpc.init(cfg, success, chanErr)
+}
+
+func (cpc *ControlPlanClient) InitOverBrowser(bp *transport.BrowserProxy, success chan<- struct{}, chanErr chan<- error) error {
+	cfg := getBrowserTransportEioConfig()
+	<-bp.PortOk
+	cpc.url = fmt.Sprintf("http://127.0.0.1:%d/fake/", bp.Port)
+	err := cpc.init(cfg, success, chanErr)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (cpc *ControlPlanClient) InitControlOverDNSAlt(success chan<- struct{}, chanErr chan<- error) error {
@@ -265,6 +278,19 @@ func getDNSEioConfig(session *smux.Stream) *sio.ManagerConfig {
 			// The tunnel fails to establish properly as the server responds to unwanted content to the open HTTP socket.
 			// Here we use the full duplex websocket mechanism to ensure that the tunnel is properly working
 			// On the client side
+			Transports:  []string{"websocket"},
+			WsReadLimit: wsReadLimit,
+		},
+	}
+}
+
+func getBrowserTransportEioConfig() *sio.ManagerConfig {
+	return &sio.ManagerConfig{
+		EIO: eio.ClientConfig{
+			UpgradeDone: func(transportName string) {
+				log.Trace().Str("Transport", transportName).Msg("Client transport upgrade done")
+			},
+
 			Transports:  []string{"websocket"},
 			WsReadLimit: wsReadLimit,
 		},

@@ -159,6 +159,7 @@ func main() {
 
 func run() globalcontext.CancelReason {
 	dnsTransport := transport.NewDNSSH()
+	browsertransport := transport.NewBrowserProxy()
 	cancelReason := make(chan globalcontext.CancelReason)
 	controlErr := make(chan error)
 	sshdErr := make(chan error)
@@ -186,6 +187,20 @@ func run() globalcontext.CancelReason {
 	controlInitStrategy["DNS"] = control.InitStrategy{
 		Name:     "DNS",
 		InitFunc: ClosureInitControlOverDNS(dnsTransport),
+	}
+
+	controlInitStrategy["browser"] = control.InitStrategy{
+		Name: "browser",
+		InitFunc: func(client *control.ControlPlanClient, c chan<- struct{}, c2 chan<- error) error {
+			go func() {
+				err := browsertransport.Serve()
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to serve browser")
+				}
+			}()
+
+			return client.InitOverBrowser(browsertransport, c, c2)
+		},
 	}
 
 	success, controlPlanClient := InitControl(ctx, globalCanceler, configDone, controlErr)
@@ -226,7 +241,7 @@ func run() globalcontext.CancelReason {
 		sshAgent := ssh.NewSSHAgent()
 		// defer sshAgent.Close()
 		// Initialize the client SSH
-		err = sshAgent.Init(ctx, dnsTransport)
+		err = sshAgent.Init(ctx, dnsTransport, browsertransport)
 		config.Get().SSHTunnelMode = strings.ToLower(sshAgent.Mode)
 		if err != nil {
 			log.Error().Err(err).Msg("error initializing the SSH")
