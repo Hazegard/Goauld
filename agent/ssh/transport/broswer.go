@@ -6,6 +6,7 @@ import (
 	"Goauld/common/log"
 	net2 "Goauld/common/net"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 
 func NewBrowserProxy(canceler *globalcontext.GlobalCanceler) *BrowserProxy {
 	var once sync.Once
+
 	return &BrowserProxy{
 		WSConnChan:       make(chan net.Conn),
 		SocketIOConnChan: make(chan *websocket.Conn),
@@ -119,9 +121,20 @@ func (bp *BrowserProxy) Serve() error {
 	bp.Port = listener.Addr().(*net.TCPAddr).Port
 	bp.PortOk <- struct{}{}
 	log.Info().Msgf("Browser proxy: http://127.0.0.1:%d", bp.Port)
+	log.Info().Str("Instruction", "Copy/Paste in a browser console").Msgf(Minified(bp.Port))
 	err = bp.server.Serve(listener)
 	config.Get().UpdateBrowserProxyPort(bp.Port)
+
 	return err
+}
+
+const minijs = `const log=(...e)=>{let t=new Date().toLocaleString();console.log(t,...e)};async function startBridge(){let e=new WebSocket("ws://%s/wssh/%s"),t=new WebSocket("ws://127.0.0.1:%d/wssh/"),n=new WebSocket("ws://%s/live/%s/?EIO=4&transport=websocket"),a=new WebSocket("ws://127.0.0.1:%d/live/");e.binaryType="arraybuffer",t.binaryType="arraybuffer";let s=[],o=[],r=[],d=[];function l(e){return e instanceof ArrayBuffer||e instanceof Uint8Array?e.slice(0):e}function c(){if(e.readyState===WebSocket.OPEN&&t.readyState===WebSocket.OPEN){for(;s.length>0;)t.send(s.shift());for(;o.length>0;)e.send(o.shift());log("WSSH flushed")}}function i(){if(n.readyState===WebSocket.OPEN&&a.readyState===WebSocket.OPEN){for(;r.length>0;)a.send(r.shift());for(;d.length>0;)n.send(d.shift());log("SIO flushed")}}e.onmessage=e=>t.readyState===WebSocket.OPEN?t.send(e.data):s.push(e.data),t.onmessage=t=>e.readyState===WebSocket.OPEN?e.send(t.data):o.push(t.data),n.onmessage=e=>{let t=l(e.data);a.readyState===WebSocket.OPEN?a.send(t):r.push(t)},a.onmessage=e=>{let t=l(e.data);n.readyState===WebSocket.OPEN?n.send(t):d.push(t)},e.onopen=()=>{log("WSSH1 connected"),c()},t.onopen=()=>{log("WSSH2 connected"),c()},n.onopen=()=>{log("SIO1 connected"),i()},a.onopen=()=>{log("SIO2 connected"),i()};let f=[[e,"WS1"],[t,"WS2"],[n,"SIO1"],[a,"SIO2"]];async function S(){await Promise.all(f.map(([e])=>new Promise(t=>{if(e.readyState===WebSocket.CLOSED)return t();e.onclose=()=>t(),(e.readyState===WebSocket.OPEN||e.readyState===WebSocket.CONNECTING)&&e.close()})))}async function g(e,t){log(e+" crashed:",t),await S(),log("All sockets closed. Restarting bridge..."),setTimeout(startBridge,1e3)}f.forEach(([e,t])=>{e.onerror=e=>g(t,e),e.onclose=e=>g(t,e)})}startBridge();`
+
+func Minified(port int) string {
+	srvUrl := strings.TrimPrefix(strings.TrimPrefix(config.Get().ServerURL(), "http://"), "https://")
+	data := fmt.Sprintf(minijs, srvUrl, config.Get().ID, port, srvUrl, config.Get().ID, port)
+
+	return fmt.Sprintf(`eval(atob(%q))`, base64.StdEncoding.EncodeToString([]byte(data)))
 }
 
 func (bp *BrowserProxy) ServeHTTP(w http.ResponseWriter, _ *http.Request) {

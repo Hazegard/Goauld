@@ -306,5 +306,6 @@ func (dnssh *DNSSH) Close() error {
 		errs = append(errs, dnssh.ControlStream.Close())
 	}
 	errs = append(errs, dnssh.CloseStream())
+
 	return errors.Join(errs...)
 }
