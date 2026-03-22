@@ -36,6 +36,9 @@ func getProxiedClient(ctx context.Context, sshConfig *ssh.ClientConfig, dnsTrans
 			case strings.HasPrefix(proto, "browser"):
 				client, conn, closer = proxyBrowser(sshConfig, id, bp)
 				resultChan <- "browser"
+			case strings.HasPrefix(proto, "bind"):
+				client, conn, closer = proxyBrowser(sshConfig, id, bp)
+				resultChan <- "bind"
 			case strings.HasPrefix(proto, "ssh"):
 				client = directSSH(timeoutCtx, sshConfig)
 				if client != nil {

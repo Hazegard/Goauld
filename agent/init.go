@@ -74,6 +74,9 @@ func InitControl(ctx context.Context, globalCanceler *globalcontext.GlobalCancel
 		if order[0] == "browser" {
 			socketOrder = []string{"browser"}
 		}
+		if order[0] == "bind" {
+			socketOrder = []string{"bind"}
+		}
 	}
 
 	var controlPlanClient *control.ControlPlanClient

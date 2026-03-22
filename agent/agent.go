@@ -200,11 +200,25 @@ func run() globalcontext.CancelReason {
 		InitFunc: ClosureInitControlOverDNS(dnsTransport),
 	}
 
+	controlInitStrategy["bind"] = control.InitStrategy{
+		Name: "bind",
+		InitFunc: func(client *control.ControlPlanClient, c chan<- struct{}, c2 chan<- error) error {
+			go func() {
+				err := browserTransport.Serve(transport.Bind)
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to serve bind")
+				}
+			}()
+
+			return client.InitOverBrowser(browserTransport, c, c2)
+		},
+	}
+
 	controlInitStrategy["browser"] = control.InitStrategy{
 		Name: "browser",
 		InitFunc: func(client *control.ControlPlanClient, c chan<- struct{}, c2 chan<- error) error {
 			go func() {
-				err := browserTransport.Serve()
+				err := browserTransport.Serve(transport.Browser)
 				if err != nil {
 					log.Error().Err(err).Msg("Failed to serve browser")
 				}

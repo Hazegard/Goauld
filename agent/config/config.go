@@ -270,7 +270,7 @@ type AgentConfig struct {
 
 	RelayAddr string `default:"${_relay_addr}" group:"Agent configuration:"  name:"relay-addr" yaml:"relay-addr" help:"Use another agent to relay the connection to the server."`
 
-	BrowserProxyPort int `default:"${_browser_proxy_port}" group:"Agent configuration:" name:"browser-proxy-port" yaml:"browser-proxy-port" optional:"" help:"Local port to expose the browser WS proxy (0 = random)."`
+	BrowserProxyPort int `default:"${_browser_proxy_port}" group:"Agent configuration:" aliases:"bind-port" name:"browser-proxy-port" yaml:"browser-proxy-port" optional:"" help:"Local port to expose the browser WS proxy (0 = random)."`
 
 	Remaining []string `arg:"" name:"remaining" yaml:"remaining" passthrough:"" optional:"" hidden:"" help:"Extra arguments that will be trashed, required when launching the agent in some contexts."`
 }

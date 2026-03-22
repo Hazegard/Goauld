@@ -212,6 +212,7 @@ type ClientConfig struct {
 	Wireguard Wireguard `cmd:"" name:"wireguard" yaml:"wireguard" help:"Generate or manage WireGuard configuration."`
 
 	EmbedServer Server `cmd:"" name:"embed-server" yaml:"embed-server" help:"Start a server to serve agents."`
+	Bind        Bind   `cmd:"" name:"bind" yaml:"bind" help:"Connect the agent through bind connection."`
 
 	SearchConfigDir string `hidden:""`
 }

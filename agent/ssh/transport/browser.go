@@ -17,6 +17,13 @@ import (
 	"github.com/coder/websocket"
 )
 
+type Mode int
+
+const (
+	Browser Mode = iota
+	Bind
+)
+
 func NewBrowserProxy(canceler *globalcontext.GlobalCanceler) *BrowserProxy {
 	var once sync.Once
 
@@ -26,7 +33,7 @@ func NewBrowserProxy(canceler *globalcontext.GlobalCanceler) *BrowserProxy {
 		PortOk:           make(chan struct{}),
 		cancel: func() {
 			once.Do(func() {
-				canceler.Restart("Browser proxy crashed")
+				canceler.Restart("Browser proxy closed")
 			})
 		},
 	}
@@ -42,6 +49,7 @@ type BrowserProxy struct {
 	server           *http.Server
 	fakeConn         net.Conn
 	cancel           func()
+	mode             Mode
 }
 
 func (bp *BrowserProxy) Close() error {
@@ -93,9 +101,12 @@ func (bp *BrowserProxy) HandleFake(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-func (bp *BrowserProxy) Serve() error {
+func (bp *BrowserProxy) Serve(mode Mode) error {
+	bp.mode = mode
 	router := http.NewServeMux()
-	router.HandleFunc("/", bp.ServeHTTP)
+	if mode == Browser {
+		router.HandleFunc("/", bp.ServeHTTP)
+	}
 	router.HandleFunc("/wssh/", bp.ServeWS)
 	router.HandleFunc("/live/", bp.ServeSocketIO)
 	router.HandleFunc("/fake/", bp.HandleFake)
@@ -113,17 +124,30 @@ func (bp *BrowserProxy) Serve() error {
 	}
 
 	// serve the HTTP server
-	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", config.Get().GetBrowserProxyPort()))
+	ip := "127.0.0.1"
+	if bp.mode == Browser {
+		ip = "127.0.0.1"
+	} else if bp.mode == Bind {
+		ip = "0.0.0.0"
+	}
+	address := fmt.Sprintf("%s:%d", ip, config.Get().GetBrowserProxyPort())
+
+	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
 	}
 	//nolint:forcetypeassert
 	bp.Port = listener.Addr().(*net.TCPAddr).Port
 	bp.PortOk <- struct{}{}
-	log.Info().Msgf("Browser proxy: http://127.0.0.1:%d", bp.Port)
-	log.Info().Str("Instruction", "Copy/Paste in a browser console").Msgf(Minified(bp.Port))
-	err = bp.server.Serve(listener)
 	config.Get().UpdateBrowserProxyPort(bp.Port)
+
+	if bp.mode == Browser {
+		log.Info().Msgf("Browser proxy address: http://%s", address)
+		log.Info().Str("Instruction", "Copy/Paste in a browser console").Msgf(Minified(bp.Port))
+	} else if bp.mode == Bind {
+		log.Info().Str("IPs", strings.Join(config.Get().IPs, "/")).Msgf("Bind address proxy: http://%s:%d", ip, config.Get().GetBrowserProxyPort())
+	}
+	err = bp.server.Serve(listener)
 
 	return err
 }
@@ -255,7 +279,10 @@ startBridge()
 </html>
 
 `, srvUrl, config.Get().ID, bp.Port, srvUrl, config.Get().ID, bp.Port)
-	w.Write([]byte(js))
+	_, err := w.Write([]byte(js))
+	if err != nil {
+		log.Debug().Err(err).Msg("Failed to write response")
+	}
 }
 
 // ServeWS handle the SSH over Websockets connections.
