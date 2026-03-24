@@ -157,7 +157,9 @@ func (c *Compiler) Run() error {
 		return fmt.Errorf("compilation failed: %w", err)
 	}
 
-	log.Run().Str("Password", c.AgentPassword).Msg("Compiler finished")
+	if c.ID == "" || strings.HasPrefix(c.ID, "agent") {
+		log.Run().Str("Password", c.AgentPassword).Msg("Compiler finished")
+	}
 
 	return nil
 }
