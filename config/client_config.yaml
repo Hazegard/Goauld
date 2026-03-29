@@ -285,5 +285,24 @@ embed-server:
   #Address and port to bind for QUIC connections (port 0 = random).
   quic-listen-addr: :443
 
+# Connect the agent through bind connection.
+bind:
+  #Age private key used by the server.
+  age-privkey: ""
+  #Address and port to bind for HTTP connections (port 0 = random).
+  http-listen-addr: :80
+  #Address and port to bind for HTTPS connections (port 0 = random).
+  https-listen-addr: :443
+  #Address and port to bind for SSH connections (port 0 = random).
+  ssh-listen-addr: :2222
+  #Address and port to bind for DNS connections (port 0 = random).
+  dns-listen-addr: :53
+  #Address and port to bind for QUIC connections (port 0 = random).
+  quic-listen-addr: :443
+  #The address of the agent to bind to
+  bind-agent: _{_bind_agent}
+  #Kill the agent on disconnection
+  kill: false
+
 searchconfigdir: ~/.config/tealc.yaml
 

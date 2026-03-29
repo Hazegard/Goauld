@@ -33,6 +33,7 @@ type Compiler struct {
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" yaml:"drop-env" help:"Show then environment files required to compile the agent."`
 	Seed          string `default:"${_compile_seed}" name:"seed" yaml:"seed" help:"Seed to use to obfuscate agent."`
 	AgentPassword string `default:"${_compile_private_password}" name:"agent-password" yaml:"agent-password" short:"p" help:"Static agent password."`
+	AgePubKey     string `default:"${_compile_age_public_key}" name:"age-public-key" yaml:"age-public-key" short:"K" help:"Public Key for agent."`
 	NoPass        bool   `default:"${_compile_nopass}" name:"nopass" yaml:"nopass" help:"Do not set the agent password."`
 	Compress      bool   `default:"${_compile_compress}" name:"compress" yaml:"compress" help:"Pack the binaries with upx."`
 	Tiny          bool   `default:"true"  name:"tiny" yaml:"tiny" negatable:"" help:"Tiny garble flag (reduce size, but no stacktrace)."`
@@ -132,6 +133,10 @@ func (c *Compiler) Run() error {
 			}
 		}
 		content = ReplaceInFile(content, "AGENT__PRIVATE_PASSWORD=", "AGENT__PRIVATE_PASSWORD="+c.AgentPassword)
+	}
+
+	if c.AgePubKey != "" {
+		content = ReplaceInFile(content, "AGENT__AGEPUBKEY", "AGENT__AGEPUBKEY="+c.AgePubKey)
 	}
 
 	err = MkdirAll(c.Output)

@@ -192,6 +192,9 @@ kill-switch: 7
 # Use another agent to relay the connection to the server.
 relay-addr: ""
 
+# Local port to expose the browser WS proxy (0 = random).
+browser-proxy-port: 0
+
 # Extra arguments that will be trashed, required when launching the agent in some contexts.
 remaining: []
 

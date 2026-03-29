@@ -132,7 +132,7 @@ type ServerConfig struct {
 	TLS             bool   `default:"${_tls}" group:"Listeners configuration:" name:"tls" yaml:"tls" json:"tls" negatable:"" help:"Enable TLS support."`
 	TLSKey          string `default:"${_tls_key}" group:"Listeners configuration:" name:"tls-key" yaml:"tls-key" json:"tls-key" help:"Path to the TLS private key file."`
 	TLSCert         string `default:"${_tls_cert}" group:"Listeners configuration:" name:"tls-cert" yaml:"tls-cert" json:"tls-cert" help:"Path to the TLS certificate file."`
-	LetsEncryptMail string `default:"${_letsencrypt_email}" group:"Listeners configuration:" name:"letsencrypt-mail" yaml:"letsencrypt-mail" json:"letsencrypt-mail" help:"Email used when generating Let's Encrypt certificates.'"`
+	LetsEncryptMail string `default:"${_letsencrypt_email}" group:"Listeners configuration:" name:"letsencrypt-mail" yaml:"letsencrypt-mail" json:"letsencrypt-mail" help:"Email used when generating Let's Encrypt certificates."`
 	Quic            bool   `default:"${_quic}" group:"Listeners configuration:" name:"quic" yaml:"quic" json:"quic" negatable:"" help:"Enable QUIC protocol support."`
 	DNS             bool   `default:"${_dns}" group:"Listeners configuration:" name:"dns" yaml:"dns" json:"dns" negatable:"" help:"Enable DNS server for SSH-over-DNS connections."`
 

@@ -87,6 +87,7 @@ var (
 	_compile_drop_env         = "false"      //nolint:revive
 	_compile_seed             = "__generate" //nolint:revive
 	_compile_private_password = ""           //nolint:revive
+	_compile_age_public_key   = ""           //nolint:revive
 	_compile_nopass           = "false"      //nolint:revive
 	_compile_compress         = "false"      //nolint:revive
 
@@ -160,6 +161,7 @@ var (
 		"_compile_drop_env":         _compile_drop_env,
 		"_compile_seed":             _compile_seed,
 		"_compile_private_password": _compile_private_password,
+		"_compile_age_public_key":   _compile_age_public_key,
 		"_compile_nopass":           _compile_nopass,
 		"_compile_compress":         _compile_compress,
 

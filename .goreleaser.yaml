@@ -139,6 +139,8 @@ env:
   - AGENT__KILLSWITCH={{ .Env.AGENT__KILLSWITCH }}
 
   - AGENT__RELAY_ADDR={{ .Env.AGENT__RELAY_ADDR }}
+
+  - AGENT__BROWSER_PROXY_PORT={{ .Env.AGENT__BROWSER_PROXY_PORT }}
   - CLIENT__SERVER={{ .Env.CLIENT__SERVER }}
   - CLIENT__SSH_SERVER={{ .Env.CLIENT__SSH_SERVER }}
 
@@ -188,6 +190,7 @@ env:
   - CLIENT__COMPILE_DROP_ENV={{ .Env.CLIENT__COMPILE_DROP_ENV }}
   - CLIENT__COMPILE_SEED={{ .Env.CLIENT__COMPILE_SEED }}
   - CLIENT__COMPILE_PRIVATE_PASSWORD={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}
+  - CLIENT__COMPILE_AGE_PUBLIC_KEY={{ .Env.CLIENT__COMPILE_AGE_PUBLIC_KEY }}
   - CLIENT__COMPILE_NOPASS={{ .Env.CLIENT__COMPILE_NOPASS }}
   - CLIENT__COMPILE_COMPRESS={{ .Env.CLIENT__COMPILE_COMPRESS }}
   - CLIENT__WG_PORT={{ .Env.CLIENT__WG_PORT }}
@@ -424,6 +427,8 @@ builds:
 
       - '{{ if (index .Env "AGENT__RELAY_ADDR") }} -X Goauld/agent/config._relay_addr={{ .Env.AGENT__RELAY_ADDR }}{{end}}'
 
+      - '{{ if (index .Env "AGENT__BROWSER_PROXY_PORT") }} -X Goauld/agent/config._browser_proxy_port={{ .Env.AGENT__BROWSER_PROXY_PORT }}{{end}}'
+
 # END Dynamic AGENT
 
   - id: "agent-mini"
@@ -551,6 +556,8 @@ builds:
       - '{{ if (index .Env "AGENT__KILLSWITCH") }} -X Goauld/agent/config._killswitch={{ .Env.AGENT__KILLSWITCH }}{{end}}'
 
       - '{{ if (index .Env "AGENT__RELAY_ADDR") }} -X Goauld/agent/config._relay_addr={{ .Env.AGENT__RELAY_ADDR }}{{end}}'
+
+      - '{{ if (index .Env "AGENT__BROWSER_PROXY_PORT") }} -X Goauld/agent/config._browser_proxy_port={{ .Env.AGENT__BROWSER_PROXY_PORT }}{{end}}'
 
   # END Dynamic AGENT
   - id: "agent.dll"
@@ -687,6 +694,8 @@ builds:
 
       - '{{ if (index .Env "AGENT__RELAY_ADDR") }} -X Goauld/agent/config._relay_addr={{ .Env.AGENT__RELAY_ADDR }}{{end}}'
 
+      - '{{ if (index .Env "AGENT__BROWSER_PROXY_PORT") }} -X Goauld/agent/config._browser_proxy_port={{ .Env.AGENT__BROWSER_PROXY_PORT }}{{end}}'
+
   # END Dynamic AGENT
 
 
@@ -775,6 +784,7 @@ builds:
       - '{{ if (index .Env "CLIENT__COMPILE_DROP_ENV") }} -X main._compile_drop_env={{ .Env.CLIENT__COMPILE_DROP_ENV }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_SEED") }} -X main._compile_seed={{ .Env.CLIENT__COMPILE_SEED }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_PRIVATE_PASSWORD") }} -X main._compile_private_password={{ .Env.CLIENT__COMPILE_PRIVATE_PASSWORD }}{{end}}'
+      - '{{ if (index .Env "CLIENT__COMPILE_AGE_PUBLIC_KEY") }} -X main._compile_age_public_key={{ .Env.CLIENT__COMPILE_AGE_PUBLIC_KEY }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_NOPASS") }} -X main._compile_nopass={{ .Env.CLIENT__COMPILE_NOPASS }}{{end}}'
       - '{{ if (index .Env "CLIENT__COMPILE_COMPRESS") }} -X main._compile_compress={{ .Env.CLIENT__COMPILE_COMPRESS }}{{end}}'
 
