@@ -27,6 +27,7 @@ It is composed of three components:
 ## Features
 
 The main agent features are:
+- Cross-platform (Windows, Linux and MacOS)
 - SSH encapsulation over multiple transports:
     * Direct SSH
     * TLS
