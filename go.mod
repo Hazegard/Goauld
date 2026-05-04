@@ -1,6 +1,6 @@
 module Goauld
 
-go 1.25.7
+go 1.26.2
 
 require (
 	filippo.io/age v1.3.1

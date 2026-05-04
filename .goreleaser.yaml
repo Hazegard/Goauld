@@ -225,7 +225,7 @@ before:
         env GOOS=windows GOARCH=arm64 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '"'"'-s -w -buildid='"'"' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm64.exe ./agent/sshd/shell/shim_windows/
         env GOOS=windows GOARCH=386 {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '"'"'-s -w -buildid='"'"' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_386.exe ./agent/sshd/shell/shim_windows/
         # fi
-        env GOOS=windows GOARCH=arm {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '"'"'-s -w -buildid='"'"' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
+        # env GOOS=windows GOARCH=arm {{ if and (index .Env "CLIENT__COMPILE_SEED") .Env.CLIENT__COMPILE_SEED }}CLIENT__COMPILE_SEED={{.Env.CLIENT__COMPILE_SEED}} ./scripts/garble.sh{{else}}go{{end}} build -trimpath -ldflags '"'"'-s -w -buildid='"'"' -o agent/sshd/shell/shimembed/sshd_shim/sshd_windows_arm.exe ./agent/sshd/shell/shim_windows/
         fi'
 
 

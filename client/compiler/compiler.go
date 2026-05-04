@@ -95,7 +95,7 @@ func (c *Compiler) Run() error {
 	content := string(byteContent)
 
 	if c.Seed == "__generate" {
-		seed, err := GenerateSecureRandomBase64(69)
+		seed, err := GenerateSecureRandomBase64(8)
 		if err != nil {
 			return fmt.Errorf("could not generate random seed: %w", err)
 		}
