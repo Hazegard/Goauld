@@ -157,6 +157,7 @@ func (d *DNSSHServer) acceptStreams(conn *kcp.UDPSession) error {
 		if err != nil {
 			var netErr net.Error
 			if errors.As(err, &netErr) {
+				log.Trace().Str("Mode", "DNSSH").Err(err).Msg("failed to accept stream")
 				continue
 			}
 
@@ -233,6 +234,7 @@ func (d *DNSSHServer) acceptSessions(ln *kcp.Listener, mtu int) error {
 		if err != nil {
 			var netErr net.Error
 			if errors.As(err, &netErr) {
+				log.Trace().Str("Mode", "DNSSH").Err(err).Msg("failed to accept stream")
 				continue
 			}
 
@@ -466,12 +468,6 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 		var buf [4096]byte
 		n, addr, err := dnsConn.ReadFrom(buf[:])
 		if err != nil {
-			var netErr net.Error
-			if errors.As(err, &netErr) {
-				log.Trace().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
-
-				continue
-			}
 
 			return err
 		}
@@ -597,6 +593,7 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 			// overflow the capacity of the DNS response, we stash
 			// to be bundled into a future response.
 			timer := time.NewTimer(maxResponseDelay)
+			timerExpired := false
 			for {
 				var p []byte
 				unstash := ttConn.Unstash(rec.ClientID)
@@ -617,6 +614,7 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 						case p = <-unstash:
 						case p = <-outgoing:
 						case <-timer.C:
+							timerExpired = true
 						case nextRec = <-ch:
 						}
 					}
@@ -625,7 +623,11 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 				// only. The second and later packets must be
 				// immediately available or they will be omitted
 				// from this bundle.
+				if !timerExpired && !timer.Stop() {
+					<-timer.C
+				}
 				timer.Reset(0)
+				timerExpired = false
 
 				if len(p) == 0 {
 					// timer expired or receive on ch, we
@@ -655,7 +657,9 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 				_ = binary.Write(&payload, binary.BigEndian, uint16(len(p)))
 				payload.Write(p)
 			}
-			timer.Stop()
+			if !timerExpired && !timer.Stop() {
+				<-timer.C
+			}
 
 			rec.Resp.Answer[0].Data = dns.EncodeRDataTXT(payload.Bytes())
 		}
@@ -677,14 +681,15 @@ func sendLoop(dnsConn net.PacketConn, ttConn *turbotunnel.QueuePacketConn, ch <-
 		// Now we actually send the message as a UDP packet.
 		_, err = dnsConn.WriteTo(buf, rec.Addr)
 		if err != nil {
-			var netErr net.Error
-			if errors.As(err, &netErr) {
-				log.Trace().Str("Mode", "DNSSH").Msgf("WriteTo temporary error: %v", err)
-
-				continue
+			// net.ErrClosed means we'll never be able to send on
+			// dnsConn, so terminate the loop. Treat all other
+			// errors as temporary and simply log them.
+			if errors.Is(err, net.ErrClosed) {
+				return err
 			}
 
-			return err
+			log.Trace().Err(err).Str("Mode", "DNSSH").Msgf("Error encoding response")
+			continue
 		}
 	}
 
@@ -819,7 +824,13 @@ func (d *DNSSHServer) Run() error {
 	d.kcpAddr = ln.Addr().String()
 	//nolint:errcheck
 	defer ln.Close()
+	// We will run acceptSessions, sendLoop, and recvLoop concurrently. The
+	// first one to finish closes the done channel.
+	doneChan := make(chan struct{})
+	var doneOnce sync.Once
+	done := func() { doneOnce.Do(func() { close(doneChan) }) }
 	go func() {
+		defer done()
 		err := d.acceptSessions(ln, mtu)
 		if err != nil {
 			log.Debug().Str("Mode", "DNSSH").Int("mtu", mtu).Err(err).Msg("acceptSessions error")
@@ -833,13 +844,26 @@ func (d *DNSSHServer) Run() error {
 	// for each response to collect downstream data before being evicted by
 	// another response that needs to be sent.
 	go func() {
+		defer done()
 		err := sendLoop(d.dnsConn, ttConn, ch, maxEncodedPayload)
 		if err != nil {
 			log.Debug().Str("Mode", "DNSSH").Int("mtu", mtu).Err(err).Msg("sendLoop error")
 		}
 	}()
 
-	return d.recvLoop(d.domain, d.blindDomain, d.dnsConn, ttConn, ch)
+	go func() {
+		defer done()
+		err := d.recvLoop(d.domain, d.blindDomain, d.dnsConn, ttConn, ch)
+		if err != nil {
+			log.Trace().Err(err).Str("Mode", "DNSSH").Msg("recvLoop error")
+		}
+	}()
+
+	// Wait for any of acceptSessions, sendLoop, or recvLoop to return. In
+	// normal operation, we don't expect any of these to return.
+	<-doneChan
+
+	return nil
 }
 
 // NewDNSSHServer returns a DNSSHServer

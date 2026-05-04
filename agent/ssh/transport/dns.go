@@ -201,12 +201,6 @@ func (c *DNSPacketConn) recvLoop(transport net.PacketConn) error {
 			}
 		} else {
 			if err != nil {
-				var netErr net.Error
-				if errors.As(err, &netErr) {
-					log.Debug().Str("Mode", "DNSSH").Msgf("ReadFrom temporary error: %v", err)
-
-					continue
-				}
 
 				return err
 			}
