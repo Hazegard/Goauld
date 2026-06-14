@@ -54,7 +54,9 @@ func parseAndResolveEnvFile(filePath string) (map[string]string, error) {
 		if len(matches) == 3 {
 			key := matches[1]
 			value := strings.Trim(matches[2], `"`)
-			envMap[key] = value
+			if value != "" {
+				envMap[key] = value
+			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
