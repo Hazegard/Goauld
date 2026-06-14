@@ -174,7 +174,7 @@ func (cpc *ControlPlanClient) init(cfg *sio.ManagerConfig, success chan<- struct
 
 	socket.OnConnect(func() {
 		log.Debug().Msg("OnConnect")
-		log.Info().Msgf("Connected to the control server %s", cpc.url)
+		log.Info().Msgf("Connecting to the control server %s", cpc.url)
 		success <- struct{}{}
 	})
 	socket.OnConnectError(func(err any) {
