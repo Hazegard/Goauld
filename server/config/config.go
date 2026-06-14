@@ -31,10 +31,10 @@ var srvCfg *ServerConfig
 var (
 	_age_privKey = "" //nolint:revive
 
-	_http_domain    = "www.example.com" //nolint:revive
-	_tls_domain     = "app.example.com" //nolint:revive
-	_dns_domain     = "t.example.com"   //nolint:revive
-	_dns_domain_alt = "s.example.com"   //nolint:revive
+	_http_domain    = "" // www.example.com //nolint:revive
+	_tls_domain     = "" // app.example.com //nolint:revive
+	_dns_domain     = "" // t.example.com //nolint:revive
+	_dns_domain_alt = "" // s.example.com //nolint:revive
 
 	_http_listen_addr  = ":80"   //nolint:revive
 	_https_listen_addr = ":443"  //nolint:revive
@@ -46,9 +46,9 @@ var (
 	_quiet     = "false"
 
 	_tls               = "true"
-	_tls_cert          = "" //nolint:revive
-	_tls_key           = "" //nolint:revive
-	_letsencrypt_email = "mail@example.com"
+	_tls_cert          = ""     //nolint:revive
+	_tls_key           = ""     //nolint:revive
+	_letsencrypt_email = ""     // mail@example.com
 	_quic              = "true" //nolint:revive
 
 	_dns = "true"
@@ -56,12 +56,12 @@ var (
 	_no_db   = "false"                  //nolint:revive
 	_db_name = common.AppName() + ".db" //nolint:revive
 
-	_allowed_ips  = "127.0.0.1,0.0.0.0/32" //nolint:revive
-	_access_token = "TODO_TOKEN"           //nolint:revive
-	_admin_token  = "TODO_TOKEN"           //nolint:revive
+	_allowed_ips  = "" // 127.0.0.1,0.0.0.0/32 //nolint:revive
+	_access_token = "" // EXAMPLE_TOKEN //nolint:revive
+	_admin_token  = "" // EXAMPLE_TOKEN //nolint:revive
 
-	_binaries_basicauth = "username:password" //nolint:revive
-	_binaries_path      = "./binaries"        //nolint:revive
+	_binaries_basicauth = "" // username:password //nolint:revive
+	_binaries_path      = "" // ./binaries //nolint:revive
 
 	_version         = "false"
 	_generate_config = "false" //nolint:revive
@@ -143,8 +143,8 @@ type ServerConfig struct {
 	AccessToken []string `default:"${_access_token}" group:"Access control configuration:" name:"access-token" yaml:"access-token" json:"access-token" help:"Access token required for the /manage/ API endpoint."` //nolint:gosec
 	AdminToken  []string `default:"${_admin_token}" group:"Access control configuration:" name:"admin-token" yaml:"admin-token" json:"admin-token" help:"Admin token required for the /admin/ API endpoint."`
 
-	BinariesBasicAuth    string `default:"${_binaries_basicauth}" group:"Agent binaries configuration:" name:"binaries-basic-auth" yaml:"binaries-basic-auth" json:"binaries-basic-auth" help:"HTTP Basic Auth credentials required to access the binaries endpoint."`
-	BinariesPathLocation string `default:"${_binaries_path}" group:"Agent binaries configuration:" name:"binaries-path-location" yaml:"binaries-path-location" json:"binaries-path-location" help:"Filesystem path where agent binaries are stored."`
+	BinariesBasicAuth    string `default:"${_binaries_basicauth}" group:"Agent binaries configuration:" name:"binaries-basic-auth" yaml:"binaries-basic-auth" json:"binaries-basic-auth" optional:"" help:"HTTP Basic Auth credentials required to access the binaries endpoint."`
+	BinariesPathLocation string `default:"${_binaries_path}" group:"Agent binaries configuration:" name:"binaries-path-location" yaml:"binaries-path-location" json:"binaries-path-location" optional:"" help:"Filesystem path where agent binaries are stored."`
 
 	Verbose        int    `default:"${_verbosity}" group:"Server configuration:" short:"v" name:"verbose" yaml:"verbose" json:"verbose" type:"counter" help:"Increase log verbosity. Repeat for more detail."`
 	Quiet          bool   `default:"${_quiet}" group:"Server configuration:" short:"q" name:"quiet" yaml:"quiet" json:"quiet" help:"Suppress all log output."`
@@ -286,13 +286,13 @@ func (s *ServerConfig) Validate() error {
 		}
 	}
 
-	basicAuth := strings.Split(s.BinariesBasicAuth, ":")
-	if len(basicAuth) < 2 {
-		return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
-	}
-	if basicAuth[0] == "" || strings.Join(basicAuth[1:], ":") == "" {
-		return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
-	}
+	//basicAuth := strings.Split(s.BinariesBasicAuth, ":")
+	//if len(basicAuth) < 2 {
+	//	return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
+	//}
+	//if basicAuth[0] == "" || strings.Join(basicAuth[1:], ":") == "" {
+	//	return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)
+	//}
 
 	return nil
 }
@@ -305,6 +305,13 @@ func (s *ServerConfig) IsCustomTLS() bool {
 // GetTLSDomains return the list of domains served under TLS.
 func (s *ServerConfig) GetTLSDomains() []string {
 	return append(s.TLSDomain, s.HTTPDomain...)
+}
+
+// IsBinariesBasicAuthSet
+func (s *ServerConfig) IsBinariesBasicAuthSet() bool {
+	u, p := s.GetBinariesBasicAuth()
+
+	return u != "" && p != ""
 }
 
 // GetBinariesBasicAuth return the username and password used to restrict the hosted binaries.

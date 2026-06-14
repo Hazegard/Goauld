@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_agePubKey = "age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p"
+	_agePubKey = "" // age1e4txlmjtmc4sx5f8s7fhpka64d4d05rj3qn3jy4tgrta4p22euvq00ac5p
 
 	_disable_password = "false"         //nolint:revive
 	_private_password = ""              //nolint:revive
@@ -18,13 +18,13 @@ var (
 	_shared_password  = ""              //nolint:revive
 	_name             = "user@hostname" //nolint:revive
 
-	_server         = "www.example.com"
-	_ssh_server     = "www.example.com:22222"                   //nolint:revive
-	_tls_server     = "app.example.com"                         //nolint:revive
-	_quic_domain    = "app.example.com"                         //nolint:revive
-	_dns_server     = "tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9" //nolint:revive
-	_dns_domain     = "t.example.com"                           //nolint:revive
-	_dns_domain_alt = "s.example.com"                           //nolint:revive
+	_server         = "" // www.example.com //nolint:revive
+	_ssh_server     = "" // www.example.com:22222 //nolint:revive
+	_tls_server     = "" // app.example.com //nolint:revive
+	_quic_domain    = "" // app.example.com //nolint:revive
+	_dns_server     = "" // tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9 //nolint:revive
+	_dns_domain     = "" // t.example.com //nolint:revive
+	_dns_domain_alt = "" // s.example.com//nolint:revive
 
 	_sshd_enabled            = "true"  //nolint:revive
 	_socks_enabled           = "true"  //nolint:revive
@@ -67,10 +67,10 @@ var (
 	_verbosity = "0"
 	_quiet     = "false"
 
-	_only_working_days    = "false"        //nolint:revive
-	_working_day_start    = "8:00"         //nolint:revive
-	_working_day_end      = "19:30"        //nolint:revive
-	_working_day_timezone = "Europe/Paris" //nolint:revive
+	_only_working_days    = "false" //nolint:revive
+	_working_day_start    = ""      // 8:00 //nolint:revive
+	_working_day_end      = ""      // 19:30 //nolint:revive
+	_working_day_timezone = ""      // Europe/Paris //nolint:revive
 
 	_rssh_order   = "SSH,TLS,WS,HTTP,DNS" //nolint:revive
 	_rssh_timeout = "60"                  //nolint:revive

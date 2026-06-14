@@ -20,6 +20,10 @@ func Run(ctx context.Context, cancel context.CancelFunc) error {
 
 		return err
 	}
+
+	if !config.Get().IsBinariesBasicAuthSet() && config.Get().BinariesPathLocation != "" {
+		log.Warn().Msgf("No Basic Auth set on the binaries server, the folder is publicly available")
+	}
 	// Reset the connected status of all agents when restarting
 	err = db.ResetAgents()
 	if err != nil {
@@ -44,10 +48,10 @@ func Run(ctx context.Context, cancel context.CancelFunc) error {
 	adminRouter := router.NewAdminRouter(db, agentStore)
 	staticRouter := router.NewStaticRouter()
 	quicRouter := transport.NewQUICServer(agentStore, db)
-	sshttp2 := transport.NewServer("", "", false, true, false, config.Get().HTTPDomain[0], config.Get().LocalSSHAddr(), db, agentStore)
+	//sshttp2 := transport.NewServer("", "", false, true, false, config.Get().HTTPDomain[0], config.Get().LocalSSHAddr(), db, agentStore)
 
 	// Initialize the HTTP router
-	r, err := router.NewHTTPRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter, staticRouter, quicRouter, sshttp2)
+	r, err := router.NewHTTPRouter(sioServer, wssh, sshttp, tlssh, manageRouter, adminRouter, staticRouter, quicRouter /*, sshttp2*/)
 	if err != nil {
 		log.Error().Err(err).Msgf("error initializing http router")
 
