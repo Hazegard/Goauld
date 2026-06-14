@@ -42,8 +42,8 @@ function GenConfig(){
     if [[ "$ENV_VAR" != *_CLI ]]; then
       echo -e "$help" | sed 's/^/# /' >> "$ENV_FILE"
       echo "$ENV_VAR=" >> "$ENV_FILE"
-      echo "  - $ENV_VAR={{ .Env.$ENV_VAR }}" >> "$GORELEASER_ENV"
-      echo "      - '{{ if (index .Env \"$ENV_VAR\") }} -X $module.$var={{ .Env.$ENV_VAR }}{{end}}'" >> "$GORELEASER_FLAGS"
+      echo "  - $ENV_VAR={{ envOrDefault \"$ENV_VAR\" \"\"}}" >> "$GORELEASER_ENV"
+      echo "      - '{{ if (index .Env \"$ENV_VAR\") }} -X $module.$var={{ envOrDefault \"$ENV_VAR\" \"\"}}{{end}}'" >> "$GORELEASER_FLAGS"
     fi
 
   done < <(cat "$source_file" | rg -A 1 'default:"(\$\{(.*)\})?"' -oa -r '$2' | sed '$d')
@@ -183,7 +183,7 @@ function UpdateContent(){
           print
       }
   }
-  ' "$FILE" | sed 's/SERVER__ACCESS_TOKEN={{ .Env.SERVER__ACCESS_TOKEN }}/SERVER__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}/g' | sed 's/CLIENT__ACCESS_TOKEN={{ .Env.CLIENT__ACCESS_TOKEN }}/CLIENT__ACCESS_TOKEN={{ .Env.COMMON__ACCESS_TOKEN }}/g' > "$TEMP_FILE" && mv "$TEMP_FILE" "$FILE"
+  ' "$FILE" | sed 's/SERVER__ACCESS_TOKEN={{ envOrDefault "SERVER__ACCESS_TOKEN" ""}}/SERVER__ACCESS_TOKEN={{ envOrDefault "COMMON__ACCESS_TOKEN" ""}}/g' | sed 's/CLIENT__ACCESS_TOKEN={{ envOrDefault "CLIENT__ACCESS_TOKEN" ""}}/CLIENT__ACCESS_TOKEN={{ envOrDefault "COMMON__ACCESS_TOKEN" ""}}/g' > "$TEMP_FILE" && mv "$TEMP_FILE" "$FILE"
 
   echo "Content replaced successfully in $FILE"
 }
