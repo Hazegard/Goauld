@@ -32,7 +32,7 @@ type Compiler struct {
 	Verbose       int    `default:"${_verbosity}" name:"verbose" yaml:"verbose" short:"v" type:"counter" help:"Verbosity. Repeat to increase"`
 	DropEnv       bool   `default:"${_compile_drop_env}" name:"drop-env" yaml:"drop-env" help:"Show then environment files required to compile the agent."`
 	Seed          string `default:"${_compile_seed}" name:"seed" yaml:"seed" help:"Seed to use to obfuscate agent."`
-	AgentPassword string `default:"${_compile_private_password}" name:"agent-password" yaml:"agent-password" short:"p" help:"Static agent password."`
+	AgentPassword string `default:"${_compile_private_password}" name:"compiler-agent-password" yaml:"compiler-agent-password" short:"p" help:"Static agent password."`
 	AgePubKey     string `default:"${_compile_age_public_key}" name:"age-public-key" yaml:"age-public-key" short:"K" help:"Public Key for agent."`
 	NoPass        bool   `default:"${_compile_nopass}" name:"nopass" yaml:"nopass" help:"Do not set the agent password."`
 	Compress      bool   `default:"${_compile_compress}" name:"compress" yaml:"compress" help:"Pack the binaries with upx."`
@@ -201,11 +201,11 @@ func InitCompilerConfig(appName string, defaultValues kong.Vars) (*kong.Context,
 		return nil, cfg, err
 	}
 	configSearchDir := []string{
-		filepath.Join(dir, "client_config.yaml"),
+		filepath.Join(dir, "tealc.yaml"),
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		homeConfig := filepath.Join(home, ".config", strings.ToLower(appName), "client_config.yaml")
+		homeConfig := filepath.Join(home, ".config", "tealc.yaml")
 		configSearchDir = append(configSearchDir, homeConfig)
 	}
 	kongOptions := []kong.Option{
