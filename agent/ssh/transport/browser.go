@@ -53,7 +53,10 @@ type BrowserProxy struct {
 }
 
 func (bp *BrowserProxy) Close() error {
-	return bp.server.Close()
+	if bp.server != nil {
+		return bp.server.Close()
+	}
+	return nil
 }
 
 func pipe(ctx context.Context, src, dst *websocket.Conn) error {
