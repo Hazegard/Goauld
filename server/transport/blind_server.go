@@ -220,7 +220,7 @@ func NewDNSServer(db *persistence.DB, sshDest string, httpDest string, domain st
 		server := &dns.Server{Addr: s.dnsListener, Net: "udp"}
 
 		if s.debug {
-			log.Printf("DNS server starting on %s (UDP)", s.dnsListener)
+			log.Debug().Msgf("DNS server starting on %s (UDP)", s.dnsListener)
 		}
 
 		return server.ListenAndServe()
@@ -249,7 +249,7 @@ func (s *DNSServer) getBlindSession(sessionID string) (*BlindSession, error) {
 		s.sessions[sessionID] = session
 
 		if s.debug {
-			log.Printf("Created new connection for session %s to %s", sessionID, dest)
+			log.Debug().Msgf("Created new connection for session %s to %s", sessionID, dest)
 		}
 	}
 
@@ -296,10 +296,10 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 
 	question := r.Question[0]
 	if s.debug {
-		// log.Printf("=== Received DNS Request ===")
-		// log.Printf("From: %s", addr.String())
-		// log.Printf("Raw message: %v", r.String())
-		// log.Printf("Question: %s (type: %d)", question.Name, question.Qtype)
+		// log.Debug().Msgf("=== Received DNS Request ===")
+		// log.Debug().Msgf("From: %s", addr.String())
+		// log.Debug().Msgf("Raw message: %v", r.String())
+		// log.Debug().Msgf("Question: %s (type: %d)", question.Name, question.Qtype)
 	}
 
 	// Create response message
@@ -340,7 +340,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 	session, err := s.getBlindSession(sessionID)
 	if err != nil {
 		if s.debug {
-			log.Printf("Failed to get/create session: %v", err)
+			log.Debug().Msgf("Failed to get/create session: %v", err)
 		}
 		msg.Rcode = dns.RcodeServerFailure
 		err = WriteMsg(msg, dnsConn, addr)
@@ -367,7 +367,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 		response, err := s.handlePoll(session)
 		if err != nil {
 			if s.debug {
-				log.Printf("Poll error: %v", err)
+				log.Debug().Msgf("Poll error: %v", err)
 			}
 			msg.Rcode = dns.RcodeServerFailure
 			err = WriteMsg(msg, dnsConn, addr)
@@ -405,7 +405,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 			msg.Answer = append(msg.Answer, txt)
 
 			if s.debug {
-				// log.Printf("Sending response with %d chunks", len(chunks))
+				// log.Debug().Msgf("Sending response with %d chunks", len(chunks))
 			}
 		}
 		err = WriteMsg(msg, dnsConn, addr)
@@ -419,7 +419,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 	decodedData, err := blind.DecodeDNSSafe(encodedData)
 	if err != nil {
 		if s.debug {
-			log.Printf("Failed to decode data: %v", err)
+			//			log.Debug().Msgf("Failed to decode data: %v", err)
 		}
 		msg.Rcode = dns.RcodeFormatError
 		err = WriteMsg(msg, dnsConn, addr)
@@ -432,12 +432,12 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 
 	if len(decodedData) > 0 {
 		if s.debug {
-			// log.Printf("Writing %d bytes to connection", len(decodedData))
+			// log.Debug().Msgf("Writing %d bytes to connection", len(decodedData))
 		}
 
 		if err := session.Write(decodedData); err != nil {
 			if s.debug {
-				// log.Printf("Failed to write to connection: %v", err)
+				// log.Debug().Msgf("Failed to write to connection: %v", err)
 			}
 			msg.Rcode = dns.RcodeServerFailure
 			err = WriteMsg(msg, dnsConn, addr)
@@ -486,7 +486,7 @@ func (s *DNSServer) handleDNSRequest(dnsConn net.PacketConn, r *dns.Msg, addr ne
 	}
 
 	if s.debug {
-		// log.Printf("Sending response with %d chunks", len(msg.Answer[0].(*dns.TXT).Txt))
+		// log.Debug().Msgf("Sending response with %d chunks", len(msg.Answer[0].(*dns.TXT).Txt))
 	}
 
 	err = WriteMsg(msg, dnsConn, addr)
@@ -563,7 +563,7 @@ func (s *DNSServer) cleanupBlindSessions() {
 		for id, session := range s.sessions {
 			if session.IsClosed() || now.Sub(session.lastActive) > 5*time.Minute {
 				if s.debug {
-					log.Printf("Cleaning up session: %s (closed: %v, inactive: %v)",
+					log.Debug().Msgf("Cleaning up session: %s (closed: %v, inactive: %v)",
 						id,
 						session.IsClosed(),
 						now.Sub(session.lastActive) > 5*time.Minute)
