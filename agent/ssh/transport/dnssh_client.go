@@ -136,45 +136,42 @@ func (dnssh *DNSSH) Start() error {
 	port := 53
 	if config.Get().GetDNSCommand() == "" {
 		dnsServers := config.Get().DNSServer()
-		//for _, _dns := range dns2.GetDNSServers() {
-		//	dnsServers = append(dnsServers, _dns.String())
-		//}
-		log.Info().Str("Mode", "DNSSH").Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")
-		for _, domain := range dnsServers {
+		found := false
+		log.Info().Str("Mode", "DNSSH").Str("Servers", strings.Join(dnsServers, ", ")).Msg("Trying DNS servers")
+		for _, server := range dnsServers {
+			ip := server
 			p := 53
-			var ip string
-			split := strings.Split(domain, ":")
-			if len(split) == 2 {
+
+			if strings.Contains(server, ":") {
+				split := strings.Split(server, ":")
 				ip = split[0]
-				var err error
-				p, err = strconv.Atoi(split[1])
+
+				parsedPort, err := strconv.Atoi(split[1])
 				if err != nil {
-					log.Debug().Err(err).Str("Mode", "DNSSH").Str("Domain", domain).Str("Port", split[1]).Msg("error parsing port, using 53 as default...")
-					p = 53
+					log.Debug().Err(err).Str("Mode", "DNSSH").Str("Port", split[1]).Str("Server", server).Msg("invalid port, defaulting to 53")
+				} else {
+					p = parsedPort
 				}
-			} else {
-				ip = domain
 			}
-			log.Debug().Str("IP", ip).Str("Mode", "DNSSH").Int("Port", p).Msgf("Testing DNS server availability")
+			log.Debug().Str("Mode", "DNSSH").Str("IP", ip).Int("Port", p).Msg("Testing DNS server availability")
 			if TestDNSServer(ip, p, config.Get().DNSDomain()) {
 				d = ip
 				port = p
-
-				break
-			} else if TestDNSServer(ip, p, config.Get().DNSDomain()) {
-				d = ip
-				port = p
-
+				found = true
 				break
 			}
 		}
+
+		if !found {
+			log.Error().Str("Mode", "DNSSH").Strs("Tried", dnsServers).Msg("No reachable DNS server found")
+			return fmt.Errorf("no reachable DNS server found (tried: %s)", strings.Join(dnsServers, ", "))
+		}
 		var err error
-		log.Debug().Str("DNS", d).Str("Mode", "DNSSH").Int("port", port).Msg("dns server")
+		log.Debug().Str("DNS", d).Int("Port", port).Str("Mode", "DNSSH").Msg("selected DNS server")
 		domain, err = dns.ParseName(config.Get().DNSDomain())
 		if err != nil {
 			log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
-
-			return err
+			return fmt.Errorf("error parsing domain: %w", err)
 		}
 		log.Info().Str("Mode", "DNSSH").Str("Domain", config.Get().DNSDomain()).Msg("DNS tunneling")
 
@@ -197,8 +194,7 @@ func (dnssh *DNSSH) Start() error {
 		domain, err = dns.ParseName(config.Get().DNSDomain())
 		if err != nil {
 			log.Error().Str("Mode", "DNSSH").Err(err).Str("Domain", config.Get().DNSDomain()).Msg("error parsing domain")
-
-			return err
+			return fmt.Errorf("error parsing domain: %w", err)
 		}
 		remoteAddr, err = net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", d, port))
 		if err != nil {
