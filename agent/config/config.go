@@ -18,13 +18,13 @@ var (
 	_shared_password  = ""              //nolint:revive
 	_name             = "user@hostname" //nolint:revive
 
-	_server         = "" // www.example.com //nolint:revive
-	_ssh_server     = "" // www.example.com:22222 //nolint:revive
-	_tls_server     = "" // app.example.com //nolint:revive
-	_quic_domain    = "" // app.example.com //nolint:revive
-	_dns_server     = "" // tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9 //nolint:revive
-	_dns_domain     = "" // t.example.com //nolint:revive
-	_dns_domain_alt = "" // s.example.com//nolint:revive
+	_server         = ""       // www.example.com //nolint:revive
+	_ssh_server     = ""       // www.example.com:22222 //nolint:revive
+	_tls_server     = ""       // app.example.com //nolint:revive
+	_quic_domain    = ""       // app.example.com //nolint:revive
+	_dns_server     = "system" // tns.example.com,8.8.8.8,1.1.1.1,9.9.9.9 //nolint:revive
+	_dns_domain     = ""       // t.example.com //nolint:revive
+	_dns_domain_alt = ""       // s.example.com//nolint:revive
 
 	_sshd_enabled            = "true"  //nolint:revive
 	_socks_enabled           = "true"  //nolint:revive

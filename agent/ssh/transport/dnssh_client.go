@@ -136,9 +136,9 @@ func (dnssh *DNSSH) Start() error {
 	port := 53
 	if config.Get().GetDNSCommand() == "" {
 		dnsServers := config.Get().DNSServer()
-		for _, _dns := range dns2.GetDNSServers() {
-			dnsServers = append(dnsServers, _dns.String())
-		}
+		//for _, _dns := range dns2.GetDNSServers() {
+		//	dnsServers = append(dnsServers, _dns.String())
+		//}
 		log.Info().Str("Mode", "DNSSH").Str("Servers", strings.Join(dnsServers, ", ")).Msgf("Trying DNS servers")
 		for _, domain := range dnsServers {
 			p := 53
