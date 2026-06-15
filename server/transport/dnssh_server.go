@@ -480,7 +480,7 @@ func (d *DNSSHServer) recvLoop(domain dns.Name, blindDomain dns.Name, dnsConn ne
 			continue
 		}
 
-		if len(query.Question) > 0 {
+		if len(query.Question) > 0 && blindDomain != nil {
 			question := query.Question[0]
 			_, ok := question.Name.TrimSuffix(blindDomain)
 			if ok {
@@ -878,9 +878,12 @@ func NewDNSSHServer(agentStore *store.AgentStore, db *persistence.DB) (*DNSSHSer
 	// an error or warning at startup, rather than only when the
 	// first stream occurs, we apply some parsing and name
 	// resolution checks here.
-	blindDomain, err := dns.ParseName(config.Get().DNSDomainAlt)
-	if err != nil {
-		return nil, fmt.Errorf("invalid domain %s: %w", config.Get().DNSDomain, err)
+	var blindDomain dns.Name
+	if config.Get().DNSDomainAlt != "" {
+		blindDomain, err = dns.ParseName(config.Get().DNSDomainAlt)
+		if err != nil {
+			return nil, fmt.Errorf("invalid domain %s: %w", config.Get().DNSDomain, err)
+		}
 	}
 	dnsConn, err := net.ListenPacket("udp", config.Get().DNSAddr)
 	if err != nil {
