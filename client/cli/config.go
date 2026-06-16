@@ -362,7 +362,14 @@ func InitConfig() (*kong.Context, *ClientConfig, *kong.Context, error) {
 		kong.Configuration(cli.YAMLKeepEnvVar, configSearchDir...),
 		kong.DefaultEnvars(strings.ToUpper(AppName)),
 		kong.Help(func(options kong.HelpOptions, ctx *kong.Context) error {
-			if strings.HasPrefix(ctx.Command(), "compile") {
+			if strings.Fields(ctx.Command())[0] == "compile" || strings.Contains(ctx.Command(), "compile ") {
+				args := []string{}
+				for _, arg := range os.Args {
+					if arg != "compile" {
+						args = append(args, arg)
+					}
+				}
+				os.Args = args
 				_, _, _ = compiler.InitCompilerConfig(AppName, DefaultValues)
 
 				return nil
