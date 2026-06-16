@@ -45,7 +45,7 @@ type Compiler struct {
 
 const (
 	// EnvFile the default destination of created environment file.
-	EnvFile     = ".env.build"
+	EnvFile     = "env.build"
 	WordlistOut = "wordlist.txt.gz"
 )
 
@@ -182,7 +182,7 @@ func GenerateSecureRandomBase64(byteLength int) (string, error) {
 
 // HandleDropEnv get the .env file stored in the embed struct and drops print the file to the stdout.
 func HandleDropEnv(source embed.FS) error {
-	fileContent, err := source.ReadFile(".env.build.tmpl")
+	fileContent, err := source.ReadFile("env.build.tmpl")
 	if err != nil {
 		return err
 	}
