@@ -286,6 +286,12 @@ func (s *ServerConfig) Validate() error {
 		}
 	}
 
+	for _, token := range s.AccessToken {
+		if strings.ContainsAny(token, ":") {
+			return fmt.Errorf("access token cannot contain \":\" (%s)", token)
+		}
+	}
+
 	//basicAuth := strings.Split(s.BinariesBasicAuth, ":")
 	//if len(basicAuth) < 2 {
 	//	return fmt.Errorf("invalid basic auth: %s", s.BinariesBasicAuth)

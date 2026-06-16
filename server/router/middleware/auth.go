@@ -13,13 +13,19 @@ import (
 
 // AuthMiddleware checks if the Authorization header matches a given token.
 func AuthMiddleware(expectedAuthToken []string) negroni.HandlerFunc {
+	tokens := []string{}
+	for _, token := range expectedAuthToken {
+		if token != "" {
+			tokens = append(tokens, token)
+		}
+	}
 	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		// Extract the Authorization header
 		authHeader := r.Header.Get("Authorization")
 		// Validate the Authorization header
 		authHeader = strings.Split(authHeader, ":")[0]
 
-		if !utils.Contains(expectedAuthToken, authHeader) {
+		if !utils.Contains(tokens, authHeader) {
 			// If the token is not correct, return 403 Forbidden
 			http.Error(w, net.Unauthorized, http.StatusUnauthorized)
 			log.Get().Trace().Str("Header", authHeader).Msg("Header not allowed")
