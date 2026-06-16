@@ -24,8 +24,8 @@ import (
 // Compiler holds the information used to compile the binaries.
 type Compiler struct {
 	ID            string `default:"${_compile_id}" name:"id" yaml:"id" help:"[client|server|agent|agent-mini|agent-dll]."`
-	Goos          string `default:"${_compile_goos}" name:"goos" yaml:"goos" enum:",windows,linux,darwin" short:"O" help:"[darwin|linux|windows]."`
-	Goarch        string `default:"${_compile_goarch}" name:"goarch" yaml:"goarch" enum:",amd64,arm64,arm,386" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
+	Goos          string `default:"${_compile_goos}" name:"goos" yaml:"goos" enum:",windows,linux,darwin" env:"GOOS" env:"TEALC_GOOS" short:"O" help:"[darwin|linux|windows]."`
+	Goarch        string `default:"${_compile_goarch}" name:"goarch" yaml:"goarch" enum:",amd64,arm64,arm,386" env:"GOARCH"  env:"TEALC_GOARCH" short:"A" help:"[amd64|arm64|arm|386] (arm/386 only works for ID=client)."`
 	Source        string `default:"${_compile_source}" name:"source" yaml:"source" help:"Source goauld directory."`
 	EnvFile       string `default:"${_compile_env_file}" name:"env" yaml:"env" help:"File containing environment variables."`
 	Output        string `default:"${_compile_output}" name:"output" yaml:"output" short:"o" help:"Folder containing compiled agents."`
